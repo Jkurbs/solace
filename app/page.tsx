@@ -31,7 +31,7 @@ const systems = [
     status: 'Live',
     category: 'Market intelligence',
     description:
-      'Reads market structure, ranks asymmetric opportunities, and gives Solace a live feedback surface.',
+      'The first live instrument: reading liquidity, timing, and structure until signal earns action.',
   },
   {
     index: '02',
@@ -39,7 +39,7 @@ const systems = [
     status: 'Research',
     category: 'Probabilistic engines',
     description:
-      'Models timing, state, uncertainty, and feedback in environments where static prediction is not enough.',
+      'State-aware engines for decisions where timing, uncertainty, and feedback decide the outcome.',
   },
   {
     index: '03',
@@ -47,7 +47,7 @@ const systems = [
     status: 'Building',
     category: 'Synthetic environments',
     description:
-      'Tests hypotheses before deployment and studies path-dependent behavior under controlled pressure.',
+      'Controlled worlds where hypotheses fail quietly before they are allowed into the open.',
   },
   {
     index: '04',
@@ -55,22 +55,22 @@ const systems = [
     status: 'Horizon',
     category: 'Physical-world systems',
     description:
-      'Extends the same discipline toward robotics and embodied intelligence over a longer horizon.',
+      'The long horizon: intelligence that carries the same discipline into physical-world action.',
   },
 ];
 
 const principles = [
   {
     label: 'Observe',
-    text: 'Take the environment seriously before imposing a model on it.',
+    text: 'Let the world speak before the model explains it.',
   },
   {
     label: 'Model',
-    text: 'Convert state, timing, and uncertainty into operational structure.',
+    text: 'Turn state, timing, and uncertainty into structure.',
   },
   {
     label: 'Deploy',
-    text: 'Let feedback decide what survives.',
+    text: 'Keep only what feedback refuses to break.',
   },
 ];
 
@@ -78,17 +78,32 @@ const notes = [
   {
     index: '01',
     title: 'Capital velocity',
-    text: 'Return per unit time is treated as a first-class measure.',
+    text: 'Compounding is measured by time, not just direction.',
   },
   {
     index: '02',
     title: 'Liquidity path efficiency',
-    text: 'Price targets matter less when the path cannot support clean travel.',
+    text: 'A destination matters less when the path cannot carry price.',
   },
   {
     index: '03',
     title: 'Regime detection',
-    text: 'System behavior changes when the environment changes.',
+    text: 'The system changes posture when the environment changes character.',
+  },
+];
+
+const hermesMetrics = [
+  {
+    label: 'Signal',
+    value: 'Structure',
+  },
+  {
+    label: 'Posture',
+    value: 'Selective',
+  },
+  {
+    label: 'Feedback',
+    value: 'Live',
   },
 ];
 
@@ -116,6 +131,9 @@ function Header() {
           <Link href="/vision" className="transition-colors hover:text-foreground">
             Vision
           </Link>
+          <a href="#hermes" className="transition-colors hover:text-foreground">
+            Hermes
+          </a>
           <a href="#systems" className="transition-colors hover:text-foreground">
             Systems
           </a>
@@ -140,6 +158,14 @@ function AnimatedSignalLayer() {
       <span className="signal-plane plane-three" />
 
       <div className="signal-orbit-system">
+        <div className="instrument-core">
+          <span className="instrument-ring ring-a" />
+          <span className="instrument-ring ring-b" />
+          <span className="instrument-ring ring-c" />
+          <span className="instrument-axis axis-a" />
+          <span className="instrument-axis axis-b" />
+          <span className="instrument-center" />
+        </div>
         <span className="signal-orbit orbit-one" />
         <span className="signal-orbit orbit-two" />
         <span className="signal-orbit orbit-three" />
@@ -165,6 +191,23 @@ function AnimatedSignalLayer() {
   );
 }
 
+function HermesInstrument() {
+  return (
+    <div className="hermes-instrument" aria-hidden="true">
+      <span className="hermes-arc hermes-arc-one" />
+      <span className="hermes-arc hermes-arc-two" />
+      <span className="hermes-arc hermes-arc-three" />
+      <span className="hermes-axis hermes-axis-one" />
+      <span className="hermes-axis hermes-axis-two" />
+      <span className="hermes-point hermes-point-one" />
+      <span className="hermes-point hermes-point-two" />
+      <span className="hermes-point hermes-point-three" />
+      <span className="hermes-point hermes-point-four" />
+      <span className="hermes-core">H</span>
+    </div>
+  );
+}
+
 export default function Home() {
   return (
     <main className="home-shell relative min-h-screen overflow-x-hidden text-foreground">
@@ -182,7 +225,7 @@ export default function Home() {
         >
           <div className="hero-copy max-w-3xl">
             <motion.p variants={fade} className="section-kicker">
-              Private intelligence laboratory
+              Private intelligence observatory
             </motion.p>
             <motion.h1
               variants={fade}
@@ -191,15 +234,15 @@ export default function Home() {
               Systems for reading complexity.
             </motion.h1>
             <motion.p variants={fade} className="hero-body mt-7 max-w-2xl text-base leading-8 text-muted md:text-lg">
-              Solace builds disciplined research systems that observe, model, simulate, and deploy into environments
-              where uncertainty is the medium.
+              Solace builds instruments for uncertainty: systems that observe, model, deploy, and keep only what
+              survives contact with the world.
             </motion.p>
             <motion.div variants={fade} className="hero-actions mt-9 flex flex-wrap items-center gap-x-7 gap-y-3">
               <Link href="/vision" className="primary-link">
                 Read the thesis
               </Link>
-              <a href="#systems" className="text-link">
-                View systems
+              <a href="#hermes" className="text-link">
+                Enter Hermes
               </a>
             </motion.div>
           </div>
@@ -216,8 +259,33 @@ export default function Home() {
         <div className="mx-auto grid max-w-7xl gap-8 border-y border-white/10 py-8 md:grid-cols-[0.7fr_1fr] md:items-center">
           <p className="section-kicker">Operating posture</p>
           <p className="max-w-4xl font-serif text-3xl font-medium leading-tight text-foreground md:text-5xl">
-            Intelligence is only valuable when it survives contact with the world.
+            Only what works under real-world feedback deserves to be called intelligence.
           </p>
+        </div>
+      </section>
+
+      <section id="hermes" className="hermes-section scroll-mt-24 px-5 py-20 md:px-8 md:py-28">
+        <div className="mx-auto grid max-w-7xl gap-12 border-t border-white/10 pt-10 lg:grid-cols-[0.78fr_1fr] lg:items-center">
+          <div className="max-w-2xl">
+            <p className="section-kicker">First live system</p>
+            <h2 className="mt-4 font-serif text-4xl font-medium leading-tight md:text-6xl">
+              Hermes is the first instrument.
+            </h2>
+            <p className="mt-6 max-w-xl text-base leading-8 text-muted md:text-lg">
+              It reads liquidity, timing, and capital posture in the open. The model does not get to stay beautiful
+              unless feedback agrees.
+            </p>
+            <div className="hermes-metrics">
+              {hermesMetrics.map((metric) => (
+                <div key={metric.label}>
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <HermesInstrument />
         </div>
       </section>
 
@@ -227,7 +295,7 @@ export default function Home() {
             <div>
               <p className="section-kicker">Systems</p>
               <h2 className="mt-4 max-w-xl font-serif text-4xl font-medium leading-tight md:text-6xl">
-                Built with restraint. Measured by feedback.
+                Built with restraint. Earned by contact.
               </h2>
             </div>
             <div className="system-list">
@@ -255,7 +323,7 @@ export default function Home() {
             <div>
               <p className="section-kicker">Method</p>
               <h2 className="mt-4 max-w-lg font-serif text-4xl font-medium leading-tight md:text-6xl">
-                A quiet loop for violent domains.
+                A quiet loop for uncertain worlds.
               </h2>
             </div>
             <div className="grid gap-8 md:grid-cols-3">
@@ -282,7 +350,7 @@ export default function Home() {
 
           <div className="space-y-8">
             <p className="max-w-2xl text-base leading-8 text-muted md:text-lg">
-              Solace presents research as a living surface. Ideas are kept only when they improve ranking, risk,
+              Solace presents research as a living surface. Ideas are kept only when they sharpen ranking, risk,
               timing, or deployment behavior.
             </p>
             <div className="research-list">

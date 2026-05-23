@@ -9,7 +9,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        serif: ['Georgia', 'Cambria', 'Times New Roman', 'serif'],
+        serif: ['var(--font-display)', 'Georgia', 'Cambria', 'Times New Roman', 'serif'],
         sans: ['var(--font-grotesk)', 'Inter', 'system-ui', 'sans-serif'],
         mono: ['var(--font-plex)', 'ui-monospace', 'SFMono-Regular'],
       },

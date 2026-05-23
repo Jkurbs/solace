@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Manrope } from "next/font/google";
+import { Cormorant_Garamond, IBM_Plex_Mono, Manrope } from "next/font/google";
 import "./globals.css";
+
+const display = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 const body = Manrope({
   subsets: ["latin"],
@@ -28,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${body.variable} ${plex.variable}`}>
+    <html lang="en" className={`${display.variable} ${body.variable} ${plex.variable}`}>
       <body className="antialiased">{children}</body>
     </html>
   );
