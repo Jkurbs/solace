@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, IBM_Plex_Mono, Manrope } from "next/font/google";
+import { IBM_Plex_Mono, Manrope, Newsreader } from "next/font/google";
 import "./globals.css";
 
-const display = Cormorant_Garamond({
+const display = Newsreader({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "variable",
   variable: "--font-display",
   display: "swap",
+  axes: ["opsz"],
 });
 
 const body = Manrope({

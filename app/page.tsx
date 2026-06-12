@@ -1,7 +1,23 @@
 'use client';
 
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+
+import SkyBackground from './SkyBackground';
+
+const HermesLiquidityFieldRender = dynamic(() => import('./HermesLiquidityFieldRender'), {
+  ssr: false,
+});
+
+const HeroObservatoryRender = dynamic(() => import('./HeroObservatoryRender'), {
+  ssr: false,
+});
+
+const OracleFuturesRender = dynamic(() => import('./OracleFuturesRender'), {
+  ssr: false,
+});
 
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -24,72 +40,11 @@ const stagger = {
   },
 };
 
-const systems = [
-  {
-    index: '01',
-    name: 'Hermes',
-    status: 'Live',
-    category: 'Market intelligence',
-    description:
-      'The first live instrument: reading liquidity, timing, and structure until signal earns action.',
-  },
-  {
-    index: '02',
-    name: 'Decision Systems',
-    status: 'Research',
-    category: 'Probabilistic engines',
-    description:
-      'State-aware engines for decisions where timing, uncertainty, and feedback decide the outcome.',
-  },
-  {
-    index: '03',
-    name: 'Simulation',
-    status: 'Building',
-    category: 'Synthetic environments',
-    description:
-      'Controlled worlds where hypotheses fail quietly before they are allowed into the open.',
-  },
-  {
-    index: '04',
-    name: 'Autonomy',
-    status: 'Horizon',
-    category: 'Physical-world systems',
-    description:
-      'The long horizon: intelligence that carries the same discipline into physical-world action.',
-  },
-];
-
-const principles = [
-  {
-    label: 'Observe',
-    text: 'Let the world speak before the model explains it.',
-  },
-  {
-    label: 'Model',
-    text: 'Turn state, timing, and uncertainty into structure.',
-  },
-  {
-    label: 'Deploy',
-    text: 'Keep only what feedback refuses to break.',
-  },
-];
-
-const notes = [
-  {
-    index: '01',
-    title: 'Capital velocity',
-    text: 'Compounding is measured by time, not just direction.',
-  },
-  {
-    index: '02',
-    title: 'Liquidity path efficiency',
-    text: 'A destination matters less when the path cannot carry price.',
-  },
-  {
-    index: '03',
-    title: 'Regime detection',
-    text: 'The system changes posture when the environment changes character.',
-  },
+const footerSystems = [
+  { name: 'Hermes', status: 'Live', href: '#hermes' },
+  { name: 'Oracle', status: 'Calibrating', href: '#oracle' },
+  { name: 'Simulation', status: 'Building' },
+  { name: 'Autonomy', status: 'Gated' },
 ];
 
 const hermesMetrics = [
@@ -107,118 +62,77 @@ const hermesMetrics = [
   },
 ];
 
-function BrandMark() {
-  return (
-    <span className="brand-mark" aria-hidden="true">
-      <span />
-      <span />
-      <span />
-      <span />
-    </span>
-  );
-}
-
 function Header() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-[rgba(4,4,3,0.58)] backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
-        <Link href="/" className="flex min-w-0 items-center gap-3" aria-label="Solace home">
-          <BrandMark />
-          <span className="font-mono text-xs uppercase text-muted">Solace</span>
+    <header className="site-header">
+      <div className="site-header-inner">
+        <Link href="/" className="site-wordmark" aria-label="Solace home">
+          Solace
         </Link>
 
-        <nav className="hidden items-center gap-8 text-sm text-muted md:flex" aria-label="Primary navigation">
-          <Link href="/vision" className="transition-colors hover:text-foreground">
-            Vision
+        <nav className="site-nav" aria-label="Primary navigation">
+          <Link href="/brief">
+            Brief
           </Link>
-          <a href="#hermes" className="transition-colors hover:text-foreground">
+          <a href="#hermes">
             Hermes
           </a>
-          <a href="#systems" className="transition-colors hover:text-foreground">
-            Systems
-          </a>
-          <a href="#research" className="transition-colors hover:text-foreground">
-            Research
+          <a href="#oracle">
+            Oracle
           </a>
         </nav>
 
-        <Link href="/vision" className="nav-cta">
-          Thesis
+        <div className="site-actions">
+          <a
+            href="mailto:jkurbs18@gmail.com?subject=Solace%20access"
+            className="site-action-link site-action-primary"
+          >
+            Access
+          </a>
+          <button
+            type="button"
+            className={`site-menu-button${menuOpen ? ' is-open' : ''}`}
+            aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
+      </div>
+      <div className={`site-menu-panel${menuOpen ? ' is-open' : ''}`}>
+        <Link href="/brief" onClick={() => setMenuOpen(false)}>
+          Brief
         </Link>
+        <a href="#hermes" onClick={() => setMenuOpen(false)}>
+          Hermes
+        </a>
+        <a href="#oracle" onClick={() => setMenuOpen(false)}>
+          Oracle
+        </a>
       </div>
     </header>
-  );
-}
-
-function AnimatedSignalLayer() {
-  return (
-    <div className="signal-stage" aria-hidden="true">
-      <span className="signal-plane plane-one" />
-      <span className="signal-plane plane-two" />
-      <span className="signal-plane plane-three" />
-
-      <div className="signal-orbit-system">
-        <div className="instrument-core">
-          <span className="instrument-ring ring-a" />
-          <span className="instrument-ring ring-b" />
-          <span className="instrument-ring ring-c" />
-          <span className="instrument-axis axis-a" />
-          <span className="instrument-axis axis-b" />
-          <span className="instrument-center" />
-        </div>
-        <span className="signal-orbit orbit-one" />
-        <span className="signal-orbit orbit-two" />
-        <span className="signal-orbit orbit-three" />
-        <span className="signal-orbit orbit-four" />
-        <span className="signal-sweep" />
-        <span className="signal-node node-one" />
-        <span className="signal-node node-two" />
-        <span className="signal-node node-three" />
-        <span className="signal-node node-four" />
-        <span className="signal-node node-five" />
-      </div>
-
-      <div className="signal-ledger">
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
-    </div>
-  );
-}
-
-function HermesInstrument() {
-  return (
-    <div className="hermes-instrument" aria-hidden="true">
-      <span className="hermes-arc hermes-arc-one" />
-      <span className="hermes-arc hermes-arc-two" />
-      <span className="hermes-arc hermes-arc-three" />
-      <span className="hermes-axis hermes-axis-one" />
-      <span className="hermes-axis hermes-axis-two" />
-      <span className="hermes-point hermes-point-one" />
-      <span className="hermes-point hermes-point-two" />
-      <span className="hermes-point hermes-point-three" />
-      <span className="hermes-point hermes-point-four" />
-      <span className="hermes-core">H</span>
-    </div>
   );
 }
 
 export default function Home() {
   return (
     <main className="home-shell relative min-h-screen overflow-x-hidden text-foreground">
+      <SkyBackground />
       <Header />
 
       <section className="hero-luxury relative min-h-[92vh] overflow-hidden px-5 pb-24 pt-32 md:px-8 md:pb-28 md:pt-36">
-        <AnimatedSignalLayer />
+        <div className="hero-render" aria-hidden="true">
+          <HeroObservatoryRender />
+        </div>
         <div className="hero-vignette" />
 
         <motion.div
-          initial="hidden"
+          initial={false}
           animate="show"
           variants={stagger}
           className="hero-content relative z-10 mx-auto grid max-w-7xl items-center"
@@ -238,10 +152,10 @@ export default function Home() {
               survives contact with the world.
             </motion.p>
             <motion.div variants={fade} className="hero-actions mt-9 flex flex-wrap items-center gap-x-7 gap-y-3">
-              <Link href="/vision" className="primary-link">
-                Read the thesis
+              <Link href="/brief" className="primary-link">
+                Read the brief
               </Link>
-              <a href="#hermes" className="text-link">
+              <a href="#hermes" className="hermes-product-button hermes-product-button-dark min-h-[2.75rem]">
                 Enter Hermes
               </a>
             </motion.div>
@@ -255,27 +169,34 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="luxury-band px-5 py-16 md:px-8 md:py-20">
-        <div className="mx-auto grid max-w-7xl gap-8 border-y border-white/10 py-8 md:grid-cols-[0.7fr_1fr] md:items-center">
-          <p className="section-kicker">Operating posture</p>
-          <p className="max-w-4xl font-serif text-3xl font-medium leading-tight text-foreground md:text-5xl">
-            Only what works under real-world feedback deserves to be called intelligence.
-          </p>
+      <section id="hermes" className="hermes-section scroll-mt-24">
+        <div className="hermes-product-bg" aria-hidden="true">
+          <HermesLiquidityFieldRender />
         </div>
-      </section>
-
-      <section id="hermes" className="hermes-section scroll-mt-24 px-5 py-20 md:px-8 md:py-28">
-        <div className="mx-auto grid max-w-7xl gap-12 border-t border-white/10 pt-10 lg:grid-cols-[0.78fr_1fr] lg:items-center">
-          <div className="max-w-2xl">
-            <p className="section-kicker">First live system</p>
-            <h2 className="mt-4 font-serif text-4xl font-medium leading-tight md:text-6xl">
-              Hermes is the first instrument.
-            </h2>
-            <p className="mt-6 max-w-xl text-base leading-8 text-muted md:text-lg">
-              It reads liquidity, timing, and capital posture in the open. The model does not get to stay beautiful
-              unless feedback agrees.
+        <div className="hermes-render-caption" aria-hidden="true">
+          Liquidity field · 6 candidate paths · 1 survivor
+        </div>
+        <div className="hermes-product-shell relative z-10 mx-auto flex max-w-7xl flex-col justify-center px-5 py-24 md:px-8 md:py-28">
+          <div className="hermes-product-copy">
+            <p className="section-kicker">The first instrument</p>
+            <h2>Hermes is the first instrument.</h2>
+            <p>
+              Live market intelligence for liquidity, timing, and regime structure. Built for operators who need
+              signal before consensus.
             </p>
-            <div className="hermes-metrics">
+            <div className="hermes-product-actions">
+              <a
+                href="mailto:jkurbs18@gmail.com?subject=Hermes%20access"
+                className="hermes-product-button hermes-product-button-light"
+              >
+                Request access
+              </a>
+              <Link href="/brief" className="hermes-product-button hermes-product-button-dark">
+                View brief
+              </Link>
+            </div>
+
+            <div className="hermes-product-metrics">
               {hermesMetrics.map((metric) => (
                 <div key={metric.label}>
                   <span>{metric.label}</span>
@@ -284,100 +205,91 @@ export default function Home() {
               ))}
             </div>
           </div>
-
-          <HermesInstrument />
         </div>
       </section>
 
-      <section id="systems" className="scroll-mt-24 px-5 py-20 md:px-8 md:py-28">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-8 md:grid-cols-[0.7fr_1fr]">
-            <div>
-              <p className="section-kicker">Systems</p>
-              <h2 className="mt-4 max-w-xl font-serif text-4xl font-medium leading-tight md:text-6xl">
-                Built with restraint. Earned by contact.
-              </h2>
-            </div>
-            <div className="system-list">
-              {systems.map((system) => (
-                <article key={system.name} className="luxury-row">
-                  <div className="flex items-baseline justify-between gap-5">
-                    <span className="font-mono text-xs text-accent">{system.index}</span>
-                    <span className="font-mono text-xs text-muted">{system.status}</span>
-                  </div>
-                  <div>
-                    <h3 className="font-serif text-3xl font-medium md:text-4xl">{system.name}</h3>
-                    <p className="mt-2 text-sm leading-7 text-muted">{system.category}</p>
-                  </div>
-                  <p className="max-w-2xl text-base leading-8 text-muted">{system.description}</p>
-                </article>
-              ))}
-            </div>
-          </div>
+      <section id="oracle" className="oracle-section scroll-mt-24">
+        <div className="oracle-product-bg" aria-hidden="true">
+          <OracleFuturesRender />
         </div>
-      </section>
-
-      <section className="px-5 py-20 md:px-8 md:py-28">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-12 border-t border-white/10 pt-10 lg:grid-cols-[0.55fr_1fr]">
-            <div>
-              <p className="section-kicker">Method</p>
-              <h2 className="mt-4 max-w-lg font-serif text-4xl font-medium leading-tight md:text-6xl">
-                A quiet loop for uncertain worlds.
-              </h2>
-            </div>
-            <div className="grid gap-8 md:grid-cols-3">
-              {principles.map((principle, index) => (
-                <div key={principle.label} className="principle">
-                  <span>{String(index + 1).padStart(2, '0')}</span>
-                  <h3>{principle.label}</h3>
-                  <p>{principle.text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="hermes-render-caption oracle-caption" aria-hidden="true">
+          Event markets · 7 futures weighted · 1 resolved
         </div>
-      </section>
-
-      <section id="research" className="scroll-mt-24 px-5 py-20 md:px-8 md:py-28">
-        <div className="mx-auto grid max-w-7xl gap-10 border-t border-white/10 pt-10 lg:grid-cols-[0.58fr_1fr]">
-          <div>
-            <p className="section-kicker">Research</p>
-            <h2 className="mt-4 max-w-xl font-serif text-4xl font-medium leading-tight md:text-6xl">
-              Notes that become experiments. Experiments that become systems.
-            </h2>
-          </div>
-
-          <div className="space-y-8">
-            <p className="max-w-2xl text-base leading-8 text-muted md:text-lg">
-              Solace presents research as a living surface. Ideas are kept only when they sharpen ranking, risk,
-              timing, or deployment behavior.
+        <div className="hermes-product-shell relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-center px-5 py-24 md:px-8 md:py-28">
+          <div className="hermes-product-copy lg:ml-auto">
+            <p className="section-kicker">The second instrument</p>
+            <h2>The Oracle weighs the futures.</h2>
+            <p>
+              Live probability over real events. Hermes reads the field and acts; the Oracle holds the
+              question open until the world answers — and keeps score when it does.
             </p>
-            <div className="research-list">
-              {notes.map((note) => (
-                <article key={note.index} className="research-row">
-                  <span className="font-mono text-xs text-accent">{note.index}</span>
-                  <div>
-                    <h3 className="font-serif text-2xl font-medium md:text-3xl">{note.title}</h3>
-                    <p className="mt-2 max-w-2xl text-sm leading-7 text-muted">{note.text}</p>
-                  </div>
-                </article>
-              ))}
+
+            <div className="hermes-product-metrics">
+              <div>
+                <span>Domain</span>
+                <strong>Events</strong>
+              </div>
+              <div>
+                <span>Method</span>
+                <strong>Probability</strong>
+              </div>
+              <div>
+                <span>Status</span>
+                <strong>Calibrating</strong>
+              </div>
             </div>
-            <Link href="/vision" className="text-link">
-              Open the thesis
-            </Link>
           </div>
         </div>
       </section>
 
-      <footer className="px-5 pb-10 pt-10 md:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 border-t border-white/10 pt-6 text-sm text-muted md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="font-serif text-2xl font-medium text-foreground">Solace</p>
-            <p className="mt-1">Independent research company.</p>
+      <footer className="site-footer px-5 pb-10 pt-14 md:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-12 border-t border-white/10 pt-12 md:grid-cols-[1.3fr_1fr_1fr]">
+            <div>
+              <p className="font-serif text-3xl font-medium text-foreground">Solace</p>
+              <p className="mt-3 max-w-xs text-sm leading-7 text-muted">
+                Independent research company. Instruments for uncertainty, kept only when they survive
+                contact with the world.
+              </p>
+              <p className="footer-stamp">Founded 2026 · Built for decades</p>
+            </div>
+
+            <div className="footer-col">
+              <p className="footer-heading">Instruments</p>
+              <ul>
+                {footerSystems.map((system) => (
+                  <li key={system.name}>
+                    {system.href ? (
+                      <a href={system.href}>{system.name}</a>
+                    ) : (
+                      <span className="footer-static">{system.name}</span>
+                    )}
+                    <span className="footer-status">{system.status}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="footer-col">
+              <p className="footer-heading">Company</p>
+              <ul>
+                <li>
+                  <Link href="/brief">Technical brief</Link>
+                </li>
+                <li>
+                  <a href="mailto:jkurbs18@gmail.com?subject=Solace%20access">Request access</a>
+                </li>
+                <li>
+                  <a href="mailto:jkurbs18@gmail.com">Contact</a>
+                </li>
+              </ul>
+            </div>
           </div>
-          <div className="font-mono text-xs text-muted">Vision / Systems / Research</div>
+
+          <div className="mt-12 flex flex-col gap-2 border-t border-white/10 pt-5 md:flex-row md:items-center md:justify-between">
+            <p className="footer-fineprint">© 2026 Solace. All rights reserved.</p>
+            <p className="footer-fineprint">Domains are earned</p>
+          </div>
         </div>
       </footer>
     </main>
