@@ -824,6 +824,115 @@ body {
     display: block;
   }
 
+  /* The Technical Brief inverts the site: night observatory → daylight paper. */
+  .brief-paper {
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(211, 177, 111, 0.1), transparent 38rem),
+      #f7f2e8;
+    color: #13110c;
+  }
+
+  .brief-paper ::selection {
+    background: rgba(138, 106, 51, 0.22);
+  }
+
+  .brief-paper .gate-board {
+    border-top-color: rgba(138, 106, 51, 0.3);
+  }
+
+  .brief-paper .gate-board-title {
+    color: rgba(138, 106, 51, 0.85);
+  }
+
+  .brief-paper .gate-board li {
+    color: rgba(63, 58, 48, 0.85);
+  }
+
+  .brief-paper .gate-index {
+    color: rgba(138, 106, 51, 0.7);
+  }
+
+  .brief-paper .gate-leader {
+    border-bottom-color: rgba(19, 17, 12, 0.25);
+  }
+
+  .brief-paper .gate-status {
+    color: #13110c;
+  }
+
+  .brief-author-photo {
+    width: 4rem;
+    height: 4rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    border: 1px solid rgba(19, 17, 12, 0.18);
+    object-fit: cover;
+  }
+
+  .brief-author-link {
+    border-bottom: 1px solid rgba(138, 106, 51, 0.45);
+    padding-bottom: 0.1rem;
+    transition: color 180ms ease, border-color 180ms ease;
+  }
+
+  .brief-author-link:hover {
+    color: #13110c;
+    border-color: rgba(138, 106, 51, 0.9);
+  }
+
+  .footer-stamp-link {
+    color: rgba(242, 234, 219, 0.7);
+    border-bottom: 1px solid rgba(214, 184, 130, 0.4);
+    transition: color 180ms ease;
+  }
+
+  .footer-stamp-link:hover {
+    color: var(--foreground);
+  }
+
+  .founder-photo {
+    width: 4.75rem;
+    height: 4.75rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    border: 1px solid rgba(242, 234, 219, 0.22);
+    object-fit: cover;
+    object-position: 50% 14%;
+    /* Warm monochrome grade so the photo sits inside the night palette. */
+    filter: grayscale(0.85) sepia(0.32) brightness(0.92) contrast(1.05);
+  }
+
+  .founder-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1.6rem;
+  }
+
+  .founder-links a {
+    font-family: var(--font-plex), monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(242, 234, 219, 0.66);
+    border-bottom: 1px solid rgba(214, 184, 130, 0.35);
+    padding-bottom: 0.15rem;
+    transition: color 180ms ease, border-color 180ms ease;
+  }
+
+  .founder-links a:hover {
+    color: var(--foreground);
+    border-color: rgba(214, 184, 130, 0.8);
+  }
+
+  .founder-location {
+    font-family: var(--font-plex), monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(242, 234, 219, 0.38);
+  }
+
   .footer-heading {
     font-family: var(--font-plex), monospace;
     font-size: 0.62rem;

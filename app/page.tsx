@@ -252,6 +252,12 @@ export default function Home() {
                 contact with the world.
               </p>
               <p className="footer-stamp">Founded 2026 · Built for decades</p>
+              <p className="footer-stamp">
+                Built by{' '}
+                <Link href="/brief#author" className="footer-stamp-link">
+                  Kerby Jean
+                </Link>
+              </p>
             </div>
 
             <div className="footer-col">
