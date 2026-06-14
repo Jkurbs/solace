@@ -6,6 +6,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 import SkyBackground from './SkyBackground';
+import Mark from './Mark';
+import { calibration } from './calibration';
 
 const HermesLiquidityFieldRender = dynamic(() => import('./HermesLiquidityFieldRender'), {
   ssr: false,
@@ -69,6 +71,7 @@ function Header() {
     <header className="site-header">
       <div className="site-header-inner">
         <Link href="/" className="site-wordmark" aria-label="Solace home">
+          <Mark size={28} className="site-mark" />
           Solace
         </Link>
 
@@ -76,21 +79,18 @@ function Header() {
           <Link href="/brief">
             Brief
           </Link>
-          <a href="#hermes">
+          <Link href="/hermes">
             Hermes
-          </a>
-          <a href="#oracle">
+          </Link>
+          <Link href="/oracle">
             Oracle
-          </a>
+          </Link>
         </nav>
 
         <div className="site-actions">
-          <a
-            href="mailto:jkurbs18@gmail.com?subject=Solace%20access"
-            className="site-action-link site-action-primary"
-          >
+          <Link href="/hermes" className="site-action-link site-action-primary">
             Access
-          </a>
+          </Link>
           <button
             type="button"
             className={`site-menu-button${menuOpen ? ' is-open' : ''}`}
@@ -108,12 +108,12 @@ function Header() {
         <Link href="/brief" onClick={() => setMenuOpen(false)}>
           Brief
         </Link>
-        <a href="#hermes" onClick={() => setMenuOpen(false)}>
+        <Link href="/hermes" onClick={() => setMenuOpen(false)}>
           Hermes
-        </a>
-        <a href="#oracle" onClick={() => setMenuOpen(false)}>
+        </Link>
+        <Link href="/oracle" onClick={() => setMenuOpen(false)}>
           Oracle
-        </a>
+        </Link>
       </div>
     </header>
   );
@@ -155,9 +155,9 @@ export default function Home() {
               <Link href="/brief" className="primary-link">
                 Read the brief
               </Link>
-              <a href="#hermes" className="hermes-product-button hermes-product-button-dark min-h-[2.75rem]">
+              <Link href="/hermes" className="hermes-product-button hermes-product-button-dark min-h-[2.75rem]">
                 Enter Hermes
-              </a>
+              </Link>
             </motion.div>
           </div>
         </motion.div>
@@ -185,12 +185,9 @@ export default function Home() {
               signal before consensus.
             </p>
             <div className="hermes-product-actions">
-              <a
-                href="mailto:jkurbs18@gmail.com?subject=Hermes%20access"
-                className="hermes-product-button hermes-product-button-light"
-              >
+              <Link href="/hermes" className="hermes-product-button hermes-product-button-light">
                 Request access
-              </a>
+              </Link>
               <Link href="/brief" className="hermes-product-button hermes-product-button-dark">
                 View brief
               </Link>
@@ -220,23 +217,30 @@ export default function Home() {
             <p className="section-kicker">The second instrument</p>
             <h2>The Oracle weighs the futures.</h2>
             <p>
-              Live probability over real events. Hermes reads the field and acts; the Oracle holds the
-              question open until the world answers — and keeps score when it does.
+              Live probability over real events. The Oracle holds the question open until the world
+              answers — then scores every prediction against what actually happened, wins and misses
+              alike.
             </p>
 
             <div className="hermes-product-metrics">
               <div>
-                <span>Domain</span>
-                <strong>Events</strong>
+                <span>Resolved</span>
+                <strong>{calibration.resolved}</strong>
               </div>
               <div>
-                <span>Method</span>
-                <strong>Probability</strong>
+                <span>Brier</span>
+                <strong>{calibration.brier.toFixed(2)}</strong>
               </div>
               <div>
-                <span>Status</span>
-                <strong>Calibrating</strong>
+                <span>Calibration</span>
+                <strong>Overconfident</strong>
               </div>
+            </div>
+
+            <div className="hermes-product-actions">
+              <Link href="/oracle" className="hermes-product-button hermes-product-button-light">
+                See the live record
+              </Link>
             </div>
           </div>
         </div>
@@ -246,7 +250,10 @@ export default function Home() {
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-12 border-t border-white/10 pt-12 md:grid-cols-[1.3fr_1fr_1fr]">
             <div>
-              <p className="font-serif text-3xl font-medium text-foreground">Solace</p>
+              <p className="flex items-center gap-3 font-serif text-3xl font-medium text-foreground">
+                <Mark size={36} className="site-mark" />
+                Solace
+              </p>
               <p className="mt-3 max-w-xs text-sm leading-7 text-muted">
                 Independent research company. Instruments for uncertainty, kept only when they survive
                 contact with the world.
@@ -283,7 +290,7 @@ export default function Home() {
                   <Link href="/brief">Technical brief</Link>
                 </li>
                 <li>
-                  <a href="mailto:jkurbs18@gmail.com?subject=Solace%20access">Request access</a>
+                  <Link href="/hermes">Request access</Link>
                 </li>
                 <li>
                   <a href="mailto:jkurbs18@gmail.com">Contact</a>
