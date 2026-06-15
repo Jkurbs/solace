@@ -25,7 +25,7 @@ export const hermesDashboardSnapshot: HermesDashboardSnapshot = {
   outlook: {
     environment: 'Moderate',
     stance: 'Selective deployment',
-    note: 'Opportunity is present, but Hermes is preserving cash for cleaner entries.',
+    note: 'Opportunity is present, but Hermes is preserving cash for clearer deployment.',
   },
   allocation: [
     { asset: 'BTC', percentage: 35 },
@@ -36,8 +36,8 @@ export const hermesDashboardSnapshot: HermesDashboardSnapshot = {
   activity: [
     { timestamp: new Date('2026-06-15T10:10:00-04:00'), summary: 'Increased BTC allocation' },
     { timestamp: new Date('2026-06-14T15:20:00-04:00'), summary: 'Reduced cash reserves' },
-    { timestamp: new Date('2026-06-13T11:35:00-04:00'), summary: 'Exited PEPE position' },
+    { timestamp: new Date('2026-06-13T11:35:00-04:00'), summary: 'Reduced PEPE exposure' },
   ],
   commentary:
-    'Hermes remains selectively deployed while preserving liquidity for emerging opportunities. Current market conditions favor continuation over aggressive expansion.',
+    'Hermes remains selectively deployed while preserving liquidity for emerging opportunities. Current conditions favor continuation over aggressive expansion.',
 };

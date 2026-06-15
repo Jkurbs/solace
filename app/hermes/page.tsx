@@ -6,9 +6,9 @@ import { hermesDashboardSnapshot } from '@/features/hermes-dashboard/mock-data';
 import Mark from '../Mark';
 
 export const metadata: Metadata = {
-  title: 'Solace — Hermes · Market Intelligence',
+  title: 'Solace — Hermes · Capital Allocation',
   description:
-    'Hermes reads liquidity, timing, and regime structure and acts only when signal earns it. Direct deposits through Solace. No performance claims.',
+    'Hermes evaluates opportunity, posture, and conviction before allocating capital. Direct deposits through Solace. No performance claims.',
 };
 
 const postures = [
@@ -18,7 +18,7 @@ const postures = [
   },
   {
     name: 'Balanced',
-    text: 'The house posture. Selective entries, measured size, and discipline that bends without breaking.',
+    text: 'The house posture. Selective deployment, measured size, and discipline that bends without breaking.',
   },
   {
     name: 'Velocity',
@@ -26,10 +26,10 @@ const postures = [
   },
 ];
 
-const tradingRequirements = [
-  'constant attention',
-  'risk management',
-  'execution',
+const allocationDemands = [
+  'continuous evaluation',
+  'risk calibration',
+  'allocation decisions',
   'emotional discipline',
 ];
 
@@ -120,10 +120,10 @@ const previewCashReserve =
 const previewAllocationGradient = buildPreviewAllocationGradient();
 
 const impactItems = [
-  'Users can understand what Hermes is doing without reading charts, indicators, or raw order flow.',
+  'Users can understand what Hermes is doing without parsing technical systems or raw operational detail.',
   'Portfolio value, capital deployed, cash reserve, activity, and commentary are visible in one read.',
   'Risk profile is explicit and adjustable, so allocation follows the selected posture.',
-  'Commentary turns system state into a current read instead of another stream of market noise.',
+  'Commentary turns system state into a current read instead of another stream of noise.',
 ];
 
 const fees = [
@@ -140,7 +140,7 @@ const fees = [
   {
     label: 'Hermes access',
     value: 'Disclosed before approval',
-    note: 'Access terms are provided before onboarding. No hidden spreads or trading-interface upsells.',
+    note: 'Access terms are provided before onboarding. No hidden spreads or interface upsells.',
   },
 ];
 
@@ -163,10 +163,10 @@ export default function HermesPage() {
         <section className="hermes-impact-hero">
           <div className="hermes-impact-hero-copy">
             <p className="section-kicker">Hermes + Solace</p>
-            <h1>Capital oversight without the trading terminal.</h1>
+            <h1>Capital oversight without constant intervention.</h1>
             <p>
-              Hermes is a managed interface for users who want to understand what is happening to
-              their capital without operating charts, indicators, orders, or leverage controls.
+              Hermes is an allocation interface for users who want visibility into how capital is being
+              deployed without managing daily decisions or constantly adjusting account posture.
             </p>
           </div>
         </section>
@@ -174,21 +174,21 @@ export default function HermesPage() {
         <section className="hermes-impact-section hermes-exists-section">
           <div className="hermes-impact-section-copy">
             <p className="section-kicker">Why Hermes exists</p>
-            <h2>Most people do not want to trade.</h2>
+            <h2>Capital requires decisions.</h2>
           </div>
           <div className="hermes-exists-body">
             <p>
-              Trading asks the user to become an operator. Hermes was built for people who want capital
-              exposure without accepting the work of a trading terminal.
+              Most people do not have the time, interest, or expertise to continuously evaluate changing
+              conditions and adjust allocation accordingly.
             </p>
             <ul className="hermes-exists-list">
-              {tradingRequirements.map((item) => (
+              {allocationDemands.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
             <p>
-              The objective is not activity. The objective is intelligent allocation: knowing when to deploy,
-              when to reduce, and when to preserve liquidity.
+              Hermes maintains that operating posture on behalf of the account while keeping the user
+              informed through a simple oversight interface.
             </p>
           </div>
         </section>
@@ -347,15 +347,15 @@ export default function HermesPage() {
 
         <section className="hermes-impact-quote">
           <blockquote>
-            The product should feel like checking on a professional portfolio manager, not operating a
-            trading terminal.
+            The product should feel like checking on a professional allocator, not managing the account
+            yourself.
           </blockquote>
         </section>
 
         <section className="hermes-impact-section hermes-impact-impact">
           <div className="hermes-impact-section-copy">
             <p className="section-kicker">Impact</p>
-            <h2>A dashboard for oversight, not trading.</h2>
+            <h2>A dashboard for oversight, not intervention.</h2>
           </div>
           <ul>
             {impactItems.map((item) => (
@@ -369,9 +369,9 @@ export default function HermesPage() {
             <p className="section-kicker">Access model</p>
             <h2>Simple terms before capital moves.</h2>
             <p>
-              Hermes is not designed around spreads, trading gimmicks, or hidden complexity. Access
-              terms are disclosed before onboarding, users deposit directly into Solace, and account
-              movement remains visible in the dashboard.
+              Hermes is not designed around spreads, gimmicks, or hidden complexity. Access terms are disclosed
+              before onboarding, users deposit directly into Solace, and account movement remains visible in the
+              dashboard.
             </p>
           </div>
           <div className="fees-static hermes-impact-fees">
