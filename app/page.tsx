@@ -88,7 +88,7 @@ function Header() {
         </nav>
 
         <div className="site-actions">
-          <Link href="/hermes" className="site-action-link site-action-primary">
+          <Link href="/dashboard" className="site-action-link site-action-primary">
             Access
           </Link>
           <button
@@ -186,7 +186,7 @@ export default function Home() {
             </p>
             <div className="hermes-product-actions">
               <Link href="/hermes" className="hermes-product-button hermes-product-button-light">
-                Request access
+                Learn More
               </Link>
               <Link href="/brief" className="hermes-product-button hermes-product-button-dark">
                 View brief
@@ -290,7 +290,7 @@ export default function Home() {
                   <Link href="/brief">Technical brief</Link>
                 </li>
                 <li>
-                  <Link href="/hermes">Request access</Link>
+                  <Link href="/dashboard">Request access</Link>
                 </li>
                 <li>
                   <a href="mailto:jkurbs18@gmail.com">Contact</a>

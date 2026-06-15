@@ -1,0 +1,43 @@
+import type { HermesDashboardSnapshot } from './types';
+
+export const hermesDashboardSnapshot: HermesDashboardSnapshot = {
+  account: {
+    label: 'Account ending 4821',
+  },
+  updatedAt: new Date('2026-06-15T09:42:00-04:00'),
+  portfolio: {
+    value: 12842.17,
+    deposited: 10000,
+    profit: 2842.17,
+    todaysChange: {
+      amount: 84.22,
+      percentage: 0.66,
+    },
+    sinceInception: 14.2,
+    availableToWithdraw: 12842.17,
+  },
+  status: {
+    status: 'ACTIVE',
+    riskProfile: 'Balanced',
+    deployedCapital: 75,
+    conviction: 'HIGH',
+  },
+  outlook: {
+    environment: 'Moderate',
+    stance: 'Selective deployment',
+    note: 'Opportunity is present, but Hermes is preserving cash for cleaner entries.',
+  },
+  allocation: [
+    { asset: 'BTC', percentage: 35 },
+    { asset: 'SUI', percentage: 20 },
+    { asset: 'Cash', percentage: 25 },
+    { asset: 'Other', percentage: 20 },
+  ],
+  activity: [
+    { timestamp: new Date('2026-06-15T10:10:00-04:00'), summary: 'Increased BTC allocation' },
+    { timestamp: new Date('2026-06-14T15:20:00-04:00'), summary: 'Reduced cash reserves' },
+    { timestamp: new Date('2026-06-13T11:35:00-04:00'), summary: 'Exited PEPE position' },
+  ],
+  commentary:
+    'Hermes remains selectively deployed while preserving liquidity for emerging opportunities. Current market conditions favor continuation over aggressive expansion.',
+};

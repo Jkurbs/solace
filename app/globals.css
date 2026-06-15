@@ -10,6 +10,9 @@
   --accent-2: #87dbc0;
   --ink: #0b0b09;
   --line: rgba(242, 234, 219, 0.13);
+  --font-display: Georgia, Cambria, "Times New Roman", serif;
+  --font-grotesk: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-plex: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
 html {
@@ -1079,22 +1082,1061 @@ body {
     box-shadow: 0 0 0 4px rgba(135, 219, 192, 0.08);
   }
 
-  .posture-static {
-    margin-top: 1.8rem;
-    display: grid;
-    gap: 1.5rem 2.5rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .hermes-dashboard-frame {
+    overflow: hidden;
+    border: 1px solid rgba(242, 234, 219, 0.13);
+    border-radius: 1.1rem;
+    background:
+      linear-gradient(145deg, rgba(242, 234, 219, 0.1), rgba(242, 234, 219, 0.025)),
+      rgba(10, 10, 8, 0.78);
   }
 
-  .posture-static > div {
+  .hermes-dashboard-showcase-full {
+    margin-right: calc(50% - 50vw);
+    margin-left: calc(50% - 50vw);
+    padding-right: clamp(1rem, 3vw, 2.5rem);
+    padding-left: clamp(1rem, 3vw, 2.5rem);
+  }
+
+  .hermes-dashboard-frame-focus {
+    width: 100%;
+    margin-top: 0;
+    border-color: rgba(242, 234, 219, 0.17);
+    border-radius: 1.25rem;
+  }
+
+  .hermes-dashboard-preview {
+    margin: 0.7rem;
+    overflow: hidden;
+    border: 1px solid rgba(242, 234, 219, 0.1);
+    border-radius: 0.8rem;
+    background: #10100e;
+    color: #f2eadb;
+    padding: 1rem;
+  }
+
+  .hermes-dashboard-frame-focus .hermes-dashboard-preview {
+    margin: 0.85rem;
+    padding: 0;
+  }
+
+  .hermes-dashboard-preview-real {
+    border-color: rgba(242, 234, 219, 0.08);
+    background: #10100e;
+  }
+
+  .hermes-preview-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 4rem;
+    border-bottom: 1px solid rgba(242, 234, 219, 0.08);
+    padding: 0 2rem;
+    color: rgba(242, 234, 219, 0.58);
+    font-size: 0.92rem;
+  }
+
+  .hermes-preview-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: #f2eadb;
+    font-weight: 700;
+  }
+
+  .hermes-preview-nav-links {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.35rem;
+  }
+
+  .hermes-preview-shell {
+    display: grid;
+    max-width: 72rem;
+    gap: 1.25rem;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .hermes-dashboard-preview span {
+    color: rgba(242, 234, 219, 0.56);
+  }
+
+  .hermes-preview-panel {
+    border: 1px solid rgba(242, 234, 219, 0.1);
+    border-radius: 0.5rem;
+    background: #181715;
+    padding: 1.6rem;
+  }
+
+  .hermes-preview-panel > span,
+  .hermes-preview-panel p > span,
+  .hermes-preview-panel time {
+    font-size: 0.94rem;
+    font-weight: 500;
+  }
+
+  .hermes-preview-panel h3 {
+    margin-top: 0.3rem;
+    color: #f2eadb;
+    font-size: 1.06rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .hermes-preview-portfolio {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.45fr);
+    align-items: end;
+    gap: 2rem;
+  }
+
+  .hermes-preview-portfolio > div:first-child > span {
+    display: block;
+    font-size: 0.94rem;
+    font-weight: 600;
+  }
+
+  .hermes-preview-portfolio > div:first-child > strong {
+    display: block;
+    margin-top: 1rem;
+    color: #f8f4ec;
+    font-size: 4.2rem;
+    font-weight: 750;
+    line-height: 0.9;
+  }
+
+  .hermes-preview-portfolio-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .hermes-preview-portfolio-metrics p,
+  .hermes-preview-status-grid p,
+  .hermes-preview-capital-row p,
+  .hermes-preview-outlook p,
+  .hermes-preview-legend p {
+    margin: 0;
+  }
+
+  .hermes-preview-portfolio-metrics span,
+  .hermes-preview-status-grid span,
+  .hermes-preview-capital-row span {
+    display: block;
+  }
+
+  .hermes-preview-portfolio-metrics strong,
+  .hermes-preview-status-grid strong,
+  .hermes-preview-capital-row strong {
+    display: block;
+    margin-top: 0.5rem;
+    color: #f2eadb;
+    font-size: 1.08rem;
+    font-weight: 750;
+  }
+
+  .hermes-preview-portfolio-metrics strong,
+  .hermes-preview-status-grid strong.is-positive {
+    color: rgba(135, 219, 192, 0.95);
+  }
+
+  .hermes-preview-status-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.3rem;
+  }
+
+  .hermes-preview-risk {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 1.7rem;
+    border-top: 1px solid rgba(242, 234, 219, 0.09);
+    padding-top: 1.3rem;
+  }
+
+  .hermes-preview-risk span {
+    display: grid;
+    min-height: 2.6rem;
+    place-items: center;
+    border-radius: 0.42rem;
+    color: rgba(242, 234, 219, 0.5);
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .hermes-preview-risk span.is-selected {
+    background: rgba(242, 234, 219, 0.18);
+    color: #f2eadb;
+  }
+
+  .hermes-preview-risk-note {
+    margin: 1.15rem 0 0;
+    color: rgba(242, 234, 219, 0.62);
+    font-size: 0.94rem;
+    line-height: 1.6;
+  }
+
+  .hermes-preview-outlook > div {
+    display: grid;
+    grid-template-columns: 14rem minmax(0, 1fr);
+    gap: 1.6rem;
+    margin-top: 1.3rem;
+    align-items: center;
+  }
+
+  .hermes-preview-outlook p:last-child {
+    border-left: 1px solid rgba(242, 234, 219, 0.1);
+    padding-left: 1.6rem;
+  }
+
+  .hermes-preview-outlook strong {
+    display: block;
+    margin-top: 0.6rem;
+    color: #f8f4ec;
+    font-size: 2.6rem;
+    font-weight: 750;
+    line-height: 1;
+  }
+
+  .hermes-preview-outlook em {
+    display: block;
+    color: #f2eadb;
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  .hermes-preview-outlook p:last-child span {
+    display: block;
+    margin-top: 0.75rem;
+    color: rgba(242, 234, 219, 0.58);
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  .hermes-preview-lower-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 1.25rem;
+  }
+
+  .hermes-preview-capital-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin-top: 1.2rem;
+  }
+
+  .hermes-preview-capital-row p {
+    border: 1px solid rgba(242, 234, 219, 0.08);
+    border-radius: 0.42rem;
+    background: rgba(16, 16, 14, 0.72);
+    padding: 1rem;
+  }
+
+  .hermes-preview-allocation-body {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 1fr);
+    gap: 1.8rem;
+    margin-top: 1.7rem;
+    align-items: center;
+  }
+
+  .hermes-preview-donut {
+    position: relative;
+    display: grid;
+    width: 13rem;
+    aspect-ratio: 1;
+    place-items: center;
+    border-radius: 999px;
+    text-align: center;
+  }
+
+  .hermes-preview-donut::before {
+    content: "";
+    position: absolute;
+    inset: 28%;
+    border-radius: inherit;
+    background: #181715;
+  }
+
+  .hermes-preview-donut span,
+  .hermes-preview-donut strong {
+    position: relative;
+    display: block;
+  }
+
+  .hermes-preview-donut span {
+    font-size: 0.95rem;
+  }
+
+  .hermes-preview-donut strong {
+    margin-top: 0.45rem;
+    color: #f2eadb;
+    font-size: 1.65rem;
+    font-weight: 750;
+  }
+
+  .hermes-preview-legend {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .hermes-preview-legend p {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.8rem;
+    align-items: center;
+  }
+
+  .hermes-preview-legend i {
+    width: 0.78rem;
+    height: 0.78rem;
+    border-radius: 999px;
+  }
+
+  .hermes-preview-legend strong {
+    color: #f2eadb;
+    font-size: 0.94rem;
+  }
+
+  .hermes-preview-activity ol {
+    display: grid;
+    margin: 1.1rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hermes-preview-activity li {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    gap: 1.2rem;
+    border-top: 1px solid rgba(242, 234, 219, 0.08);
+    padding: 1rem 0;
+  }
+
+  .hermes-preview-activity li:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .hermes-preview-activity li:last-child {
+    padding-bottom: 0;
+  }
+
+  .hermes-preview-activity strong {
+    color: #f2eadb;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .hermes-impact-article {
+    width: min(100%, 94rem);
+    margin: 0 auto;
+    padding: 8.5rem clamp(1rem, 3vw, 2.5rem) 6rem;
+  }
+
+  .hermes-impact-hero {
+    display: grid;
+    gap: 3rem;
+  }
+
+  .hermes-impact-hero-copy {
+    display: grid;
+    max-width: 62rem;
+    gap: 1.3rem;
+    padding-top: 1.5rem;
+  }
+
+  .hermes-impact-hero-copy h1 {
+    margin: 0;
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(3.4rem, 8.2vw, 8.9rem);
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 0.92;
+  }
+
+  .hermes-impact-hero-copy p:last-child {
+    max-width: 47rem;
+    margin: 0;
+    color: rgba(242, 234, 219, 0.66);
+    font-size: clamp(1.05rem, 1.7vw, 1.35rem);
+    line-height: 1.65;
+  }
+
+  .hermes-impact-media {
+    margin-top: 0.5rem;
+  }
+
+  .hermes-impact-dashboard {
+    padding: clamp(3rem, 6vw, 5.5rem) 0;
+  }
+
+  .hermes-exists-section {
+    align-items: start;
+  }
+
+  .hermes-exists-body {
+    display: grid;
+    gap: 1.1rem;
+    max-width: 42rem;
+  }
+
+  .hermes-exists-body p {
+    margin: 0;
+    color: rgba(242, 234, 219, 0.72);
+    font-size: clamp(1.08rem, 1.8vw, 1.36rem);
+    line-height: 1.7;
+  }
+
+  .hermes-custody-section {
+    align-items: start;
+  }
+
+  .hermes-custody-points {
+    display: grid;
+    border-top: 1px solid rgba(242, 234, 219, 0.14);
+  }
+
+  .hermes-custody-points p {
+    display: grid;
+    grid-template-columns: 3.8rem minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+    margin: 0;
+    border-bottom: 1px solid rgba(242, 234, 219, 0.1);
+    padding: 1.25rem 0;
+  }
+
+  .hermes-custody-points span {
+    color: var(--accent);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+  }
+
+  .hermes-custody-points strong {
+    color: var(--foreground);
+    font-size: clamp(1.25rem, 2.1vw, 1.75rem);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .hermes-impact-quote {
+    display: grid;
+    min-height: 26rem;
+    place-items: center;
+    border-bottom: 1px solid rgba(242, 234, 219, 0.1);
+    padding: 5rem 0;
+  }
+
+  .hermes-impact-quote blockquote {
+    max-width: 66rem;
+    margin: 0;
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(2.3rem, 5vw, 5.5rem);
+    font-weight: 500;
+    line-height: 1.02;
+    text-align: center;
+  }
+
+  .hermes-impact-section {
+    display: grid;
+    grid-template-columns: minmax(18rem, 0.42fr) minmax(0, 0.58fr);
+    gap: clamp(2rem, 5vw, 5.5rem);
+    align-items: center;
+    border-bottom: 1px solid rgba(242, 234, 219, 0.1);
+    padding: clamp(4rem, 8vw, 7rem) 0;
+  }
+
+  .hermes-impact-section-right .hermes-impact-section-copy {
+    order: 2;
+  }
+
+  .hermes-impact-section-right > :last-child {
+    order: 1;
+  }
+
+  .hermes-impact-section-copy {
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .hermes-impact-section-copy h2 {
+    max-width: 34rem;
+    margin: 0;
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(2.35rem, 4.4vw, 4.9rem);
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .hermes-impact-section-copy p:not(.section-kicker) {
+    max-width: 33rem;
+    margin: 0;
+    color: rgba(242, 234, 219, 0.64);
+    font-size: 1rem;
+    line-height: 1.85;
+  }
+
+  .hermes-impact-visual-stack {
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .hermes-impact-visual-stack .hermes-feature-drawing {
+    min-height: auto;
+  }
+
+  .hermes-impact-impact {
+    align-items: start;
+  }
+
+  .hermes-impact-impact ul {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid rgba(242, 234, 219, 0.12);
+  }
+
+  .hermes-impact-impact li {
+    border-bottom: 1px solid rgba(242, 234, 219, 0.1);
+    padding: 1.25rem 0;
+    color: rgba(242, 234, 219, 0.78);
+    font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+    line-height: 1.5;
+  }
+
+  .hermes-impact-fees {
+    grid-template-columns: 1fr;
+    margin-top: 0;
+  }
+
+  .hermes-impact-fees > div {
+    border-top-color: rgba(242, 234, 219, 0.12);
+  }
+
+  .hermes-impact-contact {
+    display: grid;
+    gap: 1.2rem;
+    border-bottom: 1px solid rgba(242, 234, 219, 0.1);
+    padding: clamp(4rem, 8vw, 7rem) 0;
+  }
+
+  .hermes-impact-contact h2 {
+    max-width: 48rem;
+    margin: 0;
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(2.8rem, 5.8vw, 6.8rem);
+    font-weight: 500;
+    line-height: 0.95;
+  }
+
+  .hermes-impact-contact p:not(.section-kicker) {
+    max-width: 38rem;
+    margin: 0;
+    color: rgba(242, 234, 219, 0.64);
+    font-size: 1.05rem;
+    line-height: 1.75;
+  }
+
+  .hermes-impact-contact > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.8rem;
+    align-items: center;
+    margin-top: 1.2rem;
+  }
+
+  .hermes-impact-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 1.5rem;
+  }
+
+  .hermes-feature-drawing {
+    position: relative;
+    display: grid;
+    min-height: auto;
+    overflow: hidden;
+    border: 1px solid rgba(242, 234, 219, 0.12);
+    border-radius: 0.5rem;
+    background: #11100e;
+    padding: 1rem;
+  }
+
+  .hermes-drawing-card,
+  .hermes-drawing-metrics p,
+  .hermes-drawing-status-grid p,
+  .hermes-drawing-risk-track span,
+  .hermes-drawing-bars p {
+    border: 1px solid rgba(242, 234, 219, 0.1);
+    border-radius: 0.38rem;
+    background: rgba(24, 23, 21, 0.94);
+  }
+
+  .hermes-drawing-portfolio {
+    gap: 0.85rem;
+  }
+
+  .hermes-drawing-value {
+    position: relative;
+    width: 100%;
+    padding: 1.2rem;
+    z-index: 1;
+  }
+
+  .hermes-drawing-value span,
+  .hermes-drawing-metrics span,
+  .hermes-drawing-status-grid span,
+  .hermes-drawing-bars span,
+  .hermes-drawing-outlook span,
+  .hermes-drawing-donut span {
+    display: block;
+    color: rgba(242, 234, 219, 0.54);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .hermes-drawing-value strong {
+    display: block;
+    margin-top: 0.85rem;
+    color: #f8f4ec;
+    font-size: clamp(2.9rem, 5vw, 4.2rem);
+    font-weight: 750;
+    line-height: 0.9;
+  }
+
+  .hermes-drawing-metrics {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 0.8rem;
+  }
+
+  .hermes-drawing-metrics p {
+    margin: 0;
+    padding: 0.95rem 1rem;
+  }
+
+  .hermes-drawing-metrics strong {
+    display: block;
+    margin-top: 0.45rem;
+    color: rgba(135, 219, 192, 0.96);
+    font-size: 1.15rem;
+  }
+
+  .hermes-drawing-portfolio i {
+    display: none;
+  }
+
+  .hermes-drawing-status {
+    gap: 0.85rem;
+  }
+
+  .hermes-drawing-status-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+
+  .hermes-drawing-status-grid p {
+    margin: 0;
+    padding: 0.95rem 1rem;
+  }
+
+  .hermes-drawing-status-grid strong {
+    display: block;
+    margin-top: 0.45rem;
+    color: #f2eadb;
+    font-size: 1.25rem;
+  }
+
+  .hermes-drawing-status-grid strong.is-positive {
+    color: rgba(135, 219, 192, 0.96);
+  }
+
+  .hermes-drawing-risk-track {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 0;
+  }
+
+  .hermes-drawing-risk-track span {
+    display: grid;
+    min-height: 2.75rem;
+    place-items: center;
+    color: rgba(242, 234, 219, 0.52);
+    font-weight: 700;
+    font-size: 0.92rem;
+  }
+
+  .hermes-drawing-risk-track span.is-selected {
+    border-color: rgba(242, 234, 219, 0.2);
+    background: rgba(242, 234, 219, 0.18);
+    color: #f2eadb;
+  }
+
+  .hermes-drawing-outlook {
+    place-items: stretch;
+    text-align: center;
+  }
+
+  .hermes-drawing-outlook > div:last-child {
+    position: relative;
+    z-index: 1;
+    border: 1px solid rgba(242, 234, 219, 0.12);
+    border-radius: 0.5rem;
+    background: rgba(16, 16, 14, 0.9);
+    padding: 1.6rem;
+  }
+
+  .hermes-drawing-outlook strong {
+    display: block;
+    margin-top: 0.65rem;
+    color: #f8f4ec;
+    font-size: clamp(2.9rem, 5vw, 4rem);
+    font-weight: 750;
+    line-height: 1;
+  }
+
+  .hermes-drawing-outlook em {
+    display: block;
+    margin-top: 0.8rem;
+    color: rgba(242, 234, 219, 0.82);
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  .hermes-drawing-allocation {
+    grid-template-columns: minmax(10rem, 13rem) minmax(0, 1fr);
+    gap: 1.4rem;
+    align-items: center;
+  }
+
+  .hermes-drawing-donut {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    width: 100%;
+    max-width: 13rem;
+    aspect-ratio: 1;
+    place-items: center;
+    border-radius: 999px;
+    text-align: center;
+  }
+
+  .hermes-drawing-donut::before {
+    content: "";
+    position: absolute;
+    inset: 28%;
+    border-radius: inherit;
+    background: #11100e;
+  }
+
+  .hermes-drawing-donut span,
+  .hermes-drawing-donut strong {
+    position: relative;
+    display: block;
+  }
+
+  .hermes-drawing-donut strong {
+    margin-top: 0.5rem;
+    color: #f2eadb;
+    font-size: 1.9rem;
+  }
+
+  .hermes-drawing-bars {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .hermes-drawing-bars p {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: center;
+    margin: 0;
+    padding: 0.9rem 1rem;
+  }
+
+  .hermes-drawing-bars span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .hermes-drawing-bars i {
+    display: inline-block;
+    width: 0.68rem;
+    height: 0.68rem;
+    border-radius: 999px;
+  }
+
+  .hermes-drawing-bars strong {
+    color: #f2eadb;
+  }
+
+  .hermes-drawing-activity {
+    align-content: center;
+    padding: 1.25rem;
+  }
+
+  .hermes-drawing-activity p {
+    display: grid;
+    grid-template-columns: 4.6rem minmax(0, 1fr);
+    gap: 1rem;
+    margin: 0;
+    border-top: 1px solid rgba(242, 234, 219, 0.08);
+    padding: 1.05rem 0;
+  }
+
+  .hermes-drawing-activity p:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .hermes-drawing-activity p:last-child {
+    padding-bottom: 0;
+  }
+
+  .hermes-drawing-activity time {
+    color: rgba(242, 234, 219, 0.5);
+    font-size: 0.95rem;
+  }
+
+  .hermes-drawing-activity strong {
+    color: #f2eadb;
+    font-size: 1rem;
+  }
+
+  .fees-static {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem 2rem;
+    margin-top: 2rem;
+  }
+
+  .fees-static > div {
     border-top: 1px solid rgba(214, 177, 111, 0.2);
     padding-top: 1.1rem;
   }
 
-  @media (max-width: 760px) {
-    .posture-static {
+  .fees-static span {
+    color: var(--accent);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .fees-static strong {
+    display: block;
+    margin-top: 0.9rem;
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(1.5rem, 2.6vw, 2.2rem);
+    font-weight: 500;
+    line-height: 1.05;
+  }
+
+  .fees-static p {
+    margin-top: 0.9rem;
+    color: rgba(242, 234, 219, 0.64);
+    font-size: 0.94rem;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 980px) {
+    .hermes-impact-section,
+    .hermes-impact-impact {
       grid-template-columns: 1fr;
     }
+
+    .hermes-impact-section-right .hermes-impact-section-copy,
+    .hermes-impact-section-right > :last-child {
+      order: 0;
+    }
+
+    .hermes-drawing-allocation {
+      grid-template-columns: 1fr;
+    }
+
+    .hermes-preview-portfolio,
+    .hermes-preview-lower-grid,
+    .hermes-preview-outlook > div,
+    .hermes-preview-allocation-body {
+      grid-template-columns: 1fr;
+    }
+
+    .hermes-preview-status-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hermes-preview-outlook p:last-child {
+      border-top: 1px solid rgba(242, 234, 219, 0.1);
+      border-left: 0;
+      padding-top: 1.2rem;
+      padding-left: 0;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .hermes-impact-article {
+      padding: 6.5rem 0.75rem 4rem;
+    }
+
+    .hermes-impact-hero {
+      gap: 2rem;
+    }
+
+    .hermes-impact-hero-copy {
+      padding-top: 0.75rem;
+    }
+
+    .hermes-impact-hero-copy h1 {
+      font-size: 3.2rem;
+    }
+
+    .hermes-impact-quote {
+      min-height: 18rem;
+      padding: 3.5rem 0;
+    }
+
+    .hermes-impact-section,
+    .hermes-impact-contact {
+      padding: 3.5rem 0;
+    }
+
+    .hermes-impact-section-copy h2,
+    .hermes-impact-contact h2 {
+      font-size: 2.45rem;
+    }
+
+    .hermes-impact-visual-stack {
+      gap: 0.75rem;
+    }
+
+    .fees-static {
+      grid-template-columns: 1fr;
+    }
+
+    .hermes-dashboard-showcase-full {
+      padding-right: 0.75rem;
+      padding-left: 0.75rem;
+    }
+
+    .hermes-dashboard-frame-focus .hermes-dashboard-preview {
+      margin: 0.45rem;
+    }
+
+    .hermes-preview-nav {
+      min-height: 3.5rem;
+      padding: 0 1rem;
+    }
+
+    .hermes-preview-nav-links {
+      gap: 0.8rem;
+      font-size: 0.78rem;
+    }
+
+    .hermes-preview-nav-links span:nth-child(2),
+    .hermes-preview-nav-links span:nth-child(4) {
+      display: none;
+    }
+
+    .hermes-preview-shell {
+      gap: 0.8rem;
+      padding: 0.8rem;
+    }
+
+    .hermes-preview-panel {
+      padding: 1rem;
+    }
+
+    .hermes-preview-portfolio > div:first-child > strong {
+      font-size: 3rem;
+    }
+
+    .hermes-preview-portfolio-metrics,
+    .hermes-preview-status-grid,
+    .hermes-preview-risk,
+    .hermes-preview-capital-row {
+      grid-template-columns: 1fr;
+    }
+
+    .hermes-preview-donut {
+      width: min(100%, 11rem);
+    }
+
+    .hermes-preview-activity li {
+      grid-template-columns: 3.8rem minmax(0, 1fr);
+      gap: 0.8rem;
+    }
+
+    .hermes-feature-drawing {
+      min-height: 20rem;
+      padding: 1rem;
+    }
+
+    .hermes-drawing-value {
+      width: 100%;
+      padding: 1.1rem;
+    }
+
+    .hermes-drawing-value strong {
+      font-size: 2.8rem;
+    }
+
+    .hermes-drawing-metrics,
+    .hermes-drawing-status-grid,
+    .hermes-drawing-risk-track,
+    .hermes-drawing-allocation {
+      grid-template-columns: 1fr;
+    }
+
+    .hermes-drawing-metrics {
+      width: 100%;
+      margin-left: 0;
+    }
+
+    .hermes-drawing-outlook strong {
+      font-size: 3rem;
+    }
+
+    .hermes-drawing-donut {
+      width: min(100%, 11rem);
+    }
+
+    .hermes-drawing-activity {
+      padding: 1.2rem;
+    }
+
+    .hermes-drawing-activity p {
+      grid-template-columns: 3.7rem minmax(0, 1fr);
+      gap: 0.75rem;
+      padding-left: 1.2rem;
+    }
+
   }
 
   .oracle-table {
