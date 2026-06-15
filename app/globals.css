@@ -1652,7 +1652,8 @@ body {
     border-top-color: rgba(242, 234, 219, 0.12);
   }
 
-  .hermes-impact-contact {
+  .hermes-impact-contact,
+  .hermes-access-form-section {
     display: grid;
     gap: 1.2rem;
     border-bottom: 1px solid rgba(242, 234, 219, 0.1);
@@ -1683,6 +1684,128 @@ body {
     gap: 1rem 1.8rem;
     align-items: center;
     margin-top: 1.2rem;
+  }
+
+  .hermes-access-form-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .hermes-access-form {
+    display: grid;
+    gap: clamp(2.5rem, 5vw, 4.5rem);
+    margin-top: 1.5rem;
+  }
+
+  .hermes-access-form h2 {
+    max-width: 42rem;
+    margin: 0;
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(2.8rem, 5.8vw, 6.8rem);
+    font-weight: 500;
+    line-height: 0.95;
+  }
+
+  .hermes-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.2rem 2rem;
+  }
+
+  .hermes-form-grid label {
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .hermes-form-grid span {
+    color: rgba(242, 234, 219, 0.72);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .hermes-form-grid i {
+    color: rgba(255, 135, 115, 0.95);
+    font-style: normal;
+  }
+
+  .hermes-form-grid input,
+  .hermes-form-grid select,
+  .hermes-form-grid textarea {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid rgba(242, 234, 219, 0.45);
+    border-radius: 0;
+    background: transparent;
+    color: var(--foreground);
+    font: inherit;
+    font-size: 1rem;
+    outline: none;
+    padding: 0.55rem 0 0.85rem;
+  }
+
+  .hermes-form-grid textarea {
+    min-height: 7rem;
+    border: 1px solid rgba(242, 234, 219, 0.38);
+    padding: 1rem;
+    resize: vertical;
+  }
+
+  .hermes-form-grid input:focus,
+  .hermes-form-grid select:focus,
+  .hermes-form-grid textarea:focus {
+    border-color: var(--foreground);
+  }
+
+  .hermes-form-grid option {
+    background: #11100e;
+    color: var(--foreground);
+  }
+
+  .hermes-form-grid ::placeholder {
+    color: rgba(242, 234, 219, 0.36);
+  }
+
+  .hermes-form-full {
+    grid-column: 1 / -1;
+  }
+
+  .hermes-form-actions {
+    display: grid;
+    gap: 1.2rem;
+    justify-items: start;
+  }
+
+  .hermes-form-actions button {
+    min-width: 12rem;
+    border: 1px solid rgba(242, 234, 219, 0.56);
+    background: transparent;
+    color: var(--foreground);
+    cursor: pointer;
+    font: inherit;
+    font-size: 1rem;
+    padding: 1rem 2rem;
+    transition:
+      background 180ms ease,
+      color 180ms ease,
+      border-color 180ms ease;
+  }
+
+  .hermes-form-actions button:hover {
+    background: var(--foreground);
+    border-color: var(--foreground);
+    color: #080807;
+  }
+
+  .hermes-form-actions p {
+    margin: 0;
+    color: rgba(242, 234, 219, 0.58);
+    font-size: 0.95rem;
+    line-height: 1.7;
   }
 
   .hermes-impact-footer {
@@ -2051,7 +2174,8 @@ body {
     }
 
     .hermes-impact-section,
-    .hermes-impact-contact {
+    .hermes-impact-contact,
+    .hermes-access-form-section {
       padding: 3.5rem 0;
     }
 
@@ -2068,8 +2192,19 @@ body {
     }
 
     .hermes-impact-section-copy h2,
-    .hermes-impact-contact h2 {
+    .hermes-impact-contact h2,
+    .hermes-access-form h2 {
       font-size: 2.45rem;
+    }
+
+    .hermes-access-form-head {
+      align-items: start;
+      flex-direction: column;
+    }
+
+    .hermes-form-grid {
+      grid-template-columns: 1fr;
+      gap: 1.7rem;
     }
 
     .hermes-impact-visual-stack {

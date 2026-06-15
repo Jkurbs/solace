@@ -385,24 +385,70 @@ export default function HermesPage() {
           </div>
         </section>
 
-        <section className="hermes-impact-contact">
-          <p className="section-kicker">Request access</p>
-          <h2>Open the private preview.</h2>
-          <p>
-            Managed access is opening in stages. For now, request access opens the private
-            Hermes dashboard preview for approved users.
-          </p>
-          <div>
-            <Link
-              href="/dashboard"
-              className="hermes-product-button hermes-product-button-light"
-            >
-              Request access
-            </Link>
+        <section className="hermes-access-form-section">
+          <div className="hermes-access-form-head">
+            <p className="section-kicker">Request access</p>
             <Link href="/brief" className="text-link">
               Read the technical brief
             </Link>
           </div>
+
+          <form action="/api/hermes/request-access" method="post" className="hermes-access-form">
+            <h2>Interested in allocating capital with Hermes?</h2>
+
+            <div className="hermes-form-grid">
+              <label>
+                <span>First name <i>*</i></span>
+                <input name="firstName" type="text" autoComplete="given-name" required />
+              </label>
+              <label>
+                <span>Last name <i>*</i></span>
+                <input name="lastName" type="text" autoComplete="family-name" required />
+              </label>
+              <label>
+                <span>Email address <i>*</i></span>
+                <input name="email" type="email" autoComplete="email" required />
+              </label>
+              <label>
+                <span>Phone number</span>
+                <input name="phone" type="tel" autoComplete="tel" />
+              </label>
+              <label>
+                <span>Role / title</span>
+                <input name="role" type="text" autoComplete="organization-title" />
+              </label>
+              <label>
+                <span>Company / institution</span>
+                <input name="organization" type="text" autoComplete="organization" />
+              </label>
+              <label className="hermes-form-full">
+                <span>Country <i>*</i></span>
+                <select name="country" required defaultValue="">
+                  <option value="" disabled>
+                    Select...
+                  </option>
+                  <option value="United States">United States</option>
+                  <option value="Canada">Canada</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                  <option value="European Union">European Union</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+              <label className="hermes-form-full">
+                <span>Capital context</span>
+                <textarea
+                  name="context"
+                  rows={4}
+                  placeholder="Tell us what you want Hermes to help allocate, preserve, or monitor."
+                />
+              </label>
+            </div>
+
+            <div className="hermes-form-actions">
+              <button type="submit">Submit</button>
+              <p>Submitting opens the private Hermes dashboard preview. Access remains code-gated.</p>
+            </div>
+          </form>
         </section>
 
         <div className="hermes-impact-footer">
