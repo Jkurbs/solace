@@ -26,6 +26,13 @@ const postures = [
   },
 ];
 
+const tradingRequirements = [
+  'constant attention',
+  'risk management',
+  'execution',
+  'emotional discipline',
+];
+
 const dashboardPreview = hermesDashboardSnapshot;
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -113,10 +120,10 @@ const previewCashReserve =
 const previewAllocationGradient = buildPreviewAllocationGradient();
 
 const impactItems = [
-  'Portfolio value, posture, allocation, activity, and commentary are visible without opening a trading interface.',
-  'Risk profile is explicit, adjustable, and reflected directly in how Hermes deploys capital.',
-  'Capital deployed and cash reserve are presented as first-class signals, not hidden behind charts.',
-  'Recent activity creates a decision trail so users can see Hermes acting, reducing exposure, or standing down.',
+  'Users can understand what Hermes is doing without reading charts, indicators, or raw order flow.',
+  'Portfolio value, capital deployed, cash reserve, activity, and commentary are visible in one read.',
+  'Risk profile is explicit and adjustable, so allocation follows the selected posture.',
+  'Commentary turns system state into a current read instead of another stream of market noise.',
 ];
 
 const fees = [
@@ -171,20 +178,25 @@ export default function HermesPage() {
           </div>
           <div className="hermes-exists-body">
             <p>
-              Trading requires constant attention, risk management, execution, and emotional discipline.
-              Hermes was built for users who want capital exposure without operating a trading terminal.
+              Trading asks the user to become an operator. Hermes was built for people who want capital
+              exposure without accepting the work of a trading terminal.
             </p>
+            <ul className="hermes-exists-list">
+              {tradingRequirements.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
             <p>
-              The objective is not activity. The objective is intelligent allocation: knowing when to
-              deploy, when to reduce, and when to preserve liquidity.
+              The objective is not activity. The objective is intelligent allocation: knowing when to deploy,
+              when to reduce, and when to preserve liquidity.
             </p>
           </div>
         </section>
 
         <section className="hermes-impact-section hermes-custody-section hermes-impact-section-right">
           <div className="hermes-impact-section-copy">
-            <p className="section-kicker">Deposits by design</p>
-            <h2>Capital enters Solace before Hermes allocates it.</h2>
+            <p className="section-kicker">Capital architecture</p>
+            <h2>Trust is enforced through how capital moves.</h2>
           </div>
           <div className="hermes-custody-points">
             <p>
@@ -338,124 +350,6 @@ export default function HermesPage() {
             The product should feel like checking on a professional portfolio manager, not operating a
             trading terminal.
           </blockquote>
-        </section>
-
-        <section className="hermes-impact-section hermes-impact-section-right">
-          <div className="hermes-impact-section-copy">
-            <p className="section-kicker">The account view</p>
-            <h2>A single place to understand capital.</h2>
-            <p>
-              The first read is intentionally plain: current value, daily movement, inception
-              performance, and the operating posture Hermes is using right now.
-            </p>
-            <p>
-              Users do not need to interpret candles or technical indicators. They need to know whether
-              Hermes is active, how much capital is deployed, and how the account is positioned.
-            </p>
-          </div>
-          <div className="hermes-feature-drawing hermes-drawing-portfolio" aria-hidden="true">
-            <div className="hermes-drawing-card hermes-drawing-value">
-              <span>Portfolio Value</span>
-              <strong>{formatPreviewCurrency(dashboardPreview.portfolio.value)}</strong>
-            </div>
-            <div className="hermes-drawing-metrics">
-              <p>
-                <span>Today</span>
-                <strong>{formatPreviewCurrency(dashboardPreview.portfolio.todaysChange.amount, true)}</strong>
-              </p>
-              <p>
-                <span>Inception</span>
-                <strong>{formatPreviewPercent(dashboardPreview.portfolio.sinceInception, true)}</strong>
-              </p>
-            </div>
-            <i />
-          </div>
-        </section>
-
-        <section className="hermes-impact-section">
-          <div className="hermes-impact-section-copy">
-            <p className="section-kicker">The operating layer</p>
-            <h2>Hermes translates market conditions into posture.</h2>
-            <p>
-              Status, risk profile, capital deployed, conviction, and opportunity environment create a
-              concise operating read. The user sees what Hermes thinks and how it is responding.
-            </p>
-            <p>
-              The interface favors judgment over noise: allocation is visible, cash reserve is visible,
-              and activity is written as decisions rather than as raw order flow.
-            </p>
-          </div>
-          <div className="hermes-impact-visual-stack" aria-hidden="true">
-            <div className="hermes-feature-drawing hermes-drawing-status">
-              <div className="hermes-drawing-status-grid">
-                {previewStatusMetrics.map((item) => (
-                  <p key={item.label}>
-                    <span>{item.label}</span>
-                    <strong className={item.positive ? 'is-positive' : undefined}>{item.value}</strong>
-                  </p>
-                ))}
-              </div>
-              <div className="hermes-drawing-risk-track">
-                {postures.map((posture) => (
-                  <span
-                    key={posture.name}
-                    className={posture.name === dashboardPreview.status.riskProfile ? 'is-selected' : undefined}
-                  >
-                    {posture.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="hermes-feature-drawing hermes-drawing-outlook">
-              <div>
-                <span>Current Outlook</span>
-                <strong>{dashboardPreview.outlook.environment}</strong>
-                <em>{dashboardPreview.outlook.stance}</em>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="hermes-impact-section hermes-impact-section-right">
-          <div className="hermes-impact-section-copy">
-            <p className="section-kicker">Allocation and activity</p>
-            <h2>Positioning is explained as a portfolio decision.</h2>
-            <p>
-              The allocation model separates deployed capital from cash reserve so users can understand
-              how much of their account is working and how much is being preserved.
-            </p>
-            <p>
-              A short decision trail shows Hermes is alive without turning the dashboard into a trading
-              feed.
-            </p>
-          </div>
-          <div className="hermes-impact-visual-stack" aria-hidden="true">
-            <div className="hermes-feature-drawing hermes-drawing-allocation">
-              <div className="hermes-drawing-donut" style={{ background: previewAllocationGradient }}>
-                <span>Allocated</span>
-                <strong>{formatPreviewPercent(dashboardPreview.status.deployedCapital)}</strong>
-              </div>
-              <div className="hermes-drawing-bars">
-                {dashboardPreview.allocation.map((item) => (
-                  <p key={item.asset}>
-                    <span>
-                      <i style={{ backgroundColor: previewAllocationColors[item.asset] ?? '#87dbc0' }} />
-                      {item.asset}
-                    </span>
-                    <strong>{formatPreviewPercent(item.percentage)}</strong>
-                  </p>
-                ))}
-              </div>
-            </div>
-            <div className="hermes-feature-drawing hermes-drawing-activity">
-              {dashboardPreview.activity.map((activity) => (
-                <p key={`${activity.timestamp.toISOString()}-${activity.summary}`}>
-                  <time dateTime={activity.timestamp.toISOString()}>{formatActivityDate(activity.timestamp)}</time>
-                  <strong>{activity.summary}</strong>
-                </p>
-              ))}
-            </div>
-          </div>
         </section>
 
         <section className="hermes-impact-section hermes-impact-impact">

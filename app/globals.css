@@ -1494,6 +1494,34 @@ body {
     line-height: 1.7;
   }
 
+  .hermes-exists-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    margin: 0.4rem 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid rgba(242, 234, 219, 0.12);
+  }
+
+  .hermes-exists-list li {
+    border-bottom: 1px solid rgba(242, 234, 219, 0.1);
+    color: var(--foreground);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.74rem;
+    letter-spacing: 0.16em;
+    padding: 1rem 0;
+    text-transform: uppercase;
+  }
+
+  .hermes-exists-list li:nth-child(odd) {
+    border-right: 1px solid rgba(242, 234, 219, 0.1);
+  }
+
+  .hermes-exists-list li:nth-child(even) {
+    padding-left: 1.2rem;
+  }
+
   .hermes-custody-section {
     align-items: start;
   }
@@ -2025,6 +2053,18 @@ body {
     .hermes-impact-section,
     .hermes-impact-contact {
       padding: 3.5rem 0;
+    }
+
+    .hermes-exists-list {
+      grid-template-columns: 1fr;
+    }
+
+    .hermes-exists-list li:nth-child(odd) {
+      border-right: 0;
+    }
+
+    .hermes-exists-list li:nth-child(even) {
+      padding-left: 0;
     }
 
     .hermes-impact-section-copy h2,
