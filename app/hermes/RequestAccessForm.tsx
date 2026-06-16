@@ -120,6 +120,30 @@ export default function RequestAccessForm() {
                   <option value="Other">Other</option>
                 </select>
               </div>
+              <div className="hermes-form-field">
+                <label htmlFor="hermes-capital-range">Capital range <i>*</i></label>
+                <select id="hermes-capital-range" name="capitalRange" required defaultValue="">
+                  <option value="" disabled>
+                    Select...
+                  </option>
+                  <option value="$10k-$25k">$10k-$25k</option>
+                  <option value="$25k-$100k">$25k-$100k</option>
+                  <option value="$100k-$250k">$100k-$250k</option>
+                  <option value="$250k+">$250k+</option>
+                </select>
+              </div>
+              <div className="hermes-form-field">
+                <label htmlFor="hermes-objective">Objective <i>*</i></label>
+                <select id="hermes-objective" name="objective" required defaultValue="">
+                  <option value="" disabled>
+                    Select...
+                  </option>
+                  <option value="Capital preservation">Capital preservation</option>
+                  <option value="Balanced allocation">Balanced allocation</option>
+                  <option value="Higher-conviction growth">Higher-conviction growth</option>
+                  <option value="Research / monitoring">Research / monitoring</option>
+                </select>
+              </div>
               <div className="hermes-form-field hermes-form-full">
                 <label htmlFor="hermes-context">Capital context</label>
                 <textarea

@@ -3,6 +3,93 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      hermes_access_requests: {
+        Row: {
+          id: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone: string | null;
+          role: string | null;
+          organization: string | null;
+          country: string;
+          capital_range: string | null;
+          objective: string | null;
+          context: string | null;
+          status: 'new' | 'review' | 'more_info' | 'approved' | 'declined';
+          ai_recommendation: 'APPROVE' | 'REVIEW' | 'DECLINE';
+          ai_confidence: 'LOW' | 'MEDIUM' | 'HIGH';
+          ai_reasons: string[];
+          ai_missing_info: string[];
+          ai_risk_flags: string[];
+          ai_review_source: 'openai' | 'rules';
+          ai_review_model: string | null;
+          ai_reviewed_at: string;
+          human_decision: 'APPROVED' | 'DECLINED' | 'REQUEST_MORE_INFO' | null;
+          human_decision_at: string | null;
+          account_id: string | null;
+          account_created_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone?: string | null;
+          role?: string | null;
+          organization?: string | null;
+          country: string;
+          capital_range?: string | null;
+          objective?: string | null;
+          context?: string | null;
+          status: 'new' | 'review' | 'more_info' | 'approved' | 'declined';
+          ai_recommendation: 'APPROVE' | 'REVIEW' | 'DECLINE';
+          ai_confidence: 'LOW' | 'MEDIUM' | 'HIGH';
+          ai_reasons?: string[];
+          ai_missing_info?: string[];
+          ai_risk_flags?: string[];
+          ai_review_source: 'openai' | 'rules';
+          ai_review_model?: string | null;
+          ai_reviewed_at: string;
+          human_decision?: 'APPROVED' | 'DECLINED' | 'REQUEST_MORE_INFO' | null;
+          human_decision_at?: string | null;
+          account_id?: string | null;
+          account_created_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          first_name?: string;
+          last_name?: string;
+          email?: string;
+          phone?: string | null;
+          role?: string | null;
+          organization?: string | null;
+          country?: string;
+          capital_range?: string | null;
+          objective?: string | null;
+          context?: string | null;
+          status?: 'new' | 'review' | 'more_info' | 'approved' | 'declined';
+          ai_recommendation?: 'APPROVE' | 'REVIEW' | 'DECLINE';
+          ai_confidence?: 'LOW' | 'MEDIUM' | 'HIGH';
+          ai_reasons?: string[];
+          ai_missing_info?: string[];
+          ai_risk_flags?: string[];
+          ai_review_source?: 'openai' | 'rules';
+          ai_review_model?: string | null;
+          ai_reviewed_at?: string;
+          human_decision?: 'APPROVED' | 'DECLINED' | 'REQUEST_MORE_INFO' | null;
+          human_decision_at?: string | null;
+          account_id?: string | null;
+          account_created_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       hermes_dashboard_snapshots: {
         Row: {
           id: string;

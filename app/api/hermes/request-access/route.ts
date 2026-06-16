@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
+import { createAccessRequest } from '@/features/access-review/store';
+import type { HermesAccessRequestInput } from '@/features/access-review/types';
+
 export const runtime = 'nodejs';
 
 const recipientEmail = process.env.HERMES_ACCESS_RECIPIENT_EMAIL ?? 'jkurbs18@gmail.com';
@@ -13,8 +16,13 @@ const fieldLabels = [
   ['role', 'Role / title'],
   ['organization', 'Company / institution'],
   ['country', 'Country'],
+  ['capitalRange', 'Capital range'],
+  ['objective', 'Objective'],
   ['context', 'Capital context'],
 ] as const;
+
+type RequestAccessField = (typeof fieldLabels)[number][0];
+type RequestAccessValues = Record<RequestAccessField, string>;
 
 function getField(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -58,7 +66,13 @@ function getSmtpConfig() {
 }
 
 function buildSubmission(formData: FormData) {
-  const values = Object.fromEntries(fieldLabels.map(([key]) => [key, getField(formData, key)]));
+  const values = fieldLabels.reduce<RequestAccessValues>(
+    (fields, [key]) => ({
+      ...fields,
+      [key]: getField(formData, key),
+    }),
+    {} as RequestAccessValues,
+  );
 
   return {
     values,
@@ -119,6 +133,12 @@ export async function POST(request: Request) {
   if (!submission.values.firstName || !submission.values.lastName || !submission.values.email || !submission.values.country) {
     return NextResponse.json({ message: 'Required fields are missing.' }, { status: 400 });
   }
+
+  if (!submission.values.capitalRange || !submission.values.objective) {
+    return NextResponse.json({ message: 'Capital range and objective are required.' }, { status: 400 });
+  }
+
+  await createAccessRequest(submission.values satisfies HermesAccessRequestInput);
 
   const smtpConfig = getSmtpConfig();
 
