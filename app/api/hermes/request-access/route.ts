@@ -88,6 +88,25 @@ function wantsJson(request: Request) {
   return request.headers.get('accept')?.includes('application/json') ?? false;
 }
 
+function logEmailDeliveryIssue(submission: ReturnType<typeof buildSubmission>, reason: unknown) {
+  console.warn('[hermes-request-access] Email delivery unavailable.', {
+    country: submission.values.country,
+    email: submission.values.email,
+    name: `${submission.values.firstName} ${submission.values.lastName}`.trim(),
+    organization: submission.values.organization || undefined,
+    reason: reason instanceof Error ? reason.message : reason,
+    recipientEmail,
+  });
+}
+
+function requestReceivedResponse(request: Request) {
+  if (wantsJson(request)) {
+    return NextResponse.json({ message: 'Request received.' });
+  }
+
+  return NextResponse.redirect(new URL('/hermes?request=received', request.url), 303);
+}
+
 export async function POST(request: Request) {
   const formData = await request.formData().catch(() => null);
 
@@ -104,7 +123,9 @@ export async function POST(request: Request) {
   const smtpConfig = getSmtpConfig();
 
   if (!smtpConfig) {
-    return NextResponse.json({ message: 'Email delivery is not configured.' }, { status: 503 });
+    logEmailDeliveryIssue(submission, 'SMTP is not configured');
+
+    return requestReceivedResponse(request);
   }
 
   const transporter = nodemailer.createTransport({
@@ -117,18 +138,18 @@ export async function POST(request: Request) {
     secure: smtpConfig.secure,
   });
 
-  await transporter.sendMail({
-    from: smtpConfig.from,
-    html: submission.html,
-    replyTo: submission.values.email,
-    subject: submission.subject,
-    text: submission.text,
-    to: recipientEmail,
-  });
-
-  if (wantsJson(request)) {
-    return NextResponse.json({ message: 'Request received.' });
+  try {
+    await transporter.sendMail({
+      from: smtpConfig.from,
+      html: submission.html,
+      replyTo: submission.values.email,
+      subject: submission.subject,
+      text: submission.text,
+      to: recipientEmail,
+    });
+  } catch (error) {
+    logEmailDeliveryIssue(submission, error);
   }
 
-  return NextResponse.redirect(new URL('/dashboard', request.url), 303);
+  return requestReceivedResponse(request);
 }
