@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { hasDashboardAccess } from '@/features/hermes-dashboard/access';
-import { isRiskProfile, riskProfileCookieName } from '@/features/hermes-dashboard/preferences';
+import { isRiskProfile, setRiskProfilePreference } from '@/features/hermes-dashboard/preferences';
 import type { RiskProfile } from '@/features/hermes-dashboard/types';
 
 export async function POST(request: Request) {
@@ -17,13 +17,7 @@ export async function POST(request: Request) {
   }
 
   const response = NextResponse.json({ riskProfile });
-  response.cookies.set(riskProfileCookieName, riskProfile, {
-    httpOnly: true,
-    maxAge: 60 * 60 * 24 * 365,
-    path: '/',
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-  });
+  setRiskProfilePreference(response, riskProfile);
 
   return response;
 }

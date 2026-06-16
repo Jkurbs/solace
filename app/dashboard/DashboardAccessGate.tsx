@@ -23,10 +23,10 @@ export default function DashboardAccessGate({ denied = false }: { denied?: boole
           method="post"
           className="w-full rounded-lg border border-neutral-800 bg-[#181715] p-6 shadow-2xl shadow-black/20"
         >
-          <p className="text-sm font-medium text-neutral-400">Hermes Dashboard</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-normal text-neutral-50">Access required</h1>
+          <p className="text-sm font-medium uppercase tracking-[0.16em] text-neutral-500">Hermes access</p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-normal text-neutral-50">Begin account setup</h1>
           <p className="mt-3 text-sm leading-6 text-neutral-400">
-            Enter the private access code to view the dashboard.
+            Enter the private access code to set your risk profile and capital intent.
           </p>
 
           <label htmlFor="dashboard-code" className="mt-6 block text-sm font-medium text-neutral-300">
@@ -51,7 +51,7 @@ export default function DashboardAccessGate({ denied = false }: { denied?: boole
             type="submit"
             className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-md bg-neutral-50 px-4 text-sm font-semibold text-neutral-950 transition-colors hover:bg-neutral-200"
           >
-            Enter dashboard
+            Continue
           </button>
         </form>
       </section>

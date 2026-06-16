@@ -7,6 +7,8 @@ export const hermesDashboardSnapshot: HermesDashboardSnapshot = {
   fieldSources: dashboardFieldSources,
   account: {
     label: 'Account ending 4821',
+    lifecycle: 'ACTIVE',
+    depositIntent: null,
   },
   updatedAt: '2026-06-15T13:42:00.000Z',
   portfolio: {

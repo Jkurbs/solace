@@ -6,6 +6,10 @@ export type HermesOperatingStatus = 'ACTIVE' | 'WAIT';
 
 export type HermesConviction = 'LOW' | 'MEDIUM' | 'HIGH';
 
+export type HermesAccountLifecycle = 'ACTIVE' | 'AWAITING_DEPOSIT';
+
+export type DepositIntentStatus = 'REVIEW_PENDING';
+
 export type IsoDateString = string;
 
 export type HermesDashboardContractVersion = 'hermes.dashboard.v1';
@@ -86,6 +90,11 @@ export type HermesDashboardSnapshot = {
   fieldSources: DashboardFieldSource[];
   account: {
     label: string;
+    lifecycle: HermesAccountLifecycle;
+    depositIntent?: {
+      amount: number;
+      status: DepositIntentStatus;
+    } | null;
   };
   updatedAt: IsoDateString;
   portfolio: Portfolio;

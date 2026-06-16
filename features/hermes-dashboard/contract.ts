@@ -16,7 +16,7 @@ export const dashboardFieldSources: DashboardFieldSource[] = [
     label: 'Account label',
     owner: 'ledger',
     ownerLabel: 'Ledger',
-    requirement: 'Identifies the capital account represented by the dashboard.',
+    requirement: 'Identifies the capital account, lifecycle state, and any pending capital intent represented by the dashboard.',
     status: 'mock',
   },
   {

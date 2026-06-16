@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 import Mark from '@/app/Mark';
 import DashboardAccessGate from '@/app/dashboard/DashboardAccessGate';
 import { hasDashboardAccess } from '@/features/hermes-dashboard/access';
-import { getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
+import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
 import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
 import { hasConsoleAccess } from '@/features/solace-console/access';
 import type {
@@ -128,14 +129,28 @@ function countByOwner(fieldSources: DashboardFieldSource[]) {
 }
 
 export default async function DashboardContractPage() {
-  const accessGranted = (await hasDashboardAccess()) || (await hasConsoleAccess());
+  const dashboardAccessGranted = await hasDashboardAccess();
+  const consoleAccessGranted = await hasConsoleAccess();
+  const accessGranted = dashboardAccessGranted || consoleAccessGranted;
 
   if (!accessGranted) {
     return <DashboardAccessGate />;
   }
 
   const riskProfile = await getStoredRiskProfile();
-  const snapshot = await getHermesDashboardSnapshot({ riskProfile });
+  const onboarding = dashboardAccessGranted
+    ? await getDashboardOnboardingState()
+    : { complete: false, depositIntentAmount: null };
+
+  if (dashboardAccessGranted && !consoleAccessGranted && !onboarding.complete) {
+    redirect('/dashboard/onboarding');
+  }
+
+  const snapshot = await getHermesDashboardSnapshot({
+    depositIntentAmount: onboarding.depositIntentAmount,
+    lifecycle: onboarding.complete ? 'AWAITING_DEPOSIT' : 'ACTIVE',
+    riskProfile,
+  });
   const ownerCounts = countByOwner(snapshot.fieldSources);
   const statusCounts = snapshot.fieldSources.reduce<Record<DashboardFieldSourceStatus, number>>(
     (counts, source) => ({

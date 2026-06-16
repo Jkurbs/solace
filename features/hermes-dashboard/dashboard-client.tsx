@@ -178,8 +178,14 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
 
   const moneyMovement = useMutation({
     mutationFn: (type: MoneyMovementType) => startMoneyMovement(type),
+    onMutate() {
+      setActionStatus('');
+    },
     onError(error) {
       setActionStatus(error.message);
+    },
+    onSuccess(payload) {
+      setActionStatus(payload.message ?? '');
     },
   });
 
@@ -256,15 +262,25 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   }
 
   const allocationGradient = useMemo(() => buildAllocationGradient(data.allocation, theme), [data.allocation, theme]);
+  const isAwaitingDeposit = data.account.lifecycle === 'AWAITING_DEPOSIT';
   const deployed = data.status.deployedCapital;
   const cashReserve = data.allocation.find((item) => item.asset.toLowerCase() === 'cash')?.percentage ?? 100 - deployed;
+  const portfolioValue = isAwaitingDeposit ? 'Pending' : formatCurrency(data.portfolio.value);
+  const todaysChange = isAwaitingDeposit ? '—' : formatTodaysChange(data.portfolio.todaysChange);
+  const sinceInception = isAwaitingDeposit ? '—' : formatPercent(data.portfolio.sinceInception, true);
+  const operatingStatus = isAwaitingDeposit ? 'Awaiting deposit' : data.status.status;
+  const actionHelper =
+    actionStatus ||
+    (isAwaitingDeposit
+      ? 'Deposits are reviewed before Hermes begins allocation.'
+      : 'Capital movement runs through the approved account rails.');
   const accountMetrics = [
     { label: 'Total Deposited', value: formatCurrency(data.portfolio.deposited, { whole: true }) },
-    { label: 'Current Value', value: formatCurrency(data.portfolio.value, { whole: true }) },
+    { label: 'Current Value', value: isAwaitingDeposit ? 'Pending' : formatCurrency(data.portfolio.value, { whole: true }) },
     {
       label: 'Net Profit',
-      positive: data.portfolio.profit > 0,
-      value: formatCurrency(data.portfolio.profit, { signed: true, whole: true }),
+      positive: !isAwaitingDeposit && data.portfolio.profit > 0,
+      value: isAwaitingDeposit ? '—' : formatCurrency(data.portfolio.profit, { signed: true, whole: true }),
     },
     {
       label: 'Available To Withdraw',
@@ -345,22 +361,26 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Portfolio Value</p>
                 <h1
                   id="portfolio-value"
-                  className="mt-3 text-5xl font-semibold leading-none text-neutral-950 dark:text-neutral-50 sm:text-6xl"
+                  className={cn(
+                    'mt-3 font-semibold leading-none text-neutral-950 dark:text-neutral-50',
+                    isAwaitingDeposit ? 'text-4xl sm:text-5xl' : 'text-5xl sm:text-6xl',
+                  )}
                 >
-                  {formatCurrency(data.portfolio.value)}
+                  {portfolioValue}
                 </h1>
+                {isAwaitingDeposit && data.account.depositIntent?.amount ? (
+                  <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
+                    Initial capital intent: {formatCurrency(data.account.depositIntent.amount, { whole: true })}
+                  </p>
+                ) : null}
               </div>
               <div className="grid gap-4 sm:grid-cols-2 md:min-w-[22rem]">
                 <Metric
                   label="Today's Change"
-                  value={formatTodaysChange(data.portfolio.todaysChange)}
-                  positive={data.portfolio.todaysChange.amount > 0}
+                  value={todaysChange}
+                  positive={!isAwaitingDeposit && data.portfolio.todaysChange.amount > 0}
                 />
-                <Metric
-                  label="Since Inception"
-                  value={formatPercent(data.portfolio.sinceInception, true)}
-                  positive={data.portfolio.sinceInception > 0}
-                />
+                <Metric label="Since Inception" value={sinceInception} positive={!isAwaitingDeposit && data.portfolio.sinceInception > 0} />
               </div>
             </div>
           </motion.section>
@@ -370,9 +390,11 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Actions</p>
-                  <CardTitle>Move capital</CardTitle>
+                  <CardTitle>{isAwaitingDeposit ? 'Complete setup' : 'Move capital'}</CardTitle>
                 </div>
-                <Badge variant={data.status.status === 'ACTIVE' ? 'success' : 'secondary'}>{data.status.status}</Badge>
+                <Badge variant={data.status.status === 'ACTIVE' ? 'success' : 'secondary'}>
+                  {isAwaitingDeposit ? 'PENDING' : data.status.status}
+                </Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -389,14 +411,14 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                   type="button"
                   variant="secondary"
                   onClick={() => moneyMovement.mutate('withdraw')}
-                  disabled={moneyMovement.isPending}
+                  disabled={moneyMovement.isPending || isAwaitingDeposit}
                 >
                   <ArrowUpFromLine size={16} aria-hidden="true" />
                   Withdraw
                 </Button>
               </div>
-              <p className="sr-only" aria-live="polite">
-                {actionStatus}
+              <p className="mt-3 text-sm leading-6 text-neutral-500 dark:text-neutral-400" aria-live="polite">
+                {actionHelper}
               </p>
             </CardContent>
           </Card>
@@ -409,7 +431,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Metric label="Status" value={data.status.status} positive={data.status.status === 'ACTIVE'} />
+              <Metric label="Status" value={operatingStatus} positive={data.status.status === 'ACTIVE'} />
               <Metric label="Risk Profile" value={data.status.riskProfile} />
               <Metric label="Capital Deployed" value={formatPercent(data.status.deployedCapital)} />
               <Metric label="Conviction" value={formatConstantLabel(data.status.conviction)} />
