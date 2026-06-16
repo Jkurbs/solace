@@ -7,6 +7,7 @@ import { hermesDashboardSnapshot } from './mock-data';
 import type { AccountReview, HermesDashboardSnapshot, IdentityVerification, RiskProfile } from './types';
 
 type DashboardSnapshotInput = {
+  accountId?: string | null;
   accountReview?: AccountReview | null;
   depositIntentAmount?: number | null;
   identityVerification?: IdentityVerification | null;
@@ -102,6 +103,7 @@ function getAwaitingDepositSnapshot(
 }
 
 export async function getHermesDashboardSnapshot({
+  accountId,
   accountReview,
   depositIntentAmount,
   identityVerification,
@@ -118,15 +120,30 @@ export async function getHermesDashboardSnapshot({
   };
 
   if (lifecycle === 'AWAITING_DEPOSIT') {
-    return getAwaitingDepositSnapshot(baseSnapshot, {
+    const pendingSnapshot = getAwaitingDepositSnapshot(baseSnapshot, {
       accountReview,
       depositIntentAmount,
       identityVerification,
       riskProfile: selectedRiskProfile,
     });
+
+    if (!accountId) {
+      return pendingSnapshot;
+    }
+
+    const ledger = await getLedgerReadModel(accountId);
+
+    return {
+      ...pendingSnapshot,
+      account: {
+        ...pendingSnapshot.account,
+        label: ledger.account.label,
+      },
+      updatedAt: ledger.generatedAt,
+    };
   }
 
-  const ledger = await getLedgerReadModel();
+  const ledger = await getLedgerReadModel(accountId ?? undefined);
 
   return {
     ...baseSnapshot,

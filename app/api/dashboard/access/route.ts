@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { grantDashboardAccess, isValidDashboardAccessCode } from '@/features/hermes-dashboard/access';
+import { grantDashboardAccess, resolveDashboardAccessCode } from '@/features/hermes-dashboard/access';
 import { getDashboardOnboardingState } from '@/features/hermes-dashboard/preferences';
 
 export async function POST(request: Request) {
@@ -8,7 +8,9 @@ export async function POST(request: Request) {
   const code = formData?.get('code');
   const dashboardUrl = new URL('/dashboard', request.url);
 
-  if (typeof code !== 'string' || !isValidDashboardAccessCode(code)) {
+  const dashboardAccess = typeof code === 'string' ? await resolveDashboardAccessCode(code) : null;
+
+  if (!dashboardAccess) {
     dashboardUrl.searchParams.set('access', 'denied');
     return NextResponse.redirect(dashboardUrl, 303);
   }
@@ -16,7 +18,7 @@ export async function POST(request: Request) {
   const onboarding = await getDashboardOnboardingState();
   const nextUrl = new URL(onboarding.complete ? '/dashboard' : '/dashboard/onboarding', request.url);
   const response = NextResponse.redirect(nextUrl, 303);
-  grantDashboardAccess(response);
+  grantDashboardAccess(response, dashboardAccess);
 
   return response;
 }

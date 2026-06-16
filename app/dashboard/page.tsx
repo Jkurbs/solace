@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-import { hasDashboardAccess } from '@/features/hermes-dashboard/access';
+import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import { HermesDashboard } from '@/features/hermes-dashboard/dashboard-client';
 import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
 import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
@@ -16,8 +16,10 @@ export const metadata: Metadata = {
 async function getInitialDashboardSnapshot() {
   const storedRiskProfile = await getStoredRiskProfile();
   const onboarding = await getDashboardOnboardingState();
+  const accountId = await getDashboardAccountId();
 
   return getHermesDashboardSnapshot({
+    accountId,
     accountReview: onboarding.accountReview,
     depositIntentAmount: onboarding.depositIntentAmount,
     identityVerification: onboarding.identityVerification,

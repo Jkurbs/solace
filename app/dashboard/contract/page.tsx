@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 
 import Mark from '@/app/Mark';
 import DashboardAccessGate from '@/app/dashboard/DashboardAccessGate';
-import { hasDashboardAccess } from '@/features/hermes-dashboard/access';
+import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
 import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
 import { hasConsoleAccess } from '@/features/solace-console/access';
@@ -152,6 +152,7 @@ export default async function DashboardContractPage() {
   }
 
   const riskProfile = await getStoredRiskProfile();
+  const dashboardAccountId = dashboardAccessGranted ? await getDashboardAccountId() : null;
   const onboarding = dashboardAccessGranted
     ? await getDashboardOnboardingState()
     : {
@@ -169,6 +170,7 @@ export default async function DashboardContractPage() {
   }
 
   const snapshot = await getHermesDashboardSnapshot({
+    accountId: dashboardAccountId,
     accountReview: onboarding.accountReview,
     depositIntentAmount: onboarding.depositIntentAmount,
     identityVerification: onboarding.identityVerification,

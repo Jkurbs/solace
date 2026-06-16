@@ -10,6 +10,12 @@ export type AccessReviewSource = 'openai' | 'rules';
 
 export type HumanAccessDecision = 'APPROVED' | 'DECLINED' | 'REQUEST_MORE_INFO';
 
+export type SolaceUserStatus = 'APPROVED' | 'ACTIVE' | 'SUSPENDED';
+
+export type HermesAccountStatus = 'PENDING_ACTIVATION' | 'ACTIVE' | 'PAUSED' | 'CLOSED';
+
+export type DashboardInviteStatus = 'ACTIVE' | 'REVOKED';
+
 export interface HermesAccessRequestInput {
   firstName: string;
   lastName: string;
@@ -40,8 +46,18 @@ export interface HermesAccessRequest extends HermesAccessRequestInput {
   aiReview: AccessReviewResult;
   humanDecision?: HumanAccessDecision;
   humanDecisionAt?: IsoDateString;
+  solaceUserId?: string;
+  solaceUserStatus?: SolaceUserStatus;
+  hermesAccountId?: string;
+  hermesAccountStatus?: HermesAccountStatus;
+  ledgerAccountId?: string;
   accountId?: string;
   accountCreatedAt?: IsoDateString;
+  dashboardInviteId?: string;
+  dashboardInviteCode?: string;
+  dashboardInviteCodeHash?: string;
+  dashboardInviteStatus?: DashboardInviteStatus;
+  dashboardInviteCreatedAt?: IsoDateString;
   createdAt: IsoDateString;
   updatedAt: IsoDateString;
 }

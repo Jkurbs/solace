@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { listAccessRequests } from '@/features/access-review/store';
+
 import { ledgerSeedData } from './seed-data';
 import type {
   LedgerAccount,
@@ -26,6 +28,63 @@ function cloneDataset(dataset: LedgerDataset): LedgerDataset {
     })),
     treasuryTransfers: dataset.treasuryTransfers.map((transfer) => ({ ...transfer })),
   };
+}
+
+function getAccountLabel(accountId: string) {
+  return `Account ending ${accountId.replace(/[^a-z0-9]/gi, '').slice(-4).toUpperCase()}`;
+}
+
+async function getApprovedAccountDataset(): Promise<LedgerDataset> {
+  const accessRequests = await listAccessRequests();
+  const approvedRequests = accessRequests.filter((request) => request.status === 'approved');
+
+  return approvedRequests.reduce<LedgerDataset>(
+    (dataset, request) => {
+      const accountId = request.ledgerAccountId ?? request.accountId;
+      const userId = request.solaceUserId;
+
+      if (!accountId || !userId || dataset.accounts.some((account) => account.id === accountId)) {
+        return dataset;
+      }
+
+      const createdAt = request.accountCreatedAt ?? request.humanDecisionAt ?? request.createdAt;
+
+      dataset.users.push({
+        createdAt,
+        email: request.email,
+        id: userId,
+        name: `${request.firstName} ${request.lastName}`.trim(),
+        riskProfile: 'Balanced',
+      });
+      dataset.accounts.push({
+        createdAt,
+        currency: 'USD',
+        id: accountId,
+        label: getAccountLabel(accountId),
+        status: 'PENDING_ACTIVATION',
+        userId,
+      });
+      dataset.activities.push({
+        accountId,
+        createdAt,
+        id: `act_${accountId}_created`,
+        message: 'Solace account approved',
+        type: 'account_created',
+      });
+
+      return dataset;
+    },
+    {
+      accounts: [],
+      activities: [],
+      deposits: [],
+      entries: [],
+      portfolioSnapshots: [],
+      treasuryTransfers: [],
+      users: [],
+      withdrawals: [],
+    },
+  );
 }
 
 function sortByNewest<T extends { createdAt: string }>(items: T[]) {
@@ -164,7 +223,19 @@ function buildReadModelForAccount(dataset: LedgerDataset, account: LedgerAccount
 }
 
 export async function getLedgerDataset(): Promise<LedgerDataset> {
-  return cloneDataset(ledgerSeedData);
+  const dataset = cloneDataset(ledgerSeedData);
+  const approvedAccounts = await getApprovedAccountDataset();
+
+  return {
+    accounts: [...dataset.accounts, ...approvedAccounts.accounts],
+    activities: [...dataset.activities, ...approvedAccounts.activities],
+    deposits: [...dataset.deposits, ...approvedAccounts.deposits],
+    entries: [...dataset.entries, ...approvedAccounts.entries],
+    portfolioSnapshots: [...dataset.portfolioSnapshots, ...approvedAccounts.portfolioSnapshots],
+    treasuryTransfers: [...dataset.treasuryTransfers, ...approvedAccounts.treasuryTransfers],
+    users: [...dataset.users, ...approvedAccounts.users],
+    withdrawals: [...dataset.withdrawals, ...approvedAccounts.withdrawals],
+  };
 }
 
 export async function getLedgerReadModel(accountId = 'acct_demo_4821'): Promise<LedgerReadModel> {

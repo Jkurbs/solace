@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { hasDashboardAccess } from '@/features/hermes-dashboard/access';
+import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
 import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
 
@@ -11,12 +11,14 @@ export async function GET() {
 
   const riskProfile = await getStoredRiskProfile();
   const onboarding = await getDashboardOnboardingState();
+  const accountId = await getDashboardAccountId();
 
   if (!onboarding.complete) {
     return NextResponse.json({ message: 'Dashboard onboarding required.' }, { status: 409 });
   }
 
   const snapshot = await getHermesDashboardSnapshot({
+    accountId,
     accountReview: onboarding.accountReview,
     depositIntentAmount: onboarding.depositIntentAmount,
     identityVerification: onboarding.identityVerification,

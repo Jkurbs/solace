@@ -162,6 +162,10 @@ function countAiApprovals(requests: HermesAccessRequest[]) {
   return requests.filter((request) => request.aiReview.recommendation === 'APPROVE').length;
 }
 
+function getLedgerAccountId(request: HermesAccessRequest) {
+  return request.ledgerAccountId ?? request.accountId;
+}
+
 function AccessDecisionButton({
   children,
   decision,
@@ -415,9 +419,12 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
                         </div>
                       </div>
 
-                      {request.accountId ? (
-                        <div className="rounded-md border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-100">
-                          Account created: {request.accountId}
+                      {getLedgerAccountId(request) ? (
+                        <div className="grid gap-3 rounded-md border border-emerald-400/20 bg-emerald-400/10 px-3 py-3 text-sm text-emerald-100 sm:grid-cols-2">
+                          <span>Solace user: {request.solaceUserId ?? 'Pending'}</span>
+                          <span>Hermes account: {request.hermesAccountId ?? 'Pending'}</span>
+                          <span>Ledger account: {getLedgerAccountId(request)}</span>
+                          <span>Invite code: {request.dashboardInviteCode ?? 'Pending'}</span>
                         </div>
                       ) : null}
                     </div>

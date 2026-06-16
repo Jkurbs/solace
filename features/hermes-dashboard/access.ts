@@ -4,8 +4,24 @@ import { createHash, timingSafeEqual } from 'crypto';
 import { cookies } from 'next/headers';
 import type { NextResponse } from 'next/server';
 
+import {
+  findApprovedAccessRequestByDashboardCode,
+  hasDashboardInviteAccess,
+} from '@/features/access-review/store';
+
 const dashboardAccessCookieName = 'hermes_dashboard_access';
+const dashboardAccountCookieName = 'hermes_dashboard_account_id';
 const fallbackDashboardAccessCode = 'solace-4821';
+
+type DashboardAccessGrant =
+  | {
+      kind: 'global';
+    }
+  | {
+      accountId: string;
+      kind: 'invite';
+      token: string;
+    };
 
 function getDashboardAccessCode() {
   const configuredCode = process.env.HERMES_DASHBOARD_ACCESS_CODE?.trim();
@@ -39,19 +55,55 @@ function safeEquals(actual: string, expected: string) {
 export async function hasDashboardAccess() {
   const cookieStore = await cookies();
   const token = cookieStore.get(dashboardAccessCookieName)?.value;
+  const accountId = cookieStore.get(dashboardAccountCookieName)?.value;
   const expectedToken = getDashboardAccessToken();
 
-  return token && expectedToken ? safeEquals(token, expectedToken) : false;
+  if (token && expectedToken && safeEquals(token, expectedToken)) {
+    return true;
+  }
+
+  if (token && accountId) {
+    return hasDashboardInviteAccess(accountId, token);
+  }
+
+  return false;
 }
 
-export function isValidDashboardAccessCode(code: string) {
+export async function getDashboardAccountId() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(dashboardAccessCookieName)?.value;
+  const accountId = cookieStore.get(dashboardAccountCookieName)?.value;
+
+  if (!token || !accountId || !(await hasDashboardInviteAccess(accountId, token))) {
+    return null;
+  }
+
+  return accountId;
+}
+
+export async function resolveDashboardAccessCode(code: string): Promise<DashboardAccessGrant | null> {
   const expectedCode = getDashboardAccessCode();
 
-  return expectedCode ? safeEquals(code.trim(), expectedCode) : false;
+  if (expectedCode && safeEquals(code.trim(), expectedCode)) {
+    return { kind: 'global' };
+  }
+
+  const approvedRequest = await findApprovedAccessRequestByDashboardCode(code);
+  const accountId = approvedRequest?.ledgerAccountId ?? approvedRequest?.accountId;
+
+  if (!accountId || !approvedRequest?.dashboardInviteCodeHash) {
+    return null;
+  }
+
+  return {
+    accountId,
+    kind: 'invite',
+    token: approvedRequest.dashboardInviteCodeHash,
+  };
 }
 
-export function grantDashboardAccess(response: NextResponse) {
-  const accessToken = getDashboardAccessToken();
+export function grantDashboardAccess(response: NextResponse, grant: DashboardAccessGrant = { kind: 'global' }) {
+  const accessToken = grant.kind === 'global' ? getDashboardAccessToken() : grant.token;
 
   if (!accessToken) {
     return;
@@ -64,10 +116,29 @@ export function grantDashboardAccess(response: NextResponse) {
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
   });
+
+  if (grant.kind === 'invite') {
+    response.cookies.set(dashboardAccountCookieName, grant.accountId, {
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    });
+  } else {
+    response.cookies.set(dashboardAccountCookieName, '', {
+      maxAge: 0,
+      path: '/',
+    });
+  }
 }
 
 export function expireDashboardAccess(response: NextResponse) {
   response.cookies.set(dashboardAccessCookieName, '', {
+    maxAge: 0,
+    path: '/',
+  });
+  response.cookies.set(dashboardAccountCookieName, '', {
     maxAge: 0,
     path: '/',
   });
