@@ -86,8 +86,12 @@ function formatConstantLabel(value: string) {
     .join(' ');
 }
 
-function formatActivityDate(value: Date) {
-  const parts = activityDateFormatter.formatToParts(value);
+function coercePreviewDate(value: string) {
+  return new Date(value);
+}
+
+function formatActivityDate(value: string) {
+  const parts = activityDateFormatter.formatToParts(coercePreviewDate(value));
   const month = parts.find((part) => part.type === 'month')?.value ?? '';
   const day = parts.find((part) => part.type === 'day')?.value ?? '';
 
@@ -333,8 +337,8 @@ export default function HermesPage() {
                     <h3>Latest decisions</h3>
                     <ol>
                       {dashboardPreview.activity.map((activity) => (
-                        <li key={`${activity.timestamp.toISOString()}-${activity.summary}`}>
-                          <time dateTime={activity.timestamp.toISOString()}>{formatActivityDate(activity.timestamp)}</time>
+                        <li key={`${activity.timestamp}-${activity.summary}`}>
+                          <time dateTime={activity.timestamp}>{formatActivityDate(activity.timestamp)}</time>
                           <strong>{activity.summary}</strong>
                         </li>
                       ))}

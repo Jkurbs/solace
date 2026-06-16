@@ -1,10 +1,14 @@
 import type { HermesDashboardSnapshot } from './types';
+import { dashboardFieldSources, hermesDashboardContractVersion } from './contract';
 
 export const hermesDashboardSnapshot: HermesDashboardSnapshot = {
+  contractVersion: hermesDashboardContractVersion,
+  generatedAt: '2026-06-15T13:42:00.000Z',
+  fieldSources: dashboardFieldSources,
   account: {
     label: 'Account ending 4821',
   },
-  updatedAt: new Date('2026-06-15T09:42:00-04:00'),
+  updatedAt: '2026-06-15T13:42:00.000Z',
   portfolio: {
     value: 12842.17,
     deposited: 10000,
@@ -34,9 +38,9 @@ export const hermesDashboardSnapshot: HermesDashboardSnapshot = {
     { asset: 'Other', percentage: 20 },
   ],
   activity: [
-    { timestamp: new Date('2026-06-15T10:10:00-04:00'), summary: 'Increased BTC allocation' },
-    { timestamp: new Date('2026-06-14T15:20:00-04:00'), summary: 'Reduced cash reserves' },
-    { timestamp: new Date('2026-06-13T11:35:00-04:00'), summary: 'Reduced PEPE exposure' },
+    { timestamp: '2026-06-15T14:10:00.000Z', summary: 'Increased BTC allocation' },
+    { timestamp: '2026-06-14T19:20:00.000Z', summary: 'Reduced cash reserves' },
+    { timestamp: '2026-06-13T15:35:00.000Z', summary: 'Reduced PEPE exposure' },
   ],
   commentary:
     'Hermes remains selectively deployed while preserving liquidity for emerging opportunities. Current conditions favor continuation over aggressive expansion.',

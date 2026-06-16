@@ -6,6 +6,45 @@ export type HermesOperatingStatus = 'ACTIVE' | 'WAIT';
 
 export type HermesConviction = 'LOW' | 'MEDIUM' | 'HIGH';
 
+export type IsoDateString = string;
+
+export type HermesDashboardContractVersion = 'hermes.dashboard.v1';
+
+export type DashboardFieldOwner =
+  | 'ledger'
+  | 'performance_engine'
+  | 'allocation_engine'
+  | 'position_ownership'
+  | 'decision_journal'
+  | 'hermes_state'
+  | 'account_preferences';
+
+export type DashboardFieldKey =
+  | 'account'
+  | 'portfolio'
+  | 'todays_change'
+  | 'since_inception'
+  | 'available_to_withdraw'
+  | 'status'
+  | 'risk_profile'
+  | 'capital_deployed'
+  | 'conviction'
+  | 'outlook'
+  | 'allocation'
+  | 'activity'
+  | 'commentary';
+
+export type DashboardFieldSourceStatus = 'mock' | 'planned' | 'live';
+
+export interface DashboardFieldSource {
+  field: DashboardFieldKey;
+  label: string;
+  owner: DashboardFieldOwner;
+  ownerLabel: string;
+  requirement: string;
+  status: DashboardFieldSourceStatus;
+}
+
 export interface Portfolio {
   value: number;
   deposited: number;
@@ -32,7 +71,7 @@ export type HermesOutlook = {
 };
 
 export interface Activity {
-  timestamp: Date;
+  timestamp: IsoDateString;
   summary: string;
 }
 
@@ -42,10 +81,13 @@ export interface Allocation {
 }
 
 export type HermesDashboardSnapshot = {
+  contractVersion: HermesDashboardContractVersion;
+  generatedAt: IsoDateString;
+  fieldSources: DashboardFieldSource[];
   account: {
     label: string;
   };
-  updatedAt: Date;
+  updatedAt: IsoDateString;
   portfolio: Portfolio;
   status: HermesStatus;
   outlook: HermesOutlook;

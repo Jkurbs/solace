@@ -19,6 +19,7 @@ import {
   startMoneyMovement,
   updateRiskProfile,
 } from './queries';
+import { riskProfileDescriptions } from './contract';
 import type { HermesDashboardSnapshot, MoneyMovementType, RiskProfile } from './types';
 
 type HermesDashboardProps = {
@@ -78,12 +79,6 @@ const riskProfiles: Array<{ label: RiskProfile; icon: typeof ShieldCheck }> = [
   { label: 'Balanced', icon: Scale },
   { label: 'Velocity', icon: Zap },
 ];
-
-const riskProfileDescriptions: Record<RiskProfile, string> = {
-  Preservation: 'Preservation prioritizes drawdown control, lower activity, and larger cash reserves.',
-  Balanced: 'Balanced keeps Hermes selective while allowing measured deployment when conditions are favorable.',
-  Velocity: 'Velocity allows more active deployment when Hermes finds strong opportunity and sufficient liquidity.',
-};
 
 function getAllocationColor(asset: string, index: number, theme: DashboardTheme) {
   const resolvedTheme: DashboardTheme = theme === 'light' ? 'light' : 'dark';

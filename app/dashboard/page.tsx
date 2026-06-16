@@ -1,41 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
 
 import Mark from '@/app/Mark';
 import { hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import { HermesDashboard } from '@/features/hermes-dashboard/dashboard-client';
-import { hermesDashboardSnapshot } from '@/features/hermes-dashboard/mock-data';
-import type { HermesDashboardSnapshot, RiskProfile } from '@/features/hermes-dashboard/types';
-import { createSupabaseServerClient, isSupabaseServerConfigured } from '@/lib/supabase/server';
+import { getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
+import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
 
 export const metadata: Metadata = {
   title: 'Solace — Hermes Dashboard',
   description: 'A simple Hermes account dashboard focused on value, status, allocation, activity, and commentary.',
 };
-
-const riskProfiles = new Set<RiskProfile>(['Preservation', 'Balanced', 'Velocity']);
-
-async function getStoredRiskProfile() {
-  const cookieStore = await cookies();
-  const riskProfile = cookieStore.get('hermes_risk_profile')?.value as RiskProfile | undefined;
-
-  return riskProfile && riskProfiles.has(riskProfile) ? riskProfile : null;
-}
-
-function applyRiskProfile(snapshot: HermesDashboardSnapshot, riskProfile: RiskProfile | null) {
-  if (!riskProfile) {
-    return snapshot;
-  }
-
-  return {
-    ...snapshot,
-    status: {
-      ...snapshot.status,
-      riskProfile,
-    },
-  };
-}
 
 function DashboardAccessGate({ denied = false }: { denied?: boolean }) {
   return (
@@ -97,20 +72,7 @@ function DashboardAccessGate({ denied = false }: { denied?: boolean }) {
 async function getInitialDashboardSnapshot() {
   const storedRiskProfile = await getStoredRiskProfile();
 
-  if (!isSupabaseServerConfigured()) {
-    return applyRiskProfile(hermesDashboardSnapshot, storedRiskProfile);
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return applyRiskProfile(hermesDashboardSnapshot, storedRiskProfile);
-  }
-
-  return applyRiskProfile(hermesDashboardSnapshot, storedRiskProfile);
+  return getHermesDashboardSnapshot({ riskProfile: storedRiskProfile });
 }
 
 type DashboardPageProps = {
