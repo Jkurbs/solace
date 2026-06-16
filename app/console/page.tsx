@@ -5,6 +5,7 @@ import Mark from '@/app/Mark';
 import { getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
 import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
 import type { DashboardFieldSource, DashboardFieldSourceStatus } from '@/features/hermes-dashboard/types';
+import { getLedgerReadModel } from '@/features/ledger/read-model';
 import { hasConsoleAccess } from '@/features/solace-console/access';
 
 import ConsoleAccessGate from './ConsoleAccessGate';
@@ -36,8 +37,35 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
 });
 
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+  style: 'currency',
+});
+
+const numberFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 2,
+});
+
 function formatDate(value: string) {
   return dateFormatter.format(new Date(value));
+}
+
+function formatCurrency(value: number) {
+  return currencyFormatter.format(value);
+}
+
+function formatPercent(value: number) {
+  return `${numberFormatter.format(value)}%`;
+}
+
+function formatConstant(value: string) {
+  return value
+    .toLowerCase()
+    .split('_')
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
 }
 
 function countStatuses(fieldSources: DashboardFieldSource[]) {
@@ -119,6 +147,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
 
   const riskProfile = await getStoredRiskProfile();
   const snapshot = await getHermesDashboardSnapshot({ riskProfile });
+  const ledger = await getLedgerReadModel();
   const statusCounts = countStatuses(snapshot.fieldSources);
   const ownerSummaries = groupByOwner(snapshot.fieldSources);
 
@@ -171,6 +200,17 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
           <StatCard label="Owner systems" value={ownerSummaries.length} />
         </section>
 
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Ledger overview">
+          <StatCard label="Ledger balance" value={formatCurrency(ledger.portfolio.value)} tone="green" />
+          <StatCard label="Deposited" value={formatCurrency(ledger.portfolio.totalDeposited)} />
+          <StatCard label="Net profit" value={formatCurrency(ledger.portfolio.netProfit)} tone="green" />
+          <StatCard
+            label="Reconciliation"
+            value={ledger.reconciliation.status === 'matched' ? 'Matched' : 'Review'}
+            tone={ledger.reconciliation.status === 'matched' ? 'green' : 'amber'}
+          />
+        </section>
+
         <section className="grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="grid gap-5">
             <article className="rounded-lg border border-neutral-800 bg-[#181715] p-6">
@@ -192,6 +232,10 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
                 <div className="grid grid-cols-[1fr_auto] gap-4 border-t border-neutral-800 pt-4">
                   <dt className="text-sm text-neutral-500">Opportunity environment</dt>
                   <dd className="text-sm font-medium text-neutral-200">{snapshot.outlook.environment}</dd>
+                </div>
+                <div className="grid grid-cols-[1fr_auto] gap-4 border-t border-neutral-800 pt-4">
+                  <dt className="text-sm text-neutral-500">Ledger source</dt>
+                  <dd className="text-sm font-medium text-neutral-200">Ledger V1</dd>
                 </div>
               </dl>
             </article>
@@ -247,6 +291,123 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
               })}
             </div>
           </section>
+        </section>
+
+        <section className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+          <article className="rounded-lg border border-neutral-800 bg-[#181715] p-6">
+            <p className="text-sm font-medium text-neutral-400">Ledger</p>
+            <h2 className="mt-1 text-xl font-semibold text-neutral-50">Account truth</h2>
+            <dl className="mt-5 grid gap-4">
+              <div className="grid grid-cols-[1fr_auto] gap-4 border-t border-neutral-800 pt-4 first:border-t-0 first:pt-0">
+                <dt className="text-sm text-neutral-500">User</dt>
+                <dd className="text-sm font-medium text-neutral-200">{ledger.user.name}</dd>
+              </div>
+              <div className="grid grid-cols-[1fr_auto] gap-4 border-t border-neutral-800 pt-4">
+                <dt className="text-sm text-neutral-500">Account</dt>
+                <dd className="text-sm font-medium text-neutral-200">{ledger.account.label}</dd>
+              </div>
+              <div className="grid grid-cols-[1fr_auto] gap-4 border-t border-neutral-800 pt-4">
+                <dt className="text-sm text-neutral-500">Available to withdraw</dt>
+                <dd className="text-sm font-medium text-neutral-200">{formatCurrency(ledger.portfolio.availableToWithdraw)}</dd>
+              </div>
+              <div className="grid grid-cols-[1fr_auto] gap-4 border-t border-neutral-800 pt-4">
+                <dt className="text-sm text-neutral-500">Solace fee accrual</dt>
+                <dd className="text-sm font-medium text-neutral-200">{formatCurrency(ledger.portfolio.accruedSolaceFees)}</dd>
+              </div>
+              <div className="grid grid-cols-[1fr_auto] gap-4 border-t border-neutral-800 pt-4">
+                <dt className="text-sm text-neutral-500">Today</dt>
+                <dd className="text-sm font-medium text-emerald-200">
+                  {formatCurrency(ledger.performance.todaysChange.amount)} ({formatPercent(ledger.performance.todaysChange.percentage)})
+                </dd>
+              </div>
+              <div className="grid grid-cols-[1fr_auto] gap-4 border-t border-neutral-800 pt-4">
+                <dt className="text-sm text-neutral-500">Since inception</dt>
+                <dd className="text-sm font-medium text-emerald-200">{formatPercent(ledger.performance.sinceInception)}</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article className="rounded-lg border border-neutral-800 bg-[#181715] p-6">
+            <p className="text-sm font-medium text-neutral-400">Treasury</p>
+            <h2 className="mt-1 text-xl font-semibold text-neutral-50">KuCoin transfer state</h2>
+            <div className="mt-5 grid gap-3">
+              {ledger.treasuryTransfers.map((transfer) => (
+                <div
+                  key={transfer.id}
+                  className="rounded-md border border-neutral-800 bg-neutral-950/30 p-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <strong className="text-sm font-semibold text-neutral-50">
+                      {formatCurrency(transfer.amount)} to KuCoin
+                    </strong>
+                    <span
+                      className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                        transfer.status === 'reconciled'
+                          ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200'
+                          : 'border-amber-300/25 bg-amber-300/10 text-amber-100'
+                      }`}
+                    >
+                      {formatConstant(transfer.status)}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-neutral-400">{transfer.notes}</p>
+                  <div className="mt-3 grid gap-2 text-xs text-neutral-500 sm:grid-cols-2">
+                    <span>Created {formatDate(transfer.createdAt)}</span>
+                    <span>Reference {transfer.externalReference ?? 'Pending'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 rounded-md border border-neutral-800 bg-neutral-950/30 p-4">
+              <div className="grid grid-cols-[1fr_auto] gap-4">
+                <span className="text-sm text-neutral-500">Ledger vs KuCoin variance</span>
+                <strong className="text-sm font-semibold text-emerald-200">
+                  {formatCurrency(ledger.reconciliation.variance)}
+                </strong>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section className="rounded-lg border border-neutral-800 bg-[#181715] p-6" aria-labelledby="ledger-entries-heading">
+          <p className="text-sm font-medium text-neutral-400">Ledger Entries</p>
+          <h2 id="ledger-entries-heading" className="mt-1 text-xl font-semibold text-neutral-50">
+            Immutable account events
+          </h2>
+          <div className="mt-5 grid gap-3">
+            {ledger.entries.map((entry) => (
+              <article
+                key={entry.id}
+                className="grid gap-3 rounded-md border border-neutral-800 bg-neutral-950/30 p-4 lg:grid-cols-[0.75fr_0.7fr_0.7fr_1fr_auto] lg:items-center"
+              >
+                <div>
+                  <span className="block text-xs uppercase tracking-[0.14em] text-neutral-500">Type</span>
+                  <strong className="mt-1 block text-sm font-semibold text-neutral-50">{formatConstant(entry.type)}</strong>
+                </div>
+                <div>
+                  <span className="block text-xs uppercase tracking-[0.14em] text-neutral-500">Amount</span>
+                  <strong
+                    className={`mt-1 block text-sm font-semibold ${
+                      entry.type === 'fee' ? 'text-amber-100' : 'text-emerald-200'
+                    }`}
+                  >
+                    {formatCurrency(entry.amount)}
+                  </strong>
+                </div>
+                <div>
+                  <span className="block text-xs uppercase tracking-[0.14em] text-neutral-500">Source</span>
+                  <span className="mt-1 block text-sm text-neutral-300">{formatConstant(entry.source)}</span>
+                </div>
+                <div>
+                  <span className="block text-xs uppercase tracking-[0.14em] text-neutral-500">Description</span>
+                  <span className="mt-1 block text-sm text-neutral-300">{entry.description}</span>
+                </div>
+                <time className="text-sm text-neutral-500" dateTime={entry.effectiveAt}>
+                  {formatDate(entry.effectiveAt)}
+                </time>
+              </article>
+            ))}
+          </div>
         </section>
       </div>
     </main>

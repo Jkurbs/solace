@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { getLedgerReadModel } from '@/features/ledger/read-model';
+
 import { dashboardFieldSources, hermesDashboardContractVersion } from './contract';
 import { hermesDashboardSnapshot } from './mock-data';
 import type { AccountReview, HermesDashboardSnapshot, IdentityVerification, RiskProfile } from './types';
@@ -124,11 +126,39 @@ export async function getHermesDashboardSnapshot({
     });
   }
 
+  const ledger = await getLedgerReadModel();
+
   return {
     ...baseSnapshot,
+    account: {
+      ...baseSnapshot.account,
+      label: ledger.account.label,
+      lifecycle: ledger.account.status === 'ACTIVE' ? 'ACTIVE' : 'AWAITING_DEPOSIT',
+    },
+    updatedAt: ledger.generatedAt,
+    portfolio: {
+      value: ledger.portfolio.value,
+      deposited: ledger.portfolio.totalDeposited,
+      profit: ledger.portfolio.netProfit,
+      todaysChange: {
+        amount: ledger.performance.todaysChange.amount,
+        percentage: ledger.performance.todaysChange.percentage,
+      },
+      sinceInception: ledger.performance.sinceInception,
+      availableToWithdraw: ledger.portfolio.availableToWithdraw,
+    },
     status: {
       ...snapshot.status,
       riskProfile: selectedRiskProfile,
+      deployedCapital: ledger.allocation.capitalDeployed,
     },
+    allocation: ledger.allocation.allocations,
+    activity: ledger.activities
+      .filter((activity) => activity.type === 'hermes_decision')
+      .slice(0, 3)
+      .map((activity) => ({
+        timestamp: activity.createdAt,
+        summary: activity.message,
+      })),
   };
 }
