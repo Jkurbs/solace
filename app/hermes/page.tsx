@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { hermesDashboardSnapshot } from '@/features/hermes-dashboard/mock-data';
 
 import Mark from '../Mark';
+import RequestAccessForm from './RequestAccessForm';
 
 export const metadata: Metadata = {
   title: 'Solace — Hermes · Capital Allocation',
@@ -393,63 +394,7 @@ export default function HermesPage() {
             </Link>
           </div>
 
-          <form action="/api/hermes/request-access" method="post" className="hermes-access-form">
-            <h2>Interested in allocating capital with Hermes?</h2>
-
-            <div className="hermes-form-grid">
-              <div className="hermes-form-field">
-                <label htmlFor="hermes-first-name">First name <i>*</i></label>
-                <input id="hermes-first-name" name="firstName" type="text" autoComplete="given-name" required />
-              </div>
-              <div className="hermes-form-field">
-                <label htmlFor="hermes-last-name">Last name <i>*</i></label>
-                <input id="hermes-last-name" name="lastName" type="text" autoComplete="family-name" required />
-              </div>
-              <div className="hermes-form-field">
-                <label htmlFor="hermes-email">Email address <i>*</i></label>
-                <input id="hermes-email" name="email" type="email" autoComplete="email" required />
-              </div>
-              <div className="hermes-form-field">
-                <label htmlFor="hermes-phone">Phone number</label>
-                <input id="hermes-phone" name="phone" type="tel" autoComplete="tel" />
-              </div>
-              <div className="hermes-form-field">
-                <label htmlFor="hermes-role">Role / title</label>
-                <input id="hermes-role" name="role" type="text" autoComplete="organization-title" />
-              </div>
-              <div className="hermes-form-field">
-                <label htmlFor="hermes-organization">Company / institution</label>
-                <input id="hermes-organization" name="organization" type="text" autoComplete="organization" />
-              </div>
-              <div className="hermes-form-field hermes-form-full">
-                <label htmlFor="hermes-country">Country <i>*</i></label>
-                <select id="hermes-country" name="country" required defaultValue="">
-                  <option value="" disabled>
-                    Select...
-                  </option>
-                  <option value="United States">United States</option>
-                  <option value="Canada">Canada</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                  <option value="European Union">European Union</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div className="hermes-form-field hermes-form-full">
-                <label htmlFor="hermes-context">Capital context</label>
-                <textarea
-                  id="hermes-context"
-                  name="context"
-                  rows={4}
-                  placeholder="Tell us what you want Hermes to help allocate, preserve, or monitor."
-                />
-              </div>
-            </div>
-
-            <div className="hermes-form-actions">
-              <button type="submit">Submit</button>
-              <p>Submitting opens the private Hermes dashboard preview. Access remains code-gated.</p>
-            </div>
-          </form>
+          <RequestAccessForm />
         </section>
 
         <div className="hermes-impact-footer">

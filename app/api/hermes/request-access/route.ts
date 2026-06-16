@@ -84,6 +84,10 @@ function buildSubmission(formData: FormData) {
   };
 }
 
+function wantsJson(request: Request) {
+  return request.headers.get('accept')?.includes('application/json') ?? false;
+}
+
 export async function POST(request: Request) {
   const formData = await request.formData().catch(() => null);
 
@@ -121,6 +125,10 @@ export async function POST(request: Request) {
     text: submission.text,
     to: recipientEmail,
   });
+
+  if (wantsJson(request)) {
+    return NextResponse.json({ message: 'Request received.' });
+  }
 
   return NextResponse.redirect(new URL('/dashboard', request.url), 303);
 }

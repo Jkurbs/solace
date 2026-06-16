@@ -1699,6 +1699,11 @@ body {
     margin-top: 1.5rem;
   }
 
+  .hermes-access-form-inner {
+    display: grid;
+    gap: clamp(2.5rem, 5vw, 4.5rem);
+  }
+
   .hermes-access-form h2 {
     max-width: 42rem;
     margin: 0;
@@ -1813,11 +1818,95 @@ body {
     color: #080807;
   }
 
+  .hermes-form-actions button:disabled {
+    opacity: 0.55;
+    cursor: progress;
+  }
+
+  .hermes-form-actions button:disabled:hover {
+    background: transparent;
+    border-color: rgba(242, 234, 219, 0.56);
+    color: var(--foreground);
+  }
+
   .hermes-form-actions p {
     margin: 0;
     color: rgba(242, 234, 219, 0.58);
     font-size: 0.95rem;
     line-height: 1.7;
+  }
+
+  .hermes-form-error {
+    color: rgba(255, 151, 128, 0.92) !important;
+  }
+
+  .hermes-form-success {
+    position: relative;
+    display: grid;
+    min-height: clamp(24rem, 42vw, 34rem);
+    align-content: center;
+    gap: 1.25rem;
+    overflow: hidden;
+    border: 1px solid rgba(242, 234, 219, 0.16);
+    border-radius: 0.5rem;
+    background:
+      linear-gradient(180deg, rgba(242, 234, 219, 0.045), rgba(242, 234, 219, 0)),
+      #080807;
+    padding: clamp(2rem, 6vw, 5.5rem);
+  }
+
+  .hermes-form-success::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(135, 219, 192, 0.68), transparent);
+  }
+
+  .hermes-form-success > span {
+    width: 0.68rem;
+    height: 0.68rem;
+    border-radius: 999px;
+    background: #87dbc0;
+    box-shadow: 0 0 0 0 rgba(135, 219, 192, 0.34);
+    animation: hermes-form-pulse 2.4s ease-out infinite;
+  }
+
+  .hermes-form-success p {
+    margin: 0;
+    color: rgba(242, 234, 219, 0.7);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.16em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .hermes-form-success h2 {
+    max-width: 54rem;
+  }
+
+  .hermes-form-success strong {
+    color: rgba(242, 234, 219, 0.7);
+    font-size: clamp(1.1rem, 2vw, 1.45rem);
+    font-weight: 400;
+    line-height: 1.55;
+  }
+
+  @keyframes hermes-form-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(135, 219, 192, 0.34);
+    }
+
+    70% {
+      box-shadow: 0 0 0 1rem rgba(135, 219, 192, 0);
+    }
+
+    100% {
+      box-shadow: 0 0 0 0 rgba(135, 219, 192, 0);
+    }
   }
 
   .hermes-impact-footer {
