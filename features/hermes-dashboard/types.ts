@@ -25,6 +25,7 @@ export type DashboardFieldOwner =
 
 export type DashboardFieldKey =
   | 'account'
+  | 'activation_status'
   | 'portfolio'
   | 'todays_change'
   | 'since_inception'

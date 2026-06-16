@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDownToLine, ArrowUpFromLine, LogOut, Moon, Scale, ShieldCheck, Sun, Zap } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Check, Clock3, LogOut, Moon, Scale, ShieldCheck, Sun, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import Mark from '@/app/Mark';
@@ -163,6 +163,39 @@ function Metric({ label, value, positive = false }: { label: string; value: stri
   );
 }
 
+function ActivationStep({
+  detail,
+  label,
+  state,
+}: {
+  detail: string;
+  label: string;
+  state: 'complete' | 'pending';
+}) {
+  const Icon = state === 'complete' ? Check : Clock3;
+
+  return (
+    <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/60">
+      <div className="flex items-start gap-3">
+        <span
+          className={cn(
+            'grid h-8 w-8 shrink-0 place-items-center rounded-full border',
+            state === 'complete'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300'
+              : 'border-neutral-300 bg-white text-neutral-500 dark:border-neutral-700 dark:bg-[#181715] dark:text-neutral-400',
+          )}
+        >
+          <Icon size={16} aria-hidden="true" />
+        </span>
+        <div>
+          <strong className="block text-sm font-semibold text-neutral-950 dark:text-neutral-50">{label}</strong>
+          <span className="mt-1 block text-sm leading-5 text-neutral-500 dark:text-neutral-400">{detail}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const [actionStatus, setActionStatus] = useState('');
   const [logoutStatus, setLogoutStatus] = useState('');
@@ -274,9 +307,37 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
     (isAwaitingDeposit
       ? 'Deposits are reviewed before Hermes begins allocation.'
       : 'Capital movement runs through the approved account rails.');
+  const depositIntentLabel = data.account.depositIntent?.amount
+    ? formatCurrency(data.account.depositIntent.amount, { whole: true })
+    : 'Pending';
+  const activationSteps = [
+    {
+      detail: data.status.riskProfile,
+      label: 'Risk profile selected',
+      state: 'complete',
+    },
+    {
+      detail: depositIntentLabel,
+      label: 'Capital intent recorded',
+      state: data.account.depositIntent?.amount ? 'complete' : 'pending',
+    },
+    {
+      detail: 'Next step from Solace',
+      label: 'Funding instructions pending',
+      state: 'pending',
+    },
+    {
+      detail: 'Begins after funding',
+      label: 'Hermes activation pending',
+      state: 'pending',
+    },
+  ] satisfies Array<{ detail: string; label: string; state: 'complete' | 'pending' }>;
   const accountMetrics = [
     { label: 'Total Deposited', value: formatCurrency(data.portfolio.deposited, { whole: true }) },
-    { label: 'Current Value', value: isAwaitingDeposit ? 'Pending' : formatCurrency(data.portfolio.value, { whole: true }) },
+    {
+      label: 'Current Value',
+      value: isAwaitingDeposit ? 'Pending' : formatCurrency(data.portfolio.value, { whole: true }),
+    },
     {
       label: 'Net Profit',
       positive: !isAwaitingDeposit && data.portfolio.profit > 0,
@@ -423,6 +484,30 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             </CardContent>
           </Card>
         </div>
+
+        {isAwaitingDeposit ? (
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Activation Status</p>
+                  <CardTitle>Pending activation</CardTitle>
+                </div>
+                <Badge variant="secondary">IN REVIEW</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {activationSteps.map((step) => (
+                  <ActivationStep key={step.label} detail={step.detail} label={step.label} state={step.state} />
+                ))}
+              </div>
+              <p className="mt-5 border-t border-neutral-200 pt-4 text-sm leading-6 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
+                Hermes will begin allocation after capital is received and the account is activated.
+              </p>
+            </CardContent>
+          </Card>
+        ) : null}
 
         <Card>
           <CardHeader className="pb-4">

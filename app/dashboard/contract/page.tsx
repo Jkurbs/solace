@@ -70,6 +70,10 @@ function getCurrentValue(field: DashboardFieldKey, snapshot: HermesDashboardSnap
   switch (field) {
     case 'account':
       return snapshot.account.label;
+    case 'activation_status':
+      return snapshot.account.lifecycle === 'AWAITING_DEPOSIT'
+        ? 'Risk profile selected · Capital intent recorded · Funding pending · Activation pending'
+        : 'Active';
     case 'portfolio':
       return formatCurrency(snapshot.portfolio.value);
     case 'todays_change':

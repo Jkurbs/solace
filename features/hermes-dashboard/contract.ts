@@ -20,6 +20,14 @@ export const dashboardFieldSources: DashboardFieldSource[] = [
     status: 'mock',
   },
   {
+    field: 'activation_status',
+    label: 'Activation status',
+    owner: 'account_preferences',
+    ownerLabel: 'Account Preferences',
+    requirement: 'Tracks approved-user setup progress across risk profile selection, capital intent, funding instructions, and activation state.',
+    status: 'mock',
+  },
+  {
     field: 'portfolio',
     label: 'Portfolio value',
     owner: 'ledger',
