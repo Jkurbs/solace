@@ -1,8 +1,32 @@
-import type { DashboardFieldSource, HermesDashboardContractVersion, RiskProfile } from './types';
+import type {
+  AccountType,
+  DashboardFieldSource,
+  HermesDashboardContractVersion,
+  IntendedDepositRange,
+  RiskProfile,
+  SourceOfFunds,
+} from './types';
 
 export const hermesDashboardContractVersion: HermesDashboardContractVersion = 'hermes.dashboard.v1';
 
 export const riskProfileValues: RiskProfile[] = ['Preservation', 'Balanced', 'Velocity'];
+
+export const accountTypeValues: AccountType[] = ['Individual', 'Entity'];
+
+export const intendedDepositRangeValues: IntendedDepositRange[] = [
+  '$10k-$25k',
+  '$25k-$100k',
+  '$100k-$250k',
+  '$250k+',
+];
+
+export const sourceOfFundsValues: SourceOfFunds[] = [
+  'Employment income',
+  'Business income',
+  'Investment proceeds',
+  'Savings',
+  'Other',
+];
 
 export const riskProfileDescriptions: Record<RiskProfile, string> = {
   Preservation: 'Preservation prioritizes drawdown control, lower activity, and larger cash reserves.',
@@ -26,6 +50,22 @@ export const dashboardFieldSources: DashboardFieldSource[] = [
     ownerLabel: 'Account Preferences',
     requirement: 'Tracks approved-user setup progress across risk profile selection, capital intent, funding instructions, and activation state.',
     status: 'mock',
+  },
+  {
+    field: 'account_review',
+    label: 'Account review',
+    owner: 'account_preferences',
+    ownerLabel: 'Account Preferences',
+    requirement: 'Stores light onboarding review data without collecting ID documents, SSNs, or bank details inside Solace.',
+    status: 'mock',
+  },
+  {
+    field: 'identity_verification',
+    label: 'Identity verification',
+    owner: 'identity_verification',
+    ownerLabel: 'Stripe Identity',
+    requirement: 'Creates and tracks Stripe Identity verification sessions while keeping sensitive verification data outside Solace.',
+    status: 'planned',
   },
   {
     field: 'portfolio',

@@ -5,7 +5,13 @@ import { ArrowRight, Scale, ShieldCheck, Zap } from 'lucide-react';
 
 import Mark from '@/app/Mark';
 import { hasDashboardAccess } from '@/features/hermes-dashboard/access';
-import { riskProfileDescriptions, riskProfileValues } from '@/features/hermes-dashboard/contract';
+import {
+  accountTypeValues,
+  intendedDepositRangeValues,
+  riskProfileDescriptions,
+  riskProfileValues,
+  sourceOfFundsValues,
+} from '@/features/hermes-dashboard/contract';
 import { getDashboardOnboardingState } from '@/features/hermes-dashboard/preferences';
 import type { RiskProfile } from '@/features/hermes-dashboard/types';
 
@@ -63,7 +69,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             Welcome to Hermes.
           </h1>
           <p className="mt-5 max-w-md text-sm leading-6 text-neutral-400">
-            Set the account posture and initial capital intent before entering the dashboard.
+            Set the account posture, complete a light review, and record capital intent before entering the dashboard.
           </p>
           <div className="mt-8 grid gap-3 text-sm text-neutral-400">
             <div className="grid grid-cols-[1.5rem_1fr] gap-3">
@@ -72,10 +78,18 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             </div>
             <div className="grid grid-cols-[1.5rem_1fr] gap-3">
               <span className="font-mono text-neutral-600">02</span>
-              <span>Record capital intent</span>
+              <span>Submit account review</span>
             </div>
             <div className="grid grid-cols-[1.5rem_1fr] gap-3">
               <span className="font-mono text-neutral-600">03</span>
+              <span>Consent to identity verification</span>
+            </div>
+            <div className="grid grid-cols-[1.5rem_1fr] gap-3">
+              <span className="font-mono text-neutral-600">04</span>
+              <span>Record capital intent</span>
+            </div>
+            <div className="grid grid-cols-[1.5rem_1fr] gap-3">
+              <span className="font-mono text-neutral-600">05</span>
               <span>Enter dashboard</span>
             </div>
           </div>
@@ -112,6 +126,122 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                   </label>
                 );
               })}
+            </div>
+          </div>
+
+          <div className="mt-8 border-t border-neutral-800 pt-6">
+            <p className="text-sm font-medium text-neutral-400">Account Review</p>
+            <h2 className="mt-1 text-xl font-semibold text-neutral-50">Light profile</h2>
+            <p className="mt-3 text-sm leading-6 text-neutral-400">
+              Solace does not collect ID documents, SSNs, or bank details in this form.
+            </p>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="legal-name" className="block text-sm font-medium text-neutral-300">
+                  Legal name
+                </label>
+                <input
+                  id="legal-name"
+                  name="legalName"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
+                />
+              </div>
+              <div>
+                <label htmlFor="account-type" className="block text-sm font-medium text-neutral-300">
+                  Account type
+                </label>
+                <select
+                  id="account-type"
+                  name="accountType"
+                  required
+                  defaultValue="Individual"
+                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors focus:border-neutral-400"
+                >
+                  {accountTypeValues.map((accountType) => (
+                    <option key={accountType} value={accountType}>
+                      {accountType}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="review-country" className="block text-sm font-medium text-neutral-300">
+                  Country
+                </label>
+                <input
+                  id="review-country"
+                  name="country"
+                  type="text"
+                  autoComplete="country-name"
+                  required
+                  defaultValue="United States"
+                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
+                />
+              </div>
+              <div>
+                <label htmlFor="review-region" className="block text-sm font-medium text-neutral-300">
+                  State / region
+                </label>
+                <input
+                  id="review-region"
+                  name="region"
+                  type="text"
+                  autoComplete="address-level1"
+                  required
+                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
+                />
+              </div>
+              <div>
+                <label htmlFor="deposit-range" className="block text-sm font-medium text-neutral-300">
+                  Intended range
+                </label>
+                <select
+                  id="deposit-range"
+                  name="intendedDepositRange"
+                  required
+                  defaultValue="$10k-$25k"
+                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors focus:border-neutral-400"
+                >
+                  {intendedDepositRangeValues.map((range) => (
+                    <option key={range} value={range}>
+                      {range}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="source-of-funds" className="block text-sm font-medium text-neutral-300">
+                  Source of funds
+                </label>
+                <select
+                  id="source-of-funds"
+                  name="sourceOfFunds"
+                  required
+                  defaultValue="Employment income"
+                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors focus:border-neutral-400"
+                >
+                  {sourceOfFundsValues.map((source) => (
+                    <option key={source} value={source}>
+                      {source}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3">
+              <label className="flex gap-3 rounded-md border border-neutral-800 bg-neutral-950/30 p-4 text-sm leading-6 text-neutral-300">
+                <input name="riskAcknowledged" type="checkbox" required className="mt-1 h-4 w-4 accent-neutral-50" />
+                <span>Capital deployment is subject to review and activation by Solace.</span>
+              </label>
+              <label className="flex gap-3 rounded-md border border-neutral-800 bg-neutral-950/30 p-4 text-sm leading-6 text-neutral-300">
+                <input name="identityConsent" type="checkbox" required className="mt-1 h-4 w-4 accent-neutral-50" />
+                <span>I consent to identity verification through Stripe Identity when verification is opened.</span>
+              </label>
             </div>
           </div>
 

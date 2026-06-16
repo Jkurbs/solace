@@ -9,6 +9,11 @@ export const hermesDashboardSnapshot: HermesDashboardSnapshot = {
     label: 'Account ending 4821',
     lifecycle: 'ACTIVE',
     depositIntent: null,
+    review: null,
+    identityVerification: {
+      provider: 'stripe_identity',
+      status: 'NOT_STARTED',
+    },
   },
   updatedAt: '2026-06-15T13:42:00.000Z',
   portfolio: {

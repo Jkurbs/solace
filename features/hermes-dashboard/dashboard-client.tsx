@@ -16,11 +16,12 @@ import {
   getHermesDashboardSnapshot,
   hermesDashboardQueryKey,
   logoutUser,
+  startIdentityVerification,
   startMoneyMovement,
   updateRiskProfile,
 } from './queries';
 import { riskProfileDescriptions } from './contract';
-import type { HermesDashboardSnapshot, MoneyMovementType, RiskProfile } from './types';
+import type { HermesDashboardSnapshot, IdentityVerificationStatus, MoneyMovementType, RiskProfile } from './types';
 
 type HermesDashboardProps = {
   initialSnapshot: HermesDashboardSnapshot;
@@ -123,6 +124,14 @@ function formatConstantLabel(value: string) {
     .join(' ');
 }
 
+function formatIdentityStatus(value: IdentityVerificationStatus) {
+  return value
+    .toLowerCase()
+    .split('_')
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+}
+
 function coerceDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
 }
@@ -198,6 +207,7 @@ function ActivationStep({
 
 export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const [actionStatus, setActionStatus] = useState('');
+  const [identityStatus, setIdentityStatus] = useState('');
   const [logoutStatus, setLogoutStatus] = useState('');
   const [riskStatus, setRiskStatus] = useState('');
   const [theme, setTheme] = useState<DashboardTheme>('dark');
@@ -219,6 +229,20 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
     },
     onSuccess(payload) {
       setActionStatus(payload.message ?? '');
+    },
+  });
+
+  const identityVerification = useMutation({
+    mutationFn: startIdentityVerification,
+    onMutate() {
+      setIdentityStatus('');
+    },
+    onError(error) {
+      setIdentityStatus(error.message);
+    },
+    onSuccess(payload) {
+      setIdentityStatus(payload.message ?? '');
+      queryClient.invalidateQueries({ queryKey: hermesDashboardQueryKey });
     },
   });
 
@@ -310,11 +334,28 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const depositIntentLabel = data.account.depositIntent?.amount
     ? formatCurrency(data.account.depositIntent.amount, { whole: true })
     : 'Pending';
+  const accountReviewSubmitted = data.account.review?.status === 'SUBMITTED';
+  const identityVerificationLabel = formatIdentityStatus(data.account.identityVerification.status);
+  const identityHelper =
+    identityStatus ||
+    (data.account.identityVerification.status === 'SESSION_CREATED'
+      ? 'Stripe Identity session has been created. Complete verification in the Stripe flow.'
+      : 'Verification uses Stripe Identity when test-mode keys are configured.');
   const activationSteps = [
     {
       detail: data.status.riskProfile,
       label: 'Risk profile selected',
       state: 'complete',
+    },
+    {
+      detail: accountReviewSubmitted ? `${data.account.review?.accountType} · ${data.account.review?.country}` : 'Pending',
+      label: 'Account review submitted',
+      state: accountReviewSubmitted ? 'complete' : 'pending',
+    },
+    {
+      detail: identityVerificationLabel,
+      label: 'Identity verification',
+      state: data.account.identityVerification.status === 'VERIFIED' ? 'complete' : 'pending',
     },
     {
       detail: depositIntentLabel,
@@ -497,13 +538,28 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {activationSteps.map((step) => (
                   <ActivationStep key={step.label} detail={step.detail} label={step.label} state={step.state} />
                 ))}
               </div>
-              <p className="mt-5 border-t border-neutral-200 pt-4 text-sm leading-6 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
-                Hermes will begin allocation after capital is received and the account is activated.
+              <div className="mt-5 grid gap-4 border-t border-neutral-200 pt-4 dark:border-neutral-800 md:grid-cols-[1fr_auto] md:items-center">
+                <p className="text-sm leading-6 text-neutral-600 dark:text-neutral-400">
+                  Hermes will begin allocation after identity verification, capital receipt, and account activation.
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => identityVerification.mutate()}
+                  disabled={identityVerification.isPending || data.account.identityVerification.status === 'VERIFIED'}
+                  className="w-full md:w-auto"
+                >
+                  <ShieldCheck size={16} aria-hidden="true" />
+                  {identityVerification.isPending ? 'Opening' : 'Start verification'}
+                </Button>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-neutral-500 dark:text-neutral-400" aria-live="polite">
+                {identityHelper}
               </p>
             </CardContent>
           </Card>

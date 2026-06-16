@@ -72,8 +72,18 @@ function getCurrentValue(field: DashboardFieldKey, snapshot: HermesDashboardSnap
       return snapshot.account.label;
     case 'activation_status':
       return snapshot.account.lifecycle === 'AWAITING_DEPOSIT'
-        ? 'Risk profile selected · Capital intent recorded · Funding pending · Activation pending'
+        ? 'Risk profile selected · Account review submitted · Identity pending · Capital intent recorded · Funding pending · Activation pending'
         : 'Active';
+    case 'account_review':
+      return snapshot.account.review
+        ? `${snapshot.account.review.accountType} · ${snapshot.account.review.country} · ${snapshot.account.review.sourceOfFunds}`
+        : 'Not submitted';
+    case 'identity_verification':
+      return snapshot.account.identityVerification.status
+        .toLowerCase()
+        .split('_')
+        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+        .join(' ');
     case 'portfolio':
       return formatCurrency(snapshot.portfolio.value);
     case 'todays_change':
@@ -144,14 +154,24 @@ export default async function DashboardContractPage() {
   const riskProfile = await getStoredRiskProfile();
   const onboarding = dashboardAccessGranted
     ? await getDashboardOnboardingState()
-    : { complete: false, depositIntentAmount: null };
+    : {
+        accountReview: null,
+        complete: false,
+        depositIntentAmount: null,
+        identityVerification: {
+          provider: 'stripe_identity' as const,
+          status: 'NOT_STARTED' as const,
+        },
+      };
 
   if (dashboardAccessGranted && !consoleAccessGranted && !onboarding.complete) {
     redirect('/dashboard/onboarding');
   }
 
   const snapshot = await getHermesDashboardSnapshot({
+    accountReview: onboarding.accountReview,
     depositIntentAmount: onboarding.depositIntentAmount,
+    identityVerification: onboarding.identityVerification,
     lifecycle: onboarding.complete ? 'AWAITING_DEPOSIT' : 'ACTIVE',
     riskProfile,
   });

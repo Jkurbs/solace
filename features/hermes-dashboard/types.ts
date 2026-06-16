@@ -10,6 +10,21 @@ export type HermesAccountLifecycle = 'ACTIVE' | 'AWAITING_DEPOSIT';
 
 export type DepositIntentStatus = 'REVIEW_PENDING';
 
+export type AccountType = 'Individual' | 'Entity';
+
+export type IntendedDepositRange = '$10k-$25k' | '$25k-$100k' | '$100k-$250k' | '$250k+';
+
+export type SourceOfFunds =
+  | 'Employment income'
+  | 'Business income'
+  | 'Investment proceeds'
+  | 'Savings'
+  | 'Other';
+
+export type AccountReviewStatus = 'SUBMITTED';
+
+export type IdentityVerificationStatus = 'NOT_STARTED' | 'READY' | 'SESSION_CREATED' | 'VERIFIED' | 'REQUIRES_INPUT';
+
 export type IsoDateString = string;
 
 export type HermesDashboardContractVersion = 'hermes.dashboard.v1';
@@ -21,11 +36,14 @@ export type DashboardFieldOwner =
   | 'position_ownership'
   | 'decision_journal'
   | 'hermes_state'
-  | 'account_preferences';
+  | 'account_preferences'
+  | 'identity_verification';
 
 export type DashboardFieldKey =
   | 'account'
   | 'activation_status'
+  | 'account_review'
+  | 'identity_verification'
   | 'portfolio'
   | 'todays_change'
   | 'since_inception'
@@ -85,6 +103,25 @@ export interface Allocation {
   percentage: number;
 }
 
+export interface AccountReview {
+  status: AccountReviewStatus;
+  accountType: AccountType;
+  country: string;
+  region: string;
+  intendedDepositRange: IntendedDepositRange;
+  sourceOfFunds: SourceOfFunds;
+  legalNameProvided: boolean;
+  riskAcknowledged: boolean;
+  identityConsent: boolean;
+}
+
+export interface IdentityVerification {
+  provider: 'stripe_identity';
+  status: IdentityVerificationStatus;
+  sessionId?: string;
+  updatedAt?: IsoDateString;
+}
+
 export type HermesDashboardSnapshot = {
   contractVersion: HermesDashboardContractVersion;
   generatedAt: IsoDateString;
@@ -96,6 +133,8 @@ export type HermesDashboardSnapshot = {
       amount: number;
       status: DepositIntentStatus;
     } | null;
+    review?: AccountReview | null;
+    identityVerification: IdentityVerification;
   };
   updatedAt: IsoDateString;
   portfolio: Portfolio;

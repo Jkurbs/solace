@@ -17,7 +17,9 @@ export async function GET() {
   }
 
   const snapshot = await getHermesDashboardSnapshot({
+    accountReview: onboarding.accountReview,
     depositIntentAmount: onboarding.depositIntentAmount,
+    identityVerification: onboarding.identityVerification,
     lifecycle: 'AWAITING_DEPOSIT',
     riskProfile,
   });

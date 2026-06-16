@@ -55,6 +55,26 @@ export async function startMoneyMovement(type: MoneyMovementType) {
   return payload;
 }
 
+export async function startIdentityVerification() {
+  const response = await fetch('/api/stripe/identity-session', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+  const payload = (await response.json()) as { message?: string; url?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.message ?? 'Identity verification could not be started.');
+  }
+
+  if (payload.url) {
+    window.location.assign(payload.url);
+  }
+
+  return payload;
+}
+
 export async function logoutUser() {
   const response = await fetch('/api/auth/logout', {
     method: 'POST',

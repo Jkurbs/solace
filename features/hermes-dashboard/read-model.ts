@@ -2,10 +2,12 @@ import 'server-only';
 
 import { dashboardFieldSources, hermesDashboardContractVersion } from './contract';
 import { hermesDashboardSnapshot } from './mock-data';
-import type { HermesDashboardSnapshot, RiskProfile } from './types';
+import type { AccountReview, HermesDashboardSnapshot, IdentityVerification, RiskProfile } from './types';
 
 type DashboardSnapshotInput = {
+  accountReview?: AccountReview | null;
   depositIntentAmount?: number | null;
+  identityVerification?: IdentityVerification | null;
   lifecycle?: HermesDashboardSnapshot['account']['lifecycle'];
   riskProfile?: RiskProfile | null;
 };
@@ -16,6 +18,8 @@ function cloneSnapshot(snapshot: HermesDashboardSnapshot): HermesDashboardSnapsh
     account: {
       ...snapshot.account,
       depositIntent: snapshot.account.depositIntent ? { ...snapshot.account.depositIntent } : null,
+      identityVerification: { ...snapshot.account.identityVerification },
+      review: snapshot.account.review ? { ...snapshot.account.review } : null,
     },
     fieldSources: snapshot.fieldSources.map((source) => ({ ...source })),
     portfolio: {
@@ -31,7 +35,17 @@ function cloneSnapshot(snapshot: HermesDashboardSnapshot): HermesDashboardSnapsh
 
 function getAwaitingDepositSnapshot(
   snapshot: HermesDashboardSnapshot,
-  { depositIntentAmount, riskProfile }: { depositIntentAmount: number | null | undefined; riskProfile: RiskProfile },
+  {
+    accountReview,
+    depositIntentAmount,
+    identityVerification,
+    riskProfile,
+  }: {
+    accountReview: AccountReview | null | undefined;
+    depositIntentAmount: number | null | undefined;
+    identityVerification: IdentityVerification | null | undefined;
+    riskProfile: RiskProfile;
+  },
 ) {
   const updatedAt = new Date().toISOString();
   const amount = depositIntentAmount ?? 0;
@@ -45,6 +59,11 @@ function getAwaitingDepositSnapshot(
         amount,
         status: 'REVIEW_PENDING',
       },
+      identityVerification: identityVerification ?? {
+        provider: 'stripe_identity',
+        status: 'READY',
+      },
+      review: accountReview ?? null,
     },
     updatedAt,
     portfolio: {
@@ -72,6 +91,7 @@ function getAwaitingDepositSnapshot(
     allocation: [{ asset: 'Cash', percentage: 100 }],
     activity: [
       { timestamp: updatedAt, summary: `${riskProfile} risk profile selected` },
+      { timestamp: updatedAt, summary: 'Account review submitted' },
       { timestamp: updatedAt, summary: 'Deposit intent recorded' },
     ],
     commentary:
@@ -80,7 +100,9 @@ function getAwaitingDepositSnapshot(
 }
 
 export async function getHermesDashboardSnapshot({
+  accountReview,
   depositIntentAmount,
+  identityVerification,
   lifecycle = 'ACTIVE',
   riskProfile,
 }: DashboardSnapshotInput = {}): Promise<HermesDashboardSnapshot> {
@@ -94,7 +116,12 @@ export async function getHermesDashboardSnapshot({
   };
 
   if (lifecycle === 'AWAITING_DEPOSIT') {
-    return getAwaitingDepositSnapshot(baseSnapshot, { depositIntentAmount, riskProfile: selectedRiskProfile });
+    return getAwaitingDepositSnapshot(baseSnapshot, {
+      accountReview,
+      depositIntentAmount,
+      identityVerification,
+      riskProfile: selectedRiskProfile,
+    });
   }
 
   return {
