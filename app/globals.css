@@ -1711,35 +1711,43 @@ body {
 
   .hermes-form-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 2.2rem 2rem;
+    grid-template-columns: repeat(2, minmax(18rem, 1fr));
+    align-items: start;
+    gap: 2.35rem 2rem;
   }
 
-  .hermes-form-grid label {
+  .hermes-form-field {
     display: grid;
-    gap: 0.7rem;
+    min-width: 0;
+    gap: 0.75rem;
+    align-content: start;
   }
 
-  .hermes-form-grid span {
+  .hermes-form-field label {
     color: rgba(242, 234, 219, 0.72);
     font-family: var(--font-plex), monospace;
     font-size: 0.72rem;
     letter-spacing: 0.15em;
+    line-height: 1.35;
     text-transform: uppercase;
   }
 
-  .hermes-form-grid i {
+  .hermes-form-field i {
     color: rgba(255, 135, 115, 0.95);
     font-style: normal;
   }
 
-  .hermes-form-grid input,
-  .hermes-form-grid select,
-  .hermes-form-grid textarea {
+  .hermes-form-field input,
+  .hermes-form-field select,
+  .hermes-form-field textarea {
+    display: block;
     width: 100%;
+    min-width: 0;
+    min-height: 2.75rem;
     border: 0;
     border-bottom: 1px solid rgba(242, 234, 219, 0.45);
     border-radius: 0;
+    appearance: none;
     background: transparent;
     color: var(--foreground);
     font: inherit;
@@ -1748,25 +1756,29 @@ body {
     padding: 0.55rem 0 0.85rem;
   }
 
-  .hermes-form-grid textarea {
+  .hermes-form-field select {
+    cursor: pointer;
+  }
+
+  .hermes-form-field textarea {
     min-height: 7rem;
     border: 1px solid rgba(242, 234, 219, 0.38);
     padding: 1rem;
     resize: vertical;
   }
 
-  .hermes-form-grid input:focus,
-  .hermes-form-grid select:focus,
-  .hermes-form-grid textarea:focus {
+  .hermes-form-field input:focus,
+  .hermes-form-field select:focus,
+  .hermes-form-field textarea:focus {
     border-color: var(--foreground);
   }
 
-  .hermes-form-grid option {
+  .hermes-form-field option {
     background: #11100e;
     color: var(--foreground);
   }
 
-  .hermes-form-grid ::placeholder {
+  .hermes-form-field ::placeholder {
     color: rgba(242, 234, 219, 0.36);
   }
 
