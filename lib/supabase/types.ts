@@ -3,6 +3,69 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      account_onboarding: {
+        Row: {
+          ledger_account_id: string;
+          complete: boolean;
+          risk_profile: 'Preservation' | 'Balanced' | 'Velocity';
+          account_review: Json | null;
+          deposit_intent_amount: number | null;
+          identity_verification: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          ledger_account_id: string;
+          complete?: boolean;
+          risk_profile: 'Preservation' | 'Balanced' | 'Velocity';
+          account_review?: Json | null;
+          deposit_intent_amount?: number | null;
+          identity_verification?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          ledger_account_id?: string;
+          complete?: boolean;
+          risk_profile?: 'Preservation' | 'Balanced' | 'Velocity';
+          account_review?: Json | null;
+          deposit_intent_amount?: number | null;
+          identity_verification?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      dashboard_invites: {
+        Row: {
+          id: string;
+          access_request_id: string | null;
+          ledger_account_id: string;
+          code_hash: string;
+          status: 'ACTIVE' | 'REVOKED';
+          created_at: string;
+          used_at: string | null;
+        };
+        Insert: {
+          id: string;
+          access_request_id?: string | null;
+          ledger_account_id: string;
+          code_hash: string;
+          status: 'ACTIVE' | 'REVOKED';
+          created_at?: string;
+          used_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          access_request_id?: string | null;
+          ledger_account_id?: string;
+          code_hash?: string;
+          status?: 'ACTIVE' | 'REVOKED';
+          created_at?: string;
+          used_at?: string | null;
+        };
+        Relationships: [];
+      };
       hermes_access_requests: {
         Row: {
           id: string;
@@ -120,6 +183,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      hermes_accounts: {
+        Row: {
+          id: string;
+          solace_user_id: string;
+          status: 'PENDING_ACTIVATION' | 'ACTIVE' | 'PAUSED' | 'CLOSED';
+          risk_profile: 'Preservation' | 'Balanced' | 'Velocity';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          solace_user_id: string;
+          status: 'PENDING_ACTIVATION' | 'ACTIVE' | 'PAUSED' | 'CLOSED';
+          risk_profile: 'Preservation' | 'Balanced' | 'Velocity';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          solace_user_id?: string;
+          status?: 'PENDING_ACTIVATION' | 'ACTIVE' | 'PAUSED' | 'CLOSED';
+          risk_profile?: 'Preservation' | 'Balanced' | 'Velocity';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       hermes_dashboard_snapshots: {
         Row: {
           id: string;
@@ -138,6 +228,69 @@ export type Database = {
           user_id?: string;
           snapshot?: Json;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      ledger_accounts: {
+        Row: {
+          id: string;
+          solace_user_id: string;
+          hermes_account_id: string;
+          label: string;
+          currency: 'USD';
+          status: 'PENDING_ACTIVATION' | 'ACTIVE';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          solace_user_id: string;
+          hermes_account_id: string;
+          label: string;
+          currency?: 'USD';
+          status: 'PENDING_ACTIVATION' | 'ACTIVE';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          solace_user_id?: string;
+          hermes_account_id?: string;
+          label?: string;
+          currency?: 'USD';
+          status?: 'PENDING_ACTIVATION' | 'ACTIVE';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      solace_users: {
+        Row: {
+          id: string;
+          access_request_id: string | null;
+          name: string;
+          email: string;
+          status: 'APPROVED' | 'ACTIVE' | 'SUSPENDED';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          access_request_id?: string | null;
+          name: string;
+          email: string;
+          status: 'APPROVED' | 'ACTIVE' | 'SUSPENDED';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          access_request_id?: string | null;
+          name?: string;
+          email?: string;
+          status?: 'APPROVED' | 'ACTIVE' | 'SUSPENDED';
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };

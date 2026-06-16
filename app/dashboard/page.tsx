@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 };
 
 async function getInitialDashboardSnapshot() {
-  const storedRiskProfile = await getStoredRiskProfile();
-  const onboarding = await getDashboardOnboardingState();
   const accountId = await getDashboardAccountId();
+  const storedRiskProfile = await getStoredRiskProfile(accountId);
+  const onboarding = await getDashboardOnboardingState(accountId);
 
   return getHermesDashboardSnapshot({
     accountId,
@@ -44,7 +44,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     return <DashboardAccessGate denied={denied} />;
   }
 
-  const onboarding = await getDashboardOnboardingState();
+  const accountId = await getDashboardAccountId();
+  const onboarding = await getDashboardOnboardingState(accountId);
 
   if (!onboarding.complete) {
     redirect('/dashboard/onboarding');

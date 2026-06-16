@@ -6,6 +6,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 
 import { createSupabaseServerClient, isSupabaseServerConfigured } from '@/lib/supabase/server';
+import { ensureApprovedAccountRecords } from '@/features/accounts/store';
 
 import { generateAccessReview } from './ai-review';
 import type {
@@ -405,15 +406,20 @@ export async function decideAccessRequest(requestId: string, decision: HumanAcce
   };
   const updatedRequest = approved ? ensureApprovalArtifacts(baseRequest, decidedAt) : baseRequest;
   const savedRequest = await updateSupabaseRequest(updatedRequest);
+  const resolvedRequest = savedRequest ?? updatedRequest;
+
+  if (approved) {
+    await ensureApprovedAccountRecords(resolvedRequest);
+  }
 
   if (savedRequest) {
     addMemoryRequest(savedRequest);
-    return savedRequest;
+    return resolvedRequest;
   }
 
   await addFallbackRequest(updatedRequest);
 
-  return updatedRequest;
+  return resolvedRequest;
 }
 
 export async function findApprovedAccessRequestByDashboardCode(code: string) {

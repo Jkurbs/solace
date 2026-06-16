@@ -3,6 +3,14 @@ import 'server-only';
 import { cookies } from 'next/headers';
 import type { NextResponse } from 'next/server';
 
+import {
+  completeAccountOnboarding,
+  getAccountOnboarding,
+  getAccountRiskProfile,
+  updateAccountIdentityVerification,
+  updateAccountRiskProfile,
+} from '@/features/accounts/store';
+
 import { accountTypeValues, intendedDepositRangeValues, riskProfileValues, sourceOfFundsValues } from './contract';
 import type {
   AccountReview,
@@ -40,14 +48,35 @@ export type DashboardOnboardingState = {
   identityVerification: IdentityVerification;
 };
 
-export async function getStoredRiskProfile() {
+export async function getStoredRiskProfile(accountId?: string | null) {
+  if (accountId) {
+    const persistedRiskProfile = await getAccountRiskProfile(accountId);
+
+    if (persistedRiskProfile) {
+      return persistedRiskProfile;
+    }
+  }
+
   const cookieStore = await cookies();
   const riskProfile = cookieStore.get(riskProfileCookieName)?.value as RiskProfile | undefined;
 
   return riskProfile && riskProfiles.has(riskProfile) ? riskProfile : null;
 }
 
-export async function getDashboardOnboardingState(): Promise<DashboardOnboardingState> {
+export async function getDashboardOnboardingState(accountId?: string | null): Promise<DashboardOnboardingState> {
+  if (accountId) {
+    const persistedOnboarding = await getAccountOnboarding(accountId);
+
+    if (persistedOnboarding) {
+      return {
+        accountReview: persistedOnboarding.accountReview,
+        complete: persistedOnboarding.complete,
+        depositIntentAmount: persistedOnboarding.depositIntentAmount,
+        identityVerification: persistedOnboarding.identityVerification,
+      };
+    }
+  }
+
   const cookieStore = await cookies();
   const complete = cookieStore.get(dashboardOnboardingCookieName)?.value === 'true';
   const accountReview = parseAccountReviewCookie(cookieStore.get(accountReviewCookieName)?.value);
@@ -229,8 +258,30 @@ export function completeDashboardOnboarding(
   });
 }
 
+export async function completePersistedDashboardOnboarding(
+  accountId: string,
+  {
+    accountReview,
+    depositIntentAmount,
+    riskProfile,
+  }: { accountReview: AccountReview; depositIntentAmount: number; riskProfile: RiskProfile },
+) {
+  return completeAccountOnboarding(accountId, { accountReview, depositIntentAmount, riskProfile });
+}
+
+export async function setPersistedRiskProfilePreference(accountId: string, riskProfile: RiskProfile) {
+  return updateAccountRiskProfile(accountId, riskProfile);
+}
+
 export function setIdentityVerificationPreference(response: NextResponse, identityVerification: IdentityVerification) {
   setJsonCookie(response, identityVerificationCookieName, identityVerification);
+}
+
+export async function setPersistedIdentityVerificationPreference(
+  accountId: string,
+  identityVerification: IdentityVerification,
+) {
+  return updateAccountIdentityVerification(accountId, identityVerification);
 }
 
 export function expireDashboardOnboarding(response: NextResponse) {

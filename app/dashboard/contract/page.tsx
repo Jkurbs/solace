@@ -151,10 +151,10 @@ export default async function DashboardContractPage() {
     return <DashboardAccessGate />;
   }
 
-  const riskProfile = await getStoredRiskProfile();
   const dashboardAccountId = dashboardAccessGranted ? await getDashboardAccountId() : null;
+  const riskProfile = await getStoredRiskProfile(dashboardAccountId);
   const onboarding = dashboardAccessGranted
-    ? await getDashboardOnboardingState()
+    ? await getDashboardOnboardingState(dashboardAccountId)
     : {
         accountReview: null,
         complete: false,

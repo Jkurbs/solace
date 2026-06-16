@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 
-import { hasDashboardAccess } from '@/features/hermes-dashboard/access';
+import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import {
   buildAccountReview,
   completeDashboardOnboarding,
+  completePersistedDashboardOnboarding,
   isRiskProfile,
   parseDepositIntentAmount,
 } from '@/features/hermes-dashboard/preferences';
@@ -21,6 +22,12 @@ export async function POST(request: Request) {
 
   if (!isRiskProfile(riskProfile) || !accountReview || !depositIntentAmount) {
     return NextResponse.redirect(new URL('/dashboard/onboarding?setup=invalid', request.url), 303);
+  }
+
+  const accountId = await getDashboardAccountId();
+
+  if (accountId) {
+    await completePersistedDashboardOnboarding(accountId, { accountReview, depositIntentAmount, riskProfile });
   }
 
   const response = NextResponse.redirect(new URL('/dashboard', request.url), 303);

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 
-import { hasDashboardAccess } from '@/features/hermes-dashboard/access';
+import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import {
   getDashboardOnboardingState,
   getStoredRiskProfile,
+  setPersistedIdentityVerificationPreference,
   setIdentityVerificationPreference,
 } from '@/features/hermes-dashboard/preferences';
 import { getStripeServerClient } from '@/lib/stripe/server';
@@ -15,7 +16,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Dashboard access required.' }, { status: 401 });
   }
 
-  const onboarding = await getDashboardOnboardingState();
+  const accountId = await getDashboardAccountId();
+  const onboarding = await getDashboardOnboardingState(accountId);
 
   if (!onboarding.complete || !onboarding.accountReview) {
     return NextResponse.json({ message: 'Account review is required before verification.' }, { status: 409 });
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const riskProfile = await getStoredRiskProfile();
+  const riskProfile = await getStoredRiskProfile(accountId);
 
   try {
     const verificationSession = await stripe.identity.verificationSessions.create({
@@ -49,12 +51,18 @@ export async function POST(request: Request) {
       url: verificationSession.url,
     });
 
-    setIdentityVerificationPreference(response, {
+    const identityVerification = {
       provider: 'stripe_identity',
       sessionId: verificationSession.id,
       status: 'SESSION_CREATED',
       updatedAt: new Date().toISOString(),
-    });
+    } as const;
+
+    if (accountId) {
+      await setPersistedIdentityVerificationPreference(accountId, identityVerification);
+    }
+
+    setIdentityVerificationPreference(response, identityVerification);
 
     return response;
   } catch (error) {

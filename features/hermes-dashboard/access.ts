@@ -4,10 +4,7 @@ import { createHash, timingSafeEqual } from 'crypto';
 import { cookies } from 'next/headers';
 import type { NextResponse } from 'next/server';
 
-import {
-  findApprovedAccessRequestByDashboardCode,
-  hasDashboardInviteAccess,
-} from '@/features/access-review/store';
+import { findActiveDashboardInviteByCode, hasDashboardInviteAccess } from '@/features/accounts/store';
 
 const dashboardAccessCookieName = 'hermes_dashboard_access';
 const dashboardAccountCookieName = 'hermes_dashboard_account_id';
@@ -88,17 +85,16 @@ export async function resolveDashboardAccessCode(code: string): Promise<Dashboar
     return { kind: 'global' };
   }
 
-  const approvedRequest = await findApprovedAccessRequestByDashboardCode(code);
-  const accountId = approvedRequest?.ledgerAccountId ?? approvedRequest?.accountId;
+  const approvedInvite = await findActiveDashboardInviteByCode(code);
 
-  if (!accountId || !approvedRequest?.dashboardInviteCodeHash) {
+  if (!approvedInvite) {
     return null;
   }
 
   return {
-    accountId,
+    accountId: approvedInvite.accountId,
     kind: 'invite',
-    token: approvedRequest.dashboardInviteCodeHash,
+    token: approvedInvite.token,
   };
 }
 

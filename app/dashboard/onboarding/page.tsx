@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { ArrowRight, Scale, ShieldCheck, Zap } from 'lucide-react';
 
 import Mark from '@/app/Mark';
-import { hasDashboardAccess } from '@/features/hermes-dashboard/access';
+import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import {
   accountTypeValues,
   intendedDepositRangeValues,
@@ -39,7 +39,8 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
     redirect('/dashboard');
   }
 
-  const onboarding = await getDashboardOnboardingState();
+  const accountId = await getDashboardAccountId();
+  const onboarding = await getDashboardOnboardingState(accountId);
 
   if (onboarding.complete) {
     redirect('/dashboard');

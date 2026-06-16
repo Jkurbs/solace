@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { listAccessRequests } from '@/features/access-review/store';
+import { listPersistedAccountBundles } from '@/features/accounts/store';
 
 import { ledgerSeedData } from './seed-data';
 import type {
@@ -35,33 +35,32 @@ function getAccountLabel(accountId: string) {
 }
 
 async function getApprovedAccountDataset(): Promise<LedgerDataset> {
-  const accessRequests = await listAccessRequests();
-  const approvedRequests = accessRequests.filter((request) => request.status === 'approved');
+  const accountBundles = await listPersistedAccountBundles();
 
-  return approvedRequests.reduce<LedgerDataset>(
-    (dataset, request) => {
-      const accountId = request.ledgerAccountId ?? request.accountId;
-      const userId = request.solaceUserId;
+  return accountBundles.reduce<LedgerDataset>(
+    (dataset, bundle) => {
+      const accountId = bundle.ledgerAccount.id;
+      const userId = bundle.user.id;
 
       if (!accountId || !userId || dataset.accounts.some((account) => account.id === accountId)) {
         return dataset;
       }
 
-      const createdAt = request.accountCreatedAt ?? request.humanDecisionAt ?? request.createdAt;
+      const createdAt = bundle.ledgerAccount.createdAt;
 
       dataset.users.push({
         createdAt,
-        email: request.email,
+        email: bundle.user.email,
         id: userId,
-        name: `${request.firstName} ${request.lastName}`.trim(),
-        riskProfile: 'Balanced',
+        name: bundle.user.name,
+        riskProfile: bundle.onboarding?.riskProfile ?? bundle.hermesAccount.riskProfile,
       });
       dataset.accounts.push({
         createdAt,
-        currency: 'USD',
+        currency: bundle.ledgerAccount.currency,
         id: accountId,
-        label: getAccountLabel(accountId),
-        status: 'PENDING_ACTIVATION',
+        label: bundle.ledgerAccount.label || getAccountLabel(accountId),
+        status: bundle.ledgerAccount.status,
         userId,
       });
       dataset.activities.push({
