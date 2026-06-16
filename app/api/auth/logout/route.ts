@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 import { expireDashboardAccess } from '@/features/hermes-dashboard/access';
+import { expireConsoleAccess } from '@/features/solace-console/access';
 import { createSupabaseServerClient, isSupabaseServerConfigured } from '@/lib/supabase/server';
 
 function getSupabaseAuthCookiePrefix() {
@@ -58,6 +59,7 @@ export async function POST() {
 
   expireCookie(response, 'hermes_risk_profile');
   expireDashboardAccess(response);
+  expireConsoleAccess(response);
 
   if (supabaseAuthCookiePrefix) {
     cookieStore.getAll().forEach(({ name }) => {

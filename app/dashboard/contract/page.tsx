@@ -6,6 +6,7 @@ import DashboardAccessGate from '@/app/dashboard/DashboardAccessGate';
 import { hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import { getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
 import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
+import { hasConsoleAccess } from '@/features/solace-console/access';
 import type {
   DashboardFieldKey,
   DashboardFieldSource,
@@ -127,7 +128,7 @@ function countByOwner(fieldSources: DashboardFieldSource[]) {
 }
 
 export default async function DashboardContractPage() {
-  const accessGranted = await hasDashboardAccess();
+  const accessGranted = (await hasDashboardAccess()) || (await hasConsoleAccess());
 
   if (!accessGranted) {
     return <DashboardAccessGate />;
