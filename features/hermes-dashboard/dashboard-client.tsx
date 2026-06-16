@@ -293,6 +293,12 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             >
               Hermes
             </Link>
+            <Link
+              href="/dashboard/contract"
+              className="hidden text-neutral-700 transition-colors hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-neutral-50 sm:inline"
+            >
+              Contract
+            </Link>
             <span className="hidden sm:inline">{data.account.label}</span>
             <Button
               type="button"
