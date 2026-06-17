@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
+import {
+  updateAccountIdentityVerification,
+  updateAccountIdentityVerificationBySessionId,
+} from '@/features/accounts/store';
+import type { IdentityVerificationStatus } from '@/features/hermes-dashboard/types';
 import { markStripeDepositSessionStatus, postStripeCheckoutDeposit } from '@/features/ledger/store';
 import { getStripeServerClient } from '@/lib/stripe/server';
 
@@ -15,6 +20,49 @@ function logIdentityEvent(event: Stripe.Event) {
     status: session.status,
     type: event.type,
   });
+}
+
+function getIdentityStatusForEvent(eventType: string): IdentityVerificationStatus | null {
+  switch (eventType) {
+    case 'identity.verification_session.verified':
+      return 'VERIFIED';
+    case 'identity.verification_session.requires_input':
+      return 'REQUIRES_INPUT';
+    case 'identity.verification_session.canceled':
+      return 'READY';
+    default:
+      return null;
+  }
+}
+
+async function persistIdentityEvent(event: Stripe.Event) {
+  const session = event.data.object as Stripe.Identity.VerificationSession;
+  const status = getIdentityStatusForEvent(event.type);
+
+  logIdentityEvent(event);
+
+  if (!status) {
+    return;
+  }
+
+  const identityVerification = {
+    provider: 'stripe_identity',
+    sessionId: session.id,
+    status,
+    updatedAt: new Date(event.created * 1000).toISOString(),
+  } as const;
+  const accountId = session.metadata?.ledger_account_id;
+  const saved = accountId
+    ? await updateAccountIdentityVerification(accountId, identityVerification)
+    : await updateAccountIdentityVerificationBySessionId(session.id, identityVerification);
+
+  if (!saved) {
+    console.warn('[stripe-webhook] Identity verification status could not be persisted.', {
+      eventId: event.id,
+      sessionId: session.id,
+      status,
+    });
+  }
 }
 
 function getPaymentIntentId(session: Stripe.Checkout.Session) {
@@ -127,7 +175,7 @@ export async function POST(request: Request) {
     case 'identity.verification_session.verified':
     case 'identity.verification_session.requires_input':
     case 'identity.verification_session.canceled':
-      logIdentityEvent(event);
+      await persistIdentityEvent(event);
       break;
     default:
       console.info('[stripe-webhook] Event received.', {

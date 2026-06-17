@@ -852,3 +852,36 @@ export async function updateAccountIdentityVerification(accountId: string, ident
 
   return upsertFallbackOnboarding(record);
 }
+
+export async function updateAccountIdentityVerificationBySessionId(
+  sessionId: string,
+  identityVerification: IdentityVerification,
+) {
+  if (isSupabaseDataClientConfigured()) {
+    try {
+      const supabase = await createSupabaseDataClient();
+      const { data, error } = await supabase
+        .from('account_onboarding')
+        .select('ledger_account_id')
+        .contains('identity_verification', { sessionId })
+        .maybeSingle();
+
+      if (error) {
+        console.warn('[accounts] Supabase identity verification session lookup unavailable.', error.message);
+      } else if (data?.ledger_account_id) {
+        return updateAccountIdentityVerification(data.ledger_account_id, identityVerification);
+      }
+    } catch (error) {
+      console.warn('[accounts] Supabase identity verification session lookup failed.', error);
+    }
+  }
+
+  const store = await readFallbackStore();
+  const onboarding = store.onboardings.find((candidate) => candidate.identityVerification.sessionId === sessionId);
+
+  if (!onboarding) {
+    return null;
+  }
+
+  return updateAccountIdentityVerification(onboarding.ledgerAccountId, identityVerification);
+}

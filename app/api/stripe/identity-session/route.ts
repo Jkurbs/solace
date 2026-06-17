@@ -39,6 +39,7 @@ export async function POST(request: Request) {
         account_type: onboarding.accountReview.accountType,
         country: onboarding.accountReview.country,
         deposit_range: onboarding.accountReview.intendedDepositRange,
+        ...(accountId ? { ledger_account_id: accountId } : {}),
         risk_profile: riskProfile ?? 'Balanced',
         source_of_funds: onboarding.accountReview.sourceOfFunds,
       },
