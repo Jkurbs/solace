@@ -2,9 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { grantDashboardAccess, resolveDashboardAccessCode } from '@/features/hermes-dashboard/access';
 
-export async function POST(request: Request) {
-  const formData = await request.formData().catch(() => null);
-  const code = formData?.get('code');
+async function grantAccessFromCode(request: Request, code: FormDataEntryValue | string | null) {
   const dashboardUrl = new URL('/dashboard', request.url);
 
   const dashboardAccess = typeof code === 'string' ? await resolveDashboardAccessCode(code) : null;
@@ -19,4 +17,16 @@ export async function POST(request: Request) {
   grantDashboardAccess(response, dashboardAccess);
 
   return response;
+}
+
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+
+  return grantAccessFromCode(request, url.searchParams.get('code'));
+}
+
+export async function POST(request: Request) {
+  const formData = await request.formData().catch(() => null);
+
+  return grantAccessFromCode(request, formData?.get('code') ?? null);
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { sendHermesApprovalEmail } from '@/features/access-review/approval-email';
 import { decideAccessRequest } from '@/features/access-review/store';
 import type { HumanAccessDecision } from '@/features/access-review/types';
 import { hasConsoleAccess } from '@/features/solace-console/access';
@@ -28,6 +29,11 @@ export async function POST(request: Request) {
   const updatedRequest = await decideAccessRequest(requestId, decision);
 
   redirectUrl.searchParams.set('review', updatedRequest ? 'updated' : 'missing');
+
+  if (updatedRequest && decision === 'APPROVED') {
+    const emailResult = await sendHermesApprovalEmail(updatedRequest, new URL(request.url).origin);
+    redirectUrl.searchParams.set('notification', emailResult);
+  }
 
   return NextResponse.redirect(redirectUrl, 303);
 }
