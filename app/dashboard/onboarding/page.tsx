@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ArrowRight, Scale, ShieldCheck, Zap } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { ArrowRight, Check, Scale, ShieldCheck, Zap } from 'lucide-react';
 
 import Mark from '@/app/Mark';
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
@@ -25,6 +26,18 @@ const riskProfileIcons: Record<RiskProfile, typeof ShieldCheck> = {
   Preservation: ShieldCheck,
   Velocity: Zap,
 };
+
+function ConsentCheckbox({ children, name }: { children: ReactNode; name: string }) {
+  return (
+    <label className="grid cursor-pointer grid-cols-[1.75rem_1fr] gap-4 rounded-md border border-neutral-800 bg-neutral-950/30 p-4 text-sm leading-6 text-neutral-300 transition-colors hover:border-neutral-700 hover:bg-neutral-950/50">
+      <input name={name} type="checkbox" required className="peer sr-only" />
+      <span className="mt-0.5 grid h-5 w-5 place-items-center rounded-md border border-neutral-500 bg-neutral-950 text-neutral-950 transition-colors peer-checked:border-neutral-50 peer-checked:bg-neutral-50 peer-checked:[&>svg]:opacity-100 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-neutral-200">
+        <Check size={15} className="opacity-0 transition-opacity" aria-hidden="true" />
+      </span>
+      <span>{children}</span>
+    </label>
+  );
+}
 
 type DashboardOnboardingPageProps = {
   searchParams?: Promise<{
@@ -235,14 +248,12 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             </div>
 
             <div className="mt-5 grid gap-3">
-              <label className="flex gap-3 rounded-md border border-neutral-800 bg-neutral-950/30 p-4 text-sm leading-6 text-neutral-300">
-                <input name="riskAcknowledged" type="checkbox" required className="mt-1 h-4 w-4 accent-neutral-50" />
-                <span>Capital deployment is subject to review and activation by Solace.</span>
-              </label>
-              <label className="flex gap-3 rounded-md border border-neutral-800 bg-neutral-950/30 p-4 text-sm leading-6 text-neutral-300">
-                <input name="identityConsent" type="checkbox" required className="mt-1 h-4 w-4 accent-neutral-50" />
-                <span>I consent to identity verification through Stripe Identity when verification is opened.</span>
-              </label>
+              <ConsentCheckbox name="riskAcknowledged">
+                Capital deployment is subject to review and activation by Solace.
+              </ConsentCheckbox>
+              <ConsentCheckbox name="identityConsent">
+                I consent to identity verification through Stripe Identity when verification is opened.
+              </ConsentCheckbox>
             </div>
           </div>
 
