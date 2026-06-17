@@ -53,6 +53,22 @@ export default function DashboardAccessGate({ denied = false }: { denied?: boole
           >
             Continue
           </button>
+
+          <div className="mt-6 border-t border-neutral-800 pt-4">
+            <p className="text-xs leading-5 text-neutral-500">
+              Hermes is currently available through a limited beta program. Features, functionality,
+              and access policies may change as the product evolves.
+            </p>
+            <p className="mt-3 text-xs text-neutral-500">
+              <Link href="/terms" className="transition-colors hover:text-neutral-300">
+                Terms
+              </Link>
+              <span className="px-1.5 text-neutral-700">·</span>
+              <Link href="/privacy" className="transition-colors hover:text-neutral-300">
+                Privacy
+              </Link>
+            </p>
+          </div>
         </form>
       </section>
     </main>

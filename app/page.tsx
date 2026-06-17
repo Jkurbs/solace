@@ -183,10 +183,7 @@ export default function Home() {
           <div className="hermes-product-copy">
             <p className="section-kicker">The first instrument</p>
             <h2>Hermes is the first instrument.</h2>
-            <p>
-              Live market intelligence for liquidity, timing, and regime structure. Built for operators who need
-              signal before consensus.
-            </p>
+            <p>Live intelligence for liquidity, timing, and regime — read until signal earns action.</p>
             <div className="hermes-product-actions">
               <Link href="/hermes" className="hermes-product-button hermes-product-button-light">
                 Learn More
@@ -219,11 +216,7 @@ export default function Home() {
           <div className="hermes-product-copy lg:ml-auto">
             <p className="section-kicker">The second instrument</p>
             <h2>The Oracle weighs the futures.</h2>
-            <p>
-              Live probability over real events. The Oracle holds the question open until the world
-              answers — then scores every prediction against what actually happened, wins and misses
-              alike.
-            </p>
+            <p>Live probability over real events — every prediction scored against what actually happened.</p>
 
             <div className="hermes-product-metrics">
               <div>
@@ -294,6 +287,12 @@ export default function Home() {
                 </li>
                 <li>
                   <Link href="/dashboard">Request access</Link>
+                </li>
+                <li>
+                  <Link href="/terms">Terms of service</Link>
+                </li>
+                <li>
+                  <Link href="/privacy">Privacy policy</Link>
                 </li>
                 <li>
                   <a href="mailto:jkurbs18@gmail.com">Contact</a>
