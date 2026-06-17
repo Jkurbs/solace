@@ -15,7 +15,8 @@ export async function POST(request: Request) {
     return NextResponse.redirect(dashboardUrl, 303);
   }
 
-  const onboarding = await getDashboardOnboardingState();
+  const accountId = dashboardAccess.kind === 'invite' ? dashboardAccess.accountId : null;
+  const onboarding = await getDashboardOnboardingState(accountId);
   const nextUrl = new URL(onboarding.complete ? '/dashboard' : '/dashboard/onboarding', request.url);
   const response = NextResponse.redirect(nextUrl, 303);
   grantDashboardAccess(response, dashboardAccess);

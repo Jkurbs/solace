@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
+import { markStripeDepositSessionStatus, postStripeCheckoutDeposit } from '@/features/ledger/store';
 import { getStripeServerClient } from '@/lib/stripe/server';
 
 export const runtime = 'nodejs';
@@ -14,6 +15,76 @@ function logIdentityEvent(event: Stripe.Event) {
     status: session.status,
     type: event.type,
   });
+}
+
+function getPaymentIntentId(session: Stripe.Checkout.Session) {
+  if (!session.payment_intent) {
+    return null;
+  }
+
+  return typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent.id;
+}
+
+function isSolaceDepositSession(session: Stripe.Checkout.Session) {
+  return session.metadata?.purpose === 'solace_deposit' && Boolean(session.metadata.ledger_account_id);
+}
+
+async function postCheckoutDeposit(event: Stripe.Event) {
+  const session = event.data.object as Stripe.Checkout.Session;
+
+  if (!isSolaceDepositSession(session)) {
+    return;
+  }
+
+  if (session.payment_status !== 'paid') {
+    console.info('[stripe-webhook] Checkout session completed before payment posted.', {
+      eventId: event.id,
+      paymentStatus: session.payment_status,
+      sessionId: session.id,
+    });
+    return;
+  }
+
+  const accountId = session.metadata?.ledger_account_id;
+  const amount = session.amount_total ? session.amount_total / 100 : null;
+  const currency = session.currency?.toUpperCase();
+
+  if (!accountId || !amount || currency !== 'USD') {
+    console.warn('[stripe-webhook] Checkout deposit is missing required ledger metadata.', {
+      accountId,
+      amount,
+      currency,
+      eventId: event.id,
+      sessionId: session.id,
+    });
+    return;
+  }
+
+  const posted = await postStripeCheckoutDeposit({
+    accountId,
+    amount,
+    checkoutSessionId: session.id,
+    currency: 'USD',
+    occurredAt: new Date(event.created * 1000).toISOString(),
+    paymentIntentId: getPaymentIntentId(session),
+  });
+
+  if (!posted) {
+    console.warn('[stripe-webhook] Checkout deposit could not be posted.', {
+      eventId: event.id,
+      sessionId: session.id,
+    });
+  }
+}
+
+async function markCheckoutSession(event: Stripe.Event, status: 'expired' | 'failed') {
+  const session = event.data.object as Stripe.Checkout.Session;
+
+  if (!isSolaceDepositSession(session)) {
+    return;
+  }
+
+  await markStripeDepositSessionStatus(session.id, status);
 }
 
 export async function POST(request: Request) {
@@ -43,6 +114,16 @@ export async function POST(request: Request) {
   }
 
   switch (event.type) {
+    case 'checkout.session.completed':
+    case 'checkout.session.async_payment_succeeded':
+      await postCheckoutDeposit(event);
+      break;
+    case 'checkout.session.async_payment_failed':
+      await markCheckoutSession(event, 'failed');
+      break;
+    case 'checkout.session.expired':
+      await markCheckoutSession(event, 'expired');
+      break;
     case 'identity.verification_session.verified':
     case 'identity.verification_session.requires_input':
     case 'identity.verification_session.canceled':

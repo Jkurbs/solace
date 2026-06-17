@@ -264,6 +264,111 @@ export type Database = {
         };
         Relationships: [];
       };
+      solace_activities: {
+        Row: {
+          id: string;
+          ledger_account_id: string;
+          type: string;
+          message: string;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          ledger_account_id: string;
+          type: string;
+          message: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          ledger_account_id?: string;
+          type?: string;
+          message?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      solace_deposits: {
+        Row: {
+          id: string;
+          ledger_account_id: string;
+          amount: number;
+          currency: 'USD';
+          status: 'pending' | 'posted' | 'failed';
+          provider: 'stripe';
+          provider_reference: string | null;
+          payment_intent_id: string | null;
+          created_at: string;
+          posted_at: string | null;
+        };
+        Insert: {
+          id: string;
+          ledger_account_id: string;
+          amount: number;
+          currency?: 'USD';
+          status: 'pending' | 'posted' | 'failed';
+          provider?: 'stripe';
+          provider_reference?: string | null;
+          payment_intent_id?: string | null;
+          created_at?: string;
+          posted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          ledger_account_id?: string;
+          amount?: number;
+          currency?: 'USD';
+          status?: 'pending' | 'posted' | 'failed';
+          provider?: 'stripe';
+          provider_reference?: string | null;
+          payment_intent_id?: string | null;
+          created_at?: string;
+          posted_at?: string | null;
+        };
+        Relationships: [];
+      };
+      solace_ledger_entries: {
+        Row: {
+          id: string;
+          ledger_account_id: string;
+          type: 'deposit' | 'withdrawal' | 'pnl' | 'fee' | 'manual_adjustment';
+          source: 'stripe' | 'hermes' | 'operator' | 'treasury';
+          status: 'pending' | 'posted' | 'void';
+          amount: number;
+          currency: 'USD';
+          description: string;
+          external_reference: string | null;
+          effective_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          ledger_account_id: string;
+          type: 'deposit' | 'withdrawal' | 'pnl' | 'fee' | 'manual_adjustment';
+          source: 'stripe' | 'hermes' | 'operator' | 'treasury';
+          status: 'pending' | 'posted' | 'void';
+          amount: number;
+          currency?: 'USD';
+          description: string;
+          external_reference?: string | null;
+          effective_at: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          ledger_account_id?: string;
+          type?: 'deposit' | 'withdrawal' | 'pnl' | 'fee' | 'manual_adjustment';
+          source?: 'stripe' | 'hermes' | 'operator' | 'treasury';
+          status?: 'pending' | 'posted' | 'void';
+          amount?: number;
+          currency?: 'USD';
+          description?: string;
+          external_reference?: string | null;
+          effective_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       solace_users: {
         Row: {
           id: string;
@@ -291,6 +396,45 @@ export type Database = {
           status?: 'APPROVED' | 'ACTIVE' | 'SUSPENDED';
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      stripe_deposit_sessions: {
+        Row: {
+          id: string;
+          ledger_account_id: string;
+          amount: number;
+          currency: 'USD';
+          status: 'open' | 'posted' | 'expired' | 'failed';
+          checkout_url: string | null;
+          payment_intent_id: string | null;
+          created_at: string;
+          updated_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id: string;
+          ledger_account_id: string;
+          amount: number;
+          currency?: 'USD';
+          status: 'open' | 'posted' | 'expired' | 'failed';
+          checkout_url?: string | null;
+          payment_intent_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          ledger_account_id?: string;
+          amount?: number;
+          currency?: 'USD';
+          status?: 'open' | 'posted' | 'expired' | 'failed';
+          checkout_url?: string | null;
+          payment_intent_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          completed_at?: string | null;
         };
         Relationships: [];
       };

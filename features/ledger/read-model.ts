@@ -3,6 +3,7 @@ import 'server-only';
 import { listPersistedAccountBundles } from '@/features/accounts/store';
 
 import { ledgerSeedData } from './seed-data';
+import { listPersistedLedgerRecords } from './store';
 import type {
   LedgerAccount,
   LedgerDataset,
@@ -223,13 +224,16 @@ function buildReadModelForAccount(dataset: LedgerDataset, account: LedgerAccount
 
 export async function getLedgerDataset(): Promise<LedgerDataset> {
   const dataset = cloneDataset(ledgerSeedData);
-  const approvedAccounts = await getApprovedAccountDataset();
+  const [approvedAccounts, persistedLedgerRecords] = await Promise.all([
+    getApprovedAccountDataset(),
+    listPersistedLedgerRecords(),
+  ]);
 
   return {
     accounts: [...dataset.accounts, ...approvedAccounts.accounts],
-    activities: [...dataset.activities, ...approvedAccounts.activities],
-    deposits: [...dataset.deposits, ...approvedAccounts.deposits],
-    entries: [...dataset.entries, ...approvedAccounts.entries],
+    activities: [...dataset.activities, ...approvedAccounts.activities, ...persistedLedgerRecords.activities],
+    deposits: [...dataset.deposits, ...approvedAccounts.deposits, ...persistedLedgerRecords.deposits],
+    entries: [...dataset.entries, ...approvedAccounts.entries, ...persistedLedgerRecords.entries],
     portfolioSnapshots: [...dataset.portfolioSnapshots, ...approvedAccounts.portfolioSnapshots],
     treasuryTransfers: [...dataset.treasuryTransfers, ...approvedAccounts.treasuryTransfers],
     users: [...dataset.users, ...approvedAccounts.users],
