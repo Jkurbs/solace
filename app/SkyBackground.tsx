@@ -45,9 +45,9 @@ export default function SkyBackground() {
       // Cold depth plus the faint color washes the page gradient used to carry.
       const washes: Array<[number, number, number, string]> = [
         [0.45, 0.35, 1.15, 'rgba(8, 14, 24, 0.38)'],
-        [0.8, 0.06, 0.42, 'rgba(211, 177, 111, 0.045)'],
+        [0.8, 0.06, 0.42, 'rgba(214, 208, 196, 0.045)'],
         [0.12, 0.6, 0.5, 'rgba(112, 93, 178, 0.03)'],
-        [0.72, 0.85, 0.52, 'rgba(135, 219, 192, 0.028)'],
+        [0.72, 0.85, 0.52, 'rgba(184, 190, 199, 0.028)'],
       ];
 
       for (const [x, y, r, color] of washes) {
@@ -70,7 +70,7 @@ export default function SkyBackground() {
         const roll = rand();
         const color =
           roll < 0.16
-            ? `rgba(214, 184, 130, ${alpha})`
+            ? `rgba(214, 208, 196, ${alpha})`
             : roll < 0.58
               ? `rgba(196, 212, 232, ${alpha})`
               : `rgba(230, 232, 228, ${alpha})`;

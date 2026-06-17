@@ -104,7 +104,7 @@ export default function BriefPage() {
       </header>
 
       <article className="mx-auto max-w-4xl px-5 pb-24 pt-36 md:px-8">
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.24em] text-[#8a6a33]">
+        <p className="font-mono text-[0.65rem] uppercase tracking-[0.24em] text-[#7c7468]">
           Solace Technical Brief
         </p>
         <h1 className="mt-5 max-w-2xl font-serif text-5xl font-medium leading-tight text-[#13110c] md:text-7xl">
@@ -150,7 +150,7 @@ export default function BriefPage() {
           {sections.map((section) => (
             <section key={section.number} id={`section-${section.number}`} className="border-t border-black/10 pt-8">
               <div className="grid gap-5 md:grid-cols-[6rem_1fr]">
-                <p className="font-mono text-xs text-[#8a6a33]">{section.number}</p>
+                <p className="font-mono text-xs text-[#7c7468]">{section.number}</p>
                 <div>
                   <h2 className="font-serif text-3xl font-medium text-[#13110c] md:text-4xl">{section.title}</h2>
                   <div className="mt-5 space-y-4 text-base leading-8 text-[#3f3a30]">

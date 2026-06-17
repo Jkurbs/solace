@@ -77,7 +77,7 @@ const fragmentShader = `
     float pt = smoothstep(radius, radius * 0.12, length(fr - pp));
     float tw = 0.55 + 0.45 * sin(uTime * (0.18 + rnd * 0.5) + rnd * 23.0);
 
-    vec3 dcol = mix(vec3(0.62, 0.74, 0.88), vec3(0.95, 0.92, 0.86), hash(cell + 9.9 + seed));
+    vec3 dcol = mix(vec3(0.66, 0.70, 0.76), vec3(0.95, 0.92, 0.86), hash(cell + 9.9 + seed));
     return dcol * spawn * pt * tw * weight;
   }
 
@@ -131,8 +131,8 @@ const fragmentShader = `
     color += dustLayer(w, 54.0, 0.0028, 0.7, 19.0);
 
     // === THE INSTRUMENT (three tilted orbits, axes, center) ===
-    color += orbitRing(p, 0.21, 0.38, -0.28, 46.0, 0.0, vec3(0.83, 0.69, 0.44), 1.0);
-    color += orbitRing(p, 0.305, 0.52, 0.66, 58.0, 2.1, vec3(0.53, 0.86, 0.75), 0.7);
+    color += orbitRing(p, 0.21, 0.38, -0.28, 46.0, 0.0, vec3(0.82, 0.80, 0.75), 1.0);
+    color += orbitRing(p, 0.305, 0.52, 0.66, 58.0, 2.1, vec3(0.66, 0.72, 0.78), 0.7);
     color += orbitRing(p, 0.405, 0.66, 1.33, 68.0, 4.4, vec3(0.95, 0.92, 0.86), 0.55);
 
     float pxPerUnit = uResolution.y / uPixelRatio;
@@ -144,7 +144,7 @@ const fragmentShader = `
       float across = abs(p.x * dir.y - p.y * dir.x) * pxPerUnit;
       float along = abs(dot(p, dir));
       float axis = exp(-across * across / 0.45) * smoothstep(0.5, 0.05, along);
-      color += vec3(0.9, 0.82, 0.62) * axis * (i == 0 ? 0.07 : 0.045);
+      color += vec3(0.86, 0.84, 0.79) * axis * (i == 0 ? 0.07 : 0.045);
     }
 
     // Slow radar sweep brushing across the orbit band.
@@ -152,16 +152,16 @@ const fragmentShader = `
     float sweepA = fract(uTime / 34.0) * TAU - 3.14159;
     float angD = abs(mod(ang - sweepA + 3.14159, TAU) - 3.14159);
     float band = smoothstep(0.05, 0.16, length(p)) * smoothstep(0.5, 0.3, length(p));
-    color += vec3(0.83, 0.72, 0.5) * smoothstep(0.6, 0.0, angD) * band * 0.05;
+    color += vec3(0.82, 0.80, 0.74) * smoothstep(0.6, 0.0, angD) * band * 0.05;
 
     // Center: the observatory's eye.
     float cd = length(p) * pxPerUnit;
     color += vec3(0.97, 0.94, 0.88) * exp(-cd * cd / 4.5) * 1.1;
-    color += vec3(0.83, 0.69, 0.44) * exp(-cd * cd / (120.0 * 120.0)) * 0.05;
+    color += vec3(0.82, 0.80, 0.75) * exp(-cd * cd / (120.0 * 120.0)) * 0.05;
 
     // Warm foreshadow: the Hermes field glowing just below the fold.
     vec2 fs = (w - vec2(1.04, 1.12)) * vec2(1.0, 1.5);
-    color += vec3(0.52, 0.28, 0.1) * exp(-dot(fs, fs) / 0.2) * 0.55;
+    color += vec3(0.40, 0.38, 0.34) * exp(-dot(fs, fs) / 0.2) * 0.55;
 
     // === GRADE (identical contract to the Hermes render) ===
     float leftFade = smoothstep(0.0, 0.30, uv.x);
