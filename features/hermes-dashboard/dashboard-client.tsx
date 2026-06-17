@@ -216,6 +216,8 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
     queryKey: hermesDashboardQueryKey,
     queryFn: getHermesDashboardSnapshot,
     initialData: initialSnapshot,
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
     staleTime: 30_000,
   });
 

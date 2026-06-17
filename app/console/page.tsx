@@ -12,6 +12,7 @@ import { getLedgerReadModel } from '@/features/ledger/read-model';
 import { hasConsoleAccess } from '@/features/solace-console/access';
 
 import ConsoleAccessGate from './ConsoleAccessGate';
+import ConsoleLiveRefresh from './ConsoleLiveRefresh';
 
 export const metadata: Metadata = {
   title: 'Solace — Console',
@@ -288,17 +289,20 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
             <Mark size={22} />
             Solace
           </Link>
-          <nav className="flex items-center gap-4 text-sm text-neutral-400">
-            <Link href="/dashboard" className="transition-colors hover:text-neutral-50">
-              Dashboard
-            </Link>
-            <Link href="/dashboard/contract" className="transition-colors hover:text-neutral-50">
-              Contracts
-            </Link>
-            <Link href="/hermes" className="hidden transition-colors hover:text-neutral-50 sm:inline">
-              Hermes
-            </Link>
-          </nav>
+          <div className="flex items-center gap-4">
+            <ConsoleLiveRefresh />
+            <nav className="flex items-center gap-4 text-sm text-neutral-400">
+              <Link href="/dashboard" className="transition-colors hover:text-neutral-50">
+                Dashboard
+              </Link>
+              <Link href="/dashboard/contract" className="transition-colors hover:text-neutral-50">
+                Contracts
+              </Link>
+              <Link href="/hermes" className="hidden transition-colors hover:text-neutral-50 sm:inline">
+                Hermes
+              </Link>
+            </nav>
+          </div>
         </div>
       </header>
 
