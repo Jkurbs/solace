@@ -89,7 +89,7 @@ function Header() {
 
         <div className="site-actions">
           <Link href="/dashboard" className="site-action-link site-action-primary">
-            Access
+            Login
           </Link>
           <button
             type="button"
@@ -113,6 +113,9 @@ function Header() {
         </Link>
         <Link href="/oracle" onClick={() => setMenuOpen(false)}>
           Oracle
+        </Link>
+        <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
+          Login
         </Link>
       </div>
     </header>
