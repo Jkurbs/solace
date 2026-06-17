@@ -42,7 +42,7 @@ async function persistIdentityEvent(event: Stripe.Event) {
   logIdentityEvent(event);
 
   if (!status) {
-    return;
+    return true;
   }
 
   const identityVerification = {
@@ -62,7 +62,11 @@ async function persistIdentityEvent(event: Stripe.Event) {
       sessionId: session.id,
       status,
     });
+
+    return false;
   }
+
+  return true;
 }
 
 function getPaymentIntentId(session: Stripe.Checkout.Session) {
@@ -81,7 +85,7 @@ async function postCheckoutDeposit(event: Stripe.Event) {
   const session = event.data.object as Stripe.Checkout.Session;
 
   if (!isSolaceDepositSession(session)) {
-    return;
+    return true;
   }
 
   if (session.payment_status !== 'paid') {
@@ -90,7 +94,7 @@ async function postCheckoutDeposit(event: Stripe.Event) {
       paymentStatus: session.payment_status,
       sessionId: session.id,
     });
-    return;
+    return true;
   }
 
   const accountId = session.metadata?.ledger_account_id;
@@ -105,7 +109,8 @@ async function postCheckoutDeposit(event: Stripe.Event) {
       eventId: event.id,
       sessionId: session.id,
     });
-    return;
+
+    return false;
   }
 
   const posted = await postStripeCheckoutDeposit({
@@ -122,17 +127,21 @@ async function postCheckoutDeposit(event: Stripe.Event) {
       eventId: event.id,
       sessionId: session.id,
     });
+
+    return false;
   }
+
+  return true;
 }
 
 async function markCheckoutSession(event: Stripe.Event, status: 'expired' | 'failed') {
   const session = event.data.object as Stripe.Checkout.Session;
 
   if (!isSolaceDepositSession(session)) {
-    return;
+    return true;
   }
 
-  await markStripeDepositSessionStatus(session.id, status);
+  return markStripeDepositSessionStatus(session.id, status);
 }
 
 export async function POST(request: Request) {
@@ -142,7 +151,7 @@ export async function POST(request: Request) {
   if (!stripe || !webhookSecret) {
     console.warn('[stripe-webhook] Stripe webhook is not configured.');
 
-    return NextResponse.json({ received: true });
+    return NextResponse.json({ message: 'Stripe webhook is not configured.' }, { status: 503 });
   }
 
   const signature = request.headers.get('stripe-signature');
@@ -161,27 +170,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ message }, { status: 400 });
   }
 
+  let processed = true;
+
   switch (event.type) {
     case 'checkout.session.completed':
     case 'checkout.session.async_payment_succeeded':
-      await postCheckoutDeposit(event);
+      processed = await postCheckoutDeposit(event);
       break;
     case 'checkout.session.async_payment_failed':
-      await markCheckoutSession(event, 'failed');
+      processed = await markCheckoutSession(event, 'failed');
       break;
     case 'checkout.session.expired':
-      await markCheckoutSession(event, 'expired');
+      processed = await markCheckoutSession(event, 'expired');
       break;
     case 'identity.verification_session.verified':
     case 'identity.verification_session.requires_input':
     case 'identity.verification_session.canceled':
-      await persistIdentityEvent(event);
+      processed = await persistIdentityEvent(event);
       break;
     default:
       console.info('[stripe-webhook] Event received.', {
         eventId: event.id,
         type: event.type,
       });
+  }
+
+  if (!processed) {
+    return NextResponse.json({ message: 'Stripe webhook processing failed.' }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
