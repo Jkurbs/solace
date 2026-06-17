@@ -5,7 +5,7 @@ import { readFile, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
-import { createSupabaseServerClient, isSupabaseServerConfigured } from '@/lib/supabase/server';
+import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/supabase/server';
 import type { Database, Json } from '@/lib/supabase/types';
 
 import type {
@@ -360,12 +360,12 @@ function buildBundle(seed: AccessRequestAccountSeed): PersistedAccountBundle | n
 }
 
 async function upsertSupabaseBundle(bundle: PersistedAccountBundle) {
-  if (!isSupabaseServerConfigured()) {
+  if (!isSupabaseDataClientConfigured()) {
     return null;
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseDataClient();
 
     const { error: userError } = await supabase.from('solace_users').upsert(toSolaceUserRow(bundle.user));
 
@@ -449,12 +449,12 @@ async function upsertFallbackBundle(bundle: PersistedAccountBundle) {
 }
 
 async function getSupabaseAccountBundle(accountId: string): Promise<PersistedAccountBundle | null> {
-  if (!isSupabaseServerConfigured()) {
+  if (!isSupabaseDataClientConfigured()) {
     return null;
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseDataClient();
     const { data: ledgerRow, error: ledgerError } = await supabase
       .from('ledger_accounts')
       .select('*')
@@ -503,12 +503,12 @@ async function getSupabaseAccountBundle(accountId: string): Promise<PersistedAcc
 }
 
 async function listSupabaseAccountBundles(): Promise<PersistedAccountBundle[] | null> {
-  if (!isSupabaseServerConfigured()) {
+  if (!isSupabaseDataClientConfigured()) {
     return null;
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseDataClient();
     const [usersResult, hermesResult, ledgerResult, inviteResult, onboardingResult] = await Promise.all([
       supabase.from('solace_users').select('*'),
       supabase.from('hermes_accounts').select('*'),
@@ -622,12 +622,12 @@ async function listFallbackAccountBundles() {
 }
 
 async function upsertSupabaseOnboarding(record: AccountOnboardingRecord) {
-  if (!isSupabaseServerConfigured()) {
+  if (!isSupabaseDataClientConfigured()) {
     return null;
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseDataClient();
     const bundle = await getSupabaseAccountBundle(record.ledgerAccountId);
 
     if (bundle) {
@@ -708,9 +708,9 @@ export async function getPersistedAccountBundle(accountId: string) {
 export async function findActiveDashboardInviteByCode(code: string) {
   const codeHash = createDashboardInviteCodeHash(code);
 
-  if (isSupabaseServerConfigured()) {
+  if (isSupabaseDataClientConfigured()) {
     try {
-      const supabase = await createSupabaseServerClient();
+      const supabase = await createSupabaseDataClient();
       const { data, error } = await supabase
         .from('dashboard_invites')
         .select('*')
@@ -740,9 +740,9 @@ export async function findActiveDashboardInviteByCode(code: string) {
 }
 
 export async function hasDashboardInviteAccess(accountId: string, token: string) {
-  if (isSupabaseServerConfigured()) {
+  if (isSupabaseDataClientConfigured()) {
     try {
-      const supabase = await createSupabaseServerClient();
+      const supabase = await createSupabaseDataClient();
       const { data, error } = await supabase
         .from('dashboard_invites')
         .select('id')

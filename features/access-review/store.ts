@@ -5,7 +5,7 @@ import { readFile, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
-import { createSupabaseServerClient, isSupabaseServerConfigured } from '@/lib/supabase/server';
+import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/supabase/server';
 import { ensureApprovedAccountRecords } from '@/features/accounts/store';
 
 import { generateAccessReview } from './ai-review';
@@ -225,12 +225,12 @@ function ensureApprovalArtifacts(request: HermesAccessRequest, decidedAt: string
 }
 
 async function insertSupabaseRequest(request: HermesAccessRequest) {
-  if (!isSupabaseServerConfigured()) {
+  if (!isSupabaseDataClientConfigured()) {
     return null;
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseDataClient();
     const { data, error } = await supabase
       .from('hermes_access_requests')
       .insert(toRow(request))
@@ -250,12 +250,12 @@ async function insertSupabaseRequest(request: HermesAccessRequest) {
 }
 
 async function listSupabaseRequests() {
-  if (!isSupabaseServerConfigured()) {
+  if (!isSupabaseDataClientConfigured()) {
     return null;
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseDataClient();
     const { data, error } = await supabase
       .from('hermes_access_requests')
       .select('*')
@@ -274,12 +274,12 @@ async function listSupabaseRequests() {
 }
 
 async function updateSupabaseRequest(request: HermesAccessRequest) {
-  if (!isSupabaseServerConfigured()) {
+  if (!isSupabaseDataClientConfigured()) {
     return null;
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseDataClient();
     const { data, error } = await supabase
       .from('hermes_access_requests')
       .update(toRow(request))
