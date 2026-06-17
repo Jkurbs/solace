@@ -9,6 +9,7 @@ import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-mod
 import type { DashboardFieldSource, DashboardFieldSourceStatus } from '@/features/hermes-dashboard/types';
 import { listMoneyMovementRecords } from '@/features/ledger/money-movement';
 import { getLedgerReadModel } from '@/features/ledger/read-model';
+import type { TreasuryTaskStatus } from '@/features/ledger/types';
 import { hasConsoleAccess } from '@/features/solace-console/access';
 
 import ConsoleAccessGate from './ConsoleAccessGate';
@@ -24,6 +25,7 @@ type ConsolePageProps = {
     access?: string | string[];
     notification?: string | string[];
     review?: string | string[];
+    treasury?: string | string[];
   }>;
 };
 
@@ -229,6 +231,65 @@ function AccessDecisionButton({
   );
 }
 
+function getTreasuryTaskActions(status: TreasuryTaskStatus): Array<{ label: string; status: TreasuryTaskStatus; tone: 'green' | 'neutral' | 'red' }> {
+  switch (status) {
+    case 'QUEUED':
+      return [
+        { label: 'Review', status: 'REVIEWING', tone: 'neutral' },
+        { label: 'Cancel', status: 'CANCELED', tone: 'red' },
+      ];
+    case 'REVIEWING':
+      return [
+        { label: 'Approve', status: 'APPROVED', tone: 'green' },
+        { label: 'Fail', status: 'FAILED', tone: 'red' },
+      ];
+    case 'APPROVED':
+      return [
+        { label: 'Submit', status: 'SUBMITTED', tone: 'green' },
+        { label: 'Cancel', status: 'CANCELED', tone: 'red' },
+      ];
+    case 'SUBMITTED':
+      return [
+        { label: 'Complete', status: 'COMPLETED', tone: 'green' },
+        { label: 'Fail', status: 'FAILED', tone: 'red' },
+      ];
+    default:
+      return [];
+  }
+}
+
+function TreasuryTaskActionButton({
+  children,
+  status,
+  taskId,
+  tone,
+}: {
+  children: string;
+  status: TreasuryTaskStatus;
+  taskId: string;
+  tone: 'green' | 'neutral' | 'red';
+}) {
+  const toneClass =
+    tone === 'green'
+      ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/15'
+      : tone === 'red'
+        ? 'border-red-400/30 bg-red-400/10 text-red-100 hover:bg-red-400/15'
+        : 'border-neutral-700 bg-[#181715] text-neutral-100 hover:bg-neutral-800';
+
+  return (
+    <form action="/api/console/treasury-tasks" method="post">
+      <input type="hidden" name="taskId" value={taskId} />
+      <input type="hidden" name="status" value={status} />
+      <button
+        type="submit"
+        className={`inline-flex h-8 items-center justify-center rounded-md border px-3 text-xs font-medium transition-colors ${toneClass}`}
+      >
+        {children}
+      </button>
+    </form>
+  );
+}
+
 function InlineMetric({ label, value, tone = 'neutral' }: { label: string; value: string | number; tone?: 'neutral' | 'amber' | 'green' }) {
   const valueClass =
     tone === 'green' ? 'text-emerald-200' : tone === 'amber' ? 'text-amber-100' : 'text-neutral-50';
@@ -272,6 +333,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
   const ownerSummaries = groupByOwner(snapshot.fieldSources);
   const reviewStatus = Array.isArray(params?.review) ? params.review[0] : params?.review;
   const notificationStatus = Array.isArray(params?.notification) ? params.notification[0] : params?.notification;
+  const treasuryStatus = Array.isArray(params?.treasury) ? params.treasury[0] : params?.treasury;
   const postedDeposits = moneyMovement.deposits.filter((deposit) => deposit.status === 'posted');
   const queuedTreasuryTasks = moneyMovement.treasuryTasks.filter((task) =>
     ['QUEUED', 'REVIEWING', 'APPROVED', 'SUBMITTED'].includes(task.status),
@@ -375,6 +437,16 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
             <div className="mt-5 rounded-md border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">
               Treasury queue table is not installed yet. Run <span className="font-mono">supabase/treasury-queue-v1.sql</span>
               {' '}to begin queueing funding tasks after deposits post.
+            </div>
+          ) : null}
+          {treasuryStatus === 'updated' ? (
+            <div className="mt-5 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm leading-6 text-emerald-100">
+              Treasury task updated.
+            </div>
+          ) : null}
+          {treasuryStatus === 'failed' || treasuryStatus === 'invalid' ? (
+            <div className="mt-5 rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm leading-6 text-red-100">
+              Treasury task could not be updated.
             </div>
           ) : null}
 
@@ -482,24 +554,43 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
               <h3 className="mt-1 text-lg font-semibold text-neutral-50">Funding tasks</h3>
               <div className="mt-5 grid gap-4">
                 {moneyMovement.treasuryTasks.length ? (
-                  moneyMovement.treasuryTasks.slice(0, 5).map((task) => (
-                    <div key={task.id} className="grid gap-3 border-t border-neutral-800 pt-4 first:border-t-0 first:pt-0 sm:grid-cols-[1fr_auto]">
-                      <div className="min-w-0">
-                        <strong className="block text-sm font-semibold text-neutral-50">{formatConstant(task.type)}</strong>
-                        <span className="mt-1 block text-xs text-neutral-500">Deposit {shortenId(task.depositId)}</span>
-                        <span className="mt-1 block text-xs text-neutral-500">Checkout {shortenId(task.checkoutSessionId)}</span>
+                  moneyMovement.treasuryTasks.slice(0, 5).map((task) => {
+                    const actions = getTreasuryTaskActions(task.status);
+
+                    return (
+                      <div key={task.id} className="grid gap-3 border-t border-neutral-800 pt-4 first:border-t-0 first:pt-0 sm:grid-cols-[1fr_auto]">
+                        <div className="min-w-0">
+                          <strong className="block text-sm font-semibold text-neutral-50">{formatConstant(task.type)}</strong>
+                          <span className="mt-1 block text-xs text-neutral-500">Deposit {shortenId(task.depositId)}</span>
+                          <span className="mt-1 block text-xs text-neutral-500">Checkout {shortenId(task.checkoutSessionId)}</span>
+                          {task.notes ? <span className="mt-2 block text-xs leading-5 text-neutral-400">{task.notes}</span> : null}
+                        </div>
+                        <div className="grid gap-2 sm:justify-items-end">
+                          <span className={`w-fit rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(task.status)}`}>
+                            {formatConstant(task.status)}
+                          </span>
+                          <strong className="text-sm font-semibold text-neutral-50">{formatCurrency(task.amount)}</strong>
+                          <time className="text-xs text-neutral-500" dateTime={task.updatedAt}>
+                            {formatDate(task.updatedAt)}
+                          </time>
+                        </div>
+                        {actions.length ? (
+                          <div className="flex flex-wrap gap-2 sm:col-span-2">
+                            {actions.map((action) => (
+                              <TreasuryTaskActionButton
+                                key={`${task.id}-${action.status}`}
+                                status={action.status}
+                                taskId={task.id}
+                                tone={action.tone}
+                              >
+                                {action.label}
+                              </TreasuryTaskActionButton>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
-                      <div className="grid gap-2 sm:justify-items-end">
-                        <span className={`w-fit rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(task.status)}`}>
-                          {formatConstant(task.status)}
-                        </span>
-                        <strong className="text-sm font-semibold text-neutral-50">{formatCurrency(task.amount)}</strong>
-                        <time className="text-xs text-neutral-500" dateTime={task.updatedAt}>
-                          {formatDate(task.updatedAt)}
-                        </time>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
                     No treasury tasks queued yet.

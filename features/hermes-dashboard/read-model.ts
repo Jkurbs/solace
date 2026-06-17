@@ -109,6 +109,7 @@ function getActiveSnapshotFromLedger(
   riskProfile: RiskProfile,
 ): HermesDashboardSnapshot {
   const hermesActivity = ledger.activities.filter((activity) => activity.type === 'hermes_decision');
+  const fundingPending = ledger.portfolio.totalDeposited > 0 && ledger.allocation.capitalDeployed === 0;
   const visibleActivity = hermesActivity.length ? hermesActivity : ledger.activities;
 
   return {
@@ -132,14 +133,26 @@ function getActiveSnapshotFromLedger(
     },
     status: {
       ...baseSnapshot.status,
+      status: fundingPending ? 'WAIT' : baseSnapshot.status.status,
       riskProfile,
+      conviction: fundingPending ? 'LOW' : baseSnapshot.status.conviction,
       deployedCapital: ledger.allocation.capitalDeployed,
     },
+    outlook: fundingPending
+      ? {
+          environment: 'Moderate',
+          stance: 'Allocation pending',
+          note: 'Capital has been received. Solace is completing treasury allocation before Hermes begins deployment.',
+        }
+      : baseSnapshot.outlook,
     allocation: ledger.allocation.allocations,
     activity: visibleActivity.slice(0, 3).map((activity) => ({
       timestamp: activity.createdAt,
       summary: activity.message,
     })),
+    commentary: fundingPending
+      ? 'Deposit received. Solace is completing treasury allocation and Hermes will begin operating once activation is complete.'
+      : baseSnapshot.commentary,
   };
 }
 

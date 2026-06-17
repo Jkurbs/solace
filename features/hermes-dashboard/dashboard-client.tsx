@@ -322,12 +322,17 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
 
   const allocationGradient = useMemo(() => buildAllocationGradient(data.allocation, theme), [data.allocation, theme]);
   const isAwaitingDeposit = data.account.lifecycle === 'AWAITING_DEPOSIT';
+  const isFundingPending =
+    !isAwaitingDeposit &&
+    data.status.status === 'WAIT' &&
+    data.portfolio.deposited > 0 &&
+    data.status.deployedCapital === 0;
   const deployed = data.status.deployedCapital;
   const cashReserve = data.allocation.find((item) => item.asset.toLowerCase() === 'cash')?.percentage ?? 100 - deployed;
   const portfolioValue = isAwaitingDeposit ? 'Pending' : formatCurrency(data.portfolio.value);
   const todaysChange = isAwaitingDeposit ? '—' : formatTodaysChange(data.portfolio.todaysChange);
   const sinceInception = isAwaitingDeposit ? '—' : formatPercent(data.portfolio.sinceInception, true);
-  const operatingStatus = isAwaitingDeposit ? 'Awaiting deposit' : data.status.status;
+  const operatingStatus = isAwaitingDeposit ? 'Awaiting deposit' : isFundingPending ? 'Allocation pending' : data.status.status;
   const depositIntentLabel = data.account.depositIntent?.amount
     ? formatCurrency(data.account.depositIntent.amount, { whole: true })
     : 'Pending';
@@ -339,6 +344,8 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       ? 'You can review Hermes now. Complete setup before deposits open.'
       : isAwaitingDeposit
         ? 'Deposits are reviewed before Hermes begins allocation.'
+        : isFundingPending
+          ? 'Deposit received. Treasury allocation is pending before Hermes begins deployment.'
         : 'Capital movement runs through the approved account rails.');
   const identityVerificationLabel = formatIdentityStatus(data.account.identityVerification.status);
   const identityHelper =
@@ -497,10 +504,10 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Actions</p>
-                  <CardTitle>{isAwaitingDeposit ? 'Complete setup' : 'Move capital'}</CardTitle>
+                  <CardTitle>{isAwaitingDeposit ? 'Complete setup' : isFundingPending ? 'Allocation pending' : 'Move capital'}</CardTitle>
                 </div>
-                <Badge variant={data.status.status === 'ACTIVE' ? 'success' : 'secondary'}>
-                  {isAwaitingDeposit ? 'PENDING' : data.status.status}
+                <Badge variant={data.status.status === 'ACTIVE' && !isFundingPending ? 'success' : 'secondary'}>
+                  {isAwaitingDeposit || isFundingPending ? 'PENDING' : data.status.status}
                 </Badge>
               </div>
             </CardHeader>
@@ -518,7 +525,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                   type="button"
                   variant="secondary"
                   onClick={() => moneyMovement.mutate('withdraw')}
-                  disabled={moneyMovement.isPending || isAwaitingDeposit}
+                  disabled={moneyMovement.isPending || isAwaitingDeposit || isFundingPending}
                 >
                   <ArrowUpFromLine size={16} aria-hidden="true" />
                   Withdraw
@@ -575,6 +582,42 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               </div>
               <p className="mt-3 text-sm leading-6 text-neutral-500 dark:text-neutral-400" aria-live="polite">
                 {identityHelper}
+              </p>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {isFundingPending ? (
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Funding Status</p>
+                  <CardTitle>Deposit received</CardTitle>
+                </div>
+                <Badge variant="secondary">PENDING</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ActivationStep
+                  detail={formatCurrency(data.portfolio.deposited, { whole: true })}
+                  label="Capital received"
+                  state="complete"
+                />
+                <ActivationStep
+                  detail="Solace is preparing allocation"
+                  label="Treasury allocation"
+                  state="pending"
+                />
+                <ActivationStep
+                  detail="Begins after treasury clears"
+                  label="Hermes deployment"
+                  state="pending"
+                />
+              </div>
+              <p className="mt-5 border-t border-neutral-200 pt-4 text-sm leading-6 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
+                Your deposit has posted to the ledger. Hermes will begin operating after Solace completes treasury allocation and activation.
               </p>
             </CardContent>
           </Card>

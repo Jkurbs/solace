@@ -10,6 +10,7 @@ import type {
   MoneyMovementRecords,
   StripeDepositSession,
   TreasuryTask,
+  TreasuryTaskStatus,
 } from './types';
 
 type DashboardInviteRow = Database['public']['Tables']['dashboard_invites']['Row'];
@@ -49,6 +50,20 @@ function isMissingTreasuryTasksTable(message: string) {
 
 function sortByNewest<T extends { createdAt: string }>(items: T[]) {
   return [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+function canTransitionTreasuryTask(currentStatus: TreasuryTaskStatus, nextStatus: TreasuryTaskStatus) {
+  const allowedTransitions: Record<TreasuryTaskStatus, TreasuryTaskStatus[]> = {
+    APPROVED: ['SUBMITTED', 'CANCELED'],
+    CANCELED: [],
+    COMPLETED: [],
+    FAILED: [],
+    QUEUED: ['REVIEWING', 'CANCELED'],
+    REVIEWING: ['APPROVED', 'FAILED'],
+    SUBMITTED: ['COMPLETED', 'FAILED'],
+  };
+
+  return allowedTransitions[currentStatus].includes(nextStatus);
 }
 
 function fromStripeDepositSessionRow(row: StripeDepositSessionRow): StripeDepositSession {
@@ -230,5 +245,71 @@ export async function listMoneyMovementRecords(): Promise<MoneyMovementRecords> 
   } catch (error) {
     console.warn('[ledger] Money movement records read failed.', error);
     return emptyMoneyMovementRecords;
+  }
+}
+
+export async function updateTreasuryTaskStatus({
+  externalReference,
+  notes,
+  status,
+  taskId,
+}: {
+  externalReference?: string | null;
+  notes?: string | null;
+  status: TreasuryTaskStatus;
+  taskId: string;
+}) {
+  if (!isSupabaseDataClientConfigured()) {
+    return false;
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    const now = new Date().toISOString();
+    const { data: task, error: taskError } = await supabase
+      .from('treasury_tasks')
+      .select('status')
+      .eq('id', taskId)
+      .maybeSingle();
+
+    if (taskError || !task) {
+      console.warn('[ledger] Treasury task status lookup failed.', taskError?.message ?? taskId);
+      return false;
+    }
+
+    if (!canTransitionTreasuryTask(task.status, status)) {
+      console.warn('[ledger] Treasury task status transition rejected.', {
+        currentStatus: task.status,
+        nextStatus: status,
+        taskId,
+      });
+      return false;
+    }
+
+    const update: Database['public']['Tables']['treasury_tasks']['Update'] = {
+      completed_at: status === 'COMPLETED' ? now : null,
+      status,
+      updated_at: now,
+    };
+
+    if (externalReference?.trim()) {
+      update.external_reference = externalReference.trim();
+    }
+
+    if (notes?.trim()) {
+      update.notes = notes.trim();
+    }
+
+    const { error } = await supabase.from('treasury_tasks').update(update).eq('id', taskId);
+
+    if (error) {
+      console.warn('[ledger] Treasury task status update failed.', error.message);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.warn('[ledger] Treasury task status update failed.', error);
+    return false;
   }
 }
