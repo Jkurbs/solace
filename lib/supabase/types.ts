@@ -438,6 +438,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      treasury_tasks: {
+        Row: {
+          id: string;
+          ledger_account_id: string;
+          deposit_id: string;
+          checkout_session_id: string;
+          type: 'FUND_HERMES';
+          amount: number;
+          currency: 'USD';
+          status: 'QUEUED' | 'REVIEWING' | 'APPROVED' | 'SUBMITTED' | 'COMPLETED' | 'FAILED' | 'CANCELED';
+          notes: string | null;
+          external_reference: string | null;
+          created_at: string;
+          updated_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id: string;
+          ledger_account_id: string;
+          deposit_id: string;
+          checkout_session_id: string;
+          type?: 'FUND_HERMES';
+          amount: number;
+          currency?: 'USD';
+          status?: 'QUEUED' | 'REVIEWING' | 'APPROVED' | 'SUBMITTED' | 'COMPLETED' | 'FAILED' | 'CANCELED';
+          notes?: string | null;
+          external_reference?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          ledger_account_id?: string;
+          deposit_id?: string;
+          checkout_session_id?: string;
+          type?: 'FUND_HERMES';
+          amount?: number;
+          currency?: 'USD';
+          status?: 'QUEUED' | 'REVIEWING' | 'APPROVED' | 'SUBMITTED' | 'COMPLETED' | 'FAILED' | 'CANCELED';
+          notes?: string | null;
+          external_reference?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

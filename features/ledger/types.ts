@@ -16,6 +16,12 @@ export type LedgerWithdrawalStatus = 'requested' | 'approved' | 'paid' | 'cancel
 
 export type TreasuryTransferStatus = 'planned' | 'initiated' | 'completed' | 'reconciled';
 
+export type TreasuryTaskStatus = 'QUEUED' | 'REVIEWING' | 'APPROVED' | 'SUBMITTED' | 'COMPLETED' | 'FAILED' | 'CANCELED';
+
+export type TreasuryTaskType = 'FUND_HERMES';
+
+export type StripeDepositSessionStatus = 'open' | 'posted' | 'expired' | 'failed';
+
 export type LedgerActivityType =
   | 'account_created'
   | 'deposit_posted'
@@ -107,6 +113,61 @@ export interface TreasuryTransfer {
   createdAt: IsoDateString;
   completedAt?: IsoDateString;
   externalReference?: string;
+}
+
+export interface TreasuryTask {
+  id: string;
+  accountId: string;
+  depositId: string;
+  checkoutSessionId: string;
+  type: TreasuryTaskType;
+  amount: number;
+  currency: LedgerCurrency;
+  status: TreasuryTaskStatus;
+  notes?: string;
+  createdAt: IsoDateString;
+  updatedAt: IsoDateString;
+  completedAt?: IsoDateString;
+  externalReference?: string;
+}
+
+export interface StripeDepositSession {
+  id: string;
+  accountId: string;
+  amount: number;
+  currency: LedgerCurrency;
+  status: StripeDepositSessionStatus;
+  checkoutUrl?: string;
+  paymentIntentId?: string;
+  createdAt: IsoDateString;
+  updatedAt: IsoDateString;
+  completedAt?: IsoDateString;
+}
+
+export interface AccountActivationStatus {
+  accountId: string;
+  accountLabel: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  solaceUserStatus: 'APPROVED' | 'ACTIVE' | 'SUSPENDED';
+  hermesAccountId: string;
+  hermesAccountStatus: 'PENDING_ACTIVATION' | 'ACTIVE' | 'PAUSED' | 'CLOSED';
+  ledgerAccountStatus: LedgerAccountStatus;
+  dashboardInviteStatus?: 'ACTIVE' | 'REVOKED';
+  createdAt: IsoDateString;
+  updatedAt: IsoDateString;
+}
+
+export interface MoneyMovementRecords {
+  generatedAt: IsoDateString;
+  available: boolean;
+  treasuryQueueAvailable: boolean;
+  stripeSessions: StripeDepositSession[];
+  deposits: LedgerDeposit[];
+  entries: LedgerEntry[];
+  treasuryTasks: TreasuryTask[];
+  accountStatuses: AccountActivationStatus[];
 }
 
 export interface LedgerDataset {

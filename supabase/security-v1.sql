@@ -21,6 +21,7 @@ alter table if exists public.stripe_deposit_sessions enable row level security;
 alter table if exists public.solace_deposits enable row level security;
 alter table if exists public.solace_ledger_entries enable row level security;
 alter table if exists public.solace_activities enable row level security;
+alter table if exists public.treasury_tasks enable row level security;
 
 do $$
 declare
@@ -45,7 +46,8 @@ begin
     'stripe_deposit_sessions',
     'solace_deposits',
     'solace_ledger_entries',
-    'solace_activities'
+    'solace_activities',
+    'treasury_tasks'
   ] loop
     target_table := to_regclass('public.' || target_name);
 

@@ -42,6 +42,13 @@ function normalizeAmount(value: number) {
   return roundCurrency(Number.isFinite(value) ? value : 0);
 }
 
+function isMissingTreasuryTasksTable(message: string) {
+  return (
+    message.includes('treasury_tasks') &&
+    (message.includes('Could not find') || message.includes('does not exist') || message.includes('schema cache'))
+  );
+}
+
 function fromSolaceDepositRow(row: SolaceDepositRow): LedgerDeposit {
   return {
     accountId: row.ledger_account_id,
@@ -54,6 +61,64 @@ function fromSolaceDepositRow(row: SolaceDepositRow): LedgerDeposit {
     providerReference: row.provider_reference ?? undefined,
     status: row.status,
   };
+}
+
+async function queueTreasuryTaskForDeposit({
+  accountId,
+  amount,
+  checkoutSessionId,
+  currency,
+  depositId,
+  occurredAt,
+}: StripeDepositPostedInput & { depositId: string }) {
+  const supabase = await createSupabaseDataClient();
+  const taskId = `treasury_task_${checkoutSessionId}`;
+
+  const { data: existingTask, error: existingTaskError } = await supabase
+    .from('treasury_tasks')
+    .select('id')
+    .eq('id', taskId)
+    .maybeSingle();
+
+  if (existingTask) {
+    return true;
+  }
+
+  if (existingTaskError) {
+    if (isMissingTreasuryTasksTable(existingTaskError.message)) {
+      console.warn('[ledger] Treasury task queue table is not installed yet.', existingTaskError.message);
+      return true;
+    }
+
+    console.warn('[ledger] Treasury task lookup failed.', existingTaskError.message);
+    return false;
+  }
+
+  const { error } = await supabase.from('treasury_tasks').insert({
+    amount: normalizeAmount(amount),
+    checkout_session_id: checkoutSessionId,
+    created_at: occurredAt,
+    currency,
+    deposit_id: depositId,
+    id: taskId,
+    ledger_account_id: accountId,
+    notes: 'Deposit posted. Prepare Hermes funding transfer after Stripe settlement clears.',
+    status: 'QUEUED',
+    type: 'FUND_HERMES',
+    updated_at: occurredAt,
+  });
+
+  if (error) {
+    if (isMissingTreasuryTasksTable(error.message)) {
+      console.warn('[ledger] Treasury task queue table is not installed yet.', error.message);
+      return true;
+    }
+
+    console.warn('[ledger] Treasury task could not be queued.', error.message);
+    return false;
+  }
+
+  return true;
 }
 
 function fromSolaceLedgerEntryRow(row: SolaceLedgerEntryRow): LedgerEntry {
@@ -289,6 +354,20 @@ export async function postStripeCheckoutDeposit({
         '[ledger] Stripe deposit posted, but account activation failed.',
         ledgerStatusResult.error?.message ?? hermesStatusResult.error?.message ?? userStatusResult.error?.message,
       );
+      return false;
+    }
+
+    const treasuryTaskQueued = await queueTreasuryTaskForDeposit({
+      accountId,
+      amount: normalizedAmount,
+      checkoutSessionId,
+      currency,
+      depositId,
+      occurredAt,
+      paymentIntentId,
+    });
+
+    if (!treasuryTaskQueued) {
       return false;
     }
 
