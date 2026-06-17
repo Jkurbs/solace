@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDownToLine, ArrowUpFromLine, Check, Clock3, LogOut, Moon, Scale, ShieldCheck, Sun, Zap } from 'lucide-react';
+import { ArrowDownToLine, ArrowRight, ArrowUpFromLine, Check, Clock3, LogOut, Moon, Scale, ShieldCheck, Sun, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import Mark from '@/app/Mark';
@@ -326,15 +326,18 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const todaysChange = isAwaitingDeposit ? '—' : formatTodaysChange(data.portfolio.todaysChange);
   const sinceInception = isAwaitingDeposit ? '—' : formatPercent(data.portfolio.sinceInception, true);
   const operatingStatus = isAwaitingDeposit ? 'Awaiting deposit' : data.status.status;
-  const actionHelper =
-    actionStatus ||
-    (isAwaitingDeposit
-      ? 'Deposits are reviewed before Hermes begins allocation.'
-      : 'Capital movement runs through the approved account rails.');
   const depositIntentLabel = data.account.depositIntent?.amount
     ? formatCurrency(data.account.depositIntent.amount, { whole: true })
     : 'Pending';
   const accountReviewSubmitted = data.account.review?.status === 'SUBMITTED';
+  const setupIncomplete = isAwaitingDeposit && (!accountReviewSubmitted || !data.account.depositIntent?.amount);
+  const actionHelper =
+    actionStatus ||
+    (setupIncomplete
+      ? 'You can review Hermes now. Complete setup before deposits open.'
+      : isAwaitingDeposit
+        ? 'Deposits are reviewed before Hermes begins allocation.'
+        : 'Capital movement runs through the approved account rails.');
   const identityVerificationLabel = formatIdentityStatus(data.account.identityVerification.status);
   const identityHelper =
     identityStatus ||
@@ -547,16 +550,26 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 <p className="text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                   Hermes will begin allocation after identity verification, capital receipt, and account activation.
                 </p>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => identityVerification.mutate()}
-                  disabled={identityVerification.isPending || data.account.identityVerification.status === 'VERIFIED'}
-                  className="w-full md:w-auto"
-                >
-                  <ShieldCheck size={16} aria-hidden="true" />
-                  {identityVerification.isPending ? 'Opening' : 'Start verification'}
-                </Button>
+                <div className="grid gap-3 sm:grid-cols-2 md:flex md:justify-end">
+                  {setupIncomplete ? (
+                    <Button asChild variant="secondary" className="w-full md:w-auto">
+                      <Link href="/dashboard/onboarding">
+                        <ArrowRight size={16} aria-hidden="true" />
+                        Complete setup
+                      </Link>
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => identityVerification.mutate()}
+                    disabled={identityVerification.isPending || data.account.identityVerification.status === 'VERIFIED'}
+                    className="w-full md:w-auto"
+                  >
+                    <ShieldCheck size={16} aria-hidden="true" />
+                    {identityVerification.isPending ? 'Opening' : 'Start verification'}
+                  </Button>
+                </div>
               </div>
               <p className="mt-3 text-sm leading-6 text-neutral-500 dark:text-neutral-400" aria-live="polite">
                 {identityHelper}

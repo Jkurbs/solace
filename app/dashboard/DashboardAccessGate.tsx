@@ -24,9 +24,9 @@ export default function DashboardAccessGate({ denied = false }: { denied?: boole
           className="w-full rounded-lg border border-neutral-800 bg-[#181715] p-6 shadow-2xl shadow-black/20"
         >
           <p className="text-sm font-medium uppercase tracking-[0.16em] text-neutral-500">Hermes access</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-normal text-neutral-50">Begin account setup</h1>
+          <h1 className="mt-3 text-3xl font-semibold tracking-normal text-neutral-50">Enter Hermes</h1>
           <p className="mt-3 text-sm leading-6 text-neutral-400">
-            Enter the private access code to set your risk profile and capital intent.
+            Enter your private access code to open the Hermes dashboard. Account setup can be completed when capital moves.
           </p>
 
           <label htmlFor="dashboard-code" className="mt-6 block text-sm font-medium text-neutral-300">

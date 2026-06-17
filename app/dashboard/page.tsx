@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
 
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import { HermesDashboard } from '@/features/hermes-dashboard/dashboard-client';
@@ -42,13 +41,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     const denied = Array.isArray(params?.access) ? params?.access.includes('denied') : params?.access === 'denied';
 
     return <DashboardAccessGate denied={denied} />;
-  }
-
-  const accountId = await getDashboardAccountId();
-  const onboarding = await getDashboardOnboardingState(accountId);
-
-  if (!onboarding.complete) {
-    redirect('/dashboard/onboarding');
   }
 
   const initialSnapshot = await getInitialDashboardSnapshot();

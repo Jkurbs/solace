@@ -13,10 +13,6 @@ export async function GET() {
   const riskProfile = await getStoredRiskProfile(accountId);
   const onboarding = await getDashboardOnboardingState(accountId);
 
-  if (!onboarding.complete) {
-    return NextResponse.json({ message: 'Dashboard onboarding required.' }, { status: 409 });
-  }
-
   const snapshot = await getHermesDashboardSnapshot({
     accountId,
     accountReview: onboarding.accountReview,

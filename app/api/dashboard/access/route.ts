@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 
 import { grantDashboardAccess, resolveDashboardAccessCode } from '@/features/hermes-dashboard/access';
-import { getDashboardOnboardingState } from '@/features/hermes-dashboard/preferences';
 
 export async function POST(request: Request) {
   const formData = await request.formData().catch(() => null);
@@ -15,9 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.redirect(dashboardUrl, 303);
   }
 
-  const accountId = dashboardAccess.kind === 'invite' ? dashboardAccess.accountId : null;
-  const onboarding = await getDashboardOnboardingState(accountId);
-  const nextUrl = new URL(onboarding.complete ? '/dashboard' : '/dashboard/onboarding', request.url);
+  const nextUrl = new URL('/dashboard', request.url);
   const response = NextResponse.redirect(nextUrl, 303);
   grantDashboardAccess(response, dashboardAccess);
 
