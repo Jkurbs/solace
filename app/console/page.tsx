@@ -231,6 +231,20 @@ function AccessDecisionButton({
   );
 }
 
+function ApprovalEmailButton({ requestId }: { requestId: string }) {
+  return (
+    <form action="/api/console/access-requests/approval-email" method="post">
+      <input type="hidden" name="requestId" value={requestId} />
+      <button
+        type="submit"
+        className="inline-flex h-9 w-full items-center justify-center rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 text-sm font-medium text-emerald-100 transition-colors hover:bg-emerald-400/15"
+      >
+        Send invite
+      </button>
+    </form>
+  );
+}
+
 function getTreasuryTaskActions(status: TreasuryTaskStatus): Array<{ label: string; status: TreasuryTaskStatus; tone: 'green' | 'neutral' | 'red' }> {
   switch (status) {
     case 'QUEUED':
@@ -796,9 +810,12 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
 
                     <div className="grid content-start gap-2">
                       {decisionRecorded ? (
-                        <div className="rounded-md border border-neutral-800 bg-[#181715] p-3 text-sm text-neutral-300">
-                          Decision: {formatConstant(request.humanDecision ?? request.status)}
-                        </div>
+                        <>
+                          <div className="rounded-md border border-neutral-800 bg-[#181715] p-3 text-sm text-neutral-300">
+                            Decision: {formatConstant(request.humanDecision ?? request.status)}
+                          </div>
+                          {request.status === 'approved' ? <ApprovalEmailButton requestId={request.id} /> : null}
+                        </>
                       ) : (
                         <>
                           <AccessDecisionButton decision="APPROVED" requestId={request.id} tone="green">
