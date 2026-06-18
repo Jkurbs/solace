@@ -17,7 +17,13 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const next = getSafeNextPath(url.searchParams.get('next'));
   const failureUrl = new URL('/dashboard', url.origin);
+  const errorCode = url.searchParams.get('error_code');
   failureUrl.searchParams.set('auth', 'failed');
+
+  if (errorCode === 'otp_expired') {
+    failureUrl.searchParams.set('auth', 'expired');
+    return NextResponse.redirect(failureUrl, 303);
+  }
 
   if (!isSupabaseServerConfigured()) {
     console.warn('[auth-callback] Supabase Auth is not configured.');

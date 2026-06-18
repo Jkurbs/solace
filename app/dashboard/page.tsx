@@ -44,7 +44,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     const status = Array.isArray(params?.auth) ? params.auth[0] : params?.auth;
     const email = Array.isArray(params?.email) ? params.email[0] : params?.email;
 
-    return <DashboardAccessGate email={email} status={status === 'denied' || status === 'failed' || status === 'invalid' || status === 'sent' ? status : undefined} />;
+    return <DashboardAccessGate email={email} status={status === 'denied' || status === 'expired' || status === 'failed' || status === 'invalid' || status === 'sent' ? status : undefined} />;
   }
 
   const initialSnapshot = await getInitialDashboardSnapshot();

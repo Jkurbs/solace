@@ -8,6 +8,8 @@ import type { HermesAccessRequest } from './types';
 
 export type ApprovalEmailResult = 'sent' | 'unconfigured' | 'failed';
 
+const defaultAppOrigin = 'https://app.solace.fyi';
+
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => {
     const entities: Record<string, string> = {
@@ -46,15 +48,24 @@ function getSmtpConfig() {
 function getAppOrigin(fallbackOrigin: string) {
   const configuredAppUrl = process.env.SOLACE_APP_URL ?? process.env.NEXT_PUBLIC_SOLACE_APP_URL;
 
-  if (!configuredAppUrl) {
-    return fallbackOrigin;
+  if (configuredAppUrl) {
+    try {
+      return new URL(configuredAppUrl).origin;
+    } catch {
+      console.warn('[access-review] SOLACE_APP_URL is not a valid URL.', { configuredAppUrl });
+    }
   }
 
   try {
-    return new URL(configuredAppUrl).origin;
+    const fallbackUrl = new URL(fallbackOrigin);
+
+    if (fallbackUrl.hostname === 'localhost' || fallbackUrl.hostname === '127.0.0.1') {
+      return defaultAppOrigin;
+    }
+
+    return fallbackUrl.origin;
   } catch {
-    console.warn('[access-review] SOLACE_APP_URL is not a valid URL.', { configuredAppUrl });
-    return fallbackOrigin;
+    return defaultAppOrigin;
   }
 }
 

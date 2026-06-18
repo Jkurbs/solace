@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 import Mark from '@/app/Mark';
 
-type AuthStatus = 'denied' | 'failed' | 'invalid' | 'sent' | undefined;
+type AuthStatus = 'denied' | 'expired' | 'failed' | 'invalid' | 'sent' | undefined;
 
 function getStatusMessage(status: AuthStatus, email?: string) {
   switch (status) {
@@ -20,6 +20,11 @@ function getStatusMessage(status: AuthStatus, email?: string) {
       return {
         tone: 'error' as const,
         text: 'We could not start the sign-in flow. Try again or contact Solace.',
+      };
+    case 'expired':
+      return {
+        tone: 'error' as const,
+        text: 'That sign-in link is invalid or expired. Enter your email to receive a fresh link.',
       };
     case 'invalid':
       return {
