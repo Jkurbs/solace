@@ -453,6 +453,30 @@ export async function updateAccessRequestEmail(requestId: string, email: string)
   return resolvedRequest;
 }
 
+export async function findApprovedAccessRequestByAccountId(accountId: string) {
+  const requests = await listAccessRequests();
+
+  return requests.find((request) => {
+    const ledgerAccountId = request.ledgerAccountId ?? request.accountId;
+
+    return (
+      request.status === 'approved' &&
+      request.dashboardInviteStatus === 'ACTIVE' &&
+      ledgerAccountId === accountId
+    );
+  });
+}
+
+export async function ensureApprovedAccountRecordsForAccountId(accountId: string) {
+  const request = await findApprovedAccessRequestByAccountId(accountId);
+
+  if (!request) {
+    return null;
+  }
+
+  return ensureApprovedAccountRecords(request);
+}
+
 export async function findApprovedAccessRequestByDashboardCode(code: string) {
   const codeHash = createDashboardInviteCodeHash(code);
   const requests = await listAccessRequests();

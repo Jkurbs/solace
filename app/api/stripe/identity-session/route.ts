@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { ensureApprovedAccountRecordsForAccountId } from '@/features/access-review/store';
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import {
   getDashboardOnboardingState,
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
     } as const;
 
     if (accountId) {
+      await ensureApprovedAccountRecordsForAccountId(accountId);
       await setPersistedIdentityVerificationPreference(accountId, identityVerification);
     }
 

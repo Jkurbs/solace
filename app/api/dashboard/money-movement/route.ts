@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 
-import { getPersistedAccountBundle, getAccountOnboarding } from '@/features/accounts/store';
+import { getPersistedAccountBundle } from '@/features/accounts/store';
+import { ensureApprovedAccountRecordsForAccountId } from '@/features/access-review/store';
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
+import { getDashboardOnboardingState } from '@/features/hermes-dashboard/preferences';
 import { recordStripeDepositSession } from '@/features/ledger/store';
 import { getStripeServerClient } from '@/lib/stripe/server';
 
@@ -51,13 +53,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Deposits require an approved Solace account invite.' }, { status: 409 });
   }
 
-  const [bundle, onboarding] = await Promise.all([
+  let [bundle, onboarding] = await Promise.all([
     getPersistedAccountBundle(accountId),
-    getAccountOnboarding(accountId),
+    getDashboardOnboardingState(accountId),
   ]);
 
   if (!bundle) {
-    return NextResponse.json({ message: 'Approved account could not be found.' }, { status: 404 });
+    bundle = await ensureApprovedAccountRecordsForAccountId(accountId);
+    onboarding = await getDashboardOnboardingState(accountId);
+  }
+
+  if (!bundle) {
+    return NextResponse.json({ message: 'Approved account could not be found. Open your invite link again or contact Solace.' }, { status: 404 });
   }
 
   const amount = onboarding?.depositIntentAmount;

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { ensureApprovedAccountRecordsForAccountId } from '@/features/access-review/store';
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import {
   buildAccountReview,
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
   const accountId = await getDashboardAccountId();
 
   if (accountId) {
+    await ensureApprovedAccountRecordsForAccountId(accountId);
     await completePersistedDashboardOnboarding(accountId, { accountReview, depositIntentAmount, riskProfile });
   }
 

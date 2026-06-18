@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
+import { ensureApprovedAccountRecordsForAccountId } from '@/features/access-review/store';
 import {
   updateAccountIdentityVerification,
   updateAccountIdentityVerificationBySessionId,
@@ -52,6 +53,11 @@ async function persistIdentityEvent(event: Stripe.Event) {
     updatedAt: new Date(event.created * 1000).toISOString(),
   } as const;
   const accountId = session.metadata?.ledger_account_id;
+
+  if (accountId) {
+    await ensureApprovedAccountRecordsForAccountId(accountId);
+  }
+
   const saved = accountId
     ? await updateAccountIdentityVerification(accountId, identityVerification)
     : await updateAccountIdentityVerificationBySessionId(session.id, identityVerification);
