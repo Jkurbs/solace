@@ -103,6 +103,10 @@ function getAwaitingDepositSnapshot(
   } satisfies HermesDashboardSnapshot;
 }
 
+function getPendingAccountLabel(accountId: string) {
+  return `Account ending ${accountId.replace(/[^a-z0-9]/gi, '').slice(-4).toUpperCase()}`;
+}
+
 function getActiveSnapshotFromLedger(
   baseSnapshot: HermesDashboardSnapshot,
   ledger: LedgerReadModel,
@@ -185,7 +189,24 @@ export async function getHermesDashboardSnapshot({
       return pendingSnapshot;
     }
 
-    const ledger = await getLedgerReadModel(accountId);
+    const ledger = await getLedgerReadModel(accountId).catch((error) => {
+      console.warn('[hermes-dashboard] Ledger read model unavailable for pending account.', {
+        accountId,
+        error: error instanceof Error ? error.message : error,
+      });
+
+      return null;
+    });
+
+    if (!ledger) {
+      return {
+        ...pendingSnapshot,
+        account: {
+          ...pendingSnapshot.account,
+          label: getPendingAccountLabel(accountId),
+        },
+      };
+    }
 
     if (ledger.account.status === 'ACTIVE') {
       return getActiveSnapshotFromLedger(baseSnapshot, ledger, selectedRiskProfile);
