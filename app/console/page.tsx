@@ -231,7 +231,7 @@ function AccessDecisionButton({
   );
 }
 
-function ApprovalEmailButton({ requestId }: { requestId: string }) {
+function ResendApprovalEmailButton({ requestId }: { requestId: string }) {
   return (
     <form action="/api/console/access-requests/approval-email" method="post">
       <input type="hidden" name="requestId" value={requestId} />
@@ -239,7 +239,7 @@ function ApprovalEmailButton({ requestId }: { requestId: string }) {
         type="submit"
         className="inline-flex h-9 w-full items-center justify-center rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 text-sm font-medium text-emerald-100 transition-colors hover:bg-emerald-400/15"
       >
-        Send invite
+        Resend invite
       </button>
     </form>
   );
@@ -673,7 +673,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
               </h2>
               <p className="mt-3 max-w-xl text-sm leading-6 text-neutral-400">
                 Requests are scored for clarity, missing information, and operational risk. The model recommends; the
-                console records the final human decision.
+                console records the final human decision. Approved requests automatically receive a dashboard invite.
               </p>
               {reviewStatus === 'updated' ? (
                 <p className="mt-4 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-100">
@@ -814,7 +814,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
                           <div className="rounded-md border border-neutral-800 bg-[#181715] p-3 text-sm text-neutral-300">
                             Decision: {formatConstant(request.humanDecision ?? request.status)}
                           </div>
-                          {request.status === 'approved' ? <ApprovalEmailButton requestId={request.id} /> : null}
+                          {request.status === 'approved' ? <ResendApprovalEmailButton requestId={request.id} /> : null}
                         </>
                       ) : (
                         <>
