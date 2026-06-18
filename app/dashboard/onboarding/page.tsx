@@ -5,6 +5,8 @@ import type { ReactNode } from 'react';
 import { ArrowRight, Check, Scale, ShieldCheck, Zap } from 'lucide-react';
 
 import Mark from '@/app/Mark';
+import { findApprovedAccessRequestByAccountId } from '@/features/access-review/store';
+import type { HermesAccessRequest } from '@/features/access-review/types';
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import {
   accountTypeValues,
@@ -14,7 +16,7 @@ import {
   sourceOfFundsValues,
 } from '@/features/hermes-dashboard/contract';
 import { getDashboardOnboardingState } from '@/features/hermes-dashboard/preferences';
-import type { RiskProfile } from '@/features/hermes-dashboard/types';
+import type { AccountReview, AccountType, IntendedDepositRange, RiskProfile, SourceOfFunds } from '@/features/hermes-dashboard/types';
 
 export const metadata: Metadata = {
   title: 'Solace — Hermes Setup',
@@ -26,6 +28,67 @@ const riskProfileIcons: Record<RiskProfile, typeof ShieldCheck> = {
   Preservation: ShieldCheck,
   Velocity: Zap,
 };
+
+function getMatchedValue<T extends string>(values: readonly T[], value: string | undefined, fallback: T) {
+  return values.includes(value as T) ? (value as T) : fallback;
+}
+
+function getInitialRiskProfile(objective: string | undefined): RiskProfile {
+  const normalizedObjective = objective?.toLowerCase() ?? '';
+
+  if (normalizedObjective.includes('preservation') || normalizedObjective.includes('monitoring')) {
+    return 'Preservation';
+  }
+
+  if (normalizedObjective.includes('growth') || normalizedObjective.includes('conviction')) {
+    return 'Velocity';
+  }
+
+  return 'Balanced';
+}
+
+function getDepositAmountFromRange(range: IntendedDepositRange) {
+  switch (range) {
+    case '$10k-$25k':
+      return '10000';
+    case '$25k-$100k':
+      return '25000';
+    case '$100k-$250k':
+      return '100000';
+    case '$250k+':
+      return '250000';
+  }
+}
+
+function joinProfileParts(parts: Array<string | null | undefined>) {
+  return parts.filter(Boolean).join(' · ');
+}
+
+function getInitialReviewValues({
+  approvedProfile,
+  existingReview,
+}: {
+  approvedProfile: HermesAccessRequest | undefined;
+  existingReview: AccountReview | null;
+}) {
+  const intendedRange = getMatchedValue(
+    intendedDepositRangeValues,
+    existingReview?.intendedDepositRange ?? approvedProfile?.capitalRange,
+    '$10k-$25k',
+  );
+  const legalName = `${approvedProfile?.firstName ?? ''} ${approvedProfile?.lastName ?? ''}`.trim();
+
+  return {
+    accountType: getMatchedValue<AccountType>(accountTypeValues, existingReview?.accountType, 'Individual'),
+    country: existingReview?.country ?? approvedProfile?.country ?? 'United States',
+    depositAmount: getDepositAmountFromRange(intendedRange),
+    intendedRange,
+    legalName,
+    region: existingReview?.region ?? '',
+    riskProfile: getInitialRiskProfile(approvedProfile?.objective),
+    sourceOfFunds: getMatchedValue<SourceOfFunds>(sourceOfFundsValues, existingReview?.sourceOfFunds, 'Employment income'),
+  };
+}
 
 function ConsentCheckbox({ children, name }: { children: ReactNode; name: string }) {
   return (
@@ -54,6 +117,11 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
 
   const accountId = await getDashboardAccountId();
   const onboarding = await getDashboardOnboardingState(accountId);
+  const approvedProfile = accountId ? await findApprovedAccessRequestByAccountId(accountId) : undefined;
+  const reviewValues = getInitialReviewValues({
+    approvedProfile,
+    existingReview: onboarding.accountReview,
+  });
 
   if (onboarding.complete) {
     redirect('/dashboard');
@@ -83,8 +151,38 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             Welcome to Hermes.
           </h1>
           <p className="mt-5 max-w-md text-sm leading-6 text-neutral-400">
-            Set the account posture, complete a light review, and record capital intent before entering the dashboard.
+            Confirm the profile from your access request, complete the remaining fields, and record capital intent before entering the dashboard.
           </p>
+          {approvedProfile ? (
+            <div className="mt-8 rounded-lg border border-neutral-800 bg-[#181715] p-4 text-sm">
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">Profile on file</p>
+              <dl className="mt-4 grid gap-3 text-neutral-300">
+                <div>
+                  <dt className="text-neutral-500">Name</dt>
+                  <dd className="mt-1">{`${approvedProfile.firstName} ${approvedProfile.lastName}`.trim()}</dd>
+                </div>
+                <div>
+                  <dt className="text-neutral-500">Contact</dt>
+                  <dd className="mt-1 grid gap-1">
+                    <span className="break-all">{approvedProfile.email}</span>
+                    {approvedProfile.phone ? <span>{approvedProfile.phone}</span> : null}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-neutral-500">Profile</dt>
+                  <dd className="mt-1">
+                    {joinProfileParts([approvedProfile.role, approvedProfile.organization, approvedProfile.country])}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-neutral-500">Capital</dt>
+                  <dd className="mt-1">
+                    {joinProfileParts([approvedProfile.capitalRange, approvedProfile.objective])}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          ) : null}
           <div className="mt-8 grid gap-3 text-sm text-neutral-400">
             <div className="grid grid-cols-[1.5rem_1fr] gap-3">
               <span className="font-mono text-neutral-600">01</span>
@@ -128,7 +226,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                       type="radio"
                       name="riskProfile"
                       value={riskProfile}
-                      defaultChecked={riskProfile === 'Balanced'}
+                      defaultChecked={riskProfile === reviewValues.riskProfile}
                     />
                     <div className="rounded-md border border-neutral-800 bg-neutral-950/30 p-4 transition-colors peer-checked:border-neutral-200 peer-checked:bg-neutral-50 peer-checked:text-neutral-950">
                       <div className="flex items-center gap-3">
@@ -147,7 +245,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             <p className="text-sm font-medium text-neutral-400">Account Review</p>
             <h2 className="mt-1 text-xl font-semibold text-neutral-50">Light profile</h2>
             <p className="mt-3 text-sm leading-6 text-neutral-400">
-              Solace does not collect ID documents, SSNs, or bank details in this form.
+              We prefilled what you already submitted. Confirm or correct the details before continuing.
             </p>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -161,6 +259,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                   type="text"
                   autoComplete="name"
                   required
+                  defaultValue={reviewValues.legalName}
                   className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
                 />
               </div>
@@ -172,7 +271,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                   id="account-type"
                   name="accountType"
                   required
-                  defaultValue="Individual"
+                  defaultValue={reviewValues.accountType}
                   className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors focus:border-neutral-400"
                 >
                   {accountTypeValues.map((accountType) => (
@@ -192,7 +291,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                   type="text"
                   autoComplete="country-name"
                   required
-                  defaultValue="United States"
+                  defaultValue={reviewValues.country}
                   className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
                 />
               </div>
@@ -206,6 +305,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                   type="text"
                   autoComplete="address-level1"
                   required
+                  defaultValue={reviewValues.region}
                   className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
                 />
               </div>
@@ -217,7 +317,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                   id="deposit-range"
                   name="intendedDepositRange"
                   required
-                  defaultValue="$10k-$25k"
+                  defaultValue={reviewValues.intendedRange}
                   className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors focus:border-neutral-400"
                 >
                   {intendedDepositRangeValues.map((range) => (
@@ -235,7 +335,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                   id="source-of-funds"
                   name="sourceOfFunds"
                   required
-                  defaultValue="Employment income"
+                  defaultValue={reviewValues.sourceOfFunds}
                   className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors focus:border-neutral-400"
                 >
                   {sourceOfFundsValues.map((source) => (
@@ -248,6 +348,9 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             </div>
 
             <div className="mt-5 grid gap-3">
+              <ConsentCheckbox name="profileConfirmed">
+                I have reviewed the profile details above and confirm they are accurate.
+              </ConsentCheckbox>
               <ConsentCheckbox name="riskAcknowledged">
                 Capital deployment is subject to review and activation by Solace.
               </ConsentCheckbox>
@@ -277,7 +380,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                 step="0.01"
                 inputMode="decimal"
                 required
-                defaultValue="10000"
+                defaultValue={reviewValues.depositAmount}
                 className="h-12 w-full bg-transparent px-4 text-base text-neutral-50 outline-none placeholder:text-neutral-600"
               />
             </div>

@@ -111,6 +111,7 @@ export interface AccountReview {
   intendedDepositRange: IntendedDepositRange;
   sourceOfFunds: SourceOfFunds;
   legalNameProvided: boolean;
+  profileConfirmed?: boolean;
   riskAcknowledged: boolean;
   identityConsent: boolean;
 }

@@ -156,6 +156,7 @@ export function buildAccountReview(formData: FormData): AccountReview | null {
   const accountType = getField(formData, 'accountType');
   const intendedDepositRange = getField(formData, 'intendedDepositRange');
   const sourceOfFunds = getField(formData, 'sourceOfFunds');
+  const profileConfirmed = formData.get('profileConfirmed') === 'on';
   const riskAcknowledged = formData.get('riskAcknowledged') === 'on';
   const identityConsent = formData.get('identityConsent') === 'on';
 
@@ -166,6 +167,7 @@ export function buildAccountReview(formData: FormData): AccountReview | null {
     !isAccountType(accountType) ||
     !isIntendedDepositRange(intendedDepositRange) ||
     !isSourceOfFunds(sourceOfFunds) ||
+    !profileConfirmed ||
     !riskAcknowledged ||
     !identityConsent
   ) {
@@ -178,6 +180,7 @@ export function buildAccountReview(formData: FormData): AccountReview | null {
     identityConsent,
     intendedDepositRange,
     legalNameProvided: true,
+    profileConfirmed,
     region,
     riskAcknowledged,
     sourceOfFunds,
