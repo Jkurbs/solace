@@ -701,6 +701,18 @@ export async function listPersistedAccountBundles() {
   return listFallbackAccountBundles();
 }
 
+export async function getPersistedAccountBundleByUserEmail(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    return null;
+  }
+
+  const bundles = await listPersistedAccountBundles();
+
+  return bundles.find((bundle) => bundle.user.email.toLowerCase() === normalizedEmail) ?? null;
+}
+
 export async function getPersistedAccountBundle(accountId: string) {
   return (await getSupabaseAccountBundle(accountId)) ?? getFallbackAccountBundle(accountId);
 }

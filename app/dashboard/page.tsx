@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   description: 'A simple Hermes account dashboard focused on value, status, allocation, activity, and commentary.',
 };
 
+export const dynamic = 'force-dynamic';
+
 async function getInitialDashboardSnapshot() {
   const accountId = await getDashboardAccountId();
   const storedRiskProfile = await getStoredRiskProfile(accountId);
@@ -29,7 +31,8 @@ async function getInitialDashboardSnapshot() {
 
 type DashboardPageProps = {
   searchParams?: Promise<{
-    access?: string | string[];
+    auth?: string | string[];
+    email?: string | string[];
   }>;
 };
 
@@ -38,9 +41,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   if (!accessGranted) {
     const params = await searchParams;
-    const denied = Array.isArray(params?.access) ? params?.access.includes('denied') : params?.access === 'denied';
+    const status = Array.isArray(params?.auth) ? params.auth[0] : params?.auth;
+    const email = Array.isArray(params?.email) ? params.email[0] : params?.email;
 
-    return <DashboardAccessGate denied={denied} />;
+    return <DashboardAccessGate email={email} status={status === 'denied' || status === 'failed' || status === 'invalid' || status === 'sent' ? status : undefined} />;
   }
 
   const initialSnapshot = await getInitialDashboardSnapshot();

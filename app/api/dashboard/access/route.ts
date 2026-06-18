@@ -1,40 +1,76 @@
 import { NextResponse } from 'next/server';
 
-import { grantDashboardAccess, resolveDashboardAccessCode } from '@/features/hermes-dashboard/access';
+import { getPersistedAccountBundleByUserEmail } from '@/features/accounts/store';
+import { createSupabaseServerClient, isSupabaseServerConfigured } from '@/lib/supabase/server';
 
-function getAccessDestinationPath(dashboardAccess: Awaited<ReturnType<typeof resolveDashboardAccessCode>>) {
-  if (dashboardAccess?.kind !== 'invite') {
-    return '/dashboard';
-  }
-
-  return '/dashboard/onboarding?welcome=1';
+function normalizeEmail(value: FormDataEntryValue | string | null) {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
 }
 
-async function grantAccessFromCode(request: Request, code: FormDataEntryValue | string | null) {
-  const dashboardUrl = new URL('/dashboard', request.url);
+function getRedirectUrl(request: Request, status: string, email?: string) {
+  const url = new URL('/dashboard', request.url);
+  url.searchParams.set('auth', status);
 
-  const dashboardAccess = typeof code === 'string' ? await resolveDashboardAccessCode(code) : null;
-
-  if (!dashboardAccess) {
-    dashboardUrl.searchParams.set('access', 'denied');
-    return NextResponse.redirect(dashboardUrl, 303);
+  if (email) {
+    url.searchParams.set('email', email);
   }
 
-  const nextUrl = new URL(getAccessDestinationPath(dashboardAccess), request.url);
-  const response = NextResponse.redirect(nextUrl, 303);
-  grantDashboardAccess(response, dashboardAccess);
+  return url;
+}
 
-  return response;
+function getEmailRedirectTo(request: Request) {
+  const callbackUrl = new URL('/auth/callback', request.url);
+  callbackUrl.searchParams.set('next', '/dashboard/onboarding?welcome=1');
+
+  return callbackUrl.toString();
+}
+
+async function sendDashboardMagicLink(request: Request, email: string) {
+  if (!isSupabaseServerConfigured()) {
+    console.warn('[dashboard-access] Supabase Auth is not configured.');
+    return false;
+  }
+
+  const bundle = await getPersistedAccountBundleByUserEmail(email);
+
+  if (!bundle || bundle.user.status === 'SUSPENDED' || bundle.hermesAccount.status === 'CLOSED') {
+    return null;
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: getEmailRedirectTo(request),
+      shouldCreateUser: true,
+    },
+  });
+
+  if (error) {
+    console.warn('[dashboard-access] Supabase magic link failed.', error.message);
+    return false;
+  }
+
+  return true;
 }
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
-
-  return grantAccessFromCode(request, url.searchParams.get('code'));
+  return NextResponse.redirect(new URL('/dashboard', request.url), 303);
 }
 
 export async function POST(request: Request) {
   const formData = await request.formData().catch(() => null);
+  const email = normalizeEmail(formData?.get('email') ?? null);
 
-  return grantAccessFromCode(request, formData?.get('code') ?? null);
+  if (!email) {
+    return NextResponse.redirect(getRedirectUrl(request, 'invalid'), 303);
+  }
+
+  const sent = await sendDashboardMagicLink(request, email);
+
+  if (sent === null) {
+    return NextResponse.redirect(getRedirectUrl(request, 'denied', email), 303);
+  }
+
+  return NextResponse.redirect(getRedirectUrl(request, sent ? 'sent' : 'failed', email), 303);
 }

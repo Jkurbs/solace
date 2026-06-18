@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   description: 'Internal Hermes dashboard contract inspector for field ownership and backend requirements.',
 };
 
+export const dynamic = 'force-dynamic';
+
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
   maximumFractionDigits: 2,

@@ -2,9 +2,11 @@ import 'server-only';
 
 import nodemailer from 'nodemailer';
 
+import { createSupabaseAdminClient, isSupabaseAdminConfigured } from '@/lib/supabase/server';
+
 import type { HermesAccessRequest } from './types';
 
-export type ApprovalEmailResult = 'sent' | 'unconfigured' | 'failed' | 'missing_invite';
+export type ApprovalEmailResult = 'sent' | 'unconfigured' | 'failed';
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => {
@@ -56,23 +58,58 @@ function getAppOrigin(fallbackOrigin: string) {
   }
 }
 
-function getDashboardAccessUrl(origin: string, inviteCode: string) {
-  const url = new URL('/api/dashboard/access', getAppOrigin(origin));
-  url.searchParams.set('code', inviteCode);
+function getDashboardLoginUrl(origin: string, email: string) {
+  const url = new URL('/dashboard', getAppOrigin(origin));
+  url.searchParams.set('email', email);
 
   return url.toString();
 }
 
-export async function sendHermesApprovalEmail(request: HermesAccessRequest, origin: string): Promise<ApprovalEmailResult> {
-  const inviteCode = request.dashboardInviteCode;
+function getAuthRedirectUrl(origin: string) {
+  const url = new URL('/auth/callback', getAppOrigin(origin));
+  url.searchParams.set('next', '/dashboard/onboarding?welcome=1');
 
-  if (!inviteCode) {
-    console.warn('[access-review] Approval email could not be sent because invite code is missing.', {
-      requestId: request.id,
-    });
-    return 'missing_invite';
+  return url.toString();
+}
+
+async function getDashboardAccessUrl(origin: string, request: HermesAccessRequest) {
+  if (isSupabaseAdminConfigured()) {
+    try {
+      const supabase = createSupabaseAdminClient();
+      const { data, error } = await supabase.auth.admin.generateLink({
+        email: request.email,
+        options: {
+          data: {
+            access_request_id: request.id,
+            account_id: request.ledgerAccountId ?? request.accountId ?? null,
+          },
+          redirectTo: getAuthRedirectUrl(origin),
+        },
+        type: 'magiclink',
+      });
+
+      const actionLink = data.properties?.action_link;
+
+      if (!error && actionLink) {
+        return actionLink;
+      }
+
+      console.warn('[access-review] Supabase approval magic link unavailable.', {
+        error: error?.message,
+        requestId: request.id,
+      });
+    } catch (error) {
+      console.warn('[access-review] Supabase approval magic link failed.', {
+        error: error instanceof Error ? error.message : error,
+        requestId: request.id,
+      });
+    }
   }
 
+  return getDashboardLoginUrl(origin, request.email);
+}
+
+export async function sendHermesApprovalEmail(request: HermesAccessRequest, origin: string): Promise<ApprovalEmailResult> {
   const smtpConfig = getSmtpConfig();
 
   if (!smtpConfig) {
@@ -83,7 +120,7 @@ export async function sendHermesApprovalEmail(request: HermesAccessRequest, orig
     return 'unconfigured';
   }
 
-  const dashboardUrl = getDashboardAccessUrl(origin, inviteCode);
+  const dashboardUrl = await getDashboardAccessUrl(origin, request);
   const firstName = request.firstName || 'there';
   const subject = 'Hermes access approved';
   const text = [
@@ -93,9 +130,7 @@ export async function sendHermesApprovalEmail(request: HermesAccessRequest, orig
     '',
     `Open Hermes: ${dashboardUrl}`,
     '',
-    `Access code: ${inviteCode}`,
-    '',
-    'Hermes is currently being introduced in stages. Once inside, you can complete setup, select your risk profile, verify identity, and prepare your first deposit.',
+    'Hermes is currently being introduced in stages. Once inside, you can confirm your profile, select your risk profile, verify identity, and prepare your first deposit.',
     '',
     'Solace',
   ].join('\n');
@@ -105,12 +140,8 @@ export async function sendHermesApprovalEmail(request: HermesAccessRequest, orig
         <p style="margin:0 0 18px;color:#9d998f;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;">Solace</p>
         <h1 style="margin:0;color:#f5f5f0;font-size:32px;line-height:1.05;font-weight:600;">Hermes access approved.</h1>
         <p style="margin:22px 0 0;color:#c8c4ba;font-size:16px;line-height:1.6;">${escapeHtml(firstName)}, your Hermes access has been approved.</p>
-        <p style="margin:16px 0 0;color:#9d998f;font-size:15px;line-height:1.6;">Hermes is currently being introduced in stages. Once inside, you can complete setup, select your risk profile, verify identity, and prepare your first deposit.</p>
+        <p style="margin:16px 0 0;color:#9d998f;font-size:15px;line-height:1.6;">Hermes is currently being introduced in stages. Once inside, you can confirm your profile, select your risk profile, verify identity, and prepare your first deposit.</p>
         <a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;margin-top:28px;background:#f5f5f0;color:#10100e;text-decoration:none;font-weight:700;font-size:14px;padding:13px 18px;border-radius:6px;">Open Hermes</a>
-        <div style="margin-top:26px;border-top:1px solid #2b2a26;padding-top:18px;">
-          <p style="margin:0;color:#9d998f;font-size:13px;">Access code</p>
-          <p style="margin:8px 0 0;color:#f5f5f0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px;">${escapeHtml(inviteCode)}</p>
-        </div>
       </div>
     </div>
   `;

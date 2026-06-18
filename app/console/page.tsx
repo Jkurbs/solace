@@ -240,21 +240,21 @@ function ResendApprovalEmailButton({ requestId }: { requestId: string }) {
         type="submit"
         className="inline-flex h-9 w-full items-center justify-center rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 text-sm font-medium text-emerald-100 transition-colors hover:bg-emerald-400/15"
       >
-        Resend invite
+        Resend access email
       </button>
     </form>
   );
 }
 
-function InviteRecipientForm({ email, requestId }: { email: string; requestId: string }) {
+function AccessEmailForm({ email, requestId }: { email: string; requestId: string }) {
   return (
     <form action="/api/console/access-requests/email" method="post" className="grid gap-2 rounded-md border border-neutral-800 bg-[#181715] p-3">
       <input type="hidden" name="requestId" value={requestId} />
-      <label htmlFor={`invite-email-${requestId}`} className="text-xs uppercase tracking-[0.14em] text-neutral-500">
-        Invite recipient
+      <label htmlFor={`access-email-${requestId}`} className="text-xs uppercase tracking-[0.14em] text-neutral-500">
+        Access email
       </label>
       <input
-        id={`invite-email-${requestId}`}
+        id={`access-email-${requestId}`}
         name="email"
         type="email"
         required
@@ -643,7 +643,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
 
           <article className="mt-4 rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
             <p className="text-sm font-medium text-neutral-400">Account Activation</p>
-            <h3 className="mt-1 text-lg font-semibold text-neutral-50">User, Hermes, ledger, and invite status</h3>
+            <h3 className="mt-1 text-lg font-semibold text-neutral-50">User, Hermes, ledger, and access status</h3>
             <div className="mt-5 grid gap-3">
               {moneyMovement.accountStatuses.length ? (
                 moneyMovement.accountStatuses.slice(0, 6).map((account) => {
@@ -673,7 +673,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
                           Ledger {formatConstant(account.ledgerAccountStatus)}
                         </span>
                         <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(account.dashboardInviteStatus ?? 'missing')}`}>
-                          Invite {formatConstant(account.dashboardInviteStatus ?? 'missing')}
+                          Access {formatConstant(account.dashboardInviteStatus ?? 'missing')}
                         </span>
                         <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(activationComplete ? 'ACTIVE' : 'PENDING_ACTIVATION')}`}>
                           {activationComplete ? 'Ready' : 'Review'}
@@ -700,7 +700,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
               </h2>
               <p className="mt-3 max-w-xl text-sm leading-6 text-neutral-400">
                 Requests are scored for clarity, missing information, and operational risk. The model recommends; the
-                console records the final human decision. Approved requests automatically receive a dashboard invite.
+                console records the final human decision. Approved requests automatically receive a secure dashboard sign-in email.
               </p>
               {reviewStatus === 'updated' ? (
                 <p className="mt-4 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-100">
@@ -714,22 +714,22 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
               ) : null}
               {notificationStatus === 'unconfigured' ? (
                 <p className="mt-3 rounded-md border border-amber-300/25 bg-amber-300/10 px-3 py-2 text-sm text-amber-100">
-                  Access was approved, but SMTP is not configured. Send the invite code manually or add email env vars.
+                  Access was approved, but SMTP is not configured. Add email env vars before sending access emails.
                 </p>
               ) : null}
-              {notificationStatus === 'failed' || notificationStatus === 'missing_invite' ? (
+              {notificationStatus === 'failed' ? (
                 <p className="mt-3 rounded-md border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-100">
                   Access was approved, but the approval email could not be sent.
                 </p>
               ) : null}
               {emailStatus === 'updated' ? (
                 <p className="mt-3 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-100">
-                  Invite recipient updated.
+                  Access email updated.
                 </p>
               ) : null}
               {emailStatus === 'invalid' || emailStatus === 'missing' ? (
                 <p className="mt-3 rounded-md border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-100">
-                  Invite recipient could not be updated.
+                  Access email could not be updated.
                 </p>
               ) : null}
               {reviewStatus === 'invalid' || reviewStatus === 'missing' ? (
@@ -840,7 +840,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
                           <span>Solace user: {request.solaceUserId ?? 'Pending'}</span>
                           <span>Hermes account: {request.hermesAccountId ?? 'Pending'}</span>
                           <span>Ledger account: {getLedgerAccountId(request)}</span>
-                          <span>Invite code: {request.dashboardInviteCode ?? 'Pending'}</span>
+                          <span>Auth access: Magic link</span>
                         </div>
                       ) : null}
                     </div>
@@ -853,7 +853,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
                           </div>
                           {request.status === 'approved' ? (
                             <>
-                              <InviteRecipientForm email={request.email} requestId={request.id} />
+                              <AccessEmailForm email={request.email} requestId={request.id} />
                               <ResendApprovalEmailButton requestId={request.id} />
                             </>
                           ) : null}

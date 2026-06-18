@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   const redirectUrl = new URL('/console', request.url);
 
   if (typeof requestId !== 'string') {
-    redirectUrl.searchParams.set('notification', 'missing_invite');
+    redirectUrl.searchParams.set('notification', 'failed');
     return NextResponse.redirect(redirectUrl, 303);
   }
 
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   const accessRequest = accessRequests.find((candidate) => candidate.id === requestId);
 
   if (!accessRequest || accessRequest.status !== 'approved') {
-    redirectUrl.searchParams.set('notification', 'missing_invite');
+    redirectUrl.searchParams.set('notification', 'failed');
     return NextResponse.redirect(redirectUrl, 303);
   }
 

@@ -23,6 +23,8 @@ export const metadata: Metadata = {
   description: 'Set up Hermes risk profile and capital intent before entering the dashboard.',
 };
 
+export const dynamic = 'force-dynamic';
+
 const riskProfileIcons: Record<RiskProfile, typeof ShieldCheck> = {
   Balanced: Scale,
   Preservation: ShieldCheck,
