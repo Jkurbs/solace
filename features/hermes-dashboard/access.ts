@@ -4,7 +4,14 @@ import { createHash, timingSafeEqual } from 'crypto';
 import { cookies } from 'next/headers';
 import type { NextResponse } from 'next/server';
 
-import { findActiveDashboardInviteByCode, hasDashboardInviteAccess } from '@/features/accounts/store';
+import {
+  findApprovedAccessRequestByDashboardCode,
+  hasDashboardInviteAccess as hasAccessRequestDashboardInviteAccess,
+} from '@/features/access-review/store';
+import {
+  findActiveDashboardInviteByCode,
+  hasDashboardInviteAccess as hasAccountDashboardInviteAccess,
+} from '@/features/accounts/store';
 
 const dashboardAccessCookieName = 'hermes_dashboard_access';
 const dashboardAccountCookieName = 'hermes_dashboard_account_id';
@@ -60,7 +67,7 @@ export async function hasDashboardAccess() {
   }
 
   if (token && accountId) {
-    return hasDashboardInviteAccess(accountId, token);
+    return hasInviteAccess(accountId, token);
   }
 
   return false;
@@ -71,11 +78,19 @@ export async function getDashboardAccountId() {
   const token = cookieStore.get(dashboardAccessCookieName)?.value;
   const accountId = cookieStore.get(dashboardAccountCookieName)?.value;
 
-  if (!token || !accountId || !(await hasDashboardInviteAccess(accountId, token))) {
+  if (!token || !accountId || !(await hasInviteAccess(accountId, token))) {
     return null;
   }
 
   return accountId;
+}
+
+async function hasInviteAccess(accountId: string, token: string) {
+  if (await hasAccountDashboardInviteAccess(accountId, token)) {
+    return true;
+  }
+
+  return hasAccessRequestDashboardInviteAccess(accountId, token);
 }
 
 export async function resolveDashboardAccessCode(code: string): Promise<DashboardAccessGrant | null> {
@@ -87,14 +102,25 @@ export async function resolveDashboardAccessCode(code: string): Promise<Dashboar
 
   const approvedInvite = await findActiveDashboardInviteByCode(code);
 
-  if (!approvedInvite) {
+  if (approvedInvite) {
+    return {
+      accountId: approvedInvite.accountId,
+      kind: 'invite',
+      token: approvedInvite.token,
+    };
+  }
+
+  const approvedRequest = await findApprovedAccessRequestByDashboardCode(code);
+  const requestAccountId = approvedRequest?.ledgerAccountId ?? approvedRequest?.accountId;
+
+  if (!approvedRequest?.dashboardInviteCodeHash || !requestAccountId) {
     return null;
   }
 
   return {
-    accountId: approvedInvite.accountId,
+    accountId: requestAccountId,
     kind: 'invite',
-    token: approvedInvite.token,
+    token: approvedRequest.dashboardInviteCodeHash,
   };
 }
 
