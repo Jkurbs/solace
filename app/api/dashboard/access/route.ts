@@ -1,16 +1,13 @@
 import { NextResponse } from 'next/server';
 
-import { getAccountOnboarding } from '@/features/accounts/store';
 import { grantDashboardAccess, resolveDashboardAccessCode } from '@/features/hermes-dashboard/access';
 
-async function getAccessDestinationPath(dashboardAccess: Awaited<ReturnType<typeof resolveDashboardAccessCode>>) {
+function getAccessDestinationPath(dashboardAccess: Awaited<ReturnType<typeof resolveDashboardAccessCode>>) {
   if (dashboardAccess?.kind !== 'invite') {
     return '/dashboard';
   }
 
-  const onboarding = await getAccountOnboarding(dashboardAccess.accountId);
-
-  return onboarding?.complete ? '/dashboard' : '/dashboard/onboarding';
+  return '/dashboard/onboarding?welcome=1';
 }
 
 async function grantAccessFromCode(request: Request, code: FormDataEntryValue | string | null) {
@@ -23,7 +20,7 @@ async function grantAccessFromCode(request: Request, code: FormDataEntryValue | 
     return NextResponse.redirect(dashboardUrl, 303);
   }
 
-  const nextUrl = new URL(await getAccessDestinationPath(dashboardAccess), request.url);
+  const nextUrl = new URL(getAccessDestinationPath(dashboardAccess), request.url);
   const response = NextResponse.redirect(nextUrl, 303);
   grantDashboardAccess(response, dashboardAccess);
 

@@ -15,7 +15,7 @@ import {
   riskProfileValues,
   sourceOfFundsValues,
 } from '@/features/hermes-dashboard/contract';
-import { getDashboardOnboardingState } from '@/features/hermes-dashboard/preferences';
+import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
 import type { AccountReview, AccountType, IntendedDepositRange, RiskProfile, SourceOfFunds } from '@/features/hermes-dashboard/types';
 
 export const metadata: Metadata = {
@@ -66,10 +66,14 @@ function joinProfileParts(parts: Array<string | null | undefined>) {
 
 function getInitialReviewValues({
   approvedProfile,
+  existingDepositIntentAmount,
   existingReview,
+  existingRiskProfile,
 }: {
   approvedProfile: HermesAccessRequest | undefined;
+  existingDepositIntentAmount: number | null;
   existingReview: AccountReview | null;
+  existingRiskProfile: RiskProfile | null;
 }) {
   const intendedRange = getMatchedValue(
     intendedDepositRangeValues,
@@ -81,11 +85,11 @@ function getInitialReviewValues({
   return {
     accountType: getMatchedValue<AccountType>(accountTypeValues, existingReview?.accountType, 'Individual'),
     country: existingReview?.country ?? approvedProfile?.country ?? 'United States',
-    depositAmount: getDepositAmountFromRange(intendedRange),
+    depositAmount: existingDepositIntentAmount ? String(existingDepositIntentAmount) : getDepositAmountFromRange(intendedRange),
     intendedRange,
     legalName,
     region: existingReview?.region ?? '',
-    riskProfile: getInitialRiskProfile(approvedProfile?.objective),
+    riskProfile: existingRiskProfile ?? getInitialRiskProfile(approvedProfile?.objective),
     sourceOfFunds: getMatchedValue<SourceOfFunds>(sourceOfFundsValues, existingReview?.sourceOfFunds, 'Employment income'),
   };
 }
@@ -105,6 +109,7 @@ function ConsentCheckbox({ children, name }: { children: ReactNode; name: string
 type DashboardOnboardingPageProps = {
   searchParams?: Promise<{
     setup?: string | string[];
+    welcome?: string | string[];
   }>;
 };
 
@@ -115,20 +120,24 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
     redirect('/dashboard');
   }
 
+  const params = await searchParams;
+  const invalid = Array.isArray(params?.setup) ? params?.setup.includes('invalid') : params?.setup === 'invalid';
+  const welcomeMode = Array.isArray(params?.welcome) ? params?.welcome.includes('1') : params?.welcome === '1';
   const accountId = await getDashboardAccountId();
   const onboarding = await getDashboardOnboardingState(accountId);
+  const storedRiskProfile = await getStoredRiskProfile(accountId);
   const approvedProfile = accountId ? await findApprovedAccessRequestByAccountId(accountId) : undefined;
   const reviewValues = getInitialReviewValues({
     approvedProfile,
+    existingDepositIntentAmount: onboarding.depositIntentAmount,
     existingReview: onboarding.accountReview,
+    existingRiskProfile: storedRiskProfile,
   });
+  const setupAlreadyComplete = onboarding.complete;
 
-  if (onboarding.complete) {
+  if (setupAlreadyComplete && !welcomeMode) {
     redirect('/dashboard');
   }
-
-  const params = await searchParams;
-  const invalid = Array.isArray(params?.setup) ? params?.setup.includes('invalid') : params?.setup === 'invalid';
 
   return (
     <main className="min-h-screen bg-[#10100e] text-neutral-50">
@@ -151,7 +160,9 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             Welcome to Hermes.
           </h1>
           <p className="mt-5 max-w-md text-sm leading-6 text-neutral-400">
-            Confirm the profile from your access request, complete the remaining fields, and record capital intent before entering the dashboard.
+            {setupAlreadyComplete
+              ? 'Review the profile from your access request. Setup is already recorded; confirm the details before entering the dashboard.'
+              : 'Confirm the profile from your access request, complete the remaining fields, and record capital intent before entering the dashboard.'}
           </p>
           {approvedProfile ? (
             <div className="mt-8 rounded-lg border border-neutral-800 bg-[#181715] p-4 text-sm">
@@ -396,7 +407,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             type="submit"
             className="mt-8 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-neutral-50 px-4 text-sm font-semibold text-neutral-950 transition-colors hover:bg-neutral-200"
           >
-            Continue to dashboard
+            {setupAlreadyComplete ? 'Open dashboard' : 'Continue to dashboard'}
             <ArrowRight size={16} aria-hidden="true" />
           </button>
         </form>
