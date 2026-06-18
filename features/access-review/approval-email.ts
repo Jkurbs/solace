@@ -41,8 +41,23 @@ function getSmtpConfig() {
   };
 }
 
+function getAppOrigin(fallbackOrigin: string) {
+  const configuredAppUrl = process.env.SOLACE_APP_URL ?? process.env.NEXT_PUBLIC_SOLACE_APP_URL;
+
+  if (!configuredAppUrl) {
+    return fallbackOrigin;
+  }
+
+  try {
+    return new URL(configuredAppUrl).origin;
+  } catch {
+    console.warn('[access-review] SOLACE_APP_URL is not a valid URL.', { configuredAppUrl });
+    return fallbackOrigin;
+  }
+}
+
 function getDashboardAccessUrl(origin: string, inviteCode: string) {
-  const url = new URL('/api/dashboard/access', origin);
+  const url = new URL('/api/dashboard/access', getAppOrigin(origin));
   url.searchParams.set('code', inviteCode);
 
   return url.toString();
