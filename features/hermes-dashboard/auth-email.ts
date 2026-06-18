@@ -4,9 +4,7 @@ import nodemailer from 'nodemailer';
 
 import { createSupabaseAdminClient, isSupabaseAdminConfigured } from '@/lib/supabase/server';
 
-import type { HermesAccessRequest } from './types';
-
-export type ApprovalEmailResult = 'sent' | 'unconfigured' | 'failed';
+export type HermesAuthEmailResult = 'sent' | 'unconfigured' | 'failed';
 
 const defaultAppOrigin = 'https://app.solace.fyi';
 
@@ -52,7 +50,7 @@ function getAppOrigin(fallbackOrigin: string) {
     try {
       return new URL(configuredAppUrl).origin;
     } catch {
-      console.warn('[access-review] SOLACE_APP_URL is not a valid URL.', { configuredAppUrl });
+      console.warn('[dashboard-auth] SOLACE_APP_URL is not a valid URL.', { configuredAppUrl });
     }
   }
 
@@ -69,13 +67,6 @@ function getAppOrigin(fallbackOrigin: string) {
   }
 }
 
-function getDashboardLoginUrl(origin: string, email: string) {
-  const url = new URL('/dashboard', getAppOrigin(origin));
-  url.searchParams.set('email', email);
-
-  return url.toString();
-}
-
 function getAuthRedirectUrl(origin: string) {
   const url = new URL('/auth/callback', getAppOrigin(origin));
   url.searchParams.set('next', '/dashboard/onboarding?welcome=1');
@@ -83,65 +74,71 @@ function getAuthRedirectUrl(origin: string) {
   return url.toString();
 }
 
-async function getDashboardAccessUrl(origin: string, request: HermesAccessRequest) {
-  if (isSupabaseAdminConfigured()) {
-    try {
-      const supabase = createSupabaseAdminClient();
-      const { data, error } = await supabase.auth.admin.generateLink({
-        email: request.email,
-        options: {
-          data: {
-            access_request_id: request.id,
-            account_id: request.ledgerAccountId ?? request.accountId ?? null,
-          },
-          redirectTo: getAuthRedirectUrl(origin),
-        },
-        type: 'magiclink',
-      });
-
-      const actionLink = data.properties?.action_link;
-
-      if (!error && actionLink) {
-        return actionLink;
-      }
-
-      console.warn('[access-review] Supabase approval magic link unavailable.', {
-        error: error?.message,
-        requestId: request.id,
-      });
-    } catch (error) {
-      console.warn('[access-review] Supabase approval magic link failed.', {
-        error: error instanceof Error ? error.message : error,
-        requestId: request.id,
-      });
-    }
+async function createHermesMagicLink({ email, origin }: { email: string; origin: string }) {
+  if (!isSupabaseAdminConfigured()) {
+    console.warn('[dashboard-auth] Supabase admin is not configured.');
+    return null;
   }
 
-  return getDashboardLoginUrl(origin, request.email);
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase.auth.admin.generateLink({
+      email,
+      options: {
+        data: {
+          source: 'hermes_dashboard',
+        },
+        redirectTo: getAuthRedirectUrl(origin),
+      },
+      type: 'magiclink',
+    });
+
+    const actionLink = data.properties?.action_link;
+
+    if (!error && actionLink) {
+      return actionLink;
+    }
+
+    console.warn('[dashboard-auth] Supabase magic link unavailable.', error?.message);
+    return null;
+  } catch (error) {
+    console.warn('[dashboard-auth] Supabase magic link failed.', error);
+    return null;
+  }
 }
 
-export async function sendHermesApprovalEmail(request: HermesAccessRequest, origin: string): Promise<ApprovalEmailResult> {
+export async function sendHermesDashboardSignInEmail({
+  email,
+  firstName,
+  origin,
+}: {
+  email: string;
+  firstName?: string;
+  origin: string;
+}): Promise<HermesAuthEmailResult> {
   const smtpConfig = getSmtpConfig();
 
   if (!smtpConfig) {
-    console.warn('[access-review] Approval email skipped because SMTP is not configured.', {
-      email: request.email,
-      requestId: request.id,
-    });
+    console.warn('[dashboard-auth] Sign-in email skipped because SMTP is not configured.', { email });
     return 'unconfigured';
   }
 
-  const dashboardUrl = await getDashboardAccessUrl(origin, request);
-  const firstName = request.firstName || 'there';
-  const subject = 'Hermes access approved';
+  const dashboardUrl = await createHermesMagicLink({ email, origin });
+
+  if (!dashboardUrl) {
+    return 'failed';
+  }
+
+  const greeting = firstName?.trim() || 'there';
+  const subject = 'Open Hermes';
   const text = [
-    `${firstName},`,
+    `${greeting},`,
     '',
-    'Your Hermes access has been approved.',
+    'Use this secure link to open Hermes:',
     '',
-    `Open Hermes: ${dashboardUrl}`,
+    dashboardUrl,
     '',
-    'Hermes is currently being introduced in stages. Once inside, you can confirm your profile, select your risk profile, verify identity, and prepare your first deposit.',
+    'This link can be used once. If it expires, request a fresh link from the Hermes login screen.',
     '',
     'Solace',
   ].join('\n');
@@ -149,9 +146,8 @@ export async function sendHermesApprovalEmail(request: HermesAccessRequest, orig
     <div style="background:#10100e;color:#f5f5f0;font-family:Inter,Arial,sans-serif;padding:32px;">
       <div style="max-width:560px;margin:0 auto;border:1px solid #2b2a26;background:#181715;padding:28px;">
         <p style="margin:0 0 18px;color:#9d998f;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;">Solace</p>
-        <h1 style="margin:0;color:#f5f5f0;font-size:32px;line-height:1.05;font-weight:600;">Hermes access approved.</h1>
-        <p style="margin:22px 0 0;color:#c8c4ba;font-size:16px;line-height:1.6;">${escapeHtml(firstName)}, your Hermes access has been approved.</p>
-        <p style="margin:16px 0 0;color:#9d998f;font-size:15px;line-height:1.6;">Hermes is currently being introduced in stages. Once inside, you can confirm your profile, select your risk profile, verify identity, and prepare your first deposit.</p>
+        <h1 style="margin:0;color:#f5f5f0;font-size:32px;line-height:1.05;font-weight:600;">Open Hermes.</h1>
+        <p style="margin:22px 0 0;color:#c8c4ba;font-size:16px;line-height:1.6;">${escapeHtml(greeting)}, use this secure link to enter your Hermes dashboard.</p>
         <a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;margin-top:28px;background:#f5f5f0;color:#10100e;text-decoration:none;font-weight:700;font-size:14px;padding:13px 18px;border-radius:6px;">Open Hermes</a>
         <div style="margin-top:26px;border-top:1px solid #2b2a26;padding-top:18px;">
           <p style="margin:0;color:#9d998f;font-size:13px;line-height:1.5;">If the button is not visible, paste this link into your browser:</p>
@@ -179,15 +175,14 @@ export async function sendHermesApprovalEmail(request: HermesAccessRequest, orig
       html,
       subject,
       text,
-      to: request.email,
+      to: email,
     });
 
     return 'sent';
   } catch (error) {
-    console.warn('[access-review] Approval email delivery failed.', {
-      email: request.email,
+    console.warn('[dashboard-auth] Sign-in email delivery failed.', {
+      email,
       error: error instanceof Error ? error.message : error,
-      requestId: request.id,
     });
 
     return 'failed';

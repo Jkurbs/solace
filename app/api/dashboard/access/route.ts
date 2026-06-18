@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { getPersistedAccountBundleByUserEmail } from '@/features/accounts/store';
-import { createSupabaseServerClient, isSupabaseServerConfigured } from '@/lib/supabase/server';
+import { sendHermesDashboardSignInEmail } from '@/features/hermes-dashboard/auth-email';
 
 function normalizeEmail(value: FormDataEntryValue | string | null) {
   return typeof value === 'string' ? value.trim().toLowerCase() : '';
@@ -18,40 +18,21 @@ function getRedirectUrl(request: Request, status: string, email?: string) {
   return url;
 }
 
-function getEmailRedirectTo(request: Request) {
-  const callbackUrl = new URL('/auth/callback', request.url);
-  callbackUrl.searchParams.set('next', '/dashboard/onboarding?welcome=1');
-
-  return callbackUrl.toString();
-}
-
 async function sendDashboardMagicLink(request: Request, email: string) {
-  if (!isSupabaseServerConfigured()) {
-    console.warn('[dashboard-access] Supabase Auth is not configured.');
-    return false;
-  }
-
   const bundle = await getPersistedAccountBundleByUserEmail(email);
 
   if (!bundle || bundle.user.status === 'SUSPENDED' || bundle.hermesAccount.status === 'CLOSED') {
     return null;
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signInWithOtp({
+  const [firstName] = bundle.user.name.trim().split(/\s+/);
+  const result = await sendHermesDashboardSignInEmail({
     email,
-    options: {
-      emailRedirectTo: getEmailRedirectTo(request),
-      shouldCreateUser: true,
-    },
+    firstName,
+    origin: new URL(request.url).origin,
   });
 
-  if (error) {
-    console.warn('[dashboard-access] Supabase magic link failed.', error.message);
-    return false;
-  }
-
-  return true;
+  return result === 'sent';
 }
 
 export async function GET(request: Request) {
