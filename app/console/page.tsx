@@ -23,6 +23,7 @@ export const metadata: Metadata = {
 type ConsolePageProps = {
   searchParams?: Promise<{
     access?: string | string[];
+    email?: string | string[];
     notification?: string | string[];
     review?: string | string[];
     treasury?: string | string[];
@@ -245,6 +246,31 @@ function ResendApprovalEmailButton({ requestId }: { requestId: string }) {
   );
 }
 
+function InviteRecipientForm({ email, requestId }: { email: string; requestId: string }) {
+  return (
+    <form action="/api/console/access-requests/email" method="post" className="grid gap-2 rounded-md border border-neutral-800 bg-[#181715] p-3">
+      <input type="hidden" name="requestId" value={requestId} />
+      <label htmlFor={`invite-email-${requestId}`} className="text-xs uppercase tracking-[0.14em] text-neutral-500">
+        Invite recipient
+      </label>
+      <input
+        id={`invite-email-${requestId}`}
+        name="email"
+        type="email"
+        required
+        defaultValue={email}
+        className="h-9 rounded-md border border-neutral-700 bg-[#10100e] px-3 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
+      />
+      <button
+        type="submit"
+        className="inline-flex h-9 w-full items-center justify-center rounded-md border border-neutral-700 px-3 text-sm font-medium text-neutral-200 transition-colors hover:border-neutral-500 hover:bg-neutral-900"
+      >
+        Update and send
+      </button>
+    </form>
+  );
+}
+
 function getTreasuryTaskActions(status: TreasuryTaskStatus): Array<{ label: string; status: TreasuryTaskStatus; tone: 'green' | 'neutral' | 'red' }> {
   switch (status) {
     case 'QUEUED':
@@ -347,6 +373,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
   const ownerSummaries = groupByOwner(snapshot.fieldSources);
   const reviewStatus = Array.isArray(params?.review) ? params.review[0] : params?.review;
   const notificationStatus = Array.isArray(params?.notification) ? params.notification[0] : params?.notification;
+  const emailStatus = Array.isArray(params?.email) ? params.email[0] : params?.email;
   const treasuryStatus = Array.isArray(params?.treasury) ? params.treasury[0] : params?.treasury;
   const postedDeposits = moneyMovement.deposits.filter((deposit) => deposit.status === 'posted');
   const queuedTreasuryTasks = moneyMovement.treasuryTasks.filter((task) =>
@@ -695,6 +722,16 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
                   Access was approved, but the approval email could not be sent.
                 </p>
               ) : null}
+              {emailStatus === 'updated' ? (
+                <p className="mt-3 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-100">
+                  Invite recipient updated.
+                </p>
+              ) : null}
+              {emailStatus === 'invalid' || emailStatus === 'missing' ? (
+                <p className="mt-3 rounded-md border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-100">
+                  Invite recipient could not be updated.
+                </p>
+              ) : null}
               {reviewStatus === 'invalid' || reviewStatus === 'missing' ? (
                 <p className="mt-4 rounded-md border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-100">
                   Access decision could not be recorded.
@@ -814,7 +851,12 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
                           <div className="rounded-md border border-neutral-800 bg-[#181715] p-3 text-sm text-neutral-300">
                             Decision: {formatConstant(request.humanDecision ?? request.status)}
                           </div>
-                          {request.status === 'approved' ? <ResendApprovalEmailButton requestId={request.id} /> : null}
+                          {request.status === 'approved' ? (
+                            <>
+                              <InviteRecipientForm email={request.email} requestId={request.id} />
+                              <ResendApprovalEmailButton requestId={request.id} />
+                            </>
+                          ) : null}
                         </>
                       ) : (
                         <>

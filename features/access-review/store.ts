@@ -422,6 +422,37 @@ export async function decideAccessRequest(requestId: string, decision: HumanAcce
   return resolvedRequest;
 }
 
+export async function updateAccessRequestEmail(requestId: string, email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const requests = await listAccessRequests();
+  const request = requests.find((candidate) => candidate.id === requestId);
+
+  if (!request || !normalizedEmail) {
+    return null;
+  }
+
+  const updatedRequest: HermesAccessRequest = {
+    ...request,
+    email: normalizedEmail,
+    updatedAt: now(),
+  };
+  const savedRequest = await updateSupabaseRequest(updatedRequest);
+  const resolvedRequest = savedRequest ?? updatedRequest;
+
+  if (resolvedRequest.status === 'approved') {
+    await ensureApprovedAccountRecords(resolvedRequest);
+  }
+
+  if (savedRequest) {
+    addMemoryRequest(savedRequest);
+    return resolvedRequest;
+  }
+
+  await addFallbackRequest(updatedRequest);
+
+  return resolvedRequest;
+}
+
 export async function findApprovedAccessRequestByDashboardCode(code: string) {
   const codeHash = createDashboardInviteCodeHash(code);
   const requests = await listAccessRequests();
