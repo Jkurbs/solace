@@ -91,7 +91,7 @@ export async function sendHermesApprovalEmail(request: HermesAccessRequest, orig
     '',
     'Your Hermes access has been approved.',
     '',
-    `Open your dashboard: ${dashboardUrl}`,
+    `Open Hermes: ${dashboardUrl}`,
     '',
     `Access code: ${inviteCode}`,
     '',
@@ -106,7 +106,7 @@ export async function sendHermesApprovalEmail(request: HermesAccessRequest, orig
         <h1 style="margin:0;color:#f5f5f0;font-size:32px;line-height:1.05;font-weight:600;">Hermes access approved.</h1>
         <p style="margin:22px 0 0;color:#c8c4ba;font-size:16px;line-height:1.6;">${escapeHtml(firstName)}, your Hermes access has been approved.</p>
         <p style="margin:16px 0 0;color:#9d998f;font-size:15px;line-height:1.6;">Hermes is currently being introduced in stages. Once inside, you can complete setup, select your risk profile, verify identity, and prepare your first deposit.</p>
-        <a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;margin-top:28px;background:#f5f5f0;color:#10100e;text-decoration:none;font-weight:700;font-size:14px;padding:13px 18px;border-radius:6px;">Open Hermes dashboard</a>
+        <a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;margin-top:28px;background:#f5f5f0;color:#10100e;text-decoration:none;font-weight:700;font-size:14px;padding:13px 18px;border-radius:6px;">Open Hermes</a>
         <div style="margin-top:26px;border-top:1px solid #2b2a26;padding-top:18px;">
           <p style="margin:0;color:#9d998f;font-size:13px;">Access code</p>
           <p style="margin:8px 0 0;color:#f5f5f0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px;">${escapeHtml(inviteCode)}</p>
