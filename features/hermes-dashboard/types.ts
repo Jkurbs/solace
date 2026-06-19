@@ -48,6 +48,8 @@ export type DashboardFieldKey =
   | 'todays_change'
   | 'since_inception'
   | 'available_to_withdraw'
+  | 'pool_ownership'
+  | 'open_pnl'
   | 'status'
   | 'risk_profile'
   | 'capital_deployed'
@@ -78,6 +80,26 @@ export interface Portfolio {
   };
   sinceInception: number;
   availableToWithdraw: number;
+  allocatedCapital?: number;
+  availableBalance?: number;
+  cashBalance?: number;
+  fees?: number;
+  funding?: number;
+  openPnlIncluded?: boolean;
+  pool?: {
+    accountingVersion: string;
+    equity: number;
+    lastUpdated: IsoDateString;
+    navPerUnit: number;
+    poolId: string;
+    poolName: string;
+    poolShare: number;
+    units: number;
+  };
+  realizedPnl?: number;
+  reservedMargin?: number;
+  unrealizedPnl?: number;
+  withdrawable?: number;
 }
 
 export interface HermesStatus {

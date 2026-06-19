@@ -23,6 +23,12 @@ alter table if exists public.solace_ledger_entries enable row level security;
 alter table if exists public.solace_activities enable row level security;
 alter table if exists public.treasury_tasks enable row level security;
 alter table if exists public.stripe_deposit_settlements enable row level security;
+alter table if exists public.strategy_pools enable row level security;
+alter table if exists public.pool_nav_snapshots enable row level security;
+alter table if exists public.pool_unit_events enable row level security;
+alter table if exists public.user_pool_positions enable row level security;
+alter table if exists public.pool_deposit_allocations enable row level security;
+alter table if exists public.pool_withdrawal_redemptions enable row level security;
 
 do $$
 declare
@@ -49,7 +55,13 @@ begin
     'solace_ledger_entries',
     'solace_activities',
     'treasury_tasks',
-    'stripe_deposit_settlements'
+    'stripe_deposit_settlements',
+    'strategy_pools',
+    'pool_nav_snapshots',
+    'pool_unit_events',
+    'user_pool_positions',
+    'pool_deposit_allocations',
+    'pool_withdrawal_redemptions'
   ] loop
     target_table := to_regclass('public.' || target_name);
 
@@ -58,4 +70,16 @@ begin
       execute format('revoke all on table %s from anon, authenticated', target_table);
     end if;
   end loop;
+end $$;
+
+do $$
+declare
+  target_function regprocedure;
+begin
+  target_function := to_regprocedure('public.post_pool_deposit_allocation(text, text, numeric, text, text, timestamptz)');
+
+  if target_function is not null then
+    execute format('revoke all on function %s from public, anon, authenticated', target_function);
+    execute format('grant execute on function %s to service_role', target_function);
+  end if;
 end $$;

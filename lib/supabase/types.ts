@@ -504,6 +504,279 @@ export type Database = {
         };
         Relationships: [];
       };
+      strategy_pools: {
+        Row: {
+          id: string;
+          name: string;
+          risk_profile: 'Preservation' | 'Balanced' | 'Velocity';
+          status: 'ACTIVE' | 'PAUSED' | 'CLOSED';
+          currency: 'USD';
+          accounting_version: 'pool_units_v1';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          name: string;
+          risk_profile: 'Preservation' | 'Balanced' | 'Velocity';
+          status?: 'ACTIVE' | 'PAUSED' | 'CLOSED';
+          currency?: 'USD';
+          accounting_version?: 'pool_units_v1';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          risk_profile?: 'Preservation' | 'Balanced' | 'Velocity';
+          status?: 'ACTIVE' | 'PAUSED' | 'CLOSED';
+          currency?: 'USD';
+          accounting_version?: 'pool_units_v1';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      pool_nav_snapshots: {
+        Row: {
+          id: string;
+          pool_id: string;
+          gross_equity: number;
+          cash_balance: number;
+          allocated_capital: number;
+          reserved_margin: number;
+          realized_pnl: number;
+          unrealized_pnl: number;
+          fees: number;
+          funding: number;
+          total_units: number;
+          nav_per_unit: number;
+          accounting_version: 'pool_units_v1';
+          source: 'operator' | 'exchange_mark' | 'migration';
+          effective_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          pool_id: string;
+          gross_equity?: number;
+          cash_balance?: number;
+          allocated_capital?: number;
+          reserved_margin?: number;
+          realized_pnl?: number;
+          unrealized_pnl?: number;
+          fees?: number;
+          funding?: number;
+          total_units?: number;
+          nav_per_unit?: number;
+          accounting_version?: 'pool_units_v1';
+          source?: 'operator' | 'exchange_mark' | 'migration';
+          effective_at: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          pool_id?: string;
+          gross_equity?: number;
+          cash_balance?: number;
+          allocated_capital?: number;
+          reserved_margin?: number;
+          realized_pnl?: number;
+          unrealized_pnl?: number;
+          fees?: number;
+          funding?: number;
+          total_units?: number;
+          nav_per_unit?: number;
+          accounting_version?: 'pool_units_v1';
+          source?: 'operator' | 'exchange_mark' | 'migration';
+          effective_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      pool_unit_events: {
+        Row: {
+          id: string;
+          pool_id: string;
+          ledger_account_id: string;
+          type: 'deposit_mint' | 'withdrawal_burn' | 'fee_accrual' | 'manual_adjustment';
+          source: 'stripe_deposit' | 'withdrawal' | 'operator' | 'nav_migration';
+          units_delta: number;
+          amount: number;
+          currency: 'USD';
+          nav_per_unit: number;
+          accounting_version: 'pool_units_v1';
+          effective_at: string;
+          source_reference: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          pool_id: string;
+          ledger_account_id: string;
+          type: 'deposit_mint' | 'withdrawal_burn' | 'fee_accrual' | 'manual_adjustment';
+          source: 'stripe_deposit' | 'withdrawal' | 'operator' | 'nav_migration';
+          units_delta: number;
+          amount?: number;
+          currency?: 'USD';
+          nav_per_unit: number;
+          accounting_version?: 'pool_units_v1';
+          effective_at: string;
+          source_reference?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          pool_id?: string;
+          ledger_account_id?: string;
+          type?: 'deposit_mint' | 'withdrawal_burn' | 'fee_accrual' | 'manual_adjustment';
+          source?: 'stripe_deposit' | 'withdrawal' | 'operator' | 'nav_migration';
+          units_delta?: number;
+          amount?: number;
+          currency?: 'USD';
+          nav_per_unit?: number;
+          accounting_version?: 'pool_units_v1';
+          effective_at?: string;
+          source_reference?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      user_pool_positions: {
+        Row: {
+          pool_id: string;
+          ledger_account_id: string;
+          units: number;
+          available_units: number;
+          nav_per_unit: number;
+          equity: number;
+          pool_share: number;
+          accounting_version: 'pool_units_v1';
+          updated_at: string;
+        };
+        Insert: {
+          pool_id: string;
+          ledger_account_id: string;
+          units?: number;
+          available_units?: number;
+          nav_per_unit?: number;
+          equity?: number;
+          pool_share?: number;
+          accounting_version?: 'pool_units_v1';
+          updated_at?: string;
+        };
+        Update: {
+          pool_id?: string;
+          ledger_account_id?: string;
+          units?: number;
+          available_units?: number;
+          nav_per_unit?: number;
+          equity?: number;
+          pool_share?: number;
+          accounting_version?: 'pool_units_v1';
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      pool_deposit_allocations: {
+        Row: {
+          id: string;
+          deposit_id: string;
+          pool_id: string;
+          ledger_account_id: string;
+          amount: number;
+          currency: 'USD';
+          nav_per_unit: number;
+          units_minted: number;
+          status: 'pending' | 'posted' | 'void';
+          pool_unit_event_id: string | null;
+          accounting_version: 'pool_units_v1';
+          effective_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          deposit_id: string;
+          pool_id: string;
+          ledger_account_id: string;
+          amount: number;
+          currency?: 'USD';
+          nav_per_unit: number;
+          units_minted: number;
+          status?: 'pending' | 'posted' | 'void';
+          pool_unit_event_id?: string | null;
+          accounting_version?: 'pool_units_v1';
+          effective_at: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          deposit_id?: string;
+          pool_id?: string;
+          ledger_account_id?: string;
+          amount?: number;
+          currency?: 'USD';
+          nav_per_unit?: number;
+          units_minted?: number;
+          status?: 'pending' | 'posted' | 'void';
+          pool_unit_event_id?: string | null;
+          accounting_version?: 'pool_units_v1';
+          effective_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      pool_withdrawal_redemptions: {
+        Row: {
+          id: string;
+          withdrawal_reference: string;
+          pool_id: string;
+          ledger_account_id: string;
+          amount: number;
+          currency: 'USD';
+          nav_per_unit: number;
+          units_burned: number;
+          status: 'pending' | 'posted' | 'void';
+          pool_unit_event_id: string | null;
+          accounting_version: 'pool_units_v1';
+          effective_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          withdrawal_reference: string;
+          pool_id: string;
+          ledger_account_id: string;
+          amount: number;
+          currency?: 'USD';
+          nav_per_unit: number;
+          units_burned: number;
+          status?: 'pending' | 'posted' | 'void';
+          pool_unit_event_id?: string | null;
+          accounting_version?: 'pool_units_v1';
+          effective_at: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          withdrawal_reference?: string;
+          pool_id?: string;
+          ledger_account_id?: string;
+          amount?: number;
+          currency?: 'USD';
+          nav_per_unit?: number;
+          units_burned?: number;
+          status?: 'pending' | 'posted' | 'void';
+          pool_unit_event_id?: string | null;
+          accounting_version?: 'pool_units_v1';
+          effective_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       treasury_tasks: {
         Row: {
           id: string;
@@ -581,7 +854,25 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      post_pool_deposit_allocation: {
+        Args: {
+          p_amount: number;
+          p_currency?: 'USD';
+          p_deposit_id: string;
+          p_effective_at?: string;
+          p_ledger_account_id: string;
+          p_source_reference?: string | null;
+        };
+        Returns: Array<{
+          pool_id: string;
+          pool_unit_event_id: string;
+          units_minted: number;
+          nav_per_unit: number;
+          total_units: number;
+        }>;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

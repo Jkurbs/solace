@@ -5,6 +5,7 @@ import type { Database } from '@/lib/supabase/types';
 import type { IdentityVerificationStatus } from '@/features/hermes-dashboard/types';
 
 import type { LedgerActivity, LedgerDataset, LedgerDeposit, LedgerEntry, StripeDepositSettlementStatus } from './types';
+import { mintPoolUnitsForDeposit } from './pool-units';
 import { evaluateTreasuryPolicy } from './treasury-policy';
 
 type SolaceActivityRow = Database['public']['Tables']['solace_activities']['Row'];
@@ -675,6 +676,19 @@ export async function postStripeCheckoutDeposit({
     });
 
     if (!settlementRecorded) {
+      return false;
+    }
+
+    const poolUnitsMinted = await mintPoolUnitsForDeposit({
+      accountId,
+      amount: normalizedAmount,
+      currency,
+      depositId,
+      occurredAt,
+      sourceReference: checkoutSessionId,
+    });
+
+    if (!poolUnitsMinted) {
       return false;
     }
 

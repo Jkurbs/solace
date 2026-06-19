@@ -100,6 +100,22 @@ export const dashboardFieldSources: DashboardFieldSource[] = [
     status: 'mock',
   },
   {
+    field: 'pool_ownership',
+    label: 'Pool ownership',
+    owner: 'ledger',
+    ownerLabel: 'Pool Unit Accounting',
+    requirement: 'Projects user equity from units owned, current pool NAV, and the active accounting version.',
+    status: 'planned',
+  },
+  {
+    field: 'open_pnl',
+    label: 'Open PnL',
+    owner: 'performance_engine',
+    ownerLabel: 'Performance Engine',
+    requirement: 'Shows the user share of unrealized pool PnL from open positions.',
+    status: 'planned',
+  },
+  {
     field: 'status',
     label: 'Hermes status',
     owner: 'hermes_state',

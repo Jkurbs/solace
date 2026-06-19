@@ -97,6 +97,14 @@ function getCurrentValue(field: DashboardFieldKey, snapshot: HermesDashboardSnap
       return formatPercent(snapshot.portfolio.sinceInception, true);
     case 'available_to_withdraw':
       return formatCurrency(snapshot.portfolio.availableToWithdraw);
+    case 'pool_ownership':
+      return snapshot.portfolio.pool
+        ? `${formatPercent(snapshot.portfolio.pool.poolShare)} · ${numberFormatter.format(snapshot.portfolio.pool.units)} units · ${snapshot.portfolio.pool.poolName}`
+        : 'No pool position yet';
+    case 'open_pnl':
+      return `${formatCurrency(snapshot.portfolio.unrealizedPnl ?? 0, true)} · ${
+        snapshot.portfolio.openPnlIncluded ? 'Included in equity' : 'Not included yet'
+      }`;
     case 'status':
       return snapshot.status.status;
     case 'risk_profile':

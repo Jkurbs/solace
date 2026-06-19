@@ -33,6 +33,14 @@ export type StripeDepositSessionStatus = 'open' | 'posted' | 'expired' | 'failed
 
 export type StripeDepositSettlementStatus = 'pending' | 'available' | 'unavailable';
 
+export type PoolAccountingVersion = 'pool_units_v1';
+
+export type StrategyPoolStatus = 'ACTIVE' | 'PAUSED' | 'CLOSED';
+
+export type PoolUnitEventType = 'deposit_mint' | 'withdrawal_burn' | 'fee_accrual' | 'manual_adjustment';
+
+export type PoolUnitEventSource = 'stripe_deposit' | 'withdrawal' | 'operator' | 'nav_migration';
+
 export type LedgerActivityType =
   | 'account_created'
   | 'deposit_posted'
@@ -175,6 +183,80 @@ export interface StripeDepositSettlement {
   availableOn?: IsoDateString;
   createdAt: IsoDateString;
   updatedAt: IsoDateString;
+}
+
+export interface StrategyPool {
+  id: string;
+  name: string;
+  riskProfile: RiskProfile;
+  status: StrategyPoolStatus;
+  currency: LedgerCurrency;
+  accountingVersion: PoolAccountingVersion;
+  createdAt: IsoDateString;
+  updatedAt: IsoDateString;
+}
+
+export interface PoolNavSnapshot {
+  id: string;
+  poolId: string;
+  grossEquity: number;
+  cashBalance: number;
+  allocatedCapital: number;
+  reservedMargin: number;
+  realizedPnl: number;
+  unrealizedPnl: number;
+  fees: number;
+  funding: number;
+  totalUnits: number;
+  navPerUnit: number;
+  accountingVersion: PoolAccountingVersion;
+  source: 'operator' | 'exchange_mark' | 'migration';
+  effectiveAt: IsoDateString;
+  createdAt: IsoDateString;
+}
+
+export interface PoolUnitEvent {
+  id: string;
+  poolId: string;
+  accountId: string;
+  type: PoolUnitEventType;
+  source: PoolUnitEventSource;
+  unitsDelta: number;
+  amount: number;
+  navPerUnit: number;
+  currency: LedgerCurrency;
+  accountingVersion: PoolAccountingVersion;
+  effectiveAt: IsoDateString;
+  sourceReference?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: IsoDateString;
+}
+
+export interface UserPoolPosition {
+  poolId: string;
+  accountId: string;
+  units: number;
+  availableUnits: number;
+  navPerUnit: number;
+  equity: number;
+  poolShare: number;
+  accountingVersion: PoolAccountingVersion;
+  updatedAt: IsoDateString;
+}
+
+export interface PoolAccountProjection {
+  pool: StrategyPool;
+  latestNav: PoolNavSnapshot;
+  position: UserPoolPosition;
+  allocatedCapital: number;
+  availableBalance: number;
+  cashBalance: number;
+  fees: number;
+  funding: number;
+  openPnlIncluded: boolean;
+  reservedMargin: number;
+  unrealizedPnl: number;
+  withdrawable: number;
 }
 
 export interface AccountActivationStatus {

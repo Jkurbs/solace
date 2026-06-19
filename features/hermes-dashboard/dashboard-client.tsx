@@ -332,6 +332,29 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const portfolioValue = isAwaitingDeposit ? 'Pending' : formatCurrency(data.portfolio.value);
   const todaysChange = isAwaitingDeposit ? '—' : formatTodaysChange(data.portfolio.todaysChange);
   const sinceInception = isAwaitingDeposit ? '—' : formatPercent(data.portfolio.sinceInception, true);
+  const availableBalance = data.portfolio.availableBalance ?? data.portfolio.availableToWithdraw;
+  const allocatedCapital =
+    data.portfolio.allocatedCapital ?? (isAwaitingDeposit ? 0 : (data.portfolio.value * data.status.deployedCapital) / 100);
+  const openPnl = data.portfolio.unrealizedPnl ?? 0;
+  const equityMetrics = [
+    {
+      label: 'Available',
+      value: isAwaitingDeposit ? 'Pending' : formatCurrency(availableBalance),
+    },
+    {
+      label: 'In Strategy',
+      value: isAwaitingDeposit ? '—' : formatCurrency(allocatedCapital),
+    },
+    {
+      label: 'Open PnL',
+      positive: !isAwaitingDeposit && openPnl > 0,
+      value: isAwaitingDeposit ? '—' : formatCurrency(openPnl, { signed: true }),
+    },
+    {
+      label: 'Withdrawable',
+      value: isAwaitingDeposit ? 'Pending' : formatCurrency(data.portfolio.withdrawable ?? data.portfolio.availableToWithdraw),
+    },
+  ];
   const operatingStatus = isAwaitingDeposit ? 'Awaiting deposit' : isFundingPending ? 'Allocation pending' : data.status.status;
   const depositIntentLabel = data.account.depositIntent?.amount
     ? formatCurrency(data.account.depositIntent.amount, { whole: true })
@@ -497,6 +520,18 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 <Metric label="Since Inception" value={sinceInception} positive={!isAwaitingDeposit && data.portfolio.sinceInception > 0} />
               </div>
             </div>
+            <div className="mt-6 grid gap-4 border-t border-neutral-200 pt-5 dark:border-neutral-800 sm:grid-cols-2 lg:grid-cols-4">
+              {equityMetrics.map((item) => (
+                <Metric key={item.label} label={item.label} value={item.value} positive={item.positive} />
+              ))}
+            </div>
+            {data.portfolio.pool ? (
+              <p className="mt-4 text-sm leading-6 text-neutral-500 dark:text-neutral-400">
+                {data.portfolio.pool.poolName} · {formatPercent(data.portfolio.pool.poolShare)} share ·{' '}
+                {numberFormatter.format(data.portfolio.pool.units)} units · NAV {formatCurrency(data.portfolio.pool.navPerUnit)}
+                {data.portfolio.openPnlIncluded ? ' · Open PnL included' : ''}
+              </p>
+            ) : null}
           </motion.section>
 
           <Card>

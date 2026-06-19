@@ -1,7 +1,8 @@
 import 'server-only';
 
+import { getPoolAccountProjection } from '@/features/ledger/pool-units';
 import { getLedgerReadModel } from '@/features/ledger/read-model';
-import type { LedgerReadModel } from '@/features/ledger/types';
+import type { LedgerReadModel, PoolAccountProjection } from '@/features/ledger/types';
 
 import { dashboardFieldSources, hermesDashboardContractVersion } from './contract';
 import { hermesDashboardSnapshot } from './mock-data';
@@ -28,6 +29,7 @@ function cloneSnapshot(snapshot: HermesDashboardSnapshot): HermesDashboardSnapsh
     fieldSources: snapshot.fieldSources.map((source) => ({ ...source })),
     portfolio: {
       ...snapshot.portfolio,
+      pool: snapshot.portfolio.pool ? { ...snapshot.portfolio.pool } : undefined,
       todaysChange: { ...snapshot.portfolio.todaysChange },
     },
     status: { ...snapshot.status },
@@ -80,6 +82,16 @@ function getAwaitingDepositSnapshot(
       },
       sinceInception: 0,
       availableToWithdraw: 0,
+      allocatedCapital: 0,
+      availableBalance: 0,
+      cashBalance: 0,
+      fees: 0,
+      funding: 0,
+      openPnlIncluded: false,
+      realizedPnl: 0,
+      reservedMargin: 0,
+      unrealizedPnl: 0,
+      withdrawable: 0,
     },
     status: {
       status: 'WAIT',
@@ -107,14 +119,29 @@ function getPendingAccountLabel(accountId: string) {
   return `Account ending ${accountId.replace(/[^a-z0-9]/gi, '').slice(-4).toUpperCase()}`;
 }
 
+function roundCurrency(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+function roundPercent(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
 function getActiveSnapshotFromLedger(
   baseSnapshot: HermesDashboardSnapshot,
   ledger: LedgerReadModel,
   riskProfile: RiskProfile,
+  poolProjection: PoolAccountProjection | null,
 ): HermesDashboardSnapshot {
   const hermesActivity = ledger.activities.filter((activity) => activity.type === 'hermes_decision');
   const fundingPending = ledger.portfolio.totalDeposited > 0 && ledger.allocation.capitalDeployed === 0;
   const visibleActivity = hermesActivity.length ? hermesActivity : ledger.activities;
+  const portfolioValue = poolProjection?.position.equity ?? ledger.portfolio.value;
+  const availableToWithdraw = poolProjection?.withdrawable ?? ledger.portfolio.availableToWithdraw;
+  const netProfit = roundCurrency(portfolioValue + ledger.portfolio.totalWithdrawn - ledger.portfolio.totalDeposited);
+  const sinceInception = ledger.portfolio.totalDeposited
+    ? roundPercent((netProfit / ledger.portfolio.totalDeposited) * 100)
+    : 0;
 
   return {
     ...baseSnapshot,
@@ -125,15 +152,37 @@ function getActiveSnapshotFromLedger(
     },
     updatedAt: ledger.generatedAt,
     portfolio: {
-      value: ledger.portfolio.value,
+      value: portfolioValue,
       deposited: ledger.portfolio.totalDeposited,
-      profit: ledger.portfolio.netProfit,
+      profit: netProfit,
       todaysChange: {
         amount: ledger.performance.todaysChange.amount,
         percentage: ledger.performance.todaysChange.percentage,
       },
-      sinceInception: ledger.performance.sinceInception,
-      availableToWithdraw: ledger.portfolio.availableToWithdraw,
+      sinceInception,
+      availableToWithdraw,
+      allocatedCapital: poolProjection?.allocatedCapital,
+      availableBalance: poolProjection?.availableBalance ?? availableToWithdraw,
+      cashBalance: poolProjection?.cashBalance,
+      fees: poolProjection?.fees ?? ledger.portfolio.accruedSolaceFees,
+      funding: poolProjection?.funding,
+      openPnlIncluded: poolProjection?.openPnlIncluded ?? false,
+      pool: poolProjection
+        ? {
+            accountingVersion: poolProjection.position.accountingVersion,
+            equity: poolProjection.position.equity,
+            lastUpdated: poolProjection.position.updatedAt,
+            navPerUnit: poolProjection.position.navPerUnit,
+            poolId: poolProjection.pool.id,
+            poolName: poolProjection.pool.name,
+            poolShare: poolProjection.position.poolShare,
+            units: poolProjection.position.units,
+          }
+        : undefined,
+      realizedPnl: poolProjection?.latestNav.realizedPnl,
+      reservedMargin: poolProjection?.reservedMargin,
+      unrealizedPnl: poolProjection?.unrealizedPnl,
+      withdrawable: poolProjection?.withdrawable ?? availableToWithdraw,
     },
     status: {
       ...baseSnapshot.status,
@@ -209,7 +258,9 @@ export async function getHermesDashboardSnapshot({
     }
 
     if (ledger.account.status === 'ACTIVE') {
-      return getActiveSnapshotFromLedger(baseSnapshot, ledger, selectedRiskProfile);
+      const poolProjection = await getPoolAccountProjection(ledger.account.id);
+
+      return getActiveSnapshotFromLedger(baseSnapshot, ledger, selectedRiskProfile, poolProjection);
     }
 
     return {
@@ -223,6 +274,7 @@ export async function getHermesDashboardSnapshot({
   }
 
   const ledger = await getLedgerReadModel(accountId ?? undefined);
+  const poolProjection = await getPoolAccountProjection(ledger.account.id);
 
-  return getActiveSnapshotFromLedger(baseSnapshot, ledger, selectedRiskProfile);
+  return getActiveSnapshotFromLedger(baseSnapshot, ledger, selectedRiskProfile, poolProjection);
 }
