@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 
 import { listAccessRequests } from '@/features/access-review/store';
 import type { AccessRequestStatus, AccessReviewRecommendation, HermesAccessRequest } from '@/features/access-review/types';
+import { listMoneyMovementRecords } from '@/features/ledger/money-movement';
+import type { AccountActivationStatus } from '@/features/ledger/types';
 import { hasConsoleAccess } from '@/features/solace-console/access';
 
 import ConsoleAccessGate from '../ConsoleAccessGate';
@@ -72,6 +74,22 @@ function getRecommendationClass(recommendation: AccessReviewRecommendation) {
   return 'border-amber-300/25 bg-amber-300/10 text-amber-100';
 }
 
+function getActivationStatusClass(status: string) {
+  if (['ACTIVE', 'APPROVED'].includes(status)) {
+    return 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200';
+  }
+
+  if (['PENDING_ACTIVATION', 'PAUSED'].includes(status)) {
+    return 'border-amber-300/25 bg-amber-300/10 text-amber-100';
+  }
+
+  if (['CLOSED', 'REVOKED', 'SUSPENDED'].includes(status)) {
+    return 'border-red-400/30 bg-red-400/10 text-red-200';
+  }
+
+  return 'border-neutral-700 bg-neutral-950/40 text-neutral-300';
+}
+
 function countPendingReviews(requests: HermesAccessRequest[]) {
   return requests.filter((request) => request.status === 'review' || request.status === 'new').length;
 }
@@ -82,6 +100,81 @@ function countAiApprovals(requests: HermesAccessRequest[]) {
 
 function getLedgerAccountId(request: HermesAccessRequest) {
   return request.ledgerAccountId ?? request.accountId;
+}
+
+function isActivationComplete(account: AccountActivationStatus) {
+  return (
+    account.solaceUserStatus === 'ACTIVE' &&
+    account.hermesAccountStatus === 'ACTIVE' &&
+    account.ledgerAccountStatus === 'ACTIVE'
+  );
+}
+
+function ActivationPill({ label, status }: { label?: string; status: string }) {
+  return (
+    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getActivationStatusClass(status)}`}>
+      {label ? `${label} ` : ''}
+      {formatConstant(status)}
+    </span>
+  );
+}
+
+function AccountActivationPanel({
+  accounts,
+  available,
+}: {
+  accounts: AccountActivationStatus[];
+  available: boolean;
+}) {
+  return (
+    <section className="rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8" aria-labelledby="account-activation-heading">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-neutral-400">Account Activation</p>
+          <h2 id="account-activation-heading" className="mt-1 text-2xl font-semibold text-neutral-50">
+            User, Hermes, ledger, and access status
+          </h2>
+        </div>
+        <span className="text-sm text-neutral-500">{accounts.length} tracked</span>
+      </div>
+
+      <div className="mt-5 grid gap-3">
+        {!available ? (
+          <p className="rounded-md border border-amber-300/25 bg-amber-300/10 p-4 text-sm text-amber-100">
+            Account activation records are unavailable. Confirm the production service-role key is configured.
+          </p>
+        ) : accounts.length ? (
+          accounts.slice(0, 8).map((account) => {
+            const activationComplete = isActivationComplete(account);
+
+            return (
+              <article
+                key={account.accountId}
+                className="grid gap-4 rounded-md border border-neutral-800 bg-neutral-950/30 p-4 lg:grid-cols-[1fr_auto]"
+              >
+                <div className="min-w-0">
+                  <strong className="block text-sm font-semibold text-neutral-50">{account.userName}</strong>
+                  <span className="mt-1 block text-xs text-neutral-500">{account.userEmail}</span>
+                  <span className="mt-1 block text-xs text-neutral-500">{account.accountLabel}</span>
+                </div>
+                <div className="flex flex-wrap gap-2 lg:justify-end">
+                  <ActivationPill label="User" status={account.solaceUserStatus} />
+                  <ActivationPill label="Hermes" status={account.hermesAccountStatus} />
+                  <ActivationPill label="Ledger" status={account.ledgerAccountStatus} />
+                  <ActivationPill label="Access" status={account.dashboardInviteStatus ?? 'missing'} />
+                  <ActivationPill status={activationComplete ? 'ACTIVE' : 'PENDING_ACTIVATION'} />
+                </div>
+              </article>
+            );
+          })
+        ) : (
+          <p className="rounded-md border border-neutral-800 bg-neutral-950/30 p-4 text-sm text-neutral-500">
+            No account activation records available.
+          </p>
+        )}
+      </div>
+    </section>
+  );
 }
 
 function AccessDecisionButton({
@@ -189,6 +282,7 @@ export default async function AccessApprovalsPage({ searchParams }: AccessApprov
   }
 
   const accessRequests = await listAccessRequests();
+  const moneyMovement = await listMoneyMovementRecords();
   const pendingAccessCount = countPendingReviews(accessRequests);
   const reviewStatus = Array.isArray(params?.review) ? params.review[0] : params?.review;
   const notificationStatus = Array.isArray(params?.notification) ? params.notification[0] : params?.notification;
@@ -199,6 +293,8 @@ export default async function AccessApprovalsPage({ searchParams }: AccessApprov
       <ConsoleHeader pendingAccessCount={pendingAccessCount} />
 
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <AccountActivationPanel accounts={moneyMovement.accountStatuses} available={moneyMovement.available} />
+
         <section className="grid gap-5 rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
           <div>
             <p className="text-sm font-medium text-neutral-400">Access Review</p>

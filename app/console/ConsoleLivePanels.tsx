@@ -393,55 +393,6 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
             </div>
           </article>
         </div>
-
-        <article className="mt-4 rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
-          <p className="text-sm font-medium text-neutral-400">Account Activation</p>
-          <h3 className="mt-1 text-lg font-semibold text-neutral-50">User, Hermes, ledger, and access status</h3>
-          <div className="mt-5 grid gap-3">
-            {moneyMovement.accountStatuses.length ? (
-              moneyMovement.accountStatuses.slice(0, 6).map((account) => {
-                const activationComplete =
-                  account.solaceUserStatus === 'ACTIVE' &&
-                  account.hermesAccountStatus === 'ACTIVE' &&
-                  account.ledgerAccountStatus === 'ACTIVE';
-
-                return (
-                  <div
-                    key={account.accountId}
-                    className="grid gap-4 rounded-md border border-neutral-800 bg-[#181715] p-4 lg:grid-cols-[1fr_auto]"
-                  >
-                    <div className="min-w-0">
-                      <strong className="block text-sm font-semibold text-neutral-50">{account.userName}</strong>
-                      <span className="mt-1 block text-xs text-neutral-500">{account.userEmail}</span>
-                      <span className="mt-1 block text-xs text-neutral-500">{account.accountLabel}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2 lg:justify-end">
-                      <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(account.solaceUserStatus)}`}>
-                        User {formatConstant(account.solaceUserStatus)}
-                      </span>
-                      <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(account.hermesAccountStatus)}`}>
-                        Hermes {formatConstant(account.hermesAccountStatus)}
-                      </span>
-                      <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(account.ledgerAccountStatus)}`}>
-                        Ledger {formatConstant(account.ledgerAccountStatus)}
-                      </span>
-                      <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(account.dashboardInviteStatus ?? 'missing')}`}>
-                        Access {formatConstant(account.dashboardInviteStatus ?? 'missing')}
-                      </span>
-                      <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(activationComplete ? 'ACTIVE' : 'PENDING_ACTIVATION')}`}>
-                        {activationComplete ? 'Ready' : 'Review'}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
-                No account activation records available.
-              </p>
-            )}
-          </div>
-        </article>
       </section>
     </>
   );
