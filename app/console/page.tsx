@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import Mark from '@/app/Mark';
 import { listAccessRequests } from '@/features/access-review/store';
-import type { AccessRequestStatus, AccessReviewRecommendation, HermesAccessRequest } from '@/features/access-review/types';
+import type { HermesAccessRequest } from '@/features/access-review/types';
 import { getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
 import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
 import type { DashboardFieldSource, DashboardFieldSourceStatus } from '@/features/hermes-dashboard/types';
@@ -13,8 +12,8 @@ import { getLedgerReadModel } from '@/features/ledger/read-model';
 import { hasConsoleAccess } from '@/features/solace-console/access';
 
 import ConsoleAccessGate from './ConsoleAccessGate';
+import ConsoleHeader from './ConsoleHeader';
 import ConsoleLivePanels from './ConsoleLivePanels';
-import ConsoleLiveRefresh from './ConsoleLiveRefresh';
 
 export const metadata: Metadata = {
   title: 'Solace — Console',
@@ -24,9 +23,6 @@ export const metadata: Metadata = {
 type ConsolePageProps = {
   searchParams?: Promise<{
     access?: string | string[];
-    email?: string | string[];
-    notification?: string | string[];
-    review?: string | string[];
   }>;
 };
 
@@ -132,139 +128,8 @@ function getOwnerStateClass(state: string) {
   return 'border-amber-300/25 bg-amber-300/10 text-amber-100';
 }
 
-function getAccessStatusClass(status: AccessRequestStatus) {
-  if (status === 'approved') {
-    return 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200';
-  }
-
-  if (status === 'declined') {
-    return 'border-red-400/30 bg-red-400/10 text-red-200';
-  }
-
-  if (status === 'more_info') {
-    return 'border-sky-400/30 bg-sky-400/10 text-sky-200';
-  }
-
-  return 'border-amber-300/25 bg-amber-300/10 text-amber-100';
-}
-
-function getRecommendationClass(recommendation: AccessReviewRecommendation) {
-  if (recommendation === 'APPROVE') {
-    return 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200';
-  }
-
-  if (recommendation === 'DECLINE') {
-    return 'border-red-400/30 bg-red-400/10 text-red-200';
-  }
-
-  return 'border-amber-300/25 bg-amber-300/10 text-amber-100';
-}
-
-function shortenId(value: string | undefined) {
-  if (!value) {
-    return 'None';
-  }
-
-  if (value.length <= 18) {
-    return value;
-  }
-
-  return `${value.slice(0, 12)}...${value.slice(-4)}`;
-}
-
 function countPendingReviews(requests: HermesAccessRequest[]) {
   return requests.filter((request) => request.status === 'review' || request.status === 'new').length;
-}
-
-function countAiApprovals(requests: HermesAccessRequest[]) {
-  return requests.filter((request) => request.aiReview.recommendation === 'APPROVE').length;
-}
-
-function getLedgerAccountId(request: HermesAccessRequest) {
-  return request.ledgerAccountId ?? request.accountId;
-}
-
-function AccessDecisionButton({
-  children,
-  decision,
-  requestId,
-  tone,
-}: {
-  children: string;
-  decision: 'APPROVED' | 'DECLINED' | 'REQUEST_MORE_INFO';
-  requestId: string;
-  tone: 'green' | 'neutral' | 'red';
-}) {
-  const toneClass =
-    tone === 'green'
-      ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/15'
-      : tone === 'red'
-        ? 'border-red-400/30 bg-red-400/10 text-red-100 hover:bg-red-400/15'
-        : 'border-neutral-700 bg-neutral-950/40 text-neutral-100 hover:bg-neutral-800';
-
-  return (
-    <form action="/api/console/access-requests" method="post">
-      <input type="hidden" name="requestId" value={requestId} />
-      <input type="hidden" name="decision" value={decision} />
-      <button
-        type="submit"
-        className={`inline-flex h-9 w-full items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors ${toneClass}`}
-      >
-        {children}
-      </button>
-    </form>
-  );
-}
-
-function ResendApprovalEmailButton({ requestId }: { requestId: string }) {
-  return (
-    <form action="/api/console/access-requests/approval-email" method="post">
-      <input type="hidden" name="requestId" value={requestId} />
-      <button
-        type="submit"
-        className="inline-flex h-9 w-full items-center justify-center rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 text-sm font-medium text-emerald-100 transition-colors hover:bg-emerald-400/15"
-      >
-        Resend access email
-      </button>
-    </form>
-  );
-}
-
-function AccessEmailForm({ email, requestId }: { email: string; requestId: string }) {
-  return (
-    <form action="/api/console/access-requests/email" method="post" className="grid gap-2 rounded-md border border-neutral-800 bg-[#181715] p-3">
-      <input type="hidden" name="requestId" value={requestId} />
-      <label htmlFor={`access-email-${requestId}`} className="text-xs uppercase tracking-[0.14em] text-neutral-500">
-        Access email
-      </label>
-      <input
-        id={`access-email-${requestId}`}
-        name="email"
-        type="email"
-        required
-        defaultValue={email}
-        className="h-9 rounded-md border border-neutral-700 bg-[#10100e] px-3 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
-      />
-      <button
-        type="submit"
-        className="inline-flex h-9 w-full items-center justify-center rounded-md border border-neutral-700 px-3 text-sm font-medium text-neutral-200 transition-colors hover:border-neutral-500 hover:bg-neutral-900"
-      >
-        Update and send
-      </button>
-    </form>
-  );
-}
-
-function InlineMetric({ label, value, tone = 'neutral' }: { label: string; value: string | number; tone?: 'neutral' | 'amber' | 'green' }) {
-  const valueClass =
-    tone === 'green' ? 'text-emerald-200' : tone === 'amber' ? 'text-amber-100' : 'text-neutral-50';
-
-  return (
-    <div className="border-t border-neutral-800 pt-3 first:border-t-0 first:pt-0 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
-      <span className="text-sm text-neutral-500">{label}</span>
-      <strong className={`mt-2 block text-3xl font-semibold ${valueClass}`}>{value}</strong>
-    </div>
-  );
 }
 
 function StatCard({ label, value, tone = 'neutral' }: { label: string; value: string | number; tone?: 'neutral' | 'amber' | 'green' }) {
@@ -299,36 +164,13 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
     moneyMovement,
   };
   const accessRequests = await listAccessRequests();
+  const pendingAccessCount = countPendingReviews(accessRequests);
   const statusCounts = countStatuses(snapshot.fieldSources);
   const ownerSummaries = groupByOwner(snapshot.fieldSources);
-  const reviewStatus = Array.isArray(params?.review) ? params.review[0] : params?.review;
-  const notificationStatus = Array.isArray(params?.notification) ? params.notification[0] : params?.notification;
-  const emailStatus = Array.isArray(params?.email) ? params.email[0] : params?.email;
 
   return (
     <main className="min-h-screen bg-[#10100e] text-neutral-50">
-      <header className="sticky top-0 z-30 border-b border-neutral-800 bg-[#10100e]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-50">
-            <Mark size={22} />
-            Solace
-          </Link>
-          <div className="flex items-center gap-4">
-            <ConsoleLiveRefresh />
-            <nav className="flex items-center gap-4 text-sm text-neutral-400">
-              <Link href="/dashboard" className="transition-colors hover:text-neutral-50">
-                Dashboard
-              </Link>
-              <Link href="/dashboard/contract" className="transition-colors hover:text-neutral-50">
-                Contracts
-              </Link>
-              <Link href="/hermes" className="hidden transition-colors hover:text-neutral-50 sm:inline">
-                Hermes
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <ConsoleHeader pendingAccessCount={pendingAccessCount} />
 
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <section className="grid gap-6 rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8">
@@ -358,194 +200,6 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
         </section>
 
         <ConsoleLivePanels initialData={consoleLiveData} />
-
-        <section className="grid gap-4" aria-labelledby="access-review-heading">
-          <div className="grid gap-5 rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-            <div>
-              <p className="text-sm font-medium text-neutral-400">Access Review</p>
-              <h2 id="access-review-heading" className="mt-1 text-2xl font-semibold text-neutral-50">
-                AI analyst, human approval
-              </h2>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-neutral-400">
-                Requests are scored for clarity, missing information, and operational risk. The model recommends; the
-                console records the final human decision. Approved requests automatically receive a secure dashboard sign-in email.
-              </p>
-              {reviewStatus === 'updated' ? (
-                <p className="mt-4 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-100">
-                  Access decision recorded.
-                </p>
-              ) : null}
-              {notificationStatus === 'sent' ? (
-                <p className="mt-3 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-100">
-                  Approval email sent to the user.
-                </p>
-              ) : null}
-              {notificationStatus === 'unconfigured' ? (
-                <p className="mt-3 rounded-md border border-amber-300/25 bg-amber-300/10 px-3 py-2 text-sm text-amber-100">
-                  Access was approved, but SMTP is not configured. Add email env vars before sending access emails.
-                </p>
-              ) : null}
-              {notificationStatus === 'failed' ? (
-                <p className="mt-3 rounded-md border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-100">
-                  Access was approved, but the approval email could not be sent.
-                </p>
-              ) : null}
-              {emailStatus === 'updated' ? (
-                <p className="mt-3 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-100">
-                  Access email updated.
-                </p>
-              ) : null}
-              {emailStatus === 'invalid' || emailStatus === 'missing' ? (
-                <p className="mt-3 rounded-md border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-100">
-                  Access email could not be updated.
-                </p>
-              ) : null}
-              {reviewStatus === 'invalid' || reviewStatus === 'missing' ? (
-                <p className="mt-4 rounded-md border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-100">
-                  Access decision could not be recorded.
-                </p>
-              ) : null}
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3 lg:self-end">
-              <InlineMetric label="Requests" value={accessRequests.length} />
-              <InlineMetric label="Pending review" value={countPendingReviews(accessRequests)} tone="amber" />
-              <InlineMetric label="AI approve" value={countAiApprovals(accessRequests)} tone="green" />
-            </div>
-          </div>
-
-          <div className="grid gap-4">
-            {accessRequests.length === 0 ? (
-              <div className="rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
-                <p className="text-sm font-medium text-neutral-200">No access requests yet.</p>
-                <p className="mt-2 text-sm leading-6 text-neutral-500">
-                  New submissions from the Hermes request form will appear here with an AI review and approval actions.
-                </p>
-              </div>
-            ) : (
-              accessRequests.map((request) => {
-                const decisionRecorded = request.status === 'approved' || request.status === 'declined';
-
-                return (
-                  <article
-                    key={request.id}
-                    className="grid gap-5 rounded-md border border-neutral-800 bg-neutral-950/30 p-5 xl:grid-cols-[0.8fr_1.15fr_0.55fr]"
-                  >
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getAccessStatusClass(request.status)}`}>
-                          {formatConstant(request.status)}
-                        </span>
-                        <span className="text-xs text-neutral-500">{formatDate(request.createdAt)}</span>
-                      </div>
-                      <h3 className="mt-4 text-xl font-semibold text-neutral-50">
-                        {request.firstName} {request.lastName}
-                      </h3>
-                      <dl className="mt-4 grid gap-3 text-sm">
-                        <div>
-                          <dt className="text-neutral-500">Email</dt>
-                          <dd className="mt-1 text-neutral-200">{request.email}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-neutral-500">Profile</dt>
-                          <dd className="mt-1 text-neutral-200">
-                            {[request.role, request.organization, request.country].filter(Boolean).join(' · ')}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-neutral-500">Capital</dt>
-                          <dd className="mt-1 text-neutral-200">
-                            {[request.capitalRange, request.objective].filter(Boolean).join(' · ')}
-                          </dd>
-                        </div>
-                      </dl>
-                    </div>
-
-                    <div className="grid gap-4">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getRecommendationClass(request.aiReview.recommendation)}`}>
-                          AI {formatConstant(request.aiReview.recommendation)}
-                        </span>
-                        <span className="rounded-full border border-neutral-700 px-2.5 py-0.5 text-xs text-neutral-400">
-                          {formatConstant(request.aiReview.confidence)} confidence
-                        </span>
-                        <span className="rounded-full border border-neutral-700 px-2.5 py-0.5 text-xs text-neutral-400">
-                          {request.aiReview.source === 'openai' ? request.aiReview.model : 'Rules fallback'}
-                        </span>
-                      </div>
-
-                      <p className="text-sm leading-6 text-neutral-300">{request.context || 'No additional context provided.'}</p>
-
-                      <div className="grid gap-3 md:grid-cols-3">
-                        <div>
-                          <span className="text-xs uppercase tracking-[0.14em] text-neutral-500">Reasons</span>
-                          <ul className="mt-2 grid gap-2 text-sm leading-5 text-neutral-300">
-                            {request.aiReview.reasons.map((reason) => (
-                              <li key={reason}>{reason}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <span className="text-xs uppercase tracking-[0.14em] text-neutral-500">Missing</span>
-                          <ul className="mt-2 grid gap-2 text-sm leading-5 text-neutral-300">
-                            {(request.aiReview.missingInfo.length ? request.aiReview.missingInfo : ['None']).map((item) => (
-                              <li key={item}>{item}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <span className="text-xs uppercase tracking-[0.14em] text-neutral-500">Risk flags</span>
-                          <ul className="mt-2 grid gap-2 text-sm leading-5 text-neutral-300">
-                            {(request.aiReview.riskFlags.length ? request.aiReview.riskFlags : ['None']).map((flag) => (
-                              <li key={flag}>{flag}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-
-                      {getLedgerAccountId(request) ? (
-                        <div className="grid gap-3 rounded-md border border-emerald-400/20 bg-emerald-400/10 px-3 py-3 text-sm text-emerald-100 sm:grid-cols-2">
-                          <span>Solace user: {request.solaceUserId ?? 'Pending'}</span>
-                          <span>Hermes account: {request.hermesAccountId ?? 'Pending'}</span>
-                          <span>Ledger account: {getLedgerAccountId(request)}</span>
-                          <span>Auth access: Magic link</span>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="grid content-start gap-2">
-                      {decisionRecorded ? (
-                        <>
-                          <div className="rounded-md border border-neutral-800 bg-[#181715] p-3 text-sm text-neutral-300">
-                            Decision: {formatConstant(request.humanDecision ?? request.status)}
-                          </div>
-                          {request.status === 'approved' ? (
-                            <>
-                              <AccessEmailForm email={request.email} requestId={request.id} />
-                              <ResendApprovalEmailButton requestId={request.id} />
-                            </>
-                          ) : null}
-                        </>
-                      ) : (
-                        <>
-                          <AccessDecisionButton decision="APPROVED" requestId={request.id} tone="green">
-                            Approve
-                          </AccessDecisionButton>
-                          <AccessDecisionButton decision="REQUEST_MORE_INFO" requestId={request.id} tone="neutral">
-                            More info
-                          </AccessDecisionButton>
-                          <AccessDecisionButton decision="DECLINED" requestId={request.id} tone="red">
-                            Decline
-                          </AccessDecisionButton>
-                        </>
-                      )}
-                    </div>
-                  </article>
-                );
-              })
-            )}
-          </div>
-        </section>
 
         <section className="grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="grid gap-5">

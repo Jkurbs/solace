@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const formData = await request.formData().catch(() => null);
   const requestId = formData?.get('requestId');
   const decision = formData?.get('decision');
-  const redirectUrl = new URL('/console', request.url);
+  const redirectUrl = new URL('/console/access', request.url);
 
   if (typeof requestId !== 'string' || !isDecision(decision)) {
     redirectUrl.searchParams.set('review', 'invalid');
