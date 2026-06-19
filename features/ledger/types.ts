@@ -259,6 +259,33 @@ export interface PoolAccountProjection {
   withdrawable: number;
 }
 
+export interface PoolMarkingPool {
+  pool: StrategyPool;
+  latestNav?: PoolNavSnapshot;
+  positionCount: number;
+  totalPositionEquity: number;
+  totalPositionUnits: number;
+}
+
+export interface PoolMarkingRecords {
+  generatedAt: IsoDateString;
+  available: boolean;
+  pools: PoolMarkingPool[];
+}
+
+export interface PoolNavMarkInput {
+  allocatedCapital: number;
+  cashBalance: number;
+  effectiveAt?: IsoDateString;
+  fees: number;
+  funding: number;
+  grossEquity: number;
+  poolId: string;
+  realizedPnl: number;
+  reservedMargin: number;
+  unrealizedPnl: number;
+}
+
 export interface AccountActivationStatus {
   accountId: string;
   accountLabel: string;

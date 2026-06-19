@@ -500,6 +500,126 @@ $$;
 revoke all on function public.post_pool_deposit_allocation(text, text, numeric, text, text, timestamptz) from public, anon, authenticated;
 grant execute on function public.post_pool_deposit_allocation(text, text, numeric, text, text, timestamptz) to service_role;
 
+create or replace function public.post_pool_nav_mark(
+  p_pool_id text,
+  p_gross_equity numeric,
+  p_cash_balance numeric,
+  p_allocated_capital numeric,
+  p_reserved_margin numeric,
+  p_realized_pnl numeric,
+  p_unrealized_pnl numeric,
+  p_fees numeric,
+  p_funding numeric,
+  p_effective_at timestamptz default now()
+)
+returns table (
+  pool_id text,
+  nav_snapshot_id text,
+  nav_per_unit numeric,
+  total_units numeric
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_accounting_version text := 'pool_units_v1';
+  v_nav_per_unit numeric(28, 10);
+  v_snapshot_id text;
+  v_total_units numeric(28, 10) := 0;
+begin
+  if p_gross_equity < 0 then
+    raise exception 'Pool gross equity cannot be negative.';
+  end if;
+
+  if p_cash_balance < 0 or p_allocated_capital < 0 or p_reserved_margin < 0 or p_fees < 0 or p_funding < 0 then
+    raise exception 'Pool NAV mark contains a negative control balance.';
+  end if;
+
+  perform 1
+  from public.strategy_pools pool
+  where pool.id = p_pool_id
+    and pool.status = 'ACTIVE'
+  for update;
+
+  if not found then
+    raise exception 'Strategy pool % is not active.', p_pool_id;
+  end if;
+
+  select coalesce(nav.total_units, 0)
+  into v_total_units
+  from public.pool_nav_snapshots nav
+  where nav.pool_id = p_pool_id
+  order by nav.effective_at desc, nav.created_at desc
+  limit 1;
+  v_total_units := coalesce(v_total_units, 0);
+
+  if v_total_units > 0 and p_gross_equity <= 0 then
+    raise exception 'Pool gross equity must be positive when units are outstanding.';
+  end if;
+
+  v_nav_per_unit := case
+    when v_total_units > 0 then round(p_gross_equity / v_total_units, 10)
+    else 1
+  end;
+  v_snapshot_id := 'nav_mark_' || p_pool_id || '_' || replace(gen_random_uuid()::text, '-', '');
+
+  insert into public.pool_nav_snapshots (
+    id,
+    pool_id,
+    gross_equity,
+    cash_balance,
+    allocated_capital,
+    reserved_margin,
+    realized_pnl,
+    unrealized_pnl,
+    fees,
+    funding,
+    total_units,
+    nav_per_unit,
+    accounting_version,
+    source,
+    effective_at,
+    created_at
+  )
+  values (
+    v_snapshot_id,
+    p_pool_id,
+    round(p_gross_equity, 2),
+    round(p_cash_balance, 2),
+    round(p_allocated_capital, 2),
+    round(p_reserved_margin, 2),
+    round(p_realized_pnl, 2),
+    round(p_unrealized_pnl, 2),
+    round(p_fees, 2),
+    round(p_funding, 2),
+    v_total_units,
+    v_nav_per_unit,
+    v_accounting_version,
+    'operator',
+    p_effective_at,
+    p_effective_at
+  );
+
+  update public.user_pool_positions position
+  set
+    nav_per_unit = v_nav_per_unit,
+    equity = round(position.units * v_nav_per_unit, 2),
+    pool_share = case when v_total_units > 0 then round((position.units / v_total_units) * 100, 8) else 0 end,
+    updated_at = p_effective_at
+  where position.pool_id = p_pool_id;
+
+  pool_id := p_pool_id;
+  nav_snapshot_id := v_snapshot_id;
+  nav_per_unit := v_nav_per_unit;
+  total_units := v_total_units;
+  return next;
+end;
+$$;
+
+revoke all on function public.post_pool_nav_mark(text, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, timestamptz) from public, anon, authenticated;
+grant execute on function public.post_pool_nav_mark(text, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, timestamptz) to service_role;
+
 do $$
 declare
   posted_deposit record;

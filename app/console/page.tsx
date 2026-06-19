@@ -4,6 +4,7 @@ import { listAccessRequests } from '@/features/access-review/store';
 import type { HermesAccessRequest } from '@/features/access-review/types';
 import { getLiveLedgerOverview } from '@/features/ledger/live-overview';
 import { listMoneyMovementRecords } from '@/features/ledger/money-movement';
+import { listPoolMarkingRecords } from '@/features/ledger/pool-marking';
 import { hasConsoleAccess } from '@/features/solace-console/access';
 
 import ConsoleAccessGate from './ConsoleAccessGate';
@@ -35,11 +36,12 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
     return <ConsoleAccessGate denied={denied} />;
   }
 
-  const moneyMovement = await listMoneyMovementRecords();
+  const [moneyMovement, poolMarking] = await Promise.all([listMoneyMovementRecords(), listPoolMarkingRecords()]);
   const consoleLiveData = {
     generatedAt: new Date().toISOString(),
     ledgerOverview: getLiveLedgerOverview(moneyMovement),
     moneyMovement,
+    poolMarking,
   };
   const accessRequests = await listAccessRequests();
   const pendingAccessCount = countPendingReviews(accessRequests);

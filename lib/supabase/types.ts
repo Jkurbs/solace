@@ -872,6 +872,26 @@ export type Database = {
           total_units: number;
         }>;
       };
+      post_pool_nav_mark: {
+        Args: {
+          p_allocated_capital: number;
+          p_cash_balance: number;
+          p_effective_at?: string;
+          p_fees: number;
+          p_funding: number;
+          p_gross_equity: number;
+          p_pool_id: string;
+          p_realized_pnl: number;
+          p_reserved_margin: number;
+          p_unrealized_pnl: number;
+        };
+        Returns: Array<{
+          pool_id: string;
+          nav_snapshot_id: string;
+          nav_per_unit: number;
+          total_units: number;
+        }>;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

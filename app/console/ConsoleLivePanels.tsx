@@ -1,15 +1,16 @@
 'use client';
 
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import type { LiveLedgerOverview } from '@/features/ledger/live-overview';
-import type { MoneyMovementRecords } from '@/features/ledger/types';
+import type { MoneyMovementRecords, PoolMarkingPool, PoolMarkingRecords } from '@/features/ledger/types';
 
 type ConsoleLivePayload = {
   generatedAt: string;
   ledgerOverview: LiveLedgerOverview;
   moneyMovement: MoneyMovementRecords;
+  poolMarking: PoolMarkingRecords;
 };
 
 type ConsoleLivePanelsProps = {
@@ -45,6 +46,15 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
 });
 
+const navFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 6,
+  minimumFractionDigits: 4,
+});
+
+const unitsFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 4,
+});
+
 function formatDate(value: string) {
   return dateFormatter.format(new Date(value));
 }
@@ -55,6 +65,14 @@ function formatTime(value: string) {
 
 function formatCurrency(value: number) {
   return currencyFormatter.format(value);
+}
+
+function formatNav(value: number) {
+  return navFormatter.format(value);
+}
+
+function formatUnits(value: number) {
+  return unitsFormatter.format(value);
 }
 
 function formatConstant(value: string) {
@@ -136,6 +154,26 @@ async function getConsoleLivePayload(): Promise<ConsoleLivePayload> {
   return payload;
 }
 
+async function postPoolNavMarkRequest(formData: FormData): Promise<{ message: string; status: string }> {
+  const response = await fetch('/api/console/pool-nav-marks', {
+    body: formData,
+    headers: {
+      Accept: 'application/json',
+    },
+    method: 'POST',
+  });
+  const payload = (await response.json()) as { message?: string; status?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.message ?? 'Pool NAV mark could not be posted.');
+  }
+
+  return {
+    message: payload.message ?? 'Pool NAV mark posted.',
+    status: payload.status ?? 'posted',
+  };
+}
+
 function StatCard({
   label,
   value,
@@ -211,6 +249,129 @@ type HealthIssue = {
   tone: 'amber' | 'red';
 };
 
+function getDefaultAmount(value: number | undefined) {
+  return (value ?? 0).toFixed(2);
+}
+
+function NumberField({
+  allowNegative = false,
+  defaultValue,
+  label,
+  name,
+}: {
+  allowNegative?: boolean;
+  defaultValue: string;
+  label: string;
+  name: string;
+}) {
+  return (
+    <label className="grid gap-1">
+      <span className="text-xs text-neutral-500">{label}</span>
+      <input
+        className="h-10 rounded-md border border-neutral-800 bg-neutral-950/40 px-3 text-sm text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-600"
+        defaultValue={defaultValue}
+        min={allowNegative ? undefined : 0}
+        name={name}
+        step="0.01"
+        type="number"
+      />
+    </label>
+  );
+}
+
+function PoolNavMarkCard({ poolMark }: { poolMark: PoolMarkingPool }) {
+  const queryClient = useQueryClient();
+  const [statusMessage, setStatusMessage] = useState('');
+  const latestNav = poolMark.latestNav;
+  const mutation = useMutation({
+    mutationFn: postPoolNavMarkRequest,
+    onError(error) {
+      setStatusMessage(error.message);
+    },
+    onMutate() {
+      setStatusMessage('');
+    },
+    onSuccess(payload) {
+      setStatusMessage(payload.message);
+      queryClient.invalidateQueries({ queryKey: consoleLiveQueryKey });
+    },
+  });
+  const grossEquity = latestNav?.grossEquity ?? poolMark.totalPositionEquity;
+  const cashBalance = latestNav?.cashBalance ?? grossEquity;
+  const allocatedCapital = latestNav?.allocatedCapital ?? 0;
+  const reservedMargin = latestNav?.reservedMargin ?? 0;
+  const realizedPnl = latestNav?.realizedPnl ?? 0;
+  const unrealizedPnl = latestNav?.unrealizedPnl ?? 0;
+  const fees = latestNav?.fees ?? 0;
+  const funding = latestNav?.funding ?? 0;
+
+  return (
+    <article className="rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
+      <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-medium text-neutral-400">{poolMark.pool.riskProfile}</p>
+            <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${getMoneyStatusClass(poolMark.pool.status)}`}>
+              {formatConstant(poolMark.pool.status)}
+            </span>
+          </div>
+          <h3 className="mt-1 text-lg font-semibold text-neutral-50">{poolMark.pool.name}</h3>
+          <p className="mt-2 text-sm leading-6 text-neutral-500">
+            {latestNav ? `Last marked ${formatDate(latestNav.effectiveAt)}` : 'No NAV mark recorded yet.'}
+          </p>
+        </div>
+        <div className="grid gap-1 text-sm lg:text-right">
+          <span className="text-neutral-500">NAV / unit</span>
+          <strong className="text-2xl font-semibold text-neutral-50">
+            {latestNav ? formatNav(latestNav.navPerUnit) : '1.0000'}
+          </strong>
+          <span className="text-xs text-neutral-500">{formatUnits(latestNav?.totalUnits ?? poolMark.totalPositionUnits)} units</span>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <InlineMetric label="Pool equity" value={formatCurrency(grossEquity)} tone={grossEquity > 0 ? 'green' : 'neutral'} />
+        <InlineMetric label="Cash" value={formatCurrency(cashBalance)} />
+        <InlineMetric label="In strategy" value={formatCurrency(allocatedCapital)} />
+        <InlineMetric label="Open PnL" value={formatCurrency(unrealizedPnl)} tone={unrealizedPnl > 0 ? 'green' : unrealizedPnl < 0 ? 'red' : 'neutral'} />
+      </div>
+
+      <form
+        key={`${poolMark.pool.id}-${latestNav?.id ?? 'empty'}`}
+        className="mt-5 grid gap-4 border-t border-neutral-800 pt-5"
+        onSubmit={(event) => {
+          event.preventDefault();
+          mutation.mutate(new FormData(event.currentTarget));
+        }}
+      >
+        <input type="hidden" name="poolId" value={poolMark.pool.id} />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <NumberField defaultValue={getDefaultAmount(grossEquity)} label="Total equity" name="grossEquity" />
+          <NumberField defaultValue={getDefaultAmount(cashBalance)} label="Cash balance" name="cashBalance" />
+          <NumberField defaultValue={getDefaultAmount(allocatedCapital)} label="Allocated capital" name="allocatedCapital" />
+          <NumberField defaultValue={getDefaultAmount(reservedMargin)} label="Reserved margin" name="reservedMargin" />
+          <NumberField allowNegative defaultValue={getDefaultAmount(realizedPnl)} label="Realized PnL" name="realizedPnl" />
+          <NumberField allowNegative defaultValue={getDefaultAmount(unrealizedPnl)} label="Open PnL" name="unrealizedPnl" />
+          <NumberField defaultValue={getDefaultAmount(fees)} label="Fees" name="fees" />
+          <NumberField defaultValue={getDefaultAmount(funding)} label="Funding" name="funding" />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm leading-6 text-neutral-500" aria-live="polite">
+            {statusMessage || 'Posting creates a new append-only pool NAV snapshot.'}
+          </p>
+          <button
+            className="inline-flex h-10 items-center justify-center rounded-md bg-neutral-100 px-4 text-sm font-medium text-neutral-950 transition-colors hover:bg-white disabled:opacity-50"
+            disabled={mutation.isPending}
+            type="submit"
+          >
+            {mutation.isPending ? 'Posting' : 'Post mark'}
+          </button>
+        </div>
+      </form>
+    </article>
+  );
+}
+
 function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
   const { data, error, isFetching } = useQuery({
     initialData,
@@ -221,6 +382,7 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
     staleTime: 2_000,
   });
   const moneyMovement = data.moneyMovement;
+  const poolMarking = data.poolMarking;
   const liveLedgerOverview = data.ledgerOverview;
   const postedDeposits = moneyMovement.deposits.filter((deposit) => deposit.status === 'posted');
   const availableSettlements = moneyMovement.stripeSettlements.filter((settlement) => settlement.status === 'available');
@@ -234,6 +396,10 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
   const failedTreasuryTasks = moneyMovement.treasuryTasks.filter((task) => task.status === 'FAILED');
   const unavailableSettlements = moneyMovement.stripeSettlements.filter((settlement) => settlement.status === 'unavailable');
   const voidEntries = moneyMovement.entries.filter((entry) => entry.status === 'void');
+  const poolEquity = poolMarking.pools.reduce((total, pool) => total + (pool.latestNav?.grossEquity ?? 0), 0);
+  const poolOpenPnl = poolMarking.pools.reduce((total, pool) => total + (pool.latestNav?.unrealizedPnl ?? 0), 0);
+  const poolTotalUnits = poolMarking.pools.reduce((total, pool) => total + (pool.latestNav?.totalUnits ?? 0), 0);
+  const activePools = poolMarking.pools.filter((pool) => pool.pool.status === 'ACTIVE');
   const healthIssues: HealthIssue[] = [
     ...(error
       ? [
@@ -325,6 +491,15 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
           },
         ]
       : []),
+    ...(!poolMarking.available
+      ? [
+          {
+            detail: 'Pool NAV marks cannot be read until pool unit accounting is installed.',
+            label: 'Pool NAV unavailable',
+            tone: 'amber' as const,
+          },
+        ]
+      : []),
   ];
   const healthTone = healthIssues.reduce<'green' | 'amber' | 'red'>(
     (current, issue) => (getToneRank(issue.tone) > getToneRank(current) ? issue.tone : current),
@@ -366,7 +541,7 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <StatusCheck
             label="Ledger"
             value={liveLedgerOverview.reconciliationStatus}
@@ -383,12 +558,18 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
             value={moneyMovement.treasuryQueueAvailable ? 'Online' : 'Missing table'}
             tone={moneyMovement.treasuryQueueAvailable ? 'green' : 'amber'}
           />
+          <StatusCheck
+            label="Pool NAV"
+            value={poolMarking.available ? 'Markable' : 'Missing table'}
+            tone={poolMarking.available ? 'green' : 'amber'}
+          />
         </div>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6" aria-label="Money overview">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-7" aria-label="Money overview">
         <StatCard label="Ledger balance" value={formatCurrency(liveLedgerOverview.balance)} tone={liveLedgerOverview.reconciliationStatus === 'Matched' ? 'green' : 'amber'} />
         <StatCard label="Deposited" value={formatCurrency(liveLedgerOverview.totalDeposited)} />
+        <StatCard label="Pool equity" value={formatCurrency(poolEquity)} tone={poolMarking.available ? 'green' : 'amber'} />
         <StatCard
           label="Available net"
           value={formatCurrency(availableSettlementNet)}
@@ -409,6 +590,54 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
           value={liveLedgerOverview.reconciliationStatus}
           tone={liveLedgerOverview.reconciliationStatus === 'Matched' ? 'green' : 'amber'}
         />
+      </section>
+
+      <section className="rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8" aria-labelledby="pool-nav-heading">
+        <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm font-medium text-neutral-400">Pool NAV</p>
+              <span className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/40 px-2.5 py-1 text-xs text-neutral-500">
+                <span
+                  aria-hidden="true"
+                  className={`h-1.5 w-1.5 rounded-full ${isFetching ? 'bg-amber-300' : 'bg-emerald-300'}`}
+                />
+                {isFetching ? 'Updating' : 'Live'}
+                <span className="text-neutral-600">5s</span>
+              </span>
+            </div>
+            <h2 id="pool-nav-heading" className="mt-1 text-2xl font-semibold text-neutral-50">
+              Pool NAV Marking V1
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">
+              Mark total pool equity and current balances. The system derives NAV per unit and refreshes user
+              positions from the pool unit ledger.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <InlineMetric label="Active pools" value={activePools.length} tone={poolMarking.available ? 'green' : 'amber'} />
+            <InlineMetric label="Pool equity" value={formatCurrency(poolEquity)} tone={poolEquity > 0 ? 'green' : 'neutral'} />
+            <InlineMetric label="Open PnL" value={formatCurrency(poolOpenPnl)} tone={poolOpenPnl > 0 ? 'green' : poolOpenPnl < 0 ? 'red' : 'neutral'} />
+            <InlineMetric label="Total units" value={formatUnits(poolTotalUnits)} />
+          </div>
+        </div>
+
+        {!poolMarking.available ? (
+          <div className="mt-5 rounded-md border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">
+            Pool unit accounting is not installed yet. Run <span className="font-mono">supabase/pool-unit-accounting-v1.sql</span>
+            {' '}to enable NAV marks and user pool projections.
+          </div>
+        ) : poolMarking.pools.length ? (
+          <div className="mt-6 grid gap-4">
+            {poolMarking.pools.map((poolMark) => (
+              <PoolNavMarkCard key={poolMark.pool.id} poolMark={poolMark} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-5 rounded-md border border-neutral-800 bg-neutral-950/30 px-4 py-3 text-sm text-neutral-500">
+            No strategy pools are available.
+          </p>
+        )}
       </section>
 
       <section className="rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8" aria-labelledby="exceptions-heading">

@@ -137,7 +137,15 @@ function buildProjection({
   pool: StrategyPool;
   position: UserPoolPosition;
 }): PoolAccountProjection {
-  const shareRatio = position.poolShare / 100;
+  const currentPoolShare = latestNav.totalUnits ? normalizeUnits((position.units / latestNav.totalUnits) * 100) : 0;
+  const currentPosition: UserPoolPosition = {
+    ...position,
+    equity: normalizeAmount(position.units * latestNav.navPerUnit),
+    navPerUnit: latestNav.navPerUnit,
+    poolShare: currentPoolShare,
+    updatedAt: latestNav.effectiveAt,
+  };
+  const shareRatio = currentPosition.poolShare / 100;
   const availableUnits = position.availableUnits || position.units;
 
   return {
@@ -149,7 +157,7 @@ function buildProjection({
     latestNav,
     openPnlIncluded: true,
     pool,
-    position,
+    position: currentPosition,
     reservedMargin: normalizeAmount(latestNav.reservedMargin * shareRatio),
     unrealizedPnl: normalizeAmount(latestNav.unrealizedPnl * shareRatio),
     withdrawable: normalizeAmount(availableUnits * latestNav.navPerUnit),

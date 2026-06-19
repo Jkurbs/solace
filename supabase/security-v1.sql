@@ -75,11 +75,17 @@ end $$;
 do $$
 declare
   target_function regprocedure;
+  target_function_name text;
 begin
-  target_function := to_regprocedure('public.post_pool_deposit_allocation(text, text, numeric, text, text, timestamptz)');
+  foreach target_function_name in array array[
+    'public.post_pool_deposit_allocation(text, text, numeric, text, text, timestamptz)',
+    'public.post_pool_nav_mark(text, numeric, numeric, numeric, numeric, numeric, numeric, numeric, numeric, timestamptz)'
+  ] loop
+    target_function := to_regprocedure(target_function_name);
 
-  if target_function is not null then
-    execute format('revoke all on function %s from public, anon, authenticated', target_function);
-    execute format('grant execute on function %s to service_role', target_function);
-  end if;
+    if target_function is not null then
+      execute format('revoke all on function %s from public, anon, authenticated', target_function);
+      execute format('grant execute on function %s to service_role', target_function);
+    end if;
+  end loop;
 end $$;
