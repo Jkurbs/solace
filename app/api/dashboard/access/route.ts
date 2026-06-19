@@ -25,7 +25,15 @@ function getAppOrigin(fallbackOrigin: string) {
 
   if (configuredAppUrl) {
     try {
-      return new URL(configuredAppUrl).origin;
+      const configuredUrl = new URL(configuredAppUrl);
+
+      if (configuredUrl.hostname !== 'localhost' && configuredUrl.hostname !== '127.0.0.1') {
+        return configuredUrl.origin;
+      }
+
+      console.warn('[dashboard-access] SOLACE_APP_URL points to localhost; using production app origin.', {
+        configuredAppUrl,
+      });
     } catch {
       console.warn('[dashboard-access] SOLACE_APP_URL is not a valid URL.', { configuredAppUrl });
     }
