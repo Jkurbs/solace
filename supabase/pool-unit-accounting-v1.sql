@@ -471,7 +471,7 @@ begin
     v_accounting_version,
     p_effective_at
   )
-  on conflict (pool_id, ledger_account_id) do update
+  on conflict on constraint user_pool_positions_pkey do update
   set
     units = current_position.units + excluded.units,
     available_units = current_position.available_units + excluded.available_units,
