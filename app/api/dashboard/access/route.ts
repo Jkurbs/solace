@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 
 import { getPersistedAccountBundleByUserEmail } from '@/features/accounts/store';
-import { sendHermesDashboardSignInEmail } from '@/features/hermes-dashboard/auth-email';
+import { createSupabaseServerClient, isSupabaseServerConfigured } from '@/lib/supabase/server';
+
+const defaultAppOrigin = 'https://app.solace.fyi';
 
 function normalizeEmail(value: FormDataEntryValue | string | null) {
   return typeof value === 'string' ? value.trim().toLowerCase() : '';
@@ -18,21 +20,64 @@ function getRedirectUrl(request: Request, status: string, email?: string) {
   return url;
 }
 
+function getAppOrigin(fallbackOrigin: string) {
+  const configuredAppUrl = process.env.SOLACE_APP_URL ?? process.env.NEXT_PUBLIC_SOLACE_APP_URL;
+
+  if (configuredAppUrl) {
+    try {
+      return new URL(configuredAppUrl).origin;
+    } catch {
+      console.warn('[dashboard-access] SOLACE_APP_URL is not a valid URL.', { configuredAppUrl });
+    }
+  }
+
+  try {
+    const fallbackUrl = new URL(fallbackOrigin);
+
+    if (fallbackUrl.hostname === 'localhost' || fallbackUrl.hostname === '127.0.0.1') {
+      return defaultAppOrigin;
+    }
+
+    return fallbackUrl.origin;
+  } catch {
+    return defaultAppOrigin;
+  }
+}
+
+function getEmailRedirectTo(request: Request) {
+  const callbackUrl = new URL('/auth/callback', getAppOrigin(new URL(request.url).origin));
+  callbackUrl.searchParams.set('next', '/dashboard/onboarding?welcome=1');
+
+  return callbackUrl.toString();
+}
+
 async function sendDashboardMagicLink(request: Request, email: string) {
+  if (!isSupabaseServerConfigured()) {
+    console.warn('[dashboard-access] Supabase Auth is not configured.');
+    return false;
+  }
+
   const bundle = await getPersistedAccountBundleByUserEmail(email);
 
   if (!bundle || bundle.user.status === 'SUSPENDED' || bundle.hermesAccount.status === 'CLOSED') {
     return null;
   }
 
-  const [firstName] = bundle.user.name.trim().split(/\s+/);
-  const result = await sendHermesDashboardSignInEmail({
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.signInWithOtp({
     email,
-    firstName,
-    origin: new URL(request.url).origin,
+    options: {
+      emailRedirectTo: getEmailRedirectTo(request),
+      shouldCreateUser: true,
+    },
   });
 
-  return result === 'sent';
+  if (error) {
+    console.warn('[dashboard-access] Supabase magic link failed.', error.message);
+    return false;
+  }
+
+  return true;
 }
 
 export async function GET(request: Request) {
