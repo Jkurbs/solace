@@ -18,6 +18,7 @@ type ConsoleLivePanelsProps = {
 
 const consoleLiveQueryKey = ['console-live'] as const;
 const refreshIntervalMs = 5_000;
+const activeTreasuryStatuses = ['WAITING_SETTLEMENT', 'QUEUED', 'REVIEWING', 'FUNDABLE', 'APPROVED', 'SUBMITTED'];
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
@@ -92,6 +93,34 @@ function getMoneyStatusClass(status: string) {
   return 'border-neutral-700 bg-neutral-950/40 text-neutral-300';
 }
 
+function getToneRank(tone: 'green' | 'amber' | 'red') {
+  return tone === 'red' ? 3 : tone === 'amber' ? 2 : 1;
+}
+
+function getHealthPanelClass(tone: 'green' | 'amber' | 'red') {
+  if (tone === 'red') {
+    return 'border-red-400/40 bg-red-400/10';
+  }
+
+  if (tone === 'amber') {
+    return 'border-amber-300/35 bg-amber-300/10';
+  }
+
+  return 'border-emerald-400/30 bg-emerald-400/10';
+}
+
+function getHealthTextClass(tone: 'green' | 'amber' | 'red') {
+  if (tone === 'red') {
+    return 'text-red-100';
+  }
+
+  if (tone === 'amber') {
+    return 'text-amber-100';
+  }
+
+  return 'text-emerald-100';
+}
+
 async function getConsoleLivePayload(): Promise<ConsoleLivePayload> {
   const response = await fetch('/api/console/live', {
     headers: {
@@ -107,9 +136,23 @@ async function getConsoleLivePayload(): Promise<ConsoleLivePayload> {
   return payload;
 }
 
-function StatCard({ label, value, tone = 'neutral' }: { label: string; value: string | number; tone?: 'neutral' | 'amber' | 'green' }) {
+function StatCard({
+  label,
+  value,
+  tone = 'neutral',
+}: {
+  label: string;
+  value: string | number;
+  tone?: 'neutral' | 'amber' | 'green' | 'red';
+}) {
   const valueClass =
-    tone === 'green' ? 'text-emerald-200' : tone === 'amber' ? 'text-amber-100' : 'text-neutral-50';
+    tone === 'green'
+      ? 'text-emerald-200'
+      : tone === 'amber'
+        ? 'text-amber-100'
+        : tone === 'red'
+          ? 'text-red-100'
+          : 'text-neutral-50';
 
   return (
     <div className="rounded-lg border border-neutral-800 bg-[#181715] p-5">
@@ -119,9 +162,23 @@ function StatCard({ label, value, tone = 'neutral' }: { label: string; value: st
   );
 }
 
-function InlineMetric({ label, value, tone = 'neutral' }: { label: string; value: string | number; tone?: 'neutral' | 'amber' | 'green' }) {
+function InlineMetric({
+  label,
+  value,
+  tone = 'neutral',
+}: {
+  label: string;
+  value: string | number;
+  tone?: 'neutral' | 'amber' | 'green' | 'red';
+}) {
   const valueClass =
-    tone === 'green' ? 'text-emerald-200' : tone === 'amber' ? 'text-amber-100' : 'text-neutral-50';
+    tone === 'green'
+      ? 'text-emerald-200'
+      : tone === 'amber'
+        ? 'text-amber-100'
+        : tone === 'red'
+          ? 'text-red-100'
+          : 'text-neutral-50';
 
   return (
     <div className="rounded-md border border-neutral-800 bg-neutral-950/30 p-3">
@@ -130,6 +187,29 @@ function InlineMetric({ label, value, tone = 'neutral' }: { label: string; value
     </div>
   );
 }
+
+function StatusCheck({
+  label,
+  tone,
+  value,
+}: {
+  label: string;
+  tone: 'green' | 'amber' | 'red';
+  value: string;
+}) {
+  return (
+    <div className="rounded-md border border-neutral-800 bg-neutral-950/30 p-3">
+      <span className="text-xs text-neutral-500">{label}</span>
+      <strong className={`mt-1 block text-sm font-semibold ${getHealthTextClass(tone)}`}>{value}</strong>
+    </div>
+  );
+}
+
+type HealthIssue = {
+  detail: string;
+  label: string;
+  tone: 'amber' | 'red';
+};
 
 function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
   const { data, error, isFetching } = useQuery({
@@ -146,24 +226,214 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
   const availableSettlements = moneyMovement.stripeSettlements.filter((settlement) => settlement.status === 'available');
   const pendingSettlements = moneyMovement.stripeSettlements.filter((settlement) => settlement.status === 'pending');
   const availableSettlementNet = availableSettlements.reduce((total, settlement) => total + settlement.netAmount, 0);
-  const queuedTreasuryTasks = moneyMovement.treasuryTasks.filter((task) =>
-    ['WAITING_SETTLEMENT', 'QUEUED', 'REVIEWING', 'FUNDABLE', 'APPROVED', 'SUBMITTED'].includes(task.status),
+  const pendingSettlementNet = pendingSettlements.reduce((total, settlement) => total + settlement.netAmount, 0);
+  const queuedTreasuryTasks = moneyMovement.treasuryTasks.filter((task) => activeTreasuryStatuses.includes(task.status));
+  const queuedTreasuryAmount = queuedTreasuryTasks.reduce((total, task) => total + task.amount, 0);
+  const failedSessions = moneyMovement.stripeSessions.filter((session) => session.status === 'failed');
+  const failedDeposits = moneyMovement.deposits.filter((deposit) => deposit.status === 'failed');
+  const failedTreasuryTasks = moneyMovement.treasuryTasks.filter((task) => task.status === 'FAILED');
+  const unavailableSettlements = moneyMovement.stripeSettlements.filter((settlement) => settlement.status === 'unavailable');
+  const voidEntries = moneyMovement.entries.filter((entry) => entry.status === 'void');
+  const healthIssues: HealthIssue[] = [
+    ...(error
+      ? [
+          {
+            detail: error.message,
+            label: 'Live console feed failed',
+            tone: 'red' as const,
+          },
+        ]
+      : []),
+    ...(!moneyMovement.available
+      ? [
+          {
+            detail: 'The console cannot read money movement records.',
+            label: 'Money movement unavailable',
+            tone: 'red' as const,
+          },
+        ]
+      : []),
+    ...(failedSessions.length
+      ? [
+          {
+            detail: `${failedSessions.length} Stripe checkout ${failedSessions.length === 1 ? 'session has' : 'sessions have'} failed.`,
+            label: 'Stripe session failure',
+            tone: 'red' as const,
+          },
+        ]
+      : []),
+    ...(failedDeposits.length
+      ? [
+          {
+            detail: `${failedDeposits.length} deposit ${failedDeposits.length === 1 ? 'has' : 'have'} failed before posting.`,
+            label: 'Deposit failure',
+            tone: 'red' as const,
+          },
+        ]
+      : []),
+    ...(failedTreasuryTasks.length
+      ? [
+          {
+            detail: `${failedTreasuryTasks.length} treasury ${failedTreasuryTasks.length === 1 ? 'task needs' : 'tasks need'} investigation.`,
+            label: 'Treasury task failed',
+            tone: 'red' as const,
+          },
+        ]
+      : []),
+    ...(unavailableSettlements.length
+      ? [
+          {
+            detail: `${unavailableSettlements.length} Stripe settlement ${unavailableSettlements.length === 1 ? 'is' : 'are'} unavailable.`,
+            label: 'Settlement unavailable',
+            tone: 'red' as const,
+          },
+        ]
+      : []),
+    ...(voidEntries.length
+      ? [
+          {
+            detail: `${voidEntries.length} ledger ${voidEntries.length === 1 ? 'entry is' : 'entries are'} void.`,
+            label: 'Ledger entry voided',
+            tone: 'red' as const,
+          },
+        ]
+      : []),
+    ...(liveLedgerOverview.reconciliationStatus !== 'Matched'
+      ? [
+          {
+            detail: 'Deposit totals and posted ledger entries do not match.',
+            label: 'Ledger reconciliation review',
+            tone: 'amber' as const,
+          },
+        ]
+      : []),
+    ...(!moneyMovement.treasuryQueueAvailable
+      ? [
+          {
+            detail: 'Treasury tasks cannot be queued until the treasury table exists.',
+            label: 'Treasury queue not installed',
+            tone: 'amber' as const,
+          },
+        ]
+      : []),
+    ...(!moneyMovement.settlementTrackingAvailable
+      ? [
+          {
+            detail: 'Stripe fees, net funds, and availability dates are not being tracked yet.',
+            label: 'Settlement tracking not installed',
+            tone: 'amber' as const,
+          },
+        ]
+      : []),
+  ];
+  const healthTone = healthIssues.reduce<'green' | 'amber' | 'red'>(
+    (current, issue) => (getToneRank(issue.tone) > getToneRank(current) ? issue.tone : current),
+    'green',
   );
+  const healthTitle =
+    healthTone === 'red' ? 'Issue detected' : healthTone === 'amber' ? 'Review required' : 'All clear';
+  const healthSummary =
+    healthTone === 'red'
+      ? 'A money movement path has a blocking issue.'
+      : healthTone === 'amber'
+        ? 'Money is moving, but at least one control needs review.'
+        : 'Ledger, settlement tracking, and treasury queue are operating normally.';
+
   return (
     <>
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Ledger overview">
-        <StatCard label="Ledger balance" value={formatCurrency(liveLedgerOverview.balance)} tone="green" />
+      <section className={`rounded-lg border p-6 sm:p-8 ${getHealthPanelClass(healthTone)}`} aria-labelledby="operations-status-heading">
+        <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm font-medium text-neutral-300">Operations Status</p>
+              <span className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/40 px-2.5 py-1 text-xs text-neutral-400">
+                <span
+                  aria-hidden="true"
+                  className={`h-1.5 w-1.5 rounded-full ${isFetching ? 'bg-amber-300' : 'bg-emerald-300'}`}
+                />
+                {isFetching ? 'Updating' : 'Live'}
+                <span className="text-neutral-600">5s</span>
+              </span>
+            </div>
+            <h1 id="operations-status-heading" className={`mt-2 text-4xl font-semibold tracking-normal sm:text-5xl ${getHealthTextClass(healthTone)}`}>
+              {healthTitle}
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-neutral-300">{healthSummary}</p>
+          </div>
+          <div className="grid gap-2 text-sm text-neutral-400 lg:text-right">
+            <span>Last update {formatTime(data.generatedAt)}</span>
+            <span>{formatDate(data.generatedAt)}</span>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatusCheck
+            label="Ledger"
+            value={liveLedgerOverview.reconciliationStatus}
+            tone={liveLedgerOverview.reconciliationStatus === 'Matched' ? 'green' : 'amber'}
+          />
+          <StatusCheck label="Money records" value={moneyMovement.available ? 'Readable' : 'Unavailable'} tone={moneyMovement.available ? 'green' : 'red'} />
+          <StatusCheck
+            label="Stripe settlement"
+            value={moneyMovement.settlementTrackingAvailable ? 'Tracked' : 'Missing table'}
+            tone={moneyMovement.settlementTrackingAvailable ? 'green' : 'amber'}
+          />
+          <StatusCheck
+            label="Treasury queue"
+            value={moneyMovement.treasuryQueueAvailable ? 'Online' : 'Missing table'}
+            tone={moneyMovement.treasuryQueueAvailable ? 'green' : 'amber'}
+          />
+        </div>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6" aria-label="Money overview">
+        <StatCard label="Ledger balance" value={formatCurrency(liveLedgerOverview.balance)} tone={liveLedgerOverview.reconciliationStatus === 'Matched' ? 'green' : 'amber'} />
         <StatCard label="Deposited" value={formatCurrency(liveLedgerOverview.totalDeposited)} />
         <StatCard
-          label="Net profit"
-          value={formatCurrency(liveLedgerOverview.netProfit)}
-          tone={liveLedgerOverview.netProfit < 0 ? 'amber' : 'green'}
+          label="Available net"
+          value={formatCurrency(availableSettlementNet)}
+          tone={availableSettlements.length ? 'green' : 'neutral'}
+        />
+        <StatCard
+          label="Pending settlement"
+          value={formatCurrency(pendingSettlementNet)}
+          tone={pendingSettlements.length ? 'amber' : 'neutral'}
+        />
+        <StatCard
+          label="Treasury queue"
+          value={formatCurrency(queuedTreasuryAmount)}
+          tone={queuedTreasuryTasks.length ? 'amber' : 'green'}
         />
         <StatCard
           label="Reconciliation"
           value={liveLedgerOverview.reconciliationStatus}
           tone={liveLedgerOverview.reconciliationStatus === 'Matched' ? 'green' : 'amber'}
         />
+      </section>
+
+      <section className="rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8" aria-labelledby="exceptions-heading">
+        <div className="grid gap-4 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
+          <div>
+            <p className="text-sm font-medium text-neutral-400">Exceptions</p>
+            <h2 id="exceptions-heading" className="mt-1 text-2xl font-semibold text-neutral-50">
+              {healthIssues.length ? `${healthIssues.length} active ${healthIssues.length === 1 ? 'signal' : 'signals'}` : 'No active exceptions'}
+            </h2>
+          </div>
+          <div className="grid gap-3">
+            {healthIssues.length ? (
+              healthIssues.map((issue) => (
+                <article key={`${issue.label}-${issue.detail}`} className={`rounded-md border px-4 py-3 ${getHealthPanelClass(issue.tone)}`}>
+                  <strong className={`block text-sm font-semibold ${getHealthTextClass(issue.tone)}`}>{issue.label}</strong>
+                  <p className="mt-1 text-sm leading-6 text-neutral-300">{issue.detail}</p>
+                </article>
+              ))
+            ) : (
+              <p className="rounded-md border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm leading-6 text-emerald-100">
+                No failed deposits, unavailable settlements, failed treasury tasks, or reconciliation breaks detected.
+              </p>
+            )}
+          </div>
+        </div>
       </section>
 
       <section className="rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8" aria-labelledby="money-movement-heading">
@@ -185,8 +455,8 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
               Deposit pipeline
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">
-              Stripe sessions, posted deposits, ledger entries, account activation, and automated treasury state in one
-              operating view.
+              Stripe sessions, settlement availability, posted deposits, ledger entries, and automated treasury state in
+              one operating view.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
