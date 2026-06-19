@@ -7,12 +7,13 @@ import type { AccessRequestStatus, AccessReviewRecommendation, HermesAccessReque
 import { getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
 import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
 import type { DashboardFieldSource, DashboardFieldSourceStatus } from '@/features/hermes-dashboard/types';
+import { getLiveLedgerOverview } from '@/features/ledger/live-overview';
 import { listMoneyMovementRecords } from '@/features/ledger/money-movement';
 import { getLedgerReadModel } from '@/features/ledger/read-model';
-import type { LedgerEntry, MoneyMovementRecords, TreasuryTaskStatus } from '@/features/ledger/types';
 import { hasConsoleAccess } from '@/features/solace-console/access';
 
 import ConsoleAccessGate from './ConsoleAccessGate';
+import ConsoleLivePanels from './ConsoleLivePanels';
 import ConsoleLiveRefresh from './ConsoleLiveRefresh';
 
 export const metadata: Metadata = {
@@ -67,10 +68,6 @@ function formatCurrency(value: number) {
 
 function formatPercent(value: number) {
   return `${numberFormatter.format(value)}%`;
-}
-
-function roundCurrency(value: number) {
-  return Math.round(value * 100) / 100;
 }
 
 function formatConstant(value: string) {
@@ -162,58 +159,6 @@ function getRecommendationClass(recommendation: AccessReviewRecommendation) {
   }
 
   return 'border-amber-300/25 bg-amber-300/10 text-amber-100';
-}
-
-function getMoneyStatusClass(status: string) {
-  if (['posted', 'ACTIVE', 'COMPLETED', 'reconciled'].includes(status)) {
-    return 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200';
-  }
-
-  if (['open', 'QUEUED', 'REVIEWING', 'APPROVED', 'SUBMITTED', 'PENDING_ACTIVATION'].includes(status)) {
-    return 'border-amber-300/25 bg-amber-300/10 text-amber-100';
-  }
-
-  if (['failed', 'FAILED', 'CANCELED', 'expired', 'SUSPENDED', 'REVOKED'].includes(status)) {
-    return 'border-red-400/30 bg-red-400/10 text-red-200';
-  }
-
-  return 'border-neutral-700 bg-neutral-950/40 text-neutral-300';
-}
-
-function getSignedLedgerEntryAmount(entry: LedgerEntry) {
-  switch (entry.type) {
-    case 'fee':
-    case 'withdrawal':
-      return -entry.amount;
-    case 'deposit':
-    case 'manual_adjustment':
-    case 'pnl':
-      return entry.amount;
-    default:
-      return 0;
-  }
-}
-
-function getLiveLedgerOverview(moneyMovement: MoneyMovementRecords) {
-  const postedDeposits = moneyMovement.deposits.filter((deposit) => deposit.status === 'posted');
-  const postedEntries = moneyMovement.entries.filter((entry) => entry.status === 'posted');
-  const totalDeposited = roundCurrency(postedDeposits.reduce((total, deposit) => total + deposit.amount, 0));
-  const entryBalance = roundCurrency(postedEntries.reduce((total, entry) => total + getSignedLedgerEntryAmount(entry), 0));
-  const depositEntriesTotal = roundCurrency(
-    postedEntries
-      .filter((entry) => entry.type === 'deposit')
-      .reduce((total, entry) => total + entry.amount, 0),
-  );
-  const balance = postedEntries.length ? entryBalance : totalDeposited;
-  const netProfit = roundCurrency(balance - totalDeposited);
-  const isMatched = Math.abs(depositEntriesTotal - totalDeposited) < 0.01;
-
-  return {
-    balance,
-    netProfit,
-    reconciliationStatus: moneyMovement.available && isMatched ? 'Matched' : 'Review',
-    totalDeposited,
-  };
 }
 
 function shortenId(value: string | undefined) {
@@ -311,65 +256,6 @@ function AccessEmailForm({ email, requestId }: { email: string; requestId: strin
   );
 }
 
-function getTreasuryTaskActions(status: TreasuryTaskStatus): Array<{ label: string; status: TreasuryTaskStatus; tone: 'green' | 'neutral' | 'red' }> {
-  switch (status) {
-    case 'QUEUED':
-      return [
-        { label: 'Review', status: 'REVIEWING', tone: 'neutral' },
-        { label: 'Cancel', status: 'CANCELED', tone: 'red' },
-      ];
-    case 'REVIEWING':
-      return [
-        { label: 'Approve', status: 'APPROVED', tone: 'green' },
-        { label: 'Fail', status: 'FAILED', tone: 'red' },
-      ];
-    case 'APPROVED':
-      return [
-        { label: 'Submit', status: 'SUBMITTED', tone: 'green' },
-        { label: 'Cancel', status: 'CANCELED', tone: 'red' },
-      ];
-    case 'SUBMITTED':
-      return [
-        { label: 'Complete', status: 'COMPLETED', tone: 'green' },
-        { label: 'Fail', status: 'FAILED', tone: 'red' },
-      ];
-    default:
-      return [];
-  }
-}
-
-function TreasuryTaskActionButton({
-  children,
-  status,
-  taskId,
-  tone,
-}: {
-  children: string;
-  status: TreasuryTaskStatus;
-  taskId: string;
-  tone: 'green' | 'neutral' | 'red';
-}) {
-  const toneClass =
-    tone === 'green'
-      ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/15'
-      : tone === 'red'
-        ? 'border-red-400/30 bg-red-400/10 text-red-100 hover:bg-red-400/15'
-        : 'border-neutral-700 bg-[#181715] text-neutral-100 hover:bg-neutral-800';
-
-  return (
-    <form action="/api/console/treasury-tasks" method="post">
-      <input type="hidden" name="taskId" value={taskId} />
-      <input type="hidden" name="status" value={status} />
-      <button
-        type="submit"
-        className={`inline-flex h-8 items-center justify-center rounded-md border px-3 text-xs font-medium transition-colors ${toneClass}`}
-      >
-        {children}
-      </button>
-    </form>
-  );
-}
-
 function InlineMetric({ label, value, tone = 'neutral' }: { label: string; value: string | number; tone?: 'neutral' | 'amber' | 'green' }) {
   const valueClass =
     tone === 'green' ? 'text-emerald-200' : tone === 'amber' ? 'text-amber-100' : 'text-neutral-50';
@@ -408,7 +294,11 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
   const snapshot = await getHermesDashboardSnapshot({ riskProfile });
   const ledger = await getLedgerReadModel();
   const moneyMovement = await listMoneyMovementRecords();
-  const liveLedgerOverview = getLiveLedgerOverview(moneyMovement);
+  const consoleLiveData = {
+    generatedAt: new Date().toISOString(),
+    ledgerOverview: getLiveLedgerOverview(moneyMovement),
+    moneyMovement,
+  };
   const accessRequests = await listAccessRequests();
   const statusCounts = countStatuses(snapshot.fieldSources);
   const ownerSummaries = groupByOwner(snapshot.fieldSources);
@@ -416,16 +306,6 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
   const notificationStatus = Array.isArray(params?.notification) ? params.notification[0] : params?.notification;
   const emailStatus = Array.isArray(params?.email) ? params.email[0] : params?.email;
   const treasuryStatus = Array.isArray(params?.treasury) ? params.treasury[0] : params?.treasury;
-  const postedDeposits = moneyMovement.deposits.filter((deposit) => deposit.status === 'posted');
-  const queuedTreasuryTasks = moneyMovement.treasuryTasks.filter((task) =>
-    ['QUEUED', 'REVIEWING', 'APPROVED', 'SUBMITTED'].includes(task.status),
-  );
-  const activeAccounts = moneyMovement.accountStatuses.filter(
-    (account) =>
-      account.solaceUserStatus === 'ACTIVE' &&
-      account.hermesAccountStatus === 'ACTIVE' &&
-      account.ledgerAccountStatus === 'ACTIVE',
-  );
 
   return (
     <main className="min-h-screen bg-[#10100e] text-neutral-50">
@@ -479,258 +359,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
           <StatCard label="Owner systems" value={ownerSummaries.length} />
         </section>
 
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Ledger overview">
-          <StatCard label="Ledger balance" value={formatCurrency(liveLedgerOverview.balance)} tone="green" />
-          <StatCard label="Deposited" value={formatCurrency(liveLedgerOverview.totalDeposited)} />
-          <StatCard label="Net profit" value={formatCurrency(liveLedgerOverview.netProfit)} tone={liveLedgerOverview.netProfit < 0 ? 'amber' : 'green'} />
-          <StatCard
-            label="Reconciliation"
-            value={liveLedgerOverview.reconciliationStatus}
-            tone={liveLedgerOverview.reconciliationStatus === 'Matched' ? 'green' : 'amber'}
-          />
-        </section>
-
-        <section className="rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8" aria-labelledby="money-movement-heading">
-          <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
-            <div>
-              <p className="text-sm font-medium text-neutral-400">Money Movement</p>
-              <h2 id="money-movement-heading" className="mt-1 text-2xl font-semibold text-neutral-50">
-                Deposit pipeline
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">
-                Stripe sessions, posted deposits, ledger entries, account activation, and treasury tasks in one control
-                surface.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-4">
-              <InlineMetric label="Stripe sessions" value={moneyMovement.stripeSessions.length} />
-              <InlineMetric label="Posted deposits" value={postedDeposits.length} tone="green" />
-              <InlineMetric label="Treasury queue" value={queuedTreasuryTasks.length} tone={queuedTreasuryTasks.length ? 'amber' : 'neutral'} />
-              <InlineMetric label="Active accounts" value={activeAccounts.length} tone="green" />
-            </div>
-          </div>
-
-          {!moneyMovement.available ? (
-            <div className="mt-5 rounded-md border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">
-              Live money movement records are unavailable. Confirm the production service-role key is configured before
-              using this console for deposit debugging.
-            </div>
-          ) : !moneyMovement.treasuryQueueAvailable ? (
-            <div className="mt-5 rounded-md border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">
-              Treasury queue table is not installed yet. Run <span className="font-mono">supabase/treasury-queue-v1.sql</span>
-              {' '}to begin queueing funding tasks after deposits post.
-            </div>
-          ) : null}
-          {treasuryStatus === 'updated' ? (
-            <div className="mt-5 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm leading-6 text-emerald-100">
-              Treasury task updated.
-            </div>
-          ) : null}
-          {treasuryStatus === 'failed' || treasuryStatus === 'invalid' ? (
-            <div className="mt-5 rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm leading-6 text-red-100">
-              Treasury task could not be updated.
-            </div>
-          ) : null}
-
-          <div className="mt-6 grid gap-4 xl:grid-cols-2">
-            <article className="rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-neutral-400">Stripe Sessions</p>
-                  <h3 className="mt-1 text-lg font-semibold text-neutral-50">Checkout lifecycle</h3>
-                </div>
-                <span className="text-xs text-neutral-500">{moneyMovement.available ? formatDate(moneyMovement.generatedAt) : 'Unavailable'}</span>
-              </div>
-              <div className="mt-5 grid gap-4">
-                {moneyMovement.stripeSessions.length ? (
-                  moneyMovement.stripeSessions.slice(0, 5).map((session) => (
-                    <div key={session.id} className="grid gap-3 border-t border-neutral-800 pt-4 first:border-t-0 first:pt-0 sm:grid-cols-[1fr_auto]">
-                      <div className="min-w-0">
-                        <strong className="block break-all text-sm font-semibold text-neutral-50">{shortenId(session.id)}</strong>
-                        <span className="mt-1 block text-xs text-neutral-500">Account {shortenId(session.accountId)}</span>
-                        <span className="mt-1 block text-xs text-neutral-500">Intent {shortenId(session.paymentIntentId)}</span>
-                      </div>
-                      <div className="grid gap-2 sm:justify-items-end">
-                        <span className={`w-fit rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(session.status)}`}>
-                          {formatConstant(session.status)}
-                        </span>
-                        <strong className="text-sm font-semibold text-neutral-50">{formatCurrency(session.amount)}</strong>
-                        <time className="text-xs text-neutral-500" dateTime={session.updatedAt}>
-                          {formatDate(session.updatedAt)}
-                        </time>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
-                    No Stripe sessions recorded yet.
-                  </p>
-                )}
-              </div>
-            </article>
-
-            <article className="rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
-              <p className="text-sm font-medium text-neutral-400">Posted Deposits</p>
-              <h3 className="mt-1 text-lg font-semibold text-neutral-50">Money accepted into ledger</h3>
-              <div className="mt-5 grid gap-4">
-                {moneyMovement.deposits.length ? (
-                  moneyMovement.deposits.slice(0, 5).map((deposit) => (
-                    <div key={deposit.id} className="grid gap-3 border-t border-neutral-800 pt-4 first:border-t-0 first:pt-0 sm:grid-cols-[1fr_auto]">
-                      <div className="min-w-0">
-                        <strong className="block break-all text-sm font-semibold text-neutral-50">{shortenId(deposit.id)}</strong>
-                        <span className="mt-1 block text-xs text-neutral-500">Account {shortenId(deposit.accountId)}</span>
-                        <span className="mt-1 block text-xs text-neutral-500">Reference {shortenId(deposit.providerReference)}</span>
-                      </div>
-                      <div className="grid gap-2 sm:justify-items-end">
-                        <span className={`w-fit rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(deposit.status)}`}>
-                          {formatConstant(deposit.status)}
-                        </span>
-                        <strong className="text-sm font-semibold text-emerald-200">{formatCurrency(deposit.amount)}</strong>
-                        <time className="text-xs text-neutral-500" dateTime={deposit.postedAt ?? deposit.createdAt}>
-                          {formatDate(deposit.postedAt ?? deposit.createdAt)}
-                        </time>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
-                    No posted deposits yet.
-                  </p>
-                )}
-              </div>
-            </article>
-
-            <article className="rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
-              <p className="text-sm font-medium text-neutral-400">Ledger Entries</p>
-              <h3 className="mt-1 text-lg font-semibold text-neutral-50">Accounting events</h3>
-              <div className="mt-5 grid gap-4">
-                {moneyMovement.entries.length ? (
-                  moneyMovement.entries.slice(0, 5).map((entry) => (
-                    <div key={entry.id} className="grid gap-3 border-t border-neutral-800 pt-4 first:border-t-0 first:pt-0 sm:grid-cols-[1fr_auto]">
-                      <div className="min-w-0">
-                        <strong className="block text-sm font-semibold text-neutral-50">{formatConstant(entry.type)}</strong>
-                        <span className="mt-1 block text-xs text-neutral-500">{entry.description}</span>
-                        <span className="mt-1 block text-xs text-neutral-500">Source {formatConstant(entry.source)}</span>
-                      </div>
-                      <div className="grid gap-2 sm:justify-items-end">
-                        <span className={`w-fit rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(entry.status)}`}>
-                          {formatConstant(entry.status)}
-                        </span>
-                        <strong className="text-sm font-semibold text-neutral-50">{formatCurrency(entry.amount)}</strong>
-                        <time className="text-xs text-neutral-500" dateTime={entry.effectiveAt}>
-                          {formatDate(entry.effectiveAt)}
-                        </time>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
-                    No ledger entries posted yet.
-                  </p>
-                )}
-              </div>
-            </article>
-
-            <article className="rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
-              <p className="text-sm font-medium text-neutral-400">Treasury Queue</p>
-              <h3 className="mt-1 text-lg font-semibold text-neutral-50">Funding tasks</h3>
-              <div className="mt-5 grid gap-4">
-                {moneyMovement.treasuryTasks.length ? (
-                  moneyMovement.treasuryTasks.slice(0, 5).map((task) => {
-                    const actions = getTreasuryTaskActions(task.status);
-
-                    return (
-                      <div key={task.id} className="grid gap-3 border-t border-neutral-800 pt-4 first:border-t-0 first:pt-0 sm:grid-cols-[1fr_auto]">
-                        <div className="min-w-0">
-                          <strong className="block text-sm font-semibold text-neutral-50">{formatConstant(task.type)}</strong>
-                          <span className="mt-1 block text-xs text-neutral-500">Deposit {shortenId(task.depositId)}</span>
-                          <span className="mt-1 block text-xs text-neutral-500">Checkout {shortenId(task.checkoutSessionId)}</span>
-                          {task.notes ? <span className="mt-2 block text-xs leading-5 text-neutral-400">{task.notes}</span> : null}
-                        </div>
-                        <div className="grid gap-2 sm:justify-items-end">
-                          <span className={`w-fit rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(task.status)}`}>
-                            {formatConstant(task.status)}
-                          </span>
-                          <strong className="text-sm font-semibold text-neutral-50">{formatCurrency(task.amount)}</strong>
-                          <time className="text-xs text-neutral-500" dateTime={task.updatedAt}>
-                            {formatDate(task.updatedAt)}
-                          </time>
-                        </div>
-                        {actions.length ? (
-                          <div className="flex flex-wrap gap-2 sm:col-span-2">
-                            {actions.map((action) => (
-                              <TreasuryTaskActionButton
-                                key={`${task.id}-${action.status}`}
-                                status={action.status}
-                                taskId={task.id}
-                                tone={action.tone}
-                              >
-                                {action.label}
-                              </TreasuryTaskActionButton>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
-                    No treasury tasks queued yet.
-                  </p>
-                )}
-              </div>
-            </article>
-          </div>
-
-          <article className="mt-4 rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
-            <p className="text-sm font-medium text-neutral-400">Account Activation</p>
-            <h3 className="mt-1 text-lg font-semibold text-neutral-50">User, Hermes, ledger, and access status</h3>
-            <div className="mt-5 grid gap-3">
-              {moneyMovement.accountStatuses.length ? (
-                moneyMovement.accountStatuses.slice(0, 6).map((account) => {
-                  const activationComplete =
-                    account.solaceUserStatus === 'ACTIVE' &&
-                    account.hermesAccountStatus === 'ACTIVE' &&
-                    account.ledgerAccountStatus === 'ACTIVE';
-
-                  return (
-                    <div
-                      key={account.accountId}
-                      className="grid gap-4 rounded-md border border-neutral-800 bg-[#181715] p-4 lg:grid-cols-[1fr_auto]"
-                    >
-                      <div className="min-w-0">
-                        <strong className="block text-sm font-semibold text-neutral-50">{account.userName}</strong>
-                        <span className="mt-1 block text-xs text-neutral-500">{account.userEmail}</span>
-                        <span className="mt-1 block text-xs text-neutral-500">{account.accountLabel}</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 lg:justify-end">
-                        <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(account.solaceUserStatus)}`}>
-                          User {formatConstant(account.solaceUserStatus)}
-                        </span>
-                        <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(account.hermesAccountStatus)}`}>
-                          Hermes {formatConstant(account.hermesAccountStatus)}
-                        </span>
-                        <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(account.ledgerAccountStatus)}`}>
-                          Ledger {formatConstant(account.ledgerAccountStatus)}
-                        </span>
-                        <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(account.dashboardInviteStatus ?? 'missing')}`}>
-                          Access {formatConstant(account.dashboardInviteStatus ?? 'missing')}
-                        </span>
-                        <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(activationComplete ? 'ACTIVE' : 'PENDING_ACTIVATION')}`}>
-                          {activationComplete ? 'Ready' : 'Review'}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
-                  No account activation records available.
-                </p>
-              )}
-            </div>
-          </article>
-        </section>
+        <ConsoleLivePanels initialData={consoleLiveData} initialTreasuryStatus={treasuryStatus} />
 
         <section className="grid gap-4" aria-labelledby="access-review-heading">
           <div className="grid gap-5 rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">

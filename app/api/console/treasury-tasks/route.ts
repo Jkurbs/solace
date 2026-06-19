@@ -18,6 +18,30 @@ function isTreasuryTaskStatus(value: unknown): value is TreasuryTaskStatus {
   return typeof value === 'string' && treasuryTaskStatuses.has(value as TreasuryTaskStatus);
 }
 
+function wantsJson(request: Request) {
+  return request.headers.get('accept')?.includes('application/json') ?? false;
+}
+
+function respondToTreasuryUpdate(request: Request, redirectUrl: URL, status: 'failed' | 'invalid' | 'updated') {
+  if (wantsJson(request)) {
+    return NextResponse.json(
+      {
+        message:
+          status === 'updated'
+            ? 'Treasury task updated.'
+            : status === 'invalid'
+              ? 'Treasury task request was invalid.'
+              : 'Treasury task could not be updated.',
+        status,
+      },
+      { status: status === 'updated' ? 200 : 400 },
+    );
+  }
+
+  redirectUrl.searchParams.set('treasury', status);
+  return NextResponse.redirect(redirectUrl, 303);
+}
+
 export async function POST(request: Request) {
   if (!(await hasConsoleAccess())) {
     return NextResponse.json({ message: 'Console access required.' }, { status: 401 });
@@ -31,8 +55,7 @@ export async function POST(request: Request) {
   const redirectUrl = new URL('/console', request.url);
 
   if (typeof taskId !== 'string' || !isTreasuryTaskStatus(status)) {
-    redirectUrl.searchParams.set('treasury', 'invalid');
-    return NextResponse.redirect(redirectUrl, 303);
+    return respondToTreasuryUpdate(request, redirectUrl, 'invalid');
   }
 
   const updated = await updateTreasuryTaskStatus({
@@ -42,7 +65,5 @@ export async function POST(request: Request) {
     taskId,
   });
 
-  redirectUrl.searchParams.set('treasury', updated ? 'updated' : 'failed');
-
-  return NextResponse.redirect(redirectUrl, 303);
+  return respondToTreasuryUpdate(request, redirectUrl, updated ? 'updated' : 'failed');
 }

@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-const refreshIntervalMs = 10_000;
+const refreshIntervalMs = 5_000;
 
 const timeFormatter = new Intl.DateTimeFormat('en-US', {
   hour: 'numeric',
@@ -13,50 +12,33 @@ const timeFormatter = new Intl.DateTimeFormat('en-US', {
 });
 
 export default function ConsoleLiveRefresh() {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [lastRefresh, setLastRefresh] = useState('');
+  const [lastTick, setLastTick] = useState('');
 
   useEffect(() => {
-    let mounted = true;
-
-    function refreshConsole() {
-      if (document.visibilityState !== 'visible') {
-        return;
-      }
-
-      startTransition(() => {
-        router.refresh();
-      });
-
-      if (mounted) {
-        setLastRefresh(timeFormatter.format(new Date()));
-      }
+    function updateTick() {
+      setLastTick(timeFormatter.format(new Date()));
     }
 
-    setLastRefresh(timeFormatter.format(new Date()));
+    updateTick();
 
-    const interval = window.setInterval(refreshConsole, refreshIntervalMs);
-    window.addEventListener('focus', refreshConsole);
-    document.addEventListener('visibilitychange', refreshConsole);
+    const interval = window.setInterval(updateTick, refreshIntervalMs);
+    window.addEventListener('focus', updateTick);
 
     return () => {
-      mounted = false;
       window.clearInterval(interval);
-      window.removeEventListener('focus', refreshConsole);
-      document.removeEventListener('visibilitychange', refreshConsole);
+      window.removeEventListener('focus', updateTick);
     };
-  }, [router]);
+  }, []);
 
   return (
     <div className="hidden items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/40 px-3 py-1.5 text-xs text-neutral-400 sm:inline-flex">
       <span
         aria-hidden="true"
-        className={`h-1.5 w-1.5 rounded-full ${isPending ? 'bg-amber-300' : 'bg-emerald-300'}`}
+        className="h-1.5 w-1.5 rounded-full bg-emerald-300"
       />
-      <span>{isPending ? 'Refreshing' : 'Live refresh'}</span>
-      <span className="text-neutral-600">10s</span>
-      {lastRefresh ? <span className="text-neutral-600">{lastRefresh}</span> : null}
+      <span>Live panels</span>
+      <span className="text-neutral-600">5s</span>
+      {lastTick ? <span className="text-neutral-600">{lastTick}</span> : null}
     </div>
   );
 }
