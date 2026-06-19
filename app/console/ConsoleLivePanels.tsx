@@ -78,15 +78,15 @@ function shortenId(value: string | undefined) {
 }
 
 function getMoneyStatusClass(status: string) {
-  if (['posted', 'ACTIVE', 'APPROVED', 'COMPLETED', 'reconciled'].includes(status)) {
+  if (['posted', 'available', 'ACTIVE', 'APPROVED', 'COMPLETED', 'FUNDABLE', 'reconciled'].includes(status)) {
     return 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200';
   }
 
-  if (['open', 'QUEUED', 'REVIEWING', 'SUBMITTED', 'PENDING_ACTIVATION'].includes(status)) {
+  if (['open', 'pending', 'QUEUED', 'REVIEWING', 'SUBMITTED', 'WAITING_SETTLEMENT', 'PENDING_ACTIVATION'].includes(status)) {
     return 'border-amber-300/25 bg-amber-300/10 text-amber-100';
   }
 
-  if (['failed', 'FAILED', 'CANCELED', 'expired', 'SUSPENDED', 'REVOKED'].includes(status)) {
+  if (['failed', 'unavailable', 'FAILED', 'CANCELED', 'expired', 'SUSPENDED', 'REVOKED'].includes(status)) {
     return 'border-red-400/30 bg-red-400/10 text-red-200';
   }
 
@@ -95,6 +95,11 @@ function getMoneyStatusClass(status: string) {
 
 function getTreasuryTaskActions(status: TreasuryTaskStatus): Array<{ label: string; status: TreasuryTaskStatus; tone: 'green' | 'neutral' | 'red' }> {
   switch (status) {
+    case 'WAITING_SETTLEMENT':
+      return [
+        { label: 'Review', status: 'REVIEWING', tone: 'neutral' },
+        { label: 'Cancel', status: 'CANCELED', tone: 'red' },
+      ];
     case 'QUEUED':
       return [
         { label: 'Review', status: 'REVIEWING', tone: 'neutral' },
@@ -102,8 +107,13 @@ function getTreasuryTaskActions(status: TreasuryTaskStatus): Array<{ label: stri
       ];
     case 'REVIEWING':
       return [
-        { label: 'Approve', status: 'APPROVED', tone: 'green' },
+        { label: 'Mark fundable', status: 'FUNDABLE', tone: 'green' },
         { label: 'Fail', status: 'FAILED', tone: 'red' },
+      ];
+    case 'FUNDABLE':
+      return [
+        { label: 'Approve', status: 'APPROVED', tone: 'green' },
+        { label: 'Cancel', status: 'CANCELED', tone: 'red' },
       ];
     case 'APPROVED':
       return [
@@ -242,16 +252,12 @@ function ConsoleLivePanelsContent({
   const moneyMovement = data.moneyMovement;
   const liveLedgerOverview = data.ledgerOverview;
   const postedDeposits = moneyMovement.deposits.filter((deposit) => deposit.status === 'posted');
+  const availableSettlements = moneyMovement.stripeSettlements.filter((settlement) => settlement.status === 'available');
+  const pendingSettlements = moneyMovement.stripeSettlements.filter((settlement) => settlement.status === 'pending');
+  const availableSettlementNet = availableSettlements.reduce((total, settlement) => total + settlement.netAmount, 0);
   const queuedTreasuryTasks = moneyMovement.treasuryTasks.filter((task) =>
-    ['QUEUED', 'REVIEWING', 'APPROVED', 'SUBMITTED'].includes(task.status),
+    ['WAITING_SETTLEMENT', 'QUEUED', 'REVIEWING', 'FUNDABLE', 'APPROVED', 'SUBMITTED'].includes(task.status),
   );
-  const activeAccounts = moneyMovement.accountStatuses.filter(
-    (account) =>
-      account.solaceUserStatus === 'ACTIVE' &&
-      account.hermesAccountStatus === 'ACTIVE' &&
-      account.ledgerAccountStatus === 'ACTIVE',
-  );
-
   return (
     <>
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Ledger overview">
@@ -292,11 +298,20 @@ function ConsoleLivePanelsContent({
               surface.
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <InlineMetric label="Stripe sessions" value={moneyMovement.stripeSessions.length} />
             <InlineMetric label="Posted deposits" value={postedDeposits.length} tone="green" />
+            <InlineMetric
+              label="Available net"
+              value={formatCurrency(availableSettlementNet)}
+              tone={availableSettlements.length ? 'green' : 'neutral'}
+            />
+            <InlineMetric
+              label="Pending settlement"
+              value={pendingSettlements.length}
+              tone={pendingSettlements.length ? 'amber' : 'neutral'}
+            />
             <InlineMetric label="Treasury queue" value={queuedTreasuryTasks.length} tone={queuedTreasuryTasks.length ? 'amber' : 'neutral'} />
-            <InlineMetric label="Active accounts" value={activeAccounts.length} tone="green" />
           </div>
         </div>
 
@@ -313,6 +328,11 @@ function ConsoleLivePanelsContent({
           <div className="mt-5 rounded-md border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">
             Treasury queue table is not installed yet. Run <span className="font-mono">supabase/treasury-queue-v1.sql</span>
             {' '}to begin queueing funding tasks after deposits post.
+          </div>
+        ) : !moneyMovement.settlementTrackingAvailable ? (
+          <div className="mt-5 rounded-md border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">
+            Stripe settlement tracking is not installed yet. Run <span className="font-mono">supabase/stripe-settlement-v1.sql</span>
+            {' '}to track Stripe fees, net funds, and availability dates before treasury funding.
           </div>
         ) : null}
         {treasuryStatus === 'updated' ? (
@@ -358,6 +378,42 @@ function ConsoleLivePanelsContent({
               ) : (
                 <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
                   No Stripe sessions recorded yet.
+                </p>
+              )}
+            </div>
+          </article>
+
+          <article className="rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
+            <p className="text-sm font-medium text-neutral-400">Stripe Settlement</p>
+            <h3 className="mt-1 text-lg font-semibold text-neutral-50">Treasury availability</h3>
+            <div className="mt-5 grid gap-4">
+              {moneyMovement.stripeSettlements.length ? (
+                moneyMovement.stripeSettlements.slice(0, 5).map((settlement) => (
+                  <div key={settlement.id} className="grid gap-3 border-t border-neutral-800 pt-4 first:border-t-0 first:pt-0 sm:grid-cols-[1fr_auto]">
+                    <div className="min-w-0">
+                      <strong className="block break-all text-sm font-semibold text-neutral-50">{shortenId(settlement.balanceTransactionId)}</strong>
+                      <span className="mt-1 block text-xs text-neutral-500">Checkout {shortenId(settlement.checkoutSessionId)}</span>
+                      <span className="mt-1 block text-xs text-neutral-500">Charge {shortenId(settlement.chargeId)}</span>
+                      <div className="mt-3 grid gap-2 text-xs text-neutral-500 sm:grid-cols-3">
+                        <span>Gross {formatCurrency(settlement.grossAmount)}</span>
+                        <span>Fee {formatCurrency(settlement.stripeFeeAmount)}</span>
+                        <span>Net {formatCurrency(settlement.netAmount)}</span>
+                      </div>
+                    </div>
+                    <div className="grid gap-2 sm:justify-items-end">
+                      <span className={`w-fit rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(settlement.status)}`}>
+                        {formatConstant(settlement.status)}
+                      </span>
+                      <strong className="text-sm font-semibold text-neutral-50">{formatCurrency(settlement.netAmount)}</strong>
+                      <time className="text-xs text-neutral-500" dateTime={settlement.availableOn ?? settlement.updatedAt}>
+                        {settlement.availableOn ? `Available ${formatDate(settlement.availableOn)}` : formatDate(settlement.updatedAt)}
+                      </time>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
+                  No Stripe settlement records yet.
                 </p>
               )}
             </div>

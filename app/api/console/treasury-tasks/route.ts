@@ -5,8 +5,10 @@ import type { TreasuryTaskStatus } from '@/features/ledger/types';
 import { hasConsoleAccess } from '@/features/solace-console/access';
 
 const treasuryTaskStatuses = new Set<TreasuryTaskStatus>([
+  'WAITING_SETTLEMENT',
   'QUEUED',
   'REVIEWING',
+  'FUNDABLE',
   'APPROVED',
   'SUBMITTED',
   'COMPLETED',

@@ -4,7 +4,7 @@ import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/
 import type { Database } from '@/lib/supabase/types';
 import type { IdentityVerificationStatus } from '@/features/hermes-dashboard/types';
 
-import type { LedgerActivity, LedgerDataset, LedgerDeposit, LedgerEntry } from './types';
+import type { LedgerActivity, LedgerDataset, LedgerDeposit, LedgerEntry, StripeDepositSettlementStatus } from './types';
 import { evaluateTreasuryPolicy } from './treasury-policy';
 
 type SolaceActivityRow = Database['public']['Tables']['solace_activities']['Row'];
@@ -13,6 +13,24 @@ type SolaceLedgerEntryRow = Database['public']['Tables']['solace_ledger_entries'
 type TreasuryTaskRow = Database['public']['Tables']['treasury_tasks']['Row'];
 
 type StripeDepositSessionStatus = Database['public']['Tables']['stripe_deposit_sessions']['Row']['status'];
+
+export type StripeDepositSettlementInput = {
+  availableOn: string | null;
+  balanceTransactionId: string | null;
+  balanceType: string | null;
+  chargeId: string | null;
+  exchangeRate: number | null;
+  grossAmount: number;
+  netAmount: number;
+  reportingCategory: string | null;
+  status: StripeDepositSettlementStatus;
+  stripeCreatedAt: string | null;
+  stripeFeeAmount: number;
+};
+
+export type PendingStripeSettlementReference = {
+  balanceTransactionId: string;
+};
 
 type StripeDepositSessionInput = {
   accountId: string;
@@ -29,6 +47,7 @@ type StripeDepositPostedInput = {
   currency: 'USD';
   occurredAt: string;
   paymentIntentId: string | null;
+  settlement: StripeDepositSettlementInput | null;
 };
 
 const emptyPersistedLedgerDataset: Pick<LedgerDataset, 'activities' | 'deposits' | 'entries'> = {
@@ -37,7 +56,12 @@ const emptyPersistedLedgerDataset: Pick<LedgerDataset, 'activities' | 'deposits'
   entries: [],
 };
 
-const mutableTreasuryTaskStatuses = new Set<TreasuryTaskRow['status']>(['APPROVED', 'QUEUED', 'REVIEWING']);
+const mutableTreasuryTaskStatuses = new Set<TreasuryTaskRow['status']>([
+  'FUNDABLE',
+  'QUEUED',
+  'REVIEWING',
+  'WAITING_SETTLEMENT',
+]);
 const identityVerificationStatuses = new Set<IdentityVerificationStatus>([
   'NOT_STARTED',
   'READY',
@@ -57,6 +81,13 @@ function normalizeAmount(value: number) {
 function isMissingTreasuryTasksTable(message: string) {
   return (
     message.includes('treasury_tasks') &&
+    (message.includes('Could not find') || message.includes('does not exist') || message.includes('schema cache'))
+  );
+}
+
+function isMissingStripeSettlementTable(message: string) {
+  return (
+    message.includes('stripe_deposit_settlements') &&
     (message.includes('Could not find') || message.includes('does not exist') || message.includes('schema cache'))
   );
 }
@@ -98,7 +129,7 @@ async function queueTreasuryTaskForDeposit({
   const supabase = await createSupabaseDataClient();
   const taskId = `treasury_task_${checkoutSessionId}`;
 
-  const [ledgerAccountResult, existingTaskResult, onboardingResult] = await Promise.all([
+  const [ledgerAccountResult, existingTaskResult, onboardingResult, settlementResult] = await Promise.all([
     supabase
       .from('ledger_accounts')
       .select('status, hermes_account_id, solace_user_id')
@@ -113,6 +144,11 @@ async function queueTreasuryTaskForDeposit({
       .from('account_onboarding')
       .select('identity_verification')
       .eq('ledger_account_id', accountId)
+      .maybeSingle(),
+    supabase
+      .from('stripe_deposit_settlements')
+      .select('status, net_amount')
+      .eq('checkout_session_id', checkoutSessionId)
       .maybeSingle(),
   ]);
 
@@ -141,6 +177,13 @@ async function queueTreasuryTaskForDeposit({
     console.warn('[ledger] Treasury policy onboarding lookup failed.', onboardingResult.error.message);
   }
 
+  if (settlementResult.error && !isMissingStripeSettlementTable(settlementResult.error.message)) {
+    console.warn('[ledger] Treasury policy settlement lookup failed.', settlementResult.error.message);
+  }
+
+  const settlementStatus = settlementResult.error ? 'unavailable' : settlementResult.data?.status;
+  const policyAmount = settlementResult.data ? normalizeAmount(settlementResult.data.net_amount) : amount;
+
   const [hermesAccountResult, userResult] = await Promise.all([
     supabase
       .from('hermes_accounts')
@@ -163,11 +206,12 @@ async function queueTreasuryTaskForDeposit({
   }
 
   const policy = evaluateTreasuryPolicy({
-    amount,
+    amount: policyAmount,
     currency,
     hermesAccountStatus: hermesAccountResult.data?.status,
     identityVerificationStatus: getIdentityVerificationStatus(onboardingResult.data?.identity_verification),
     ledgerAccountStatus: ledgerAccountResult.data.status,
+    settlementStatus,
     solaceUserStatus: userResult.data?.status,
   });
 
@@ -208,6 +252,178 @@ async function queueTreasuryTaskForDeposit({
   }
 
   return true;
+}
+
+async function recordStripeDepositSettlement({
+  accountId,
+  amount,
+  checkoutSessionId,
+  currency,
+  depositId,
+  occurredAt,
+  paymentIntentId,
+  settlement,
+}: StripeDepositPostedInput & { depositId: string }) {
+  const supabase = await createSupabaseDataClient();
+  const settlementPayload = settlement ?? {
+    availableOn: null,
+    balanceTransactionId: null,
+    balanceType: null,
+    chargeId: null,
+    exchangeRate: null,
+    grossAmount: amount,
+    netAmount: amount,
+    reportingCategory: null,
+    status: 'unavailable' as const,
+    stripeCreatedAt: null,
+    stripeFeeAmount: 0,
+  };
+  const grossAmount = normalizeAmount(settlementPayload.grossAmount);
+  const netAmount = normalizeAmount(settlementPayload.netAmount);
+
+  const { error } = await supabase.from('stripe_deposit_settlements').upsert(
+    {
+      available_on: settlementPayload.availableOn,
+      balance_transaction_id: settlementPayload.balanceTransactionId,
+      balance_type: settlementPayload.balanceType,
+      charge_id: settlementPayload.chargeId,
+      checkout_session_id: checkoutSessionId,
+      created_at: occurredAt,
+      currency,
+      deposit_id: depositId,
+      exchange_rate: settlementPayload.exchangeRate,
+      gross_amount: grossAmount,
+      id: `settlement_${checkoutSessionId}`,
+      ledger_account_id: accountId,
+      net_amount: netAmount,
+      payment_intent_id: paymentIntentId,
+      reporting_category: settlementPayload.reportingCategory,
+      status: settlementPayload.status,
+      stripe_created_at: settlementPayload.stripeCreatedAt,
+      stripe_fee_amount: normalizeAmount(settlementPayload.stripeFeeAmount),
+      updated_at: occurredAt,
+    },
+    { onConflict: 'checkout_session_id' },
+  );
+
+  if (error) {
+    if (isMissingStripeSettlementTable(error.message)) {
+      console.warn('[ledger] Stripe settlement table is not installed yet.', error.message);
+      return true;
+    }
+
+    console.warn('[ledger] Stripe settlement could not be persisted.', error.message);
+    return false;
+  }
+
+  return true;
+}
+
+export async function listPendingStripeSettlementReferences(): Promise<PendingStripeSettlementReference[]> {
+  if (!isSupabaseDataClientConfigured()) {
+    return [];
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    const { data, error } = await supabase
+      .from('stripe_deposit_settlements')
+      .select('balance_transaction_id')
+      .eq('status', 'pending')
+      .not('balance_transaction_id', 'is', null);
+
+    if (error) {
+      if (isMissingStripeSettlementTable(error.message)) {
+        return [];
+      }
+
+      console.warn('[ledger] Pending Stripe settlements could not be listed.', error.message);
+      return [];
+    }
+
+    return data.reduce<PendingStripeSettlementReference[]>((references, row) => {
+      if (row.balance_transaction_id) {
+        references.push({ balanceTransactionId: row.balance_transaction_id });
+      }
+
+      return references;
+    }, []);
+  } catch (error) {
+    console.warn('[ledger] Pending Stripe settlement listing failed.', error);
+    return [];
+  }
+}
+
+export async function refreshStripeDepositSettlement({
+  balanceTransactionId,
+  settlement,
+  updatedAt,
+}: {
+  balanceTransactionId: string;
+  settlement: StripeDepositSettlementInput;
+  updatedAt: string;
+}) {
+  if (!isSupabaseDataClientConfigured()) {
+    return false;
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    const { data: existingSettlement, error: lookupError } = await supabase
+      .from('stripe_deposit_settlements')
+      .select('charge_id, checkout_session_id, currency, deposit_id, ledger_account_id, payment_intent_id')
+      .eq('balance_transaction_id', balanceTransactionId)
+      .maybeSingle();
+
+    if (lookupError) {
+      if (isMissingStripeSettlementTable(lookupError.message)) {
+        return true;
+      }
+
+      console.warn('[ledger] Stripe settlement refresh lookup failed.', lookupError.message);
+      return false;
+    }
+
+    if (!existingSettlement) {
+      return true;
+    }
+
+    const { error: updateError } = await supabase
+      .from('stripe_deposit_settlements')
+      .update({
+        available_on: settlement.availableOn,
+        balance_type: settlement.balanceType,
+        charge_id: settlement.chargeId ?? existingSettlement.charge_id,
+        exchange_rate: settlement.exchangeRate,
+        gross_amount: normalizeAmount(settlement.grossAmount),
+        net_amount: normalizeAmount(settlement.netAmount),
+        reporting_category: settlement.reportingCategory,
+        status: settlement.status,
+        stripe_created_at: settlement.stripeCreatedAt,
+        stripe_fee_amount: normalizeAmount(settlement.stripeFeeAmount),
+        updated_at: updatedAt,
+      })
+      .eq('balance_transaction_id', balanceTransactionId);
+
+    if (updateError) {
+      console.warn('[ledger] Stripe settlement refresh failed.', updateError.message);
+      return false;
+    }
+
+    return queueTreasuryTaskForDeposit({
+      accountId: existingSettlement.ledger_account_id,
+      amount: normalizeAmount(settlement.netAmount),
+      checkoutSessionId: existingSettlement.checkout_session_id,
+      currency: existingSettlement.currency,
+      depositId: existingSettlement.deposit_id,
+      occurredAt: updatedAt,
+      paymentIntentId: existingSettlement.payment_intent_id,
+      settlement,
+    });
+  } catch (error) {
+    console.warn('[ledger] Stripe settlement refresh failed.', error);
+    return false;
+  }
 }
 
 function fromSolaceLedgerEntryRow(row: SolaceLedgerEntryRow): LedgerEntry {
@@ -341,6 +557,7 @@ export async function postStripeCheckoutDeposit({
   currency,
   occurredAt,
   paymentIntentId,
+  settlement,
 }: StripeDepositPostedInput) {
   if (!isSupabaseDataClientConfigured()) {
     return false;
@@ -446,6 +663,21 @@ export async function postStripeCheckoutDeposit({
       return false;
     }
 
+    const settlementRecorded = await recordStripeDepositSettlement({
+      accountId,
+      amount: normalizedAmount,
+      checkoutSessionId,
+      currency,
+      depositId,
+      occurredAt,
+      paymentIntentId,
+      settlement,
+    });
+
+    if (!settlementRecorded) {
+      return false;
+    }
+
     const treasuryTaskQueued = await queueTreasuryTaskForDeposit({
       accountId,
       amount: normalizedAmount,
@@ -454,6 +686,7 @@ export async function postStripeCheckoutDeposit({
       depositId,
       occurredAt,
       paymentIntentId,
+      settlement,
     });
 
     if (!treasuryTaskQueued) {

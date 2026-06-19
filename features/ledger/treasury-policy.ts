@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { IdentityVerificationStatus } from '@/features/hermes-dashboard/types';
 
-import type { LedgerAccountStatus, LedgerCurrency, TreasuryTaskStatus } from './types';
+import type { LedgerAccountStatus, LedgerCurrency, StripeDepositSettlementStatus, TreasuryTaskStatus } from './types';
 
 type HermesAccountStatus = 'PENDING_ACTIVATION' | 'ACTIVE' | 'PAUSED' | 'CLOSED';
 type SolaceUserStatus = 'APPROVED' | 'ACTIVE' | 'SUSPENDED';
@@ -12,6 +12,8 @@ export type TreasuryPolicyReason =
   | 'identity_pending'
   | 'minimum_not_met'
   | 'ready_for_funding'
+  | 'settlement_pending'
+  | 'settlement_unavailable'
   | 'unsupported_currency';
 
 export type TreasuryPolicyDecision = {
@@ -28,6 +30,7 @@ export type TreasuryPolicyInput = {
   hermesAccountStatus?: HermesAccountStatus | null;
   identityVerificationStatus?: IdentityVerificationStatus | null;
   ledgerAccountStatus?: LedgerAccountStatus | null;
+  settlementStatus?: StripeDepositSettlementStatus | null;
   solaceUserStatus?: SolaceUserStatus | null;
 };
 
@@ -74,7 +77,9 @@ function buildPolicyNote({
     account_not_active: 'Account is not fully active. Operator review is required before funding Hermes.',
     identity_pending: 'Identity verification is not complete. Hold funding until verification is complete.',
     minimum_not_met: 'Allocatable capital is below the minimum funding threshold after reserve.',
-    ready_for_funding: 'Policy approved automatically. Prepare Hermes funding transfer after Stripe settlement clears.',
+    ready_for_funding: 'Stripe settlement is available. Treasury may prepare Hermes funding.',
+    settlement_pending: 'Stripe settlement is pending. Hold funding until the net funds are available.',
+    settlement_unavailable: 'Stripe settlement details are unavailable. Operator review is required before funding Hermes.',
     unsupported_currency: 'Currency is not supported by the Hermes treasury policy.',
   };
 
@@ -94,10 +99,16 @@ export function evaluateTreasuryPolicy(input: TreasuryPolicyInput): TreasuryPoli
   const allocatableAmount = roundCurrency(Math.max(0, normalizedAmount - reserveAmount));
 
   let reason: TreasuryPolicyReason = 'ready_for_funding';
-  let status: TreasuryTaskStatus = 'APPROVED';
+  let status: TreasuryTaskStatus = 'FUNDABLE';
 
   if (input.currency !== 'USD') {
     reason = 'unsupported_currency';
+    status = 'REVIEWING';
+  } else if (input.settlementStatus === 'pending') {
+    reason = 'settlement_pending';
+    status = 'WAITING_SETTLEMENT';
+  } else if (input.settlementStatus !== 'available') {
+    reason = 'settlement_unavailable';
     status = 'REVIEWING';
   } else if (
     input.ledgerAccountStatus !== 'ACTIVE' ||

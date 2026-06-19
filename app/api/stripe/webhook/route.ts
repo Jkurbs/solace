@@ -7,7 +7,13 @@ import {
   updateAccountIdentityVerificationBySessionId,
 } from '@/features/accounts/store';
 import type { IdentityVerificationStatus } from '@/features/hermes-dashboard/types';
-import { markStripeDepositSessionStatus, postStripeCheckoutDeposit } from '@/features/ledger/store';
+import {
+  listPendingStripeSettlementReferences,
+  markStripeDepositSessionStatus,
+  postStripeCheckoutDeposit,
+  refreshStripeDepositSettlement,
+  type StripeDepositSettlementInput,
+} from '@/features/ledger/store';
 import { getStripeServerClient } from '@/lib/stripe/server';
 
 export const runtime = 'nodejs';
@@ -83,11 +89,187 @@ function getPaymentIntentId(session: Stripe.Checkout.Session) {
   return typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent.id;
 }
 
+function centsToDollars(value: number) {
+  return Math.round(value) / 100;
+}
+
+function stripeTimestampToIso(value: number | null | undefined) {
+  return value ? new Date(value * 1000).toISOString() : null;
+}
+
+function isExpandedCharge(value: string | Stripe.Charge | null): value is Stripe.Charge {
+  return Boolean(value && typeof value !== 'string');
+}
+
+function isExpandedBalanceTransaction(
+  value: string | Stripe.BalanceTransaction | null,
+): value is Stripe.BalanceTransaction {
+  return Boolean(value && typeof value !== 'string');
+}
+
+async function getChargeForPaymentIntent(stripe: Stripe, paymentIntent: Stripe.PaymentIntent) {
+  if (!paymentIntent.latest_charge) {
+    return null;
+  }
+
+  if (isExpandedCharge(paymentIntent.latest_charge)) {
+    return paymentIntent.latest_charge;
+  }
+
+  return stripe.charges.retrieve(paymentIntent.latest_charge, {
+    expand: ['balance_transaction'],
+  });
+}
+
+async function getBalanceTransactionForCharge(stripe: Stripe, charge: Stripe.Charge) {
+  if (!charge.balance_transaction) {
+    return null;
+  }
+
+  if (isExpandedBalanceTransaction(charge.balance_transaction)) {
+    return charge.balance_transaction;
+  }
+
+  return stripe.balanceTransactions.retrieve(charge.balance_transaction);
+}
+
+function getBalanceTransactionSourceId(balanceTransaction: Stripe.BalanceTransaction) {
+  const source = balanceTransaction.source;
+
+  if (typeof source === 'string') {
+    return source;
+  }
+
+  if (source && typeof source === 'object' && 'id' in source && typeof source.id === 'string') {
+    return source.id;
+  }
+
+  return null;
+}
+
+function getSettlementFromBalanceTransaction(
+  balanceTransaction: Stripe.BalanceTransaction,
+  fallbackChargeId: string | null,
+): StripeDepositSettlementInput {
+  return {
+    availableOn: stripeTimestampToIso(balanceTransaction.available_on),
+    balanceTransactionId: balanceTransaction.id,
+    balanceType: balanceTransaction.balance_type,
+    chargeId: fallbackChargeId ?? getBalanceTransactionSourceId(balanceTransaction),
+    exchangeRate: balanceTransaction.exchange_rate,
+    grossAmount: centsToDollars(balanceTransaction.amount),
+    netAmount: centsToDollars(balanceTransaction.net),
+    reportingCategory: balanceTransaction.reporting_category,
+    status: balanceTransaction.status === 'available' ? 'available' : 'pending',
+    stripeCreatedAt: stripeTimestampToIso(balanceTransaction.created),
+    stripeFeeAmount: centsToDollars(balanceTransaction.fee),
+  };
+}
+
+async function getStripeDepositSettlement(
+  stripe: Stripe,
+  paymentIntentId: string | null,
+): Promise<StripeDepositSettlementInput | null> {
+  if (!paymentIntentId) {
+    return null;
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+      expand: ['latest_charge.balance_transaction'],
+    });
+    const charge = await getChargeForPaymentIntent(stripe, paymentIntent);
+
+    if (!charge) {
+      return null;
+    }
+
+    const balanceTransaction = await getBalanceTransactionForCharge(stripe, charge);
+
+    if (!balanceTransaction || balanceTransaction.currency !== 'usd') {
+      return {
+        availableOn: null,
+        balanceTransactionId: typeof charge.balance_transaction === 'string' ? charge.balance_transaction : null,
+        balanceType: null,
+        chargeId: charge.id,
+        exchangeRate: null,
+        grossAmount: centsToDollars(charge.amount),
+        netAmount: centsToDollars(charge.amount),
+        reportingCategory: null,
+        status: 'unavailable',
+        stripeCreatedAt: stripeTimestampToIso(charge.created),
+        stripeFeeAmount: 0,
+      };
+    }
+
+    return getSettlementFromBalanceTransaction(balanceTransaction, charge.id);
+  } catch (error) {
+    console.warn('[stripe-webhook] Stripe settlement lookup failed.', {
+      error,
+      paymentIntentId,
+    });
+
+    return null;
+  }
+}
+
+async function refreshPendingStripeSettlements(stripe: Stripe, event: Stripe.Event) {
+  const pendingSettlements = await listPendingStripeSettlementReferences();
+
+  if (!pendingSettlements.length) {
+    return true;
+  }
+
+  const updatedAt = new Date(event.created * 1000).toISOString();
+  const results = await Promise.all(
+    pendingSettlements.map(async ({ balanceTransactionId }) => {
+      try {
+        const balanceTransaction = await stripe.balanceTransactions.retrieve(balanceTransactionId);
+
+        if (balanceTransaction.currency !== 'usd') {
+          return refreshStripeDepositSettlement({
+            balanceTransactionId,
+            settlement: {
+              availableOn: null,
+              balanceTransactionId,
+              balanceType: null,
+              chargeId: getBalanceTransactionSourceId(balanceTransaction),
+              exchangeRate: null,
+              grossAmount: centsToDollars(balanceTransaction.amount),
+              netAmount: centsToDollars(balanceTransaction.amount),
+              reportingCategory: balanceTransaction.reporting_category,
+              status: 'unavailable',
+              stripeCreatedAt: stripeTimestampToIso(balanceTransaction.created),
+              stripeFeeAmount: 0,
+            },
+            updatedAt,
+          });
+        }
+
+        return refreshStripeDepositSettlement({
+          balanceTransactionId,
+          settlement: getSettlementFromBalanceTransaction(balanceTransaction, null),
+          updatedAt,
+        });
+      } catch (error) {
+        console.warn('[stripe-webhook] Pending settlement refresh failed.', {
+          balanceTransactionId,
+          error,
+        });
+
+        return false;
+      }
+    }),
+  );
+
+  return results.every(Boolean);
+}
+
 function isSolaceDepositSession(session: Stripe.Checkout.Session) {
   return session.metadata?.purpose === 'solace_deposit' && Boolean(session.metadata.ledger_account_id);
 }
 
-async function postCheckoutDeposit(event: Stripe.Event) {
+async function postCheckoutDeposit(event: Stripe.Event, stripe: Stripe) {
   const session = event.data.object as Stripe.Checkout.Session;
 
   if (!isSolaceDepositSession(session)) {
@@ -106,6 +288,7 @@ async function postCheckoutDeposit(event: Stripe.Event) {
   const accountId = session.metadata?.ledger_account_id;
   const amount = session.amount_total ? session.amount_total / 100 : null;
   const currency = session.currency?.toUpperCase();
+  const paymentIntentId = getPaymentIntentId(session);
 
   if (!accountId || !amount || currency !== 'USD') {
     console.warn('[stripe-webhook] Checkout deposit is missing required ledger metadata.', {
@@ -125,7 +308,8 @@ async function postCheckoutDeposit(event: Stripe.Event) {
     checkoutSessionId: session.id,
     currency: 'USD',
     occurredAt: new Date(event.created * 1000).toISOString(),
-    paymentIntentId: getPaymentIntentId(session),
+    paymentIntentId,
+    settlement: await getStripeDepositSettlement(stripe, paymentIntentId),
   });
 
   if (!posted) {
@@ -181,7 +365,10 @@ export async function POST(request: Request) {
   switch (event.type) {
     case 'checkout.session.completed':
     case 'checkout.session.async_payment_succeeded':
-      processed = await postCheckoutDeposit(event);
+      processed = await postCheckoutDeposit(event, stripe);
+      break;
+    case 'balance.available':
+      processed = await refreshPendingStripeSettlements(stripe, event);
       break;
     case 'checkout.session.async_payment_failed':
       processed = await markCheckoutSession(event, 'failed');

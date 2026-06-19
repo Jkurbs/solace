@@ -438,6 +438,72 @@ export type Database = {
         };
         Relationships: [];
       };
+      stripe_deposit_settlements: {
+        Row: {
+          id: string;
+          ledger_account_id: string;
+          deposit_id: string;
+          checkout_session_id: string;
+          payment_intent_id: string | null;
+          charge_id: string | null;
+          balance_transaction_id: string | null;
+          gross_amount: number;
+          stripe_fee_amount: number;
+          net_amount: number;
+          currency: 'USD';
+          status: 'pending' | 'available' | 'unavailable';
+          balance_type: string | null;
+          reporting_category: string | null;
+          exchange_rate: number | null;
+          stripe_created_at: string | null;
+          available_on: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          ledger_account_id: string;
+          deposit_id: string;
+          checkout_session_id: string;
+          payment_intent_id?: string | null;
+          charge_id?: string | null;
+          balance_transaction_id?: string | null;
+          gross_amount: number;
+          stripe_fee_amount?: number;
+          net_amount: number;
+          currency?: 'USD';
+          status?: 'pending' | 'available' | 'unavailable';
+          balance_type?: string | null;
+          reporting_category?: string | null;
+          exchange_rate?: number | null;
+          stripe_created_at?: string | null;
+          available_on?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          ledger_account_id?: string;
+          deposit_id?: string;
+          checkout_session_id?: string;
+          payment_intent_id?: string | null;
+          charge_id?: string | null;
+          balance_transaction_id?: string | null;
+          gross_amount?: number;
+          stripe_fee_amount?: number;
+          net_amount?: number;
+          currency?: 'USD';
+          status?: 'pending' | 'available' | 'unavailable';
+          balance_type?: string | null;
+          reporting_category?: string | null;
+          exchange_rate?: number | null;
+          stripe_created_at?: string | null;
+          available_on?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       treasury_tasks: {
         Row: {
           id: string;
@@ -447,7 +513,16 @@ export type Database = {
           type: 'FUND_HERMES';
           amount: number;
           currency: 'USD';
-          status: 'QUEUED' | 'REVIEWING' | 'APPROVED' | 'SUBMITTED' | 'COMPLETED' | 'FAILED' | 'CANCELED';
+          status:
+            | 'WAITING_SETTLEMENT'
+            | 'QUEUED'
+            | 'REVIEWING'
+            | 'FUNDABLE'
+            | 'APPROVED'
+            | 'SUBMITTED'
+            | 'COMPLETED'
+            | 'FAILED'
+            | 'CANCELED';
           notes: string | null;
           external_reference: string | null;
           created_at: string;
@@ -462,7 +537,16 @@ export type Database = {
           type?: 'FUND_HERMES';
           amount: number;
           currency?: 'USD';
-          status?: 'QUEUED' | 'REVIEWING' | 'APPROVED' | 'SUBMITTED' | 'COMPLETED' | 'FAILED' | 'CANCELED';
+          status?:
+            | 'WAITING_SETTLEMENT'
+            | 'QUEUED'
+            | 'REVIEWING'
+            | 'FUNDABLE'
+            | 'APPROVED'
+            | 'SUBMITTED'
+            | 'COMPLETED'
+            | 'FAILED'
+            | 'CANCELED';
           notes?: string | null;
           external_reference?: string | null;
           created_at?: string;
@@ -477,7 +561,16 @@ export type Database = {
           type?: 'FUND_HERMES';
           amount?: number;
           currency?: 'USD';
-          status?: 'QUEUED' | 'REVIEWING' | 'APPROVED' | 'SUBMITTED' | 'COMPLETED' | 'FAILED' | 'CANCELED';
+          status?:
+            | 'WAITING_SETTLEMENT'
+            | 'QUEUED'
+            | 'REVIEWING'
+            | 'FUNDABLE'
+            | 'APPROVED'
+            | 'SUBMITTED'
+            | 'COMPLETED'
+            | 'FAILED'
+            | 'CANCELED';
           notes?: string | null;
           external_reference?: string | null;
           created_at?: string;

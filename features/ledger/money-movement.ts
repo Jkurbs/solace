@@ -9,6 +9,7 @@ import type {
   LedgerEntry,
   MoneyMovementRecords,
   StripeDepositSession,
+  StripeDepositSettlement,
   TreasuryTask,
   TreasuryTaskStatus,
 } from './types';
@@ -20,6 +21,7 @@ type SolaceDepositRow = Database['public']['Tables']['solace_deposits']['Row'];
 type SolaceLedgerEntryRow = Database['public']['Tables']['solace_ledger_entries']['Row'];
 type SolaceUserRow = Database['public']['Tables']['solace_users']['Row'];
 type StripeDepositSessionRow = Database['public']['Tables']['stripe_deposit_sessions']['Row'];
+type StripeDepositSettlementRow = Database['public']['Tables']['stripe_deposit_settlements']['Row'];
 type TreasuryTaskRow = Database['public']['Tables']['treasury_tasks']['Row'];
 
 const emptyMoneyMovementRecords: MoneyMovementRecords = {
@@ -29,6 +31,8 @@ const emptyMoneyMovementRecords: MoneyMovementRecords = {
   entries: [],
   generatedAt: new Date(0).toISOString(),
   stripeSessions: [],
+  stripeSettlements: [],
+  settlementTrackingAvailable: false,
   treasuryQueueAvailable: false,
   treasuryTasks: [],
 };
@@ -48,6 +52,13 @@ function isMissingTreasuryTasksTable(message: string) {
   );
 }
 
+function isMissingStripeSettlementTable(message: string) {
+  return (
+    message.includes('stripe_deposit_settlements') &&
+    (message.includes('Could not find') || message.includes('does not exist') || message.includes('schema cache'))
+  );
+}
+
 function sortByNewest<T extends { createdAt: string }>(items: T[]) {
   return [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
@@ -58,9 +69,11 @@ function canTransitionTreasuryTask(currentStatus: TreasuryTaskStatus, nextStatus
     CANCELED: [],
     COMPLETED: [],
     FAILED: [],
+    FUNDABLE: ['APPROVED', 'REVIEWING', 'CANCELED'],
     QUEUED: ['REVIEWING', 'CANCELED'],
-    REVIEWING: ['APPROVED', 'FAILED'],
+    REVIEWING: ['FUNDABLE', 'APPROVED', 'FAILED', 'CANCELED'],
     SUBMITTED: ['COMPLETED', 'FAILED'],
+    WAITING_SETTLEMENT: ['REVIEWING', 'CANCELED'],
   };
 
   return allowedTransitions[currentStatus].includes(nextStatus);
@@ -77,6 +90,30 @@ function fromStripeDepositSessionRow(row: StripeDepositSessionRow): StripeDeposi
     id: row.id,
     paymentIntentId: row.payment_intent_id ?? undefined,
     status: row.status,
+    updatedAt: row.updated_at,
+  };
+}
+
+function fromStripeDepositSettlementRow(row: StripeDepositSettlementRow): StripeDepositSettlement {
+  return {
+    accountId: row.ledger_account_id,
+    availableOn: row.available_on ?? undefined,
+    balanceTransactionId: row.balance_transaction_id ?? undefined,
+    balanceType: row.balance_type ?? undefined,
+    chargeId: row.charge_id ?? undefined,
+    checkoutSessionId: row.checkout_session_id,
+    createdAt: row.created_at,
+    currency: row.currency,
+    depositId: row.deposit_id,
+    exchangeRate: row.exchange_rate ?? undefined,
+    grossAmount: normalizeAmount(row.gross_amount),
+    id: row.id,
+    netAmount: normalizeAmount(row.net_amount),
+    paymentIntentId: row.payment_intent_id ?? undefined,
+    reportingCategory: row.reporting_category ?? undefined,
+    status: row.status,
+    stripeCreatedAt: row.stripe_created_at ?? undefined,
+    stripeFeeAmount: normalizeAmount(row.stripe_fee_amount),
     updatedAt: row.updated_at,
   };
 }
@@ -220,9 +257,15 @@ export async function listMoneyMovementRecords(): Promise<MoneyMovementRecords> 
 
     const tasksResult = await supabase.from('treasury_tasks').select('*');
     const treasuryQueueAvailable = !tasksResult.error;
+    const settlementsResult = await supabase.from('stripe_deposit_settlements').select('*');
+    const settlementTrackingAvailable = !settlementsResult.error;
 
     if (tasksResult.error && !isMissingTreasuryTasksTable(tasksResult.error.message)) {
       console.warn('[ledger] Treasury tasks unavailable.', tasksResult.error.message);
+    }
+
+    if (settlementsResult.error && !isMissingStripeSettlementTable(settlementsResult.error.message)) {
+      console.warn('[ledger] Stripe settlements unavailable.', settlementsResult.error.message);
     }
 
     return {
@@ -239,6 +282,10 @@ export async function listMoneyMovementRecords(): Promise<MoneyMovementRecords> 
       entries: sortByNewest(entriesResult.data.map(fromSolaceLedgerEntryRow)),
       generatedAt: new Date().toISOString(),
       stripeSessions: sortByNewest(sessionsResult.data.map(fromStripeDepositSessionRow)),
+      stripeSettlements: settlementTrackingAvailable
+        ? sortByNewest(settlementsResult.data.map(fromStripeDepositSettlementRow))
+        : [],
+      settlementTrackingAvailable,
       treasuryQueueAvailable,
       treasuryTasks: treasuryQueueAvailable ? sortByNewest(tasksResult.data.map(fromTreasuryTaskRow)) : [],
     };

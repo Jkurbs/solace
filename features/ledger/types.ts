@@ -16,11 +16,22 @@ export type LedgerWithdrawalStatus = 'requested' | 'approved' | 'paid' | 'cancel
 
 export type TreasuryTransferStatus = 'planned' | 'initiated' | 'completed' | 'reconciled';
 
-export type TreasuryTaskStatus = 'QUEUED' | 'REVIEWING' | 'APPROVED' | 'SUBMITTED' | 'COMPLETED' | 'FAILED' | 'CANCELED';
+export type TreasuryTaskStatus =
+  | 'WAITING_SETTLEMENT'
+  | 'QUEUED'
+  | 'REVIEWING'
+  | 'FUNDABLE'
+  | 'APPROVED'
+  | 'SUBMITTED'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'CANCELED';
 
 export type TreasuryTaskType = 'FUND_HERMES';
 
 export type StripeDepositSessionStatus = 'open' | 'posted' | 'expired' | 'failed';
+
+export type StripeDepositSettlementStatus = 'pending' | 'available' | 'unavailable';
 
 export type LedgerActivityType =
   | 'account_created'
@@ -144,6 +155,28 @@ export interface StripeDepositSession {
   completedAt?: IsoDateString;
 }
 
+export interface StripeDepositSettlement {
+  id: string;
+  accountId: string;
+  depositId: string;
+  checkoutSessionId: string;
+  paymentIntentId?: string;
+  chargeId?: string;
+  balanceTransactionId?: string;
+  grossAmount: number;
+  stripeFeeAmount: number;
+  netAmount: number;
+  currency: LedgerCurrency;
+  status: StripeDepositSettlementStatus;
+  balanceType?: string;
+  reportingCategory?: string;
+  exchangeRate?: number;
+  stripeCreatedAt?: IsoDateString;
+  availableOn?: IsoDateString;
+  createdAt: IsoDateString;
+  updatedAt: IsoDateString;
+}
+
 export interface AccountActivationStatus {
   accountId: string;
   accountLabel: string;
@@ -162,8 +195,10 @@ export interface AccountActivationStatus {
 export interface MoneyMovementRecords {
   generatedAt: IsoDateString;
   available: boolean;
+  settlementTrackingAvailable: boolean;
   treasuryQueueAvailable: boolean;
   stripeSessions: StripeDepositSession[];
+  stripeSettlements: StripeDepositSettlement[];
   deposits: LedgerDeposit[];
   entries: LedgerEntry[];
   treasuryTasks: TreasuryTask[];
