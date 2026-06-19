@@ -1,10 +1,10 @@
 'use client';
 
-import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import type { LiveLedgerOverview } from '@/features/ledger/live-overview';
-import type { MoneyMovementRecords, TreasuryTaskStatus } from '@/features/ledger/types';
+import type { MoneyMovementRecords } from '@/features/ledger/types';
 
 type ConsoleLivePayload = {
   generatedAt: string;
@@ -14,7 +14,6 @@ type ConsoleLivePayload = {
 
 type ConsoleLivePanelsProps = {
   initialData: ConsoleLivePayload;
-  initialTreasuryStatus?: string;
 };
 
 const consoleLiveQueryKey = ['console-live'] as const;
@@ -93,43 +92,6 @@ function getMoneyStatusClass(status: string) {
   return 'border-neutral-700 bg-neutral-950/40 text-neutral-300';
 }
 
-function getTreasuryTaskActions(status: TreasuryTaskStatus): Array<{ label: string; status: TreasuryTaskStatus; tone: 'green' | 'neutral' | 'red' }> {
-  switch (status) {
-    case 'WAITING_SETTLEMENT':
-      return [
-        { label: 'Review', status: 'REVIEWING', tone: 'neutral' },
-        { label: 'Cancel', status: 'CANCELED', tone: 'red' },
-      ];
-    case 'QUEUED':
-      return [
-        { label: 'Review', status: 'REVIEWING', tone: 'neutral' },
-        { label: 'Cancel', status: 'CANCELED', tone: 'red' },
-      ];
-    case 'REVIEWING':
-      return [
-        { label: 'Mark fundable', status: 'FUNDABLE', tone: 'green' },
-        { label: 'Fail', status: 'FAILED', tone: 'red' },
-      ];
-    case 'FUNDABLE':
-      return [
-        { label: 'Approve', status: 'APPROVED', tone: 'green' },
-        { label: 'Cancel', status: 'CANCELED', tone: 'red' },
-      ];
-    case 'APPROVED':
-      return [
-        { label: 'Submit', status: 'SUBMITTED', tone: 'green' },
-        { label: 'Cancel', status: 'CANCELED', tone: 'red' },
-      ];
-    case 'SUBMITTED':
-      return [
-        { label: 'Complete', status: 'COMPLETED', tone: 'green' },
-        { label: 'Fail', status: 'FAILED', tone: 'red' },
-      ];
-    default:
-      return [];
-  }
-}
-
 async function getConsoleLivePayload(): Promise<ConsoleLivePayload> {
   const response = await fetch('/api/console/live', {
     headers: {
@@ -140,27 +102,6 @@ async function getConsoleLivePayload(): Promise<ConsoleLivePayload> {
 
   if (!response.ok || !('moneyMovement' in payload)) {
     throw new Error('message' in payload ? payload.message : 'Console live data could not be loaded.');
-  }
-
-  return payload;
-}
-
-async function updateTreasuryTask({ status, taskId }: { status: TreasuryTaskStatus; taskId: string }) {
-  const formData = new FormData();
-  formData.set('taskId', taskId);
-  formData.set('status', status);
-
-  const response = await fetch('/api/console/treasury-tasks', {
-    body: formData,
-    headers: {
-      Accept: 'application/json',
-    },
-    method: 'POST',
-  });
-  const payload = (await response.json().catch(() => ({}))) as { message?: string; status?: string };
-
-  if (!response.ok || payload.status !== 'updated') {
-    throw new Error(payload.message ?? 'Treasury task could not be updated.');
   }
 
   return payload;
@@ -190,42 +131,7 @@ function InlineMetric({ label, value, tone = 'neutral' }: { label: string; value
   );
 }
 
-function TreasuryTaskActionButton({
-  children,
-  disabled,
-  onClick,
-  tone,
-}: {
-  children: string;
-  disabled: boolean;
-  onClick: () => void;
-  tone: 'green' | 'neutral' | 'red';
-}) {
-  const toneClass =
-    tone === 'green'
-      ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/15'
-      : tone === 'red'
-        ? 'border-red-400/30 bg-red-400/10 text-red-100 hover:bg-red-400/15'
-        : 'border-neutral-700 bg-neutral-950/40 text-neutral-100 hover:bg-neutral-800';
-
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={`inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${toneClass}`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function ConsoleLivePanelsContent({
-  initialData,
-  initialTreasuryStatus,
-}: ConsoleLivePanelsProps) {
-  const queryClient = useQueryClient();
-  const [treasuryStatus, setTreasuryStatus] = useState(initialTreasuryStatus ?? '');
+function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
   const { data, error, isFetching } = useQuery({
     initialData,
     queryFn: getConsoleLivePayload,
@@ -234,21 +140,6 @@ function ConsoleLivePanelsContent({
     refetchOnWindowFocus: true,
     staleTime: 2_000,
   });
-  const treasuryMutation = useMutation({
-    mutationFn: updateTreasuryTask,
-    onError(error) {
-      setTreasuryStatus('failed');
-      console.warn('[console-live] Treasury task update failed.', error);
-    },
-    onMutate() {
-      setTreasuryStatus('');
-    },
-    onSuccess() {
-      setTreasuryStatus('updated');
-      queryClient.invalidateQueries({ queryKey: consoleLiveQueryKey });
-    },
-  });
-
   const moneyMovement = data.moneyMovement;
   const liveLedgerOverview = data.ledgerOverview;
   const postedDeposits = moneyMovement.deposits.filter((deposit) => deposit.status === 'posted');
@@ -294,8 +185,8 @@ function ConsoleLivePanelsContent({
               Deposit pipeline
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">
-              Stripe sessions, posted deposits, ledger entries, account activation, and treasury tasks in one control
-              surface.
+              Stripe sessions, posted deposits, ledger entries, account activation, and automated treasury state in one
+              operating view.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -335,17 +226,6 @@ function ConsoleLivePanelsContent({
             {' '}to track Stripe fees, net funds, and availability dates before treasury funding.
           </div>
         ) : null}
-        {treasuryStatus === 'updated' ? (
-          <div className="mt-5 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm leading-6 text-emerald-100">
-            Treasury task updated.
-          </div>
-        ) : null}
-        {treasuryStatus === 'failed' || treasuryStatus === 'invalid' ? (
-          <div className="mt-5 rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm leading-6 text-red-100">
-            Treasury task could not be updated.
-          </div>
-        ) : null}
-
         <div className="mt-6 grid gap-4 xl:grid-cols-2">
           <article className="rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
             <div className="flex items-start justify-between gap-4">
@@ -483,46 +363,28 @@ function ConsoleLivePanelsContent({
 
           <article className="rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
             <p className="text-sm font-medium text-neutral-400">Treasury Queue</p>
-            <h3 className="mt-1 text-lg font-semibold text-neutral-50">Funding tasks</h3>
+            <h3 className="mt-1 text-lg font-semibold text-neutral-50">Automated funding state</h3>
             <div className="mt-5 grid gap-4">
               {moneyMovement.treasuryTasks.length ? (
-                moneyMovement.treasuryTasks.slice(0, 5).map((task) => {
-                  const actions = getTreasuryTaskActions(task.status);
-
-                  return (
-                    <div key={task.id} className="grid gap-3 border-t border-neutral-800 pt-4 first:border-t-0 first:pt-0 sm:grid-cols-[1fr_auto]">
-                      <div className="min-w-0">
-                        <strong className="block text-sm font-semibold text-neutral-50">{formatConstant(task.type)}</strong>
-                        <span className="mt-1 block text-xs text-neutral-500">Deposit {shortenId(task.depositId)}</span>
-                        <span className="mt-1 block text-xs text-neutral-500">Checkout {shortenId(task.checkoutSessionId)}</span>
-                        {task.notes ? <span className="mt-2 block text-xs leading-5 text-neutral-400">{task.notes}</span> : null}
-                      </div>
-                      <div className="grid gap-2 sm:justify-items-end">
-                        <span className={`w-fit rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(task.status)}`}>
-                          {formatConstant(task.status)}
-                        </span>
-                        <strong className="text-sm font-semibold text-neutral-50">{formatCurrency(task.amount)}</strong>
-                        <time className="text-xs text-neutral-500" dateTime={task.updatedAt}>
-                          {formatDate(task.updatedAt)}
-                        </time>
-                      </div>
-                      {actions.length ? (
-                        <div className="flex flex-wrap gap-2 sm:col-span-2">
-                          {actions.map((action) => (
-                            <TreasuryTaskActionButton
-                              key={`${task.id}-${action.status}`}
-                              disabled={treasuryMutation.isPending}
-                              onClick={() => treasuryMutation.mutate({ status: action.status, taskId: task.id })}
-                              tone={action.tone}
-                            >
-                              {action.label}
-                            </TreasuryTaskActionButton>
-                          ))}
-                        </div>
-                      ) : null}
+                moneyMovement.treasuryTasks.slice(0, 5).map((task) => (
+                  <div key={task.id} className="grid gap-3 border-t border-neutral-800 pt-4 first:border-t-0 first:pt-0 sm:grid-cols-[1fr_auto]">
+                    <div className="min-w-0">
+                      <strong className="block text-sm font-semibold text-neutral-50">{formatConstant(task.type)}</strong>
+                      <span className="mt-1 block text-xs text-neutral-500">Deposit {shortenId(task.depositId)}</span>
+                      <span className="mt-1 block text-xs text-neutral-500">Checkout {shortenId(task.checkoutSessionId)}</span>
+                      {task.notes ? <span className="mt-2 block text-xs leading-5 text-neutral-400">{task.notes}</span> : null}
                     </div>
-                  );
-                })
+                    <div className="grid gap-2 sm:justify-items-end">
+                      <span className={`w-fit rounded-full border px-2.5 py-0.5 text-xs font-medium ${getMoneyStatusClass(task.status)}`}>
+                        {formatConstant(task.status)}
+                      </span>
+                      <strong className="text-sm font-semibold text-neutral-50">{formatCurrency(task.amount)}</strong>
+                      <time className="text-xs text-neutral-500" dateTime={task.updatedAt}>
+                        {formatDate(task.updatedAt)}
+                      </time>
+                    </div>
+                  </div>
+                ))
               ) : (
                 <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
                   No treasury tasks queued yet.

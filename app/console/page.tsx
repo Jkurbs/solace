@@ -27,7 +27,6 @@ type ConsolePageProps = {
     email?: string | string[];
     notification?: string | string[];
     review?: string | string[];
-    treasury?: string | string[];
   }>;
 };
 
@@ -305,7 +304,6 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
   const reviewStatus = Array.isArray(params?.review) ? params.review[0] : params?.review;
   const notificationStatus = Array.isArray(params?.notification) ? params.notification[0] : params?.notification;
   const emailStatus = Array.isArray(params?.email) ? params.email[0] : params?.email;
-  const treasuryStatus = Array.isArray(params?.treasury) ? params.treasury[0] : params?.treasury;
 
   return (
     <main className="min-h-screen bg-[#10100e] text-neutral-50">
@@ -359,7 +357,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
           <StatCard label="Owner systems" value={ownerSummaries.length} />
         </section>
 
-        <ConsoleLivePanels initialData={consoleLiveData} initialTreasuryStatus={treasuryStatus} />
+        <ConsoleLivePanels initialData={consoleLiveData} />
 
         <section className="grid gap-4" aria-labelledby="access-review-heading">
           <div className="grid gap-5 rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
