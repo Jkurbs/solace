@@ -2,12 +2,15 @@ import 'server-only';
 
 import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/supabase/server';
 import type { Database } from '@/lib/supabase/types';
+import type { IdentityVerificationStatus } from '@/features/hermes-dashboard/types';
 
 import type { LedgerActivity, LedgerDataset, LedgerDeposit, LedgerEntry } from './types';
+import { evaluateTreasuryPolicy } from './treasury-policy';
 
 type SolaceActivityRow = Database['public']['Tables']['solace_activities']['Row'];
 type SolaceDepositRow = Database['public']['Tables']['solace_deposits']['Row'];
 type SolaceLedgerEntryRow = Database['public']['Tables']['solace_ledger_entries']['Row'];
+type TreasuryTaskRow = Database['public']['Tables']['treasury_tasks']['Row'];
 
 type StripeDepositSessionStatus = Database['public']['Tables']['stripe_deposit_sessions']['Row']['status'];
 
@@ -34,6 +37,15 @@ const emptyPersistedLedgerDataset: Pick<LedgerDataset, 'activities' | 'deposits'
   entries: [],
 };
 
+const mutableTreasuryTaskStatuses = new Set<TreasuryTaskRow['status']>(['APPROVED', 'QUEUED', 'REVIEWING']);
+const identityVerificationStatuses = new Set<IdentityVerificationStatus>([
+  'NOT_STARTED',
+  'READY',
+  'REQUIRES_INPUT',
+  'SESSION_CREATED',
+  'VERIFIED',
+]);
+
 function roundCurrency(value: number) {
   return Math.round(value * 100) / 100;
 }
@@ -47,6 +59,18 @@ function isMissingTreasuryTasksTable(message: string) {
     message.includes('treasury_tasks') &&
     (message.includes('Could not find') || message.includes('does not exist') || message.includes('schema cache'))
   );
+}
+
+function getIdentityVerificationStatus(value: unknown): IdentityVerificationStatus | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const status = (value as { status?: unknown }).status;
+
+  return typeof status === 'string' && identityVerificationStatuses.has(status as IdentityVerificationStatus)
+    ? (status as IdentityVerificationStatus)
+    : null;
 }
 
 function fromSolaceDepositRow(row: SolaceDepositRow): LedgerDeposit {
@@ -74,47 +98,112 @@ async function queueTreasuryTaskForDeposit({
   const supabase = await createSupabaseDataClient();
   const taskId = `treasury_task_${checkoutSessionId}`;
 
-  const { data: existingTask, error: existingTaskError } = await supabase
-    .from('treasury_tasks')
-    .select('id')
-    .eq('id', taskId)
-    .maybeSingle();
+  const [ledgerAccountResult, existingTaskResult, onboardingResult] = await Promise.all([
+    supabase
+      .from('ledger_accounts')
+      .select('status, hermes_account_id, solace_user_id')
+      .eq('id', accountId)
+      .maybeSingle(),
+    supabase
+      .from('treasury_tasks')
+      .select('id, status')
+      .eq('id', taskId)
+      .maybeSingle(),
+    supabase
+      .from('account_onboarding')
+      .select('identity_verification')
+      .eq('ledger_account_id', accountId)
+      .maybeSingle(),
+  ]);
 
-  if (existingTask) {
-    return true;
-  }
-
-  if (existingTaskError) {
-    if (isMissingTreasuryTasksTable(existingTaskError.message)) {
-      console.warn('[ledger] Treasury task queue table is not installed yet.', existingTaskError.message);
+  if (existingTaskResult.error) {
+    if (isMissingTreasuryTasksTable(existingTaskResult.error.message)) {
+      console.warn('[ledger] Treasury task queue table is not installed yet.', existingTaskResult.error.message);
       return true;
     }
 
-    console.warn('[ledger] Treasury task lookup failed.', existingTaskError.message);
+    console.warn('[ledger] Treasury task lookup failed.', existingTaskResult.error.message);
     return false;
   }
 
-  const { error } = await supabase.from('treasury_tasks').insert({
-    amount: normalizeAmount(amount),
+  const existingTask = existingTaskResult.data;
+
+  if (existingTask && !mutableTreasuryTaskStatuses.has(existingTask.status)) {
+    return true;
+  }
+
+  if (ledgerAccountResult.error || !ledgerAccountResult.data) {
+    console.warn('[ledger] Treasury policy account lookup failed.', ledgerAccountResult.error?.message ?? accountId);
+    return false;
+  }
+
+  if (onboardingResult.error) {
+    console.warn('[ledger] Treasury policy onboarding lookup failed.', onboardingResult.error.message);
+  }
+
+  const [hermesAccountResult, userResult] = await Promise.all([
+    supabase
+      .from('hermes_accounts')
+      .select('status')
+      .eq('id', ledgerAccountResult.data.hermes_account_id)
+      .maybeSingle(),
+    supabase
+      .from('solace_users')
+      .select('status')
+      .eq('id', ledgerAccountResult.data.solace_user_id)
+      .maybeSingle(),
+  ]);
+
+  if (hermesAccountResult.error || userResult.error) {
+    console.warn(
+      '[ledger] Treasury policy status lookup failed.',
+      hermesAccountResult.error?.message ?? userResult.error?.message,
+    );
+    return false;
+  }
+
+  const policy = evaluateTreasuryPolicy({
+    amount,
+    currency,
+    hermesAccountStatus: hermesAccountResult.data?.status,
+    identityVerificationStatus: getIdentityVerificationStatus(onboardingResult.data?.identity_verification),
+    ledgerAccountStatus: ledgerAccountResult.data.status,
+    solaceUserStatus: userResult.data?.status,
+  });
+
+  const taskPayload = {
+    amount: policy.amount,
     checkout_session_id: checkoutSessionId,
     created_at: occurredAt,
     currency,
     deposit_id: depositId,
     id: taskId,
     ledger_account_id: accountId,
-    notes: 'Deposit posted. Prepare Hermes funding transfer after Stripe settlement clears.',
-    status: 'QUEUED',
-    type: 'FUND_HERMES',
+    notes: policy.notes,
+    status: policy.status,
+    type: 'FUND_HERMES' as const,
     updated_at: occurredAt,
-  });
+  };
 
-  if (error) {
-    if (isMissingTreasuryTasksTable(error.message)) {
-      console.warn('[ledger] Treasury task queue table is not installed yet.', error.message);
+  const taskResult = existingTask
+    ? await supabase
+        .from('treasury_tasks')
+        .update({
+          amount: taskPayload.amount,
+          notes: taskPayload.notes,
+          status: taskPayload.status,
+          updated_at: taskPayload.updated_at,
+        })
+        .eq('id', taskId)
+    : await supabase.from('treasury_tasks').insert(taskPayload);
+
+  if (taskResult.error) {
+    if (isMissingTreasuryTasksTable(taskResult.error.message)) {
+      console.warn('[ledger] Treasury task queue table is not installed yet.', taskResult.error.message);
       return true;
     }
 
-    console.warn('[ledger] Treasury task could not be queued.', error.message);
+    console.warn('[ledger] Treasury task could not be persisted.', taskResult.error.message);
     return false;
   }
 
