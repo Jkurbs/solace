@@ -9,7 +9,7 @@ import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-mod
 import type { DashboardFieldSource, DashboardFieldSourceStatus } from '@/features/hermes-dashboard/types';
 import { listMoneyMovementRecords } from '@/features/ledger/money-movement';
 import { getLedgerReadModel } from '@/features/ledger/read-model';
-import type { TreasuryTaskStatus } from '@/features/ledger/types';
+import type { LedgerEntry, MoneyMovementRecords, TreasuryTaskStatus } from '@/features/ledger/types';
 import { hasConsoleAccess } from '@/features/solace-console/access';
 
 import ConsoleAccessGate from './ConsoleAccessGate';
@@ -67,6 +67,10 @@ function formatCurrency(value: number) {
 
 function formatPercent(value: number) {
   return `${numberFormatter.format(value)}%`;
+}
+
+function roundCurrency(value: number) {
+  return Math.round(value * 100) / 100;
 }
 
 function formatConstant(value: string) {
@@ -174,6 +178,42 @@ function getMoneyStatusClass(status: string) {
   }
 
   return 'border-neutral-700 bg-neutral-950/40 text-neutral-300';
+}
+
+function getSignedLedgerEntryAmount(entry: LedgerEntry) {
+  switch (entry.type) {
+    case 'fee':
+    case 'withdrawal':
+      return -entry.amount;
+    case 'deposit':
+    case 'manual_adjustment':
+    case 'pnl':
+      return entry.amount;
+    default:
+      return 0;
+  }
+}
+
+function getLiveLedgerOverview(moneyMovement: MoneyMovementRecords) {
+  const postedDeposits = moneyMovement.deposits.filter((deposit) => deposit.status === 'posted');
+  const postedEntries = moneyMovement.entries.filter((entry) => entry.status === 'posted');
+  const totalDeposited = roundCurrency(postedDeposits.reduce((total, deposit) => total + deposit.amount, 0));
+  const entryBalance = roundCurrency(postedEntries.reduce((total, entry) => total + getSignedLedgerEntryAmount(entry), 0));
+  const depositEntriesTotal = roundCurrency(
+    postedEntries
+      .filter((entry) => entry.type === 'deposit')
+      .reduce((total, entry) => total + entry.amount, 0),
+  );
+  const balance = postedEntries.length ? entryBalance : totalDeposited;
+  const netProfit = roundCurrency(balance - totalDeposited);
+  const isMatched = Math.abs(depositEntriesTotal - totalDeposited) < 0.01;
+
+  return {
+    balance,
+    netProfit,
+    reconciliationStatus: moneyMovement.available && isMatched ? 'Matched' : 'Review',
+    totalDeposited,
+  };
 }
 
 function shortenId(value: string | undefined) {
@@ -368,6 +408,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
   const snapshot = await getHermesDashboardSnapshot({ riskProfile });
   const ledger = await getLedgerReadModel();
   const moneyMovement = await listMoneyMovementRecords();
+  const liveLedgerOverview = getLiveLedgerOverview(moneyMovement);
   const accessRequests = await listAccessRequests();
   const statusCounts = countStatuses(snapshot.fieldSources);
   const ownerSummaries = groupByOwner(snapshot.fieldSources);
@@ -439,13 +480,13 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
         </section>
 
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Ledger overview">
-          <StatCard label="Ledger balance" value={formatCurrency(ledger.portfolio.value)} tone="green" />
-          <StatCard label="Deposited" value={formatCurrency(ledger.portfolio.totalDeposited)} />
-          <StatCard label="Net profit" value={formatCurrency(ledger.portfolio.netProfit)} tone="green" />
+          <StatCard label="Ledger balance" value={formatCurrency(liveLedgerOverview.balance)} tone="green" />
+          <StatCard label="Deposited" value={formatCurrency(liveLedgerOverview.totalDeposited)} />
+          <StatCard label="Net profit" value={formatCurrency(liveLedgerOverview.netProfit)} tone={liveLedgerOverview.netProfit < 0 ? 'amber' : 'green'} />
           <StatCard
             label="Reconciliation"
-            value={ledger.reconciliation.status === 'matched' ? 'Matched' : 'Review'}
-            tone={ledger.reconciliation.status === 'matched' ? 'green' : 'amber'}
+            value={liveLedgerOverview.reconciliationStatus}
+            tone={liveLedgerOverview.reconciliationStatus === 'Matched' ? 'green' : 'amber'}
           />
         </section>
 
