@@ -9,6 +9,8 @@ import type {
 
 export type LedgerAccountPersistenceStatus = 'PENDING_ACTIVATION' | 'ACTIVE';
 
+export type LedgerAccountMode = 'SIMULATION' | 'LIVE';
+
 export type DashboardInvitePersistenceStatus = 'ACTIVE' | 'REVOKED';
 
 export interface SolaceUserRecord {
@@ -37,6 +39,7 @@ export interface LedgerAccountRecord {
   label: string;
   currency: 'USD';
   status: LedgerAccountPersistenceStatus;
+  accountMode: LedgerAccountMode;
   createdAt: IsoDateString;
   updatedAt: IsoDateString;
 }

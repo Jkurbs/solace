@@ -57,6 +57,7 @@ async function getApprovedAccountDataset(): Promise<LedgerDataset> {
         riskProfile: bundle.onboarding?.riskProfile ?? bundle.hermesAccount.riskProfile,
       });
       dataset.accounts.push({
+        accountMode: bundle.ledgerAccount.accountMode,
         createdAt,
         currency: bundle.ledgerAccount.currency,
         id: accountId,

@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "hermes:nav": "node scripts/hermes-pool-nav-bridge.mjs",
+    "hermes:nav:watch": "node scripts/hermes-pool-nav-bridge.mjs --watch",
     "start": "next start",
     "lint": "next lint"
   },

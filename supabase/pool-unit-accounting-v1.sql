@@ -328,16 +328,21 @@ begin
   limit 1;
 
   if found then
-    v_allocated_capital := coalesce(v_latest_nav.allocated_capital, 0);
-    v_cash_balance := coalesce(v_latest_nav.cash_balance, 0);
-    v_fees := coalesce(v_latest_nav.fees, 0);
-    v_funding := coalesce(v_latest_nav.funding, 0);
-    v_gross_equity := coalesce(v_latest_nav.gross_equity, 0);
-    v_nav_per_unit := coalesce(v_latest_nav.nav_per_unit, 1);
-    v_realized_pnl := coalesce(v_latest_nav.realized_pnl, 0);
-    v_reserved_margin := coalesce(v_latest_nav.reserved_margin, 0);
     v_total_units := coalesce(v_latest_nav.total_units, 0);
-    v_unrealized_pnl := coalesce(v_latest_nav.unrealized_pnl, 0);
+
+    if v_total_units > 0 then
+      v_allocated_capital := coalesce(v_latest_nav.allocated_capital, 0);
+      v_cash_balance := coalesce(v_latest_nav.cash_balance, 0);
+      v_fees := coalesce(v_latest_nav.fees, 0);
+      v_funding := coalesce(v_latest_nav.funding, 0);
+      v_gross_equity := coalesce(v_latest_nav.gross_equity, 0);
+      v_nav_per_unit := coalesce(v_latest_nav.nav_per_unit, 1);
+      v_realized_pnl := coalesce(v_latest_nav.realized_pnl, 0);
+      v_reserved_margin := coalesce(v_latest_nav.reserved_margin, 0);
+      v_unrealized_pnl := coalesce(v_latest_nav.unrealized_pnl, 0);
+    else
+      v_nav_per_unit := 1;
+    end if;
   else
     v_nav_per_unit := 1;
   end if;

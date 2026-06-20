@@ -17,6 +17,7 @@ export const ledgerSeedData: LedgerDataset = {
       label: 'Account ending 4821',
       currency: 'USD',
       status: 'ACTIVE',
+      accountMode: 'SIMULATION',
       createdAt: '2026-06-13T14:05:00.000Z',
     },
   ],

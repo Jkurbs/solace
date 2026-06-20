@@ -60,6 +60,13 @@ const unitsFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 4,
 });
 
+const percentFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+  signDisplay: 'exceptZero',
+  style: 'percent',
+});
+
 function formatDate(value: string) {
   return dateFormatter.format(new Date(value));
 }
@@ -78,6 +85,10 @@ function formatNav(value: number) {
 
 function formatUnits(value: number) {
   return unitsFormatter.format(value);
+}
+
+function formatPercent(value: number) {
+  return percentFormatter.format(value);
 }
 
 function formatConstant(value: string) {
@@ -369,6 +380,15 @@ function PoolNavMarkCard({ poolMark }: { poolMark: PoolMarkingPool }) {
   const unrealizedPnl = latestNav?.unrealizedPnl ?? 0;
   const fees = latestNav?.fees ?? 0;
   const funding = latestNav?.funding ?? 0;
+  const hermesSourceMark = poolMark.latestHermesSourceMark;
+  const hermesSourceTone =
+    !hermesSourceMark || hermesSourceMark.status === 'stored'
+      ? 'amber'
+      : hermesSourceMark.sourceReturn > 0
+        ? 'green'
+        : hermesSourceMark.sourceReturn < 0
+          ? 'red'
+          : 'neutral';
 
   return (
     <article className="rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
@@ -399,6 +419,24 @@ function PoolNavMarkCard({ poolMark }: { poolMark: PoolMarkingPool }) {
         <InlineMetric label="Cash" value={formatCurrency(cashBalance)} />
         <InlineMetric label="In strategy" value={formatCurrency(allocatedCapital)} />
         <InlineMetric label="Open PnL" value={formatCurrency(unrealizedPnl)} tone={unrealizedPnl > 0 ? 'green' : unrealizedPnl < 0 ? 'red' : 'neutral'} />
+      </div>
+
+      <div className="mt-3 grid gap-3 border-t border-neutral-800 pt-4 sm:grid-cols-3">
+        <InlineMetric
+          label="Hermes source"
+          value={hermesSourceMark ? formatCurrency(hermesSourceMark.sourceEquity) : 'No source'}
+          tone={hermesSourceMark ? 'neutral' : 'amber'}
+        />
+        <InlineMetric
+          label="Source return"
+          value={hermesSourceMark ? formatPercent(hermesSourceMark.sourceReturn) : 'Waiting'}
+          tone={hermesSourceTone}
+        />
+        <InlineMetric
+          label="Translation"
+          value={hermesSourceMark ? formatConstant(hermesSourceMark.status) : 'No baseline'}
+          tone={hermesSourceMark?.status === 'applied' ? 'green' : 'amber'}
+        />
       </div>
 
       <form
@@ -467,6 +505,23 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
   const poolOpenPnl = poolMarking.pools.reduce((total, pool) => total + (pool.latestNav?.unrealizedPnl ?? 0), 0);
   const poolTotalUnits = poolMarking.pools.reduce((total, pool) => total + (pool.latestNav?.totalUnits ?? 0), 0);
   const activePools = poolMarking.pools.filter((pool) => pool.pool.status === 'ACTIVE');
+  const poolsWithUnits = activePools.filter((pool) => (pool.latestNav?.totalUnits ?? 0) > 0);
+  const poolsMissingHermesSource = poolsWithUnits.filter((pool) => !pool.latestHermesSourceMark);
+  const poolsAwaitingAppliedHermesMark = poolsWithUnits.filter((pool) => {
+    const sourceMark = pool.latestHermesSourceMark;
+
+    return sourceMark?.status === 'baseline' || sourceMark?.status === 'stored';
+  });
+  const poolsApplyingHermesReturns = poolsWithUnits.filter((pool) => pool.latestHermesSourceMark?.status === 'applied');
+  const hermesTranslationState = !poolMarking.sourceMarkingAvailable
+    ? 'Missing table'
+    : !poolsWithUnits.length
+      ? 'Awaiting units'
+      : poolsMissingHermesSource.length
+        ? 'No baseline'
+        : poolsAwaitingAppliedHermesMark.length
+          ? 'Baselined'
+          : 'Applying returns';
   const healthIssues: HealthIssue[] = [
     ...(error
       ? [
@@ -567,6 +622,33 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
           },
         ]
       : []),
+    ...(poolMarking.available && !poolMarking.sourceMarkingAvailable
+      ? [
+          {
+            detail: 'Hermes source marks are not installed, so raw KuCoin performance cannot be translated into Solace pool NAV.',
+            label: 'Hermes translation unavailable',
+            tone: 'amber' as const,
+          },
+        ]
+      : []),
+    ...(poolMarking.sourceMarkingAvailable && poolsMissingHermesSource.length
+      ? [
+          {
+            detail: `${poolsMissingHermesSource.length} active ${poolsMissingHermesSource.length === 1 ? 'pool has' : 'pools have'} user units but no Hermes source baseline yet.`,
+            label: 'Hermes baseline missing',
+            tone: 'amber' as const,
+          },
+        ]
+      : []),
+    ...(poolsAwaitingAppliedHermesMark.length
+      ? [
+          {
+            detail: `${poolsAwaitingAppliedHermesMark.length} active ${poolsAwaitingAppliedHermesMark.length === 1 ? 'pool is' : 'pools are'} baselined and waiting for the next valid Hermes return mark.`,
+            label: 'Hermes return not applied yet',
+            tone: 'amber' as const,
+          },
+        ]
+      : []),
   ];
   const healthTone = healthIssues.reduce<'green' | 'amber' | 'red'>(
     (current, issue) => (getToneRank(issue.tone) > getToneRank(current) ? issue.tone : current),
@@ -605,6 +687,14 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
       label: 'Pool NAV',
       tone: poolMarking.available ? ('green' as const) : ('amber' as const),
       value: poolMarking.available ? 'Markable' : 'Missing table',
+    },
+    {
+      label: 'Hermes translation',
+      tone:
+        !poolMarking.sourceMarkingAvailable || poolsMissingHermesSource.length || poolsAwaitingAppliedHermesMark.length
+          ? ('amber' as const)
+          : ('green' as const),
+      value: hermesTranslationState,
     },
   ];
   const capitalStats = [
@@ -732,12 +822,18 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
           <InlineMetric label="Pool equity" value={formatCurrency(poolEquity)} tone={poolEquity > 0 ? 'green' : 'neutral'} />
           <InlineMetric label="Open PnL" value={formatCurrency(poolOpenPnl)} tone={poolOpenPnl > 0 ? 'green' : poolOpenPnl < 0 ? 'red' : 'neutral'} />
           <InlineMetric label="Total units" value={formatUnits(poolTotalUnits)} />
+          <InlineMetric label="Hermes applied" value={poolsApplyingHermesReturns.length} tone={poolsApplyingHermesReturns.length ? 'green' : 'amber'} />
         </div>
 
         {!poolMarking.available ? (
           <div className="mt-5 rounded-md border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">
             Pool unit accounting is not installed yet. Run <span className="font-mono">supabase/pool-unit-accounting-v1.sql</span>
             {' '}to enable NAV marks and user pool projections.
+          </div>
+        ) : !poolMarking.sourceMarkingAvailable ? (
+          <div className="mt-5 rounded-md border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">
+            Hermes source marks are not installed yet. Run <span className="font-mono">supabase/hermes-source-marks-v1.sql</span>
+            {' '}so Hermes returns can move Solace pool NAV without overwriting pool size.
           </div>
         ) : poolMarking.pools.length ? (
           <div className="mt-5 grid gap-4 xl:grid-cols-3">

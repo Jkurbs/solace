@@ -8,6 +8,7 @@ export const hermesDashboardSnapshot: HermesDashboardSnapshot = {
   account: {
     label: 'Account ending 4821',
     lifecycle: 'ACTIVE',
+    mode: 'SIMULATION',
     depositIntent: null,
     review: null,
     identityVerification: {

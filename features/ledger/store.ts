@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { randomUUID } from 'crypto';
+
 import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/supabase/server';
 import type { Database } from '@/lib/supabase/types';
 import type { IdentityVerificationStatus } from '@/features/hermes-dashboard/types';
@@ -50,6 +52,13 @@ type StripeDepositPostedInput = {
   occurredAt: string;
   paymentIntentId: string | null;
   settlement: StripeDepositSettlementInput | null;
+};
+
+type SimulatedDepositPostedInput = {
+  accountId: string;
+  amount: number;
+  currency: 'USD';
+  occurredAt: string;
 };
 
 const emptyPersistedLedgerDataset: Pick<LedgerDataset, 'activities' | 'deposits' | 'entries'> = {
@@ -713,6 +722,113 @@ export async function postStripeCheckoutDeposit({
     return true;
   } catch (error) {
     console.warn('[ledger] Stripe deposit posting failed.', error);
+    return false;
+  }
+}
+
+export async function postSimulatedDashboardDeposit({
+  accountId,
+  amount,
+  currency,
+  occurredAt,
+}: SimulatedDepositPostedInput) {
+  if (!isSupabaseDataClientConfigured()) {
+    return false;
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    const normalizedAmount = normalizeAmount(amount);
+    const referenceSuffix = randomUUID().replace(/-/g, '').slice(0, 16);
+    const simulationReference = `sim_${accountId}_${referenceSuffix}`;
+    const depositId = `dep_${simulationReference}`;
+    const entryId = `entry_${simulationReference}`;
+    const activityId = `act_${simulationReference}`;
+
+    const { data: ledgerAccount, error: ledgerAccountError } = await supabase
+      .from('ledger_accounts')
+      .select('hermes_account_id, solace_user_id')
+      .eq('id', accountId)
+      .maybeSingle();
+
+    if (ledgerAccountError || !ledgerAccount) {
+      console.warn('[ledger] Simulated deposit account lookup failed.', ledgerAccountError?.message ?? accountId);
+      return false;
+    }
+
+    const { error: depositError } = await supabase.from('solace_deposits').insert({
+      amount: normalizedAmount,
+      currency,
+      id: depositId,
+      ledger_account_id: accountId,
+      payment_intent_id: null,
+      posted_at: occurredAt,
+      provider: 'simulation',
+      provider_reference: simulationReference,
+      status: 'posted',
+    });
+
+    if (depositError) {
+      console.warn('[ledger] Simulated deposit post failed.', depositError.message);
+      return false;
+    }
+
+    const { error: entryError } = await supabase.from('solace_ledger_entries').insert({
+      amount: normalizedAmount,
+      created_at: occurredAt,
+      currency,
+      description: 'Simulated deposit posted',
+      effective_at: occurredAt,
+      external_reference: simulationReference,
+      id: entryId,
+      ledger_account_id: accountId,
+      source: 'simulation',
+      status: 'posted',
+      type: 'deposit',
+    });
+
+    if (entryError) {
+      console.warn('[ledger] Simulated ledger entry post failed.', entryError.message);
+      return false;
+    }
+
+    const { error: activityError } = await supabase.from('solace_activities').insert({
+      created_at: occurredAt,
+      id: activityId,
+      ledger_account_id: accountId,
+      message: 'Simulated capital added',
+      type: 'deposit_posted',
+    });
+
+    if (activityError) {
+      console.warn('[ledger] Simulated activity post failed.', activityError.message);
+      return false;
+    }
+
+    const [ledgerStatusResult, hermesStatusResult, userStatusResult] = await Promise.all([
+      supabase.from('ledger_accounts').update({ status: 'ACTIVE', updated_at: occurredAt }).eq('id', accountId),
+      supabase.from('hermes_accounts').update({ status: 'ACTIVE', updated_at: occurredAt }).eq('id', ledgerAccount.hermes_account_id),
+      supabase.from('solace_users').update({ status: 'ACTIVE', updated_at: occurredAt }).eq('id', ledgerAccount.solace_user_id),
+    ]);
+
+    if (ledgerStatusResult.error || hermesStatusResult.error || userStatusResult.error) {
+      console.warn(
+        '[ledger] Simulated deposit posted, but account activation failed.',
+        ledgerStatusResult.error?.message ?? hermesStatusResult.error?.message ?? userStatusResult.error?.message,
+      );
+      return false;
+    }
+
+    return mintPoolUnitsForDeposit({
+      accountId,
+      amount: normalizedAmount,
+      currency,
+      depositId,
+      occurredAt,
+      sourceReference: simulationReference,
+    });
+  } catch (error) {
+    console.warn('[ledger] Simulated deposit posting failed.', error);
     return false;
   }
 }

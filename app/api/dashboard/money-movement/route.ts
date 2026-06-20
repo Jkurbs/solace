@@ -4,7 +4,7 @@ import { getPersistedAccountBundle } from '@/features/accounts/store';
 import { ensureApprovedAccountRecordsForAccountId } from '@/features/access-review/store';
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import { getDashboardOnboardingState } from '@/features/hermes-dashboard/preferences';
-import { recordStripeDepositSession } from '@/features/ledger/store';
+import { postSimulatedDashboardDeposit, recordStripeDepositSession } from '@/features/ledger/store';
 import { getStripeServerClient } from '@/lib/stripe/server';
 
 const validTypes = new Set(['deposit', 'withdraw']);
@@ -93,6 +93,26 @@ export async function POST(request: Request) {
 
   if (!amount || amount < minimumDepositAmount) {
     return NextResponse.json({ message: `Deposit amount must be at least $${minimumDepositAmount}.` }, { status: 400 });
+  }
+
+  if (bundle.ledgerAccount.accountMode === 'SIMULATION') {
+    const posted = await postSimulatedDashboardDeposit({
+      accountId,
+      amount,
+      currency: 'USD',
+      occurredAt: new Date().toISOString(),
+    });
+
+    if (!posted) {
+      return NextResponse.json(
+        { message: 'Simulation ledger is unavailable. Confirm simulation-mode SQL is installed.' },
+        { status: 503 },
+      );
+    }
+
+    return NextResponse.json({
+      message: 'Simulated capital added. No real money moved.',
+    });
   }
 
   const stripe = getStripeServerClient();

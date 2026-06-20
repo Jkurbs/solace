@@ -4,7 +4,9 @@ export type LedgerCurrency = 'USD';
 
 export type LedgerAccountStatus = 'ACTIVE' | 'PENDING_ACTIVATION';
 
-export type LedgerEntrySource = 'stripe' | 'hermes' | 'operator' | 'treasury';
+export type LedgerAccountMode = 'SIMULATION' | 'LIVE';
+
+export type LedgerEntrySource = 'stripe' | 'simulation' | 'hermes' | 'operator' | 'treasury';
 
 export type LedgerEntryStatus = 'pending' | 'posted' | 'void';
 
@@ -41,6 +43,14 @@ export type PoolUnitEventType = 'deposit_mint' | 'withdrawal_burn' | 'fee_accrua
 
 export type PoolUnitEventSource = 'stripe_deposit' | 'withdrawal' | 'operator' | 'nav_migration';
 
+export type PoolAllocationBasis = 'capital' | 'exposure';
+
+export type PoolAllocationSnapshotSource = 'hermes_bridge' | 'operator';
+
+export type PoolAllocationSide = 'LONG' | 'SHORT' | 'CASH';
+
+export type HermesSourceMarkStatus = 'baseline' | 'applied' | 'stored';
+
 export type LedgerActivityType =
   | 'account_created'
   | 'deposit_posted'
@@ -63,6 +73,7 @@ export interface LedgerAccount {
   label: string;
   currency: LedgerCurrency;
   status: LedgerAccountStatus;
+  accountMode: LedgerAccountMode;
   createdAt: IsoDateString;
 }
 
@@ -86,7 +97,7 @@ export interface LedgerDeposit {
   amount: number;
   currency: LedgerCurrency;
   status: LedgerDepositStatus;
-  provider: 'stripe';
+  provider: 'stripe' | 'simulation';
   providerReference?: string;
   createdAt: IsoDateString;
   postedAt?: IsoDateString;
@@ -215,6 +226,51 @@ export interface PoolNavSnapshot {
   createdAt: IsoDateString;
 }
 
+export interface HermesPoolSourceMark {
+  id: string;
+  poolId: string;
+  status: HermesSourceMarkStatus;
+  source: 'hermes_bridge' | 'operator';
+  sourceExchange?: string;
+  sourceEquity: number;
+  sourceCashBalance: number;
+  sourceAllocatedCapital: number;
+  sourceReservedMargin: number;
+  sourceRealizedPnl: number;
+  sourceUnrealizedPnl: number;
+  sourceFees: number;
+  sourceFunding: number;
+  sourceReturn: number;
+  appliedPoolEquity?: number;
+  appliedPoolNavPerUnit?: number;
+  navSnapshotId?: string;
+  rawPayload: Record<string, unknown>;
+  effectiveAt: IsoDateString;
+  createdAt: IsoDateString;
+}
+
+export interface PoolAllocationItem {
+  asset: string;
+  percentage: number;
+  allocationBasis: PoolAllocationBasis;
+  exposureUsd: number;
+  marginUsd: number;
+  side?: PoolAllocationSide;
+}
+
+export interface PoolAllocationSnapshot {
+  id: string;
+  poolId: string;
+  allocationBasis: PoolAllocationBasis;
+  allocations: PoolAllocationItem[];
+  totalExposure: number;
+  totalMargin: number;
+  cashBalance: number;
+  source: PoolAllocationSnapshotSource;
+  effectiveAt: IsoDateString;
+  createdAt: IsoDateString;
+}
+
 export interface PoolUnitEvent {
   id: string;
   poolId: string;
@@ -262,6 +318,7 @@ export interface PoolAccountProjection {
 export interface PoolMarkingPool {
   pool: StrategyPool;
   latestNav?: PoolNavSnapshot;
+  latestHermesSourceMark?: HermesPoolSourceMark;
   positionCount: number;
   totalPositionEquity: number;
   totalPositionUnits: number;
@@ -270,6 +327,7 @@ export interface PoolMarkingPool {
 export interface PoolMarkingRecords {
   generatedAt: IsoDateString;
   available: boolean;
+  sourceMarkingAvailable: boolean;
   pools: PoolMarkingPool[];
 }
 
@@ -286,6 +344,28 @@ export interface PoolNavMarkInput {
   unrealizedPnl: number;
 }
 
+export interface HermesPoolSourceMarkInput extends PoolNavMarkInput {
+  rawPayload?: Record<string, unknown>;
+  sourceExchange?: string;
+}
+
+export interface HermesTranslatedPoolMarkResult {
+  navMark?: PoolNavMarkInput;
+  navSnapshotId?: string;
+  sourceMark: HermesPoolSourceMark;
+  status: HermesSourceMarkStatus;
+}
+
+export interface PoolAllocationMarkInput {
+  allocationBasis?: PoolAllocationBasis;
+  allocations: PoolAllocationItem[];
+  cashBalance: number;
+  effectiveAt?: IsoDateString;
+  poolId: string;
+  totalExposure: number;
+  totalMargin: number;
+}
+
 export interface AccountActivationStatus {
   accountId: string;
   accountLabel: string;
@@ -296,6 +376,7 @@ export interface AccountActivationStatus {
   hermesAccountId: string;
   hermesAccountStatus: 'PENDING_ACTIVATION' | 'ACTIVE' | 'PAUSED' | 'CLOSED';
   ledgerAccountStatus: LedgerAccountStatus;
+  accountMode: LedgerAccountMode;
   dashboardInviteStatus?: 'ACTIVE' | 'REVOKED';
   createdAt: IsoDateString;
   updatedAt: IsoDateString;

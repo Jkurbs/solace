@@ -161,6 +161,14 @@ function formatIdentityStatus(value: IdentityVerificationStatus) {
     .join(' ');
 }
 
+function formatAllocationLabel(item: HermesDashboardSnapshot['allocation'][number]) {
+  if (!item.side || item.side === 'CASH') {
+    return item.asset;
+  }
+
+  return `${item.asset} ${item.side === 'SHORT' ? 'Short' : 'Long'}`;
+}
+
 function coerceDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
 }
@@ -261,6 +269,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
     },
     onSuccess(payload) {
       setActionStatus(payload.message ?? '');
+      queryClient.invalidateQueries({ queryKey: hermesDashboardQueryKey });
     },
   });
 
@@ -363,6 +372,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
 
   const allocationGradient = useMemo(() => buildAllocationGradient(data.allocation, theme), [data.allocation, theme]);
   const isAwaitingDeposit = data.account.lifecycle === 'AWAITING_DEPOSIT';
+  const isSimulationMode = data.account.mode === 'SIMULATION';
   const equityState = data.portfolio.equityState;
   const isFundingPending =
     !isAwaitingDeposit &&
@@ -432,7 +442,9 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
         ? 'Deposits are reviewed before Hermes begins allocation.'
         : isFundingPending
           ? 'Deposit received. Treasury allocation is pending before Hermes begins deployment.'
-        : 'Capital movement runs through the approved account rails.');
+        : isSimulationMode
+          ? 'Simulation mode adds ledger capital without moving real money.'
+          : 'Capital movement runs through the approved account rails.');
   const identityVerificationLabel = formatIdentityStatus(data.account.identityVerification.status);
   const identityHelper =
     identityStatus ||
@@ -516,6 +528,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               Contract
             </Link>
             <span className="hidden sm:inline">{data.account.label}</span>
+            <Badge variant={isSimulationMode ? 'secondary' : 'success'}>{isSimulationMode ? 'Simulation' : 'Live'}</Badge>
             <Button
               type="button"
               variant="ghost"
@@ -565,6 +578,9 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                       {equityState.label}
                     </Badge>
                   ) : null}
+                  <Badge variant={isSimulationMode ? 'secondary' : 'success'}>
+                    {isSimulationMode ? 'Simulation capital' : 'Live capital'}
+                  </Badge>
                 </div>
                 <h1
                   id="portfolio-value"
@@ -618,7 +634,9 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Actions</p>
-                  <CardTitle>{isAwaitingDeposit ? 'Complete setup' : isFundingPending ? 'Allocation pending' : 'Move capital'}</CardTitle>
+                  <CardTitle>
+                    {isAwaitingDeposit ? 'Complete setup' : isFundingPending ? 'Allocation pending' : isSimulationMode ? 'Simulate capital' : 'Move capital'}
+                  </CardTitle>
                 </div>
                 <Badge variant={data.status.status === 'ACTIVE' && !isFundingPending ? 'success' : 'secondary'}>
                   {isAwaitingDeposit || isFundingPending ? 'PENDING' : data.status.status}
@@ -653,7 +671,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                   className="mt-3"
                 >
                   <ArrowDownToLine size={16} aria-hidden="true" />
-                  Deposit
+                  {isSimulationMode ? 'Add simulated' : 'Deposit'}
                 </Button>
                 <Button
                   type="button"
@@ -873,13 +891,13 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 </div>
                 <div className="grid gap-3">
                   {data.allocation.map((item, index) => (
-                    <div key={item.asset} className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+                    <div key={`${item.asset}-${item.side ?? 'allocation'}`} className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
                       <span
                         className="h-3 w-3 rounded-full"
                         style={{ backgroundColor: getAllocationColor(item.asset, index, theme) }}
                         aria-hidden="true"
                       />
-                      <span className="text-sm text-neutral-600 dark:text-neutral-400">{item.asset}</span>
+                      <span className="text-sm text-neutral-600 dark:text-neutral-400">{formatAllocationLabel(item)}</span>
                       <strong className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">
                         {formatPercent(item.percentage)}
                       </strong>

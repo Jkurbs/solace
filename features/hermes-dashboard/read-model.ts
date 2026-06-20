@@ -1,10 +1,12 @@
 import 'server-only';
 
 import { listMoneyMovementRecords } from '@/features/ledger/money-movement';
+import { getLatestPoolAllocationSnapshot } from '@/features/ledger/pool-allocations';
 import { getPoolAccountProjection } from '@/features/ledger/pool-units';
 import { getLedgerReadModel } from '@/features/ledger/read-model';
 import type {
   LedgerReadModel,
+  PoolAllocationSnapshot,
   PoolAccountProjection,
   StripeDepositSettlement,
   TreasuryTask,
@@ -86,6 +88,7 @@ function getAwaitingDepositSnapshot(
     account: {
       label: 'Pending account',
       lifecycle: 'AWAITING_DEPOSIT',
+      mode: 'SIMULATION',
       depositIntent: {
         amount,
         status: 'REVIEW_PENDING',
@@ -189,6 +192,21 @@ function getPoolAllocation({
   ];
 }
 
+function getHermesPoolAllocation(allocationSnapshot: PoolAllocationSnapshot | null) {
+  if (!allocationSnapshot?.allocations.length) {
+    return null;
+  }
+
+  return allocationSnapshot.allocations.map((allocation) => ({
+    allocationBasis: allocation.allocationBasis,
+    asset: allocation.asset,
+    exposureUsd: allocation.exposureUsd,
+    marginUsd: allocation.marginUsd,
+    percentage: allocation.percentage,
+    side: allocation.side,
+  }));
+}
+
 async function getAccountMoneyState(accountId: string): Promise<AccountMoneyState> {
   const moneyMovement = await listMoneyMovementRecords().catch((error) => {
     console.warn('[hermes-dashboard] Money movement state unavailable.', {
@@ -282,6 +300,7 @@ function getActiveSnapshotFromLedger(
   ledger: LedgerReadModel,
   moneyState: AccountMoneyState,
   riskProfile: RiskProfile,
+  poolAllocation: PoolAllocationSnapshot | null,
   poolProjection: PoolAccountProjection | null,
 ): HermesDashboardSnapshot {
   const hermesActivity = ledger.activities.filter((activity) => activity.type === 'hermes_decision');
@@ -299,12 +318,15 @@ function getActiveSnapshotFromLedger(
     equityState.code === 'PENDING_SETTLEMENT' ||
     equityState.code === 'TREASURY_QUEUED' ||
     equityState.code === 'NAV_PENDING';
-  const allocation = poolProjection
-    ? getPoolAllocation({
+  const hermesAllocation = getHermesPoolAllocation(poolAllocation);
+  const allocation = hermesAllocation
+    ? hermesAllocation
+    : poolProjection
+      ? getPoolAllocation({
         allocatedCapital,
         portfolioValue,
       })
-    : ledger.allocation.allocations;
+      : ledger.allocation.allocations;
 
   return {
     ...baseSnapshot,
@@ -312,6 +334,7 @@ function getActiveSnapshotFromLedger(
       ...baseSnapshot.account,
       label: ledger.account.label,
       lifecycle: ledger.account.status === 'ACTIVE' ? 'ACTIVE' : 'AWAITING_DEPOSIT',
+      mode: ledger.account.accountMode,
     },
     updatedAt: ledger.generatedAt,
     portfolio: {
@@ -426,8 +449,9 @@ export async function getHermesDashboardSnapshot({
         getAccountMoneyState(ledger.account.id),
         getPoolAccountProjection(ledger.account.id),
       ]);
+      const poolAllocation = poolProjection ? await getLatestPoolAllocationSnapshot(poolProjection.pool.id) : null;
 
-      return getActiveSnapshotFromLedger(baseSnapshot, ledger, moneyState, selectedRiskProfile, poolProjection);
+      return getActiveSnapshotFromLedger(baseSnapshot, ledger, moneyState, selectedRiskProfile, poolAllocation, poolProjection);
     }
 
     return {
@@ -435,6 +459,7 @@ export async function getHermesDashboardSnapshot({
       account: {
         ...pendingSnapshot.account,
         label: ledger.account.label,
+        mode: ledger.account.accountMode,
       },
       updatedAt: ledger.generatedAt,
     };
@@ -445,6 +470,7 @@ export async function getHermesDashboardSnapshot({
     getAccountMoneyState(ledger.account.id),
     getPoolAccountProjection(ledger.account.id),
   ]);
+  const poolAllocation = poolProjection ? await getLatestPoolAllocationSnapshot(poolProjection.pool.id) : null;
 
-  return getActiveSnapshotFromLedger(baseSnapshot, ledger, moneyState, selectedRiskProfile, poolProjection);
+  return getActiveSnapshotFromLedger(baseSnapshot, ledger, moneyState, selectedRiskProfile, poolAllocation, poolProjection);
 }

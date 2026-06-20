@@ -14,6 +14,7 @@ import type {
   CompleteAccountOnboardingInput,
   DashboardInviteRecord,
   HermesAccountRecord,
+  LedgerAccountMode,
   LedgerAccountRecord,
   PersistedAccountBundle,
   SolaceUserRecord,
@@ -162,6 +163,7 @@ function toHermesAccountRow(record: HermesAccountRecord): Database['public']['Ta
 
 function fromLedgerAccountRow(row: LedgerAccountRow): LedgerAccountRecord {
   return {
+    accountMode: (row as LedgerAccountRow & { account_mode?: LedgerAccountMode | null }).account_mode ?? 'SIMULATION',
     createdAt: row.created_at,
     currency: row.currency,
     hermesAccountId: row.hermes_account_id,
@@ -175,6 +177,7 @@ function fromLedgerAccountRow(row: LedgerAccountRow): LedgerAccountRecord {
 
 function toLedgerAccountRow(record: LedgerAccountRecord): Database['public']['Tables']['ledger_accounts']['Insert'] {
   return {
+    account_mode: record.accountMode,
     created_at: record.createdAt,
     currency: record.currency,
     hermes_account_id: record.hermesAccountId,
@@ -243,7 +246,12 @@ function normalizeStore(store: Partial<AccountPersistenceStore> | null): Account
   return {
     dashboardInvites: Array.isArray(store?.dashboardInvites) ? store.dashboardInvites : [],
     hermesAccounts: Array.isArray(store?.hermesAccounts) ? store.hermesAccounts : [],
-    ledgerAccounts: Array.isArray(store?.ledgerAccounts) ? store.ledgerAccounts : [],
+    ledgerAccounts: Array.isArray(store?.ledgerAccounts)
+      ? store.ledgerAccounts.map((account) => ({
+          ...account,
+          accountMode: account.accountMode ?? 'SIMULATION',
+        }))
+      : [],
     onboardings: Array.isArray(store?.onboardings)
       ? store.onboardings.map((onboarding) => ({
           ...onboarding,
@@ -328,6 +336,7 @@ function buildBundle(seed: AccessRequestAccountSeed): PersistedAccountBundle | n
       updatedAt,
     },
     ledgerAccount: {
+      accountMode: 'SIMULATION',
       createdAt,
       currency: 'USD',
       hermesAccountId,
@@ -381,7 +390,14 @@ async function upsertSupabaseBundle(bundle: PersistedAccountBundle) {
       return null;
     }
 
-    const { error: ledgerError } = await supabase.from('ledger_accounts').upsert(toLedgerAccountRow(bundle.ledgerAccount));
+    const ledgerRow = toLedgerAccountRow(bundle.ledgerAccount);
+    let { error: ledgerError } = await supabase.from('ledger_accounts').upsert(ledgerRow);
+
+    if (ledgerError?.message.includes('account_mode')) {
+      const { account_mode: _accountMode, ...legacyLedgerRow } = ledgerRow;
+      const retryResult = await supabase.from('ledger_accounts').upsert(legacyLedgerRow);
+      ledgerError = retryResult.error;
+    }
 
     if (ledgerError) {
       console.warn('[accounts] Supabase ledger account upsert unavailable.', ledgerError.message);

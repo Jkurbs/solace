@@ -5,6 +5,7 @@ import type { Database } from '@/lib/supabase/types';
 
 import type {
   AccountActivationStatus,
+  LedgerAccountMode,
   LedgerDeposit,
   LedgerEntry,
   MoneyMovementRecords,
@@ -193,6 +194,7 @@ function buildAccountStatuses({
     statuses.push({
       accountId: account.id,
       accountLabel: account.label,
+      accountMode: (account as LedgerAccountRow & { account_mode?: AccountActivationStatus['accountMode'] | null }).account_mode ?? 'SIMULATION',
       createdAt: account.created_at,
       dashboardInviteStatus: invitesByAccountId.get(account.id)?.status,
       hermesAccountId: hermesAccount.id,
@@ -360,6 +362,39 @@ export async function updateTreasuryTaskStatus({
     return true;
   } catch (error) {
     console.warn('[ledger] Treasury task status update failed.', error);
+    return false;
+  }
+}
+
+export async function updateLedgerAccountMode({
+  accountId,
+  accountMode,
+}: {
+  accountId: string;
+  accountMode: LedgerAccountMode;
+}) {
+  if (!isSupabaseDataClientConfigured()) {
+    return false;
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    const { error } = await supabase
+      .from('ledger_accounts')
+      .update({
+        account_mode: accountMode,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', accountId);
+
+    if (error) {
+      console.warn('[ledger] Account mode update failed.', error.message);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.warn('[ledger] Account mode update failed.', error);
     return false;
   }
 }

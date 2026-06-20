@@ -18,6 +18,7 @@ type AccessApprovalsPageProps = {
   searchParams?: Promise<{
     access?: string | string[];
     email?: string | string[];
+    mode?: string | string[];
     notification?: string | string[];
     review?: string | string[];
   }>;
@@ -75,11 +76,11 @@ function getRecommendationClass(recommendation: AccessReviewRecommendation) {
 }
 
 function getActivationStatusClass(status: string) {
-  if (['ACTIVE', 'APPROVED'].includes(status)) {
+  if (['ACTIVE', 'APPROVED', 'LIVE'].includes(status)) {
     return 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200';
   }
 
-  if (['PENDING_ACTIVATION', 'PAUSED'].includes(status)) {
+  if (['PENDING_ACTIVATION', 'PAUSED', 'SIMULATION'].includes(status)) {
     return 'border-amber-300/25 bg-amber-300/10 text-amber-100';
   }
 
@@ -116,6 +117,29 @@ function ActivationPill({ label, status }: { label?: string; status: string }) {
       {label ? `${label} ` : ''}
       {formatConstant(status)}
     </span>
+  );
+}
+
+function AccountModeForm({ accountId, accountMode }: { accountId: string; accountMode: AccountActivationStatus['accountMode'] }) {
+  if (accountMode === 'LIVE') {
+    return (
+      <span className="inline-flex h-7 items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 text-xs font-medium text-emerald-100">
+        Live rails enabled
+      </span>
+    );
+  }
+
+  return (
+    <form action="/api/console/accounts/mode" method="post">
+      <input type="hidden" name="accountId" value={accountId} />
+      <input type="hidden" name="accountMode" value="LIVE" />
+      <button
+        type="submit"
+        className="inline-flex h-7 items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 text-xs font-medium text-emerald-100 transition-colors hover:bg-emerald-400/15"
+      >
+        Promote to live
+      </button>
+    </form>
   );
 }
 
@@ -161,8 +185,10 @@ function AccountActivationPanel({
                   <ActivationPill label="User" status={account.solaceUserStatus} />
                   <ActivationPill label="Hermes" status={account.hermesAccountStatus} />
                   <ActivationPill label="Ledger" status={account.ledgerAccountStatus} />
+                  <ActivationPill label="Mode" status={account.accountMode} />
                   <ActivationPill label="Access" status={account.dashboardInviteStatus ?? 'missing'} />
                   <ActivationPill status={activationComplete ? 'ACTIVE' : 'PENDING_ACTIVATION'} />
+                  <AccountModeForm accountId={account.accountId} accountMode={account.accountMode} />
                 </div>
               </article>
             );
@@ -287,6 +313,7 @@ export default async function AccessApprovalsPage({ searchParams }: AccessApprov
   const reviewStatus = Array.isArray(params?.review) ? params.review[0] : params?.review;
   const notificationStatus = Array.isArray(params?.notification) ? params.notification[0] : params?.notification;
   const emailStatus = Array.isArray(params?.email) ? params.email[0] : params?.email;
+  const modeStatus = Array.isArray(params?.mode) ? params.mode[0] : params?.mode;
 
   return (
     <main className="min-h-screen bg-[#10100e] text-neutral-50">
@@ -319,6 +346,10 @@ export default async function AccessApprovalsPage({ searchParams }: AccessApprov
             {emailStatus === 'updated' ? <StatusMessage tone="green">Access email updated.</StatusMessage> : null}
             {emailStatus === 'invalid' || emailStatus === 'missing' ? (
               <StatusMessage tone="red">Access email could not be updated.</StatusMessage>
+            ) : null}
+            {modeStatus === 'updated' ? <StatusMessage tone="green">Account mode updated.</StatusMessage> : null}
+            {modeStatus === 'failed' || modeStatus === 'invalid' ? (
+              <StatusMessage tone="red">Account mode could not be updated.</StatusMessage>
             ) : null}
           </div>
 

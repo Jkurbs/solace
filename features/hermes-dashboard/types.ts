@@ -8,6 +8,8 @@ export type HermesConviction = 'LOW' | 'MEDIUM' | 'HIGH';
 
 export type HermesAccountLifecycle = 'ACTIVE' | 'AWAITING_DEPOSIT';
 
+export type LedgerAccountMode = 'SIMULATION' | 'LIVE';
+
 export type DepositIntentStatus = 'REVIEW_PENDING';
 
 export type AccountType = 'Individual' | 'Entity';
@@ -137,6 +139,10 @@ export interface Activity {
 export interface Allocation {
   asset: string;
   percentage: number;
+  allocationBasis?: 'capital' | 'exposure';
+  exposureUsd?: number;
+  marginUsd?: number;
+  side?: 'LONG' | 'SHORT' | 'CASH';
 }
 
 export interface AccountReview {
@@ -166,6 +172,7 @@ export type HermesDashboardSnapshot = {
   account: {
     label: string;
     lifecycle: HermesAccountLifecycle;
+    mode: LedgerAccountMode;
     depositIntent?: {
       amount: number;
       status: DepositIntentStatus;
