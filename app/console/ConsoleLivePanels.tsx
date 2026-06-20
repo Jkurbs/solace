@@ -24,6 +24,8 @@ const activeTreasuryStatuses = ['WAITING_SETTLEMENT', 'QUEUED', 'REVIEWING', 'FU
 
 type Tone = 'neutral' | 'amber' | 'green' | 'red';
 
+const metricGridClass = 'grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3';
+
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
   hour: 'numeric',
@@ -258,9 +260,11 @@ function StatCard({
   tone?: Tone;
 }) {
   return (
-    <div className="rounded-md border border-neutral-800 bg-neutral-950/30 p-4">
-      <span className="text-xs font-medium text-neutral-500">{label}</span>
-      <strong className={`mt-1 block text-2xl font-semibold ${getValueTextClass(tone)}`}>{value}</strong>
+    <div className="min-w-0 rounded-md border border-neutral-800 bg-neutral-950/30 p-4">
+      <span className="block text-xs font-medium leading-5 text-neutral-500">{label}</span>
+      <strong className={`mt-1 block max-w-full break-words text-2xl font-semibold leading-tight tabular-nums ${getValueTextClass(tone)}`}>
+        {value}
+      </strong>
       {detail ? <span className="mt-2 block text-xs leading-5 text-neutral-500">{detail}</span> : null}
     </div>
   );
@@ -276,9 +280,11 @@ function InlineMetric({
   tone?: Tone;
 }) {
   return (
-    <div className="rounded-md border border-neutral-800 bg-neutral-950/30 p-3">
-      <span className="text-xs text-neutral-500">{label}</span>
-      <strong className={`mt-1 block text-lg font-semibold ${getValueTextClass(tone)}`}>{value}</strong>
+    <div className="min-w-0 rounded-md border border-neutral-800 bg-neutral-950/30 p-3">
+      <span className="block text-xs leading-5 text-neutral-500">{label}</span>
+      <strong className={`mt-1 block max-w-full break-words text-lg font-semibold leading-tight tabular-nums ${getValueTextClass(tone)}`}>
+        {value}
+      </strong>
     </div>
   );
 }
@@ -293,9 +299,11 @@ function StatusCheck({
   value: string;
 }) {
   return (
-    <div className="rounded-md border border-neutral-800 bg-neutral-950/30 p-3">
-      <span className="text-xs text-neutral-500">{label}</span>
-      <strong className={`mt-1 block text-sm font-semibold ${getHealthTextClass(tone)}`}>{value}</strong>
+    <div className="min-w-0 rounded-md border border-neutral-800 bg-neutral-950/30 p-3">
+      <span className="block text-xs leading-5 text-neutral-500">{label}</span>
+      <strong className={`mt-1 block max-w-full break-words text-sm font-semibold leading-tight ${getHealthTextClass(tone)}`}>
+        {value}
+      </strong>
     </div>
   );
 }
@@ -663,7 +671,7 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
             titleId="capital-position-heading"
             description="A compact read on deposits, settlement availability, pool equity, and treasury queue."
           />
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className={`mt-5 ${metricGridClass}`}>
             {capitalStats.map((stat) => (
               <StatCard key={stat.label} detail={stat.detail} label={stat.label} tone={stat.tone} value={stat.value} />
             ))}
@@ -701,7 +709,7 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
             title="Core checks"
             titleId="system-checks-heading"
           />
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className={`mt-5 ${metricGridClass}`}>
             {systemChecks.map((check) => (
               <StatusCheck key={check.label} label={check.label} tone={check.tone} value={check.value} />
             ))}
@@ -717,7 +725,7 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
           title="Pool NAV Marking"
           titleId="pool-nav-heading"
         />
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className={`mt-5 ${metricGridClass}`}>
           <InlineMetric label="Active pools" value={activePools.length} tone={poolMarking.available ? 'green' : 'amber'} />
           <InlineMetric label="Pool equity" value={formatCurrency(poolEquity)} tone={poolEquity > 0 ? 'green' : 'neutral'} />
           <InlineMetric label="Open PnL" value={formatCurrency(poolOpenPnl)} tone={poolOpenPnl > 0 ? 'green' : poolOpenPnl < 0 ? 'red' : 'neutral'} />
@@ -745,21 +753,21 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
       <Panel aria-labelledby="money-movement-heading">
         <SectionHeader
           actions={
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <InlineMetric label="Stripe sessions" value={moneyMovement.stripeSessions.length} />
-            <InlineMetric label="Posted deposits" value={postedDeposits.length} tone="green" />
-            <InlineMetric
-              label="Available net"
-              value={formatCurrency(availableSettlementNet)}
-              tone={availableSettlements.length ? 'green' : 'neutral'}
-            />
-            <InlineMetric
-              label="Pending settlement"
-              value={pendingSettlements.length}
-              tone={pendingSettlements.length ? 'amber' : 'neutral'}
-            />
-            <InlineMetric label="Treasury queue" value={queuedTreasuryTasks.length} tone={queuedTreasuryTasks.length ? 'amber' : 'neutral'} />
-          </div>
+            <div className={metricGridClass}>
+              <InlineMetric label="Stripe sessions" value={moneyMovement.stripeSessions.length} />
+              <InlineMetric label="Posted deposits" value={postedDeposits.length} tone="green" />
+              <InlineMetric
+                label="Available net"
+                value={formatCurrency(availableSettlementNet)}
+                tone={availableSettlements.length ? 'green' : 'neutral'}
+              />
+              <InlineMetric
+                label="Pending settlement"
+                value={pendingSettlements.length}
+                tone={pendingSettlements.length ? 'amber' : 'neutral'}
+              />
+              <InlineMetric label="Treasury queue" value={queuedTreasuryTasks.length} tone={queuedTreasuryTasks.length ? 'amber' : 'neutral'} />
+            </div>
           }
           description="Stripe sessions, settlement availability, posted deposits, ledger entries, and automated treasury state in one operating view."
           eyebrow="Money Movement"
