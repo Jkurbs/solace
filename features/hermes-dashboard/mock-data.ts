@@ -20,6 +20,12 @@ export const hermesDashboardSnapshot: HermesDashboardSnapshot = {
     value: 12842.17,
     deposited: 10000,
     profit: 2842.17,
+    equityState: {
+      code: 'LIVE_EQUITY',
+      detail: 'Portfolio value is projected from pool units and the latest Hermes NAV mark.',
+      label: 'Live equity',
+      updatedAt: '2026-06-15T13:42:00.000Z',
+    },
     todaysChange: {
       amount: 84.22,
       percentage: 0.66,

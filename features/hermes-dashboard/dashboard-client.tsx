@@ -46,6 +46,10 @@ const numberFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 });
 
+const unitFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 4,
+});
+
 const activityDatePartsFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
   month: 'short',
@@ -66,6 +70,7 @@ const updatedAtPartsFormatter = new Intl.DateTimeFormat('en-US', {
 const allocationColorsByAsset: Record<string, Record<DashboardTheme, string>> = {
   BTC: { dark: '#f2eadb', light: '#151515' },
   Cash: { dark: '#697067', light: '#d9ded7' },
+  'In Strategy': { dark: '#87dbc0', light: '#0f766e' },
   Other: { dark: '#d8a85b', light: '#c89245' },
   SUI: { dark: '#6ea8ff', light: '#2f72d6' },
 };
@@ -114,6 +119,18 @@ function formatPercent(value: number, signed = false) {
 
 function formatTodaysChange(change: HermesDashboardSnapshot['portfolio']['todaysChange']) {
   return `${formatCurrency(change.amount, { signed: true })} (${formatPercent(change.percentage, true)})`;
+}
+
+function getEquityStateBadgeClass(code: HermesDashboardSnapshot['portfolio']['equityState']['code']) {
+  if (code === 'LIVE_EQUITY') {
+    return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300';
+  }
+
+  if (code === 'PENDING_SETTLEMENT' || code === 'TREASURY_QUEUED' || code === 'NAV_PENDING') {
+    return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100';
+  }
+
+  return 'border-neutral-200 bg-neutral-100 text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300';
 }
 
 function formatConstantLabel(value: string) {
@@ -322,11 +339,12 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
 
   const allocationGradient = useMemo(() => buildAllocationGradient(data.allocation, theme), [data.allocation, theme]);
   const isAwaitingDeposit = data.account.lifecycle === 'AWAITING_DEPOSIT';
+  const equityState = data.portfolio.equityState;
   const isFundingPending =
     !isAwaitingDeposit &&
-    data.status.status === 'WAIT' &&
-    data.portfolio.deposited > 0 &&
-    data.status.deployedCapital === 0;
+    (equityState.code === 'PENDING_SETTLEMENT' ||
+      equityState.code === 'TREASURY_QUEUED' ||
+      equityState.code === 'NAV_PENDING');
   const deployed = data.status.deployedCapital;
   const cashReserve = data.allocation.find((item) => item.asset.toLowerCase() === 'cash')?.percentage ?? 100 - deployed;
   const portfolioValue = isAwaitingDeposit ? 'Pending' : formatCurrency(data.portfolio.value);
@@ -338,7 +356,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const openPnl = data.portfolio.unrealizedPnl ?? 0;
   const equityMetrics = [
     {
-      label: 'Available',
+      label: 'Available Balance',
       value: isAwaitingDeposit ? 'Pending' : formatCurrency(availableBalance),
     },
     {
@@ -355,6 +373,27 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       value: isAwaitingDeposit ? 'Pending' : formatCurrency(data.portfolio.withdrawable ?? data.portfolio.availableToWithdraw),
     },
   ];
+  const poolMetrics = data.portfolio.pool
+    ? [
+        {
+          label: 'Pool Share',
+          value: formatPercent(data.portfolio.pool.poolShare),
+        },
+        {
+          label: 'Units',
+          value: unitFormatter.format(data.portfolio.pool.units),
+        },
+        {
+          label: 'NAV / Unit',
+          value: formatCurrency(data.portfolio.pool.navPerUnit),
+        },
+      ]
+    : [
+        {
+          label: 'Projection',
+          value: isAwaitingDeposit ? 'Pending' : formatConstantLabel(equityState.code),
+        },
+      ];
   const operatingStatus = isAwaitingDeposit ? 'Awaiting deposit' : isFundingPending ? 'Allocation pending' : data.status.status;
   const depositIntentLabel = data.account.depositIntent?.amount
     ? formatCurrency(data.account.depositIntent.amount, { whole: true })
@@ -420,8 +459,8 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       value: isAwaitingDeposit ? '—' : formatCurrency(data.portfolio.profit, { signed: true, whole: true }),
     },
     {
-      label: 'Available To Withdraw',
-      value: formatCurrency(data.portfolio.availableToWithdraw, { whole: true }),
+      label: 'Withdrawable',
+      value: formatCurrency(data.portfolio.withdrawable ?? data.portfolio.availableToWithdraw, { whole: true }),
     },
   ];
 
@@ -495,7 +534,14 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
           >
             <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
               <div>
-                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Portfolio Value</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Portfolio Value</p>
+                  {!isAwaitingDeposit ? (
+                    <Badge className={getEquityStateBadgeClass(equityState.code)} variant="secondary">
+                      {equityState.label}
+                    </Badge>
+                  ) : null}
+                </div>
                 <h1
                   id="portfolio-value"
                   className={cn(
@@ -525,13 +571,22 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 <Metric key={item.label} label={item.label} value={item.value} positive={item.positive} />
               ))}
             </div>
-            {data.portfolio.pool ? (
-              <p className="mt-4 text-sm leading-6 text-neutral-500 dark:text-neutral-400">
-                {data.portfolio.pool.poolName} · {formatPercent(data.portfolio.pool.poolShare)} share ·{' '}
-                {numberFormatter.format(data.portfolio.pool.units)} units · NAV {formatCurrency(data.portfolio.pool.navPerUnit)}
-                {data.portfolio.openPnlIncluded ? ' · Open PnL included' : ''}
-              </p>
-            ) : null}
+            <div className="mt-5 grid gap-4 rounded-md border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/60 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <span className="block text-sm text-neutral-500 dark:text-neutral-400">Equity Source</span>
+                <strong className="mt-1 block text-base font-semibold text-neutral-950 dark:text-neutral-50">
+                  {data.portfolio.pool?.poolName ?? equityState.label}
+                </strong>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-600 dark:text-neutral-400">
+                  {equityState.detail}
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3 lg:min-w-[24rem]">
+                {poolMetrics.map((item) => (
+                  <Metric key={item.label} label={item.label} value={item.value} />
+                ))}
+              </div>
+            </div>
           </motion.section>
 
           <Card>
@@ -628,7 +683,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Funding Status</p>
-                  <CardTitle>Deposit received</CardTitle>
+                  <CardTitle>{equityState.label}</CardTitle>
                 </div>
                 <Badge variant="secondary">PENDING</Badge>
               </div>
@@ -641,18 +696,18 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                   state="complete"
                 />
                 <ActivationStep
-                  detail="Solace is preparing allocation"
-                  label="Treasury allocation"
-                  state="pending"
+                  detail={equityState.code === 'PENDING_SETTLEMENT' ? 'Awaiting Stripe availability' : 'Solace treasury is preparing allocation'}
+                  label={equityState.code === 'PENDING_SETTLEMENT' ? 'Settlement tracking' : 'Treasury allocation'}
+                  state={equityState.code === 'PENDING_SETTLEMENT' ? 'pending' : equityState.code === 'TREASURY_QUEUED' ? 'pending' : 'complete'}
                 />
                 <ActivationStep
-                  detail="Begins after treasury clears"
-                  label="Hermes deployment"
+                  detail={equityState.code === 'NAV_PENDING' ? 'Waiting for NAV mark' : 'Begins after treasury clears'}
+                  label={equityState.code === 'NAV_PENDING' ? 'NAV mark' : 'Hermes deployment'}
                   state="pending"
                 />
               </div>
               <p className="mt-5 border-t border-neutral-200 pt-4 text-sm leading-6 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
-                Your deposit has posted to the ledger. Hermes will begin operating after Solace completes treasury allocation and activation.
+                {equityState.detail}
               </p>
             </CardContent>
           </Card>
@@ -841,7 +896,9 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
           </CardContent>
         </Card>
 
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">Last updated {formatUpdatedAt(data.updatedAt)}</p>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          Last updated {formatUpdatedAt(equityState.updatedAt ?? data.updatedAt)}
+        </p>
       </div>
     </main>
   );

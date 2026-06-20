@@ -29,6 +29,14 @@ export type IsoDateString = string;
 
 export type HermesDashboardContractVersion = 'hermes.dashboard.v1';
 
+export type PortfolioEquityStateCode =
+  | 'NO_DEPOSIT'
+  | 'PENDING_SETTLEMENT'
+  | 'TREASURY_QUEUED'
+  | 'NAV_PENDING'
+  | 'LIVE_EQUITY'
+  | 'LEDGER_ONLY';
+
 export type DashboardFieldOwner =
   | 'ledger'
   | 'performance_engine'
@@ -74,6 +82,12 @@ export interface Portfolio {
   value: number;
   deposited: number;
   profit: number;
+  equityState: {
+    code: PortfolioEquityStateCode;
+    detail: string;
+    label: string;
+    updatedAt?: IsoDateString;
+  };
   todaysChange: {
     amount: number;
     percentage: number;

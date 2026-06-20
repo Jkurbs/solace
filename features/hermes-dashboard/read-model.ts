@@ -1,12 +1,23 @@
 import 'server-only';
 
+import { listMoneyMovementRecords } from '@/features/ledger/money-movement';
 import { getPoolAccountProjection } from '@/features/ledger/pool-units';
 import { getLedgerReadModel } from '@/features/ledger/read-model';
-import type { LedgerReadModel, PoolAccountProjection } from '@/features/ledger/types';
+import type {
+  LedgerReadModel,
+  PoolAccountProjection,
+  StripeDepositSettlement,
+  TreasuryTask,
+} from '@/features/ledger/types';
 
 import { dashboardFieldSources, hermesDashboardContractVersion } from './contract';
 import { hermesDashboardSnapshot } from './mock-data';
-import type { AccountReview, HermesDashboardSnapshot, IdentityVerification, RiskProfile } from './types';
+import type {
+  AccountReview,
+  HermesDashboardSnapshot,
+  IdentityVerification,
+  RiskProfile,
+} from './types';
 
 type DashboardSnapshotInput = {
   accountId?: string | null;
@@ -16,6 +27,20 @@ type DashboardSnapshotInput = {
   lifecycle?: HermesDashboardSnapshot['account']['lifecycle'];
   riskProfile?: RiskProfile | null;
 };
+
+type AccountMoneyState = {
+  activeTreasuryTask: TreasuryTask | null;
+  pendingSettlement: StripeDepositSettlement | null;
+};
+
+const activeTreasuryTaskStatuses = new Set<TreasuryTask['status']>([
+  'WAITING_SETTLEMENT',
+  'QUEUED',
+  'REVIEWING',
+  'FUNDABLE',
+  'APPROVED',
+  'SUBMITTED',
+]);
 
 function cloneSnapshot(snapshot: HermesDashboardSnapshot): HermesDashboardSnapshot {
   return {
@@ -29,6 +54,7 @@ function cloneSnapshot(snapshot: HermesDashboardSnapshot): HermesDashboardSnapsh
     fieldSources: snapshot.fieldSources.map((source) => ({ ...source })),
     portfolio: {
       ...snapshot.portfolio,
+      equityState: { ...snapshot.portfolio.equityState },
       pool: snapshot.portfolio.pool ? { ...snapshot.portfolio.pool } : undefined,
       todaysChange: { ...snapshot.portfolio.todaysChange },
     },
@@ -76,6 +102,11 @@ function getAwaitingDepositSnapshot(
       value: 0,
       deposited: 0,
       profit: 0,
+      equityState: {
+        code: 'NO_DEPOSIT',
+        detail: 'Portfolio value will appear after capital is received and posted to the ledger.',
+        label: 'Awaiting capital',
+      },
       todaysChange: {
         amount: 0,
         percentage: 0,
@@ -127,14 +158,134 @@ function roundPercent(value: number) {
   return Math.round(value * 100) / 100;
 }
 
+function getAllocatedCapitalPercentage(portfolioValue: number, allocatedCapital: number | undefined, fallback: number) {
+  if (portfolioValue <= 0 || allocatedCapital === undefined) {
+    return fallback;
+  }
+
+  return roundPercent(Math.min(100, Math.max(0, (allocatedCapital / portfolioValue) * 100)));
+}
+
+function getPoolAllocation({
+  allocatedCapital,
+  portfolioValue,
+}: {
+  allocatedCapital: number | undefined;
+  portfolioValue: number;
+}) {
+  const deployed = getAllocatedCapitalPercentage(portfolioValue, allocatedCapital, 0);
+  const cash = roundPercent(Math.max(0, 100 - deployed));
+
+  if (deployed <= 0) {
+    return [{ asset: 'Cash', percentage: 100 }];
+  }
+
+  if (cash <= 0) {
+    return [{ asset: 'In Strategy', percentage: 100 }];
+  }
+
+  return [
+    { asset: 'In Strategy', percentage: deployed },
+    { asset: 'Cash', percentage: cash },
+  ];
+}
+
+async function getAccountMoneyState(accountId: string): Promise<AccountMoneyState> {
+  const moneyMovement = await listMoneyMovementRecords().catch((error) => {
+    console.warn('[hermes-dashboard] Money movement state unavailable.', {
+      accountId,
+      error: error instanceof Error ? error.message : error,
+    });
+
+    return null;
+  });
+
+  if (!moneyMovement?.available) {
+    return {
+      activeTreasuryTask: null,
+      pendingSettlement: null,
+    };
+  }
+
+  const accountSettlements = moneyMovement.stripeSettlements.filter((settlement) => settlement.accountId === accountId);
+  const accountTasks = moneyMovement.treasuryTasks.filter((task) => task.accountId === accountId);
+
+  return {
+    activeTreasuryTask: accountTasks.find((task) => activeTreasuryTaskStatuses.has(task.status)) ?? null,
+    pendingSettlement: accountSettlements.find((settlement) => settlement.status === 'pending') ?? null,
+  };
+}
+
+function getPortfolioEquityState({
+  ledger,
+  moneyState,
+  poolProjection,
+}: {
+  ledger: LedgerReadModel;
+  moneyState: AccountMoneyState;
+  poolProjection: PoolAccountProjection | null;
+}): HermesDashboardSnapshot['portfolio']['equityState'] {
+  if (ledger.portfolio.totalDeposited <= 0) {
+    return {
+      code: 'NO_DEPOSIT',
+      detail: 'No capital has posted to this Solace account yet.',
+      label: 'Awaiting capital',
+      updatedAt: ledger.generatedAt,
+    };
+  }
+
+  if (moneyState.pendingSettlement || moneyState.activeTreasuryTask?.status === 'WAITING_SETTLEMENT') {
+    return {
+      code: 'PENDING_SETTLEMENT',
+      detail: 'The deposit is recorded. Stripe settlement availability is still being tracked before treasury funding.',
+      label: 'Settlement pending',
+      updatedAt: moneyState.pendingSettlement?.updatedAt ?? moneyState.activeTreasuryTask?.updatedAt ?? ledger.generatedAt,
+    };
+  }
+
+  if (moneyState.activeTreasuryTask) {
+    return {
+      code: 'TREASURY_QUEUED',
+      detail: 'Capital is posted and queued for Solace treasury allocation before Hermes deployment.',
+      label: 'Treasury queued',
+      updatedAt: moneyState.activeTreasuryTask.updatedAt,
+    };
+  }
+
+  if (poolProjection) {
+    return {
+      code: 'LIVE_EQUITY',
+      detail: 'Portfolio value is calculated from your pool units and the latest Hermes NAV mark.',
+      label: 'Live equity',
+      updatedAt: poolProjection.latestNav.effectiveAt,
+    };
+  }
+
+  if (ledger.portfolio.totalDeposited > 0) {
+    return {
+      code: 'NAV_PENDING',
+      detail: 'Capital is posted to the ledger. Pool units or a fresh NAV mark are not available yet.',
+      label: 'NAV pending',
+      updatedAt: ledger.generatedAt,
+    };
+  }
+
+  return {
+    code: 'LEDGER_ONLY',
+    detail: 'Portfolio value is currently being shown from the ledger while pool projection is unavailable.',
+    label: 'Ledger view',
+    updatedAt: ledger.generatedAt,
+  };
+}
+
 function getActiveSnapshotFromLedger(
   baseSnapshot: HermesDashboardSnapshot,
   ledger: LedgerReadModel,
+  moneyState: AccountMoneyState,
   riskProfile: RiskProfile,
   poolProjection: PoolAccountProjection | null,
 ): HermesDashboardSnapshot {
   const hermesActivity = ledger.activities.filter((activity) => activity.type === 'hermes_decision');
-  const fundingPending = ledger.portfolio.totalDeposited > 0 && ledger.allocation.capitalDeployed === 0;
   const visibleActivity = hermesActivity.length ? hermesActivity : ledger.activities;
   const portfolioValue = poolProjection?.position.equity ?? ledger.portfolio.value;
   const availableToWithdraw = poolProjection?.withdrawable ?? ledger.portfolio.availableToWithdraw;
@@ -142,6 +293,19 @@ function getActiveSnapshotFromLedger(
   const sinceInception = ledger.portfolio.totalDeposited
     ? roundPercent((netProfit / ledger.portfolio.totalDeposited) * 100)
     : 0;
+  const allocatedCapital = poolProjection?.allocatedCapital;
+  const deployedCapital = getAllocatedCapitalPercentage(portfolioValue, allocatedCapital, ledger.allocation.capitalDeployed);
+  const equityState = getPortfolioEquityState({ ledger, moneyState, poolProjection });
+  const fundingPending =
+    equityState.code === 'PENDING_SETTLEMENT' ||
+    equityState.code === 'TREASURY_QUEUED' ||
+    equityState.code === 'NAV_PENDING';
+  const allocation = poolProjection
+    ? getPoolAllocation({
+        allocatedCapital,
+        portfolioValue,
+      })
+    : ledger.allocation.allocations;
 
   return {
     ...baseSnapshot,
@@ -155,6 +319,7 @@ function getActiveSnapshotFromLedger(
       value: portfolioValue,
       deposited: ledger.portfolio.totalDeposited,
       profit: netProfit,
+      equityState,
       todaysChange: {
         amount: ledger.performance.todaysChange.amount,
         percentage: ledger.performance.todaysChange.percentage,
@@ -189,22 +354,22 @@ function getActiveSnapshotFromLedger(
       status: fundingPending ? 'WAIT' : baseSnapshot.status.status,
       riskProfile,
       conviction: fundingPending ? 'LOW' : baseSnapshot.status.conviction,
-      deployedCapital: ledger.allocation.capitalDeployed,
+      deployedCapital,
     },
     outlook: fundingPending
       ? {
           environment: 'Moderate',
-          stance: 'Allocation pending',
-          note: 'Capital has been received. Solace is completing treasury allocation before Hermes begins deployment.',
+          stance: equityState.label,
+          note: equityState.detail,
         }
       : baseSnapshot.outlook,
-    allocation: ledger.allocation.allocations,
+    allocation,
     activity: visibleActivity.slice(0, 3).map((activity) => ({
       timestamp: activity.createdAt,
       summary: activity.message,
     })),
     commentary: fundingPending
-      ? 'Deposit received. Solace is completing treasury allocation and Hermes will begin operating once activation is complete.'
+      ? equityState.detail
       : baseSnapshot.commentary,
   };
 }
@@ -258,9 +423,12 @@ export async function getHermesDashboardSnapshot({
     }
 
     if (ledger.account.status === 'ACTIVE') {
-      const poolProjection = await getPoolAccountProjection(ledger.account.id);
+      const [moneyState, poolProjection] = await Promise.all([
+        getAccountMoneyState(ledger.account.id),
+        getPoolAccountProjection(ledger.account.id),
+      ]);
 
-      return getActiveSnapshotFromLedger(baseSnapshot, ledger, selectedRiskProfile, poolProjection);
+      return getActiveSnapshotFromLedger(baseSnapshot, ledger, moneyState, selectedRiskProfile, poolProjection);
     }
 
     return {
@@ -274,7 +442,10 @@ export async function getHermesDashboardSnapshot({
   }
 
   const ledger = await getLedgerReadModel(accountId ?? undefined);
-  const poolProjection = await getPoolAccountProjection(ledger.account.id);
+  const [moneyState, poolProjection] = await Promise.all([
+    getAccountMoneyState(ledger.account.id),
+    getPoolAccountProjection(ledger.account.id),
+  ]);
 
-  return getActiveSnapshotFromLedger(baseSnapshot, ledger, selectedRiskProfile, poolProjection);
+  return getActiveSnapshotFromLedger(baseSnapshot, ledger, moneyState, selectedRiskProfile, poolProjection);
 }

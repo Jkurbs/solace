@@ -72,8 +72,8 @@ export const dashboardFieldSources: DashboardFieldSource[] = [
     label: 'Portfolio value',
     owner: 'ledger',
     ownerLabel: 'Ledger',
-    requirement: 'Composes deposits, withdrawals, account value, and net profit.',
-    status: 'mock',
+    requirement: 'Composes deposits, withdrawals, pool units, latest NAV, account value, and net profit.',
+    status: 'live',
   },
   {
     field: 'todays_change',
@@ -96,8 +96,8 @@ export const dashboardFieldSources: DashboardFieldSource[] = [
     label: 'Available to withdraw',
     owner: 'ledger',
     ownerLabel: 'Ledger',
-    requirement: 'Reports settled capital available for withdrawal.',
-    status: 'mock',
+    requirement: 'Reports settled capital available for withdrawal from ledger and pool-unit ownership.',
+    status: 'live',
   },
   {
     field: 'pool_ownership',
@@ -105,7 +105,7 @@ export const dashboardFieldSources: DashboardFieldSource[] = [
     owner: 'ledger',
     ownerLabel: 'Pool Unit Accounting',
     requirement: 'Projects user equity from units owned, current pool NAV, and the active accounting version.',
-    status: 'planned',
+    status: 'live',
   },
   {
     field: 'open_pnl',
@@ -113,7 +113,7 @@ export const dashboardFieldSources: DashboardFieldSource[] = [
     owner: 'performance_engine',
     ownerLabel: 'Performance Engine',
     requirement: 'Shows the user share of unrealized pool PnL from open positions.',
-    status: 'planned',
+    status: 'live',
   },
   {
     field: 'status',
