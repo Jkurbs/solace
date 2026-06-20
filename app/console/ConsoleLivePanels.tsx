@@ -1,6 +1,7 @@
 'use client';
 
 import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { HTMLAttributes, ReactNode } from 'react';
 import { useState } from 'react';
 
 import type { LiveLedgerOverview } from '@/features/ledger/live-overview';
@@ -20,6 +21,8 @@ type ConsoleLivePanelsProps = {
 const consoleLiveQueryKey = ['console-live'] as const;
 const refreshIntervalMs = 5_000;
 const activeTreasuryStatuses = ['WAITING_SETTLEMENT', 'QUEUED', 'REVIEWING', 'FUNDABLE', 'APPROVED', 'SUBMITTED'];
+
+type Tone = 'neutral' | 'amber' | 'green' | 'red';
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
@@ -139,6 +142,75 @@ function getHealthTextClass(tone: 'green' | 'amber' | 'red') {
   return 'text-emerald-100';
 }
 
+function getValueTextClass(tone: Tone) {
+  if (tone === 'green') {
+    return 'text-emerald-200';
+  }
+
+  if (tone === 'amber') {
+    return 'text-amber-100';
+  }
+
+  if (tone === 'red') {
+    return 'text-red-100';
+  }
+
+  return 'text-neutral-50';
+}
+
+function Panel({
+  children,
+  className = '',
+  ...props
+}: {
+  children: ReactNode;
+  className?: string;
+} & HTMLAttributes<HTMLElement>) {
+  return (
+    <section className={`rounded-lg border border-neutral-800 bg-[#181715] p-5 sm:p-6 ${className}`} {...props}>
+      {children}
+    </section>
+  );
+}
+
+function LiveBadge({ isFetching, timestamp }: { isFetching: boolean; timestamp?: string }) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/40 px-2.5 py-1 text-xs text-neutral-500">
+      <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${isFetching ? 'bg-amber-300' : 'bg-emerald-300'}`} />
+      {isFetching ? 'Updating' : 'Live'}
+      <span className="text-neutral-600">5s</span>
+      {timestamp ? <span className="text-neutral-600">{formatTime(timestamp)}</span> : null}
+    </span>
+  );
+}
+
+function SectionHeader({
+  actions,
+  description,
+  eyebrow,
+  title,
+  titleId,
+}: {
+  actions?: ReactNode;
+  description?: string;
+  eyebrow: string;
+  title: string;
+  titleId?: string;
+}) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
+      <div>
+        <p className="text-sm font-medium text-neutral-400">{eyebrow}</p>
+        <h2 id={titleId} className="mt-1 text-xl font-semibold text-neutral-50 sm:text-2xl">
+          {title}
+        </h2>
+        {description ? <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">{description}</p> : null}
+      </div>
+      {actions ? <div className="lg:justify-self-end">{actions}</div> : null}
+    </div>
+  );
+}
+
 async function getConsoleLivePayload(): Promise<ConsoleLivePayload> {
   const response = await fetch('/api/console/live', {
     headers: {
@@ -175,27 +247,21 @@ async function postPoolNavMarkRequest(formData: FormData): Promise<{ message: st
 }
 
 function StatCard({
+  detail,
   label,
   value,
   tone = 'neutral',
 }: {
+  detail?: string;
   label: string;
   value: string | number;
-  tone?: 'neutral' | 'amber' | 'green' | 'red';
+  tone?: Tone;
 }) {
-  const valueClass =
-    tone === 'green'
-      ? 'text-emerald-200'
-      : tone === 'amber'
-        ? 'text-amber-100'
-        : tone === 'red'
-          ? 'text-red-100'
-          : 'text-neutral-50';
-
   return (
-    <div className="rounded-lg border border-neutral-800 bg-[#181715] p-5">
-      <span className="text-sm text-neutral-500">{label}</span>
-      <strong className={`mt-2 block text-3xl font-semibold ${valueClass}`}>{value}</strong>
+    <div className="rounded-md border border-neutral-800 bg-neutral-950/30 p-4">
+      <span className="text-xs font-medium text-neutral-500">{label}</span>
+      <strong className={`mt-1 block text-2xl font-semibold ${getValueTextClass(tone)}`}>{value}</strong>
+      {detail ? <span className="mt-2 block text-xs leading-5 text-neutral-500">{detail}</span> : null}
     </div>
   );
 }
@@ -207,21 +273,12 @@ function InlineMetric({
 }: {
   label: string;
   value: string | number;
-  tone?: 'neutral' | 'amber' | 'green' | 'red';
+  tone?: Tone;
 }) {
-  const valueClass =
-    tone === 'green'
-      ? 'text-emerald-200'
-      : tone === 'amber'
-        ? 'text-amber-100'
-        : tone === 'red'
-          ? 'text-red-100'
-          : 'text-neutral-50';
-
   return (
     <div className="rounded-md border border-neutral-800 bg-neutral-950/30 p-3">
       <span className="text-xs text-neutral-500">{label}</span>
-      <strong className={`mt-1 block text-lg font-semibold ${valueClass}`}>{value}</strong>
+      <strong className={`mt-1 block text-lg font-semibold ${getValueTextClass(tone)}`}>{value}</strong>
     </div>
   );
 }
@@ -329,7 +386,7 @@ function PoolNavMarkCard({ poolMark }: { poolMark: PoolMarkingPool }) {
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <InlineMetric label="Pool equity" value={formatCurrency(grossEquity)} tone={grossEquity > 0 ? 'green' : 'neutral'} />
         <InlineMetric label="Cash" value={formatCurrency(cashBalance)} />
         <InlineMetric label="In strategy" value={formatCurrency(allocatedCapital)} />
@@ -345,7 +402,7 @@ function PoolNavMarkCard({ poolMark }: { poolMark: PoolMarkingPool }) {
         }}
       >
         <input type="hidden" name="poolId" value={poolMark.pool.id} />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2">
           <NumberField defaultValue={getDefaultAmount(grossEquity)} label="Total equity" name="grossEquity" />
           <NumberField defaultValue={getDefaultAmount(cashBalance)} label="Cash balance" name="cashBalance" />
           <NumberField defaultValue={getDefaultAmount(allocatedCapital)} label="Allocated capital" name="allocatedCapital" />
@@ -513,142 +570,115 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
       : healthTone === 'amber'
         ? 'Money is moving, but at least one control needs review.'
         : 'Ledger, settlement tracking, and treasury queue are operating normally.';
+  const systemChecks = [
+    {
+      label: 'Ledger',
+      tone: liveLedgerOverview.reconciliationStatus === 'Matched' ? ('green' as const) : ('amber' as const),
+      value: liveLedgerOverview.reconciliationStatus,
+    },
+    {
+      label: 'Money records',
+      tone: moneyMovement.available ? ('green' as const) : ('red' as const),
+      value: moneyMovement.available ? 'Readable' : 'Unavailable',
+    },
+    {
+      label: 'Stripe settlement',
+      tone: moneyMovement.settlementTrackingAvailable ? ('green' as const) : ('amber' as const),
+      value: moneyMovement.settlementTrackingAvailable ? 'Tracked' : 'Missing table',
+    },
+    {
+      label: 'Treasury queue',
+      tone: moneyMovement.treasuryQueueAvailable ? ('green' as const) : ('amber' as const),
+      value: moneyMovement.treasuryQueueAvailable ? 'Online' : 'Missing table',
+    },
+    {
+      label: 'Pool NAV',
+      tone: poolMarking.available ? ('green' as const) : ('amber' as const),
+      value: poolMarking.available ? 'Markable' : 'Missing table',
+    },
+  ];
+  const capitalStats = [
+    {
+      detail: 'Posted ledger value',
+      label: 'Ledger balance',
+      tone: liveLedgerOverview.reconciliationStatus === 'Matched' ? ('green' as const) : ('amber' as const),
+      value: formatCurrency(liveLedgerOverview.balance),
+    },
+    {
+      detail: 'User capital accepted',
+      label: 'Deposited',
+      value: formatCurrency(liveLedgerOverview.totalDeposited),
+    },
+    {
+      detail: 'Latest marked equity',
+      label: 'Pool equity',
+      tone: poolMarking.available ? ('green' as const) : ('amber' as const),
+      value: formatCurrency(poolEquity),
+    },
+    {
+      detail: 'Stripe net available',
+      label: 'Available net',
+      tone: availableSettlements.length ? ('green' as const) : ('neutral' as const),
+      value: formatCurrency(availableSettlementNet),
+    },
+    {
+      detail: 'Awaiting Stripe availability',
+      label: 'Pending settlement',
+      tone: pendingSettlements.length ? ('amber' as const) : ('neutral' as const),
+      value: formatCurrency(pendingSettlementNet),
+    },
+    {
+      detail: 'Queued for treasury',
+      label: 'Treasury queue',
+      tone: queuedTreasuryTasks.length ? ('amber' as const) : ('green' as const),
+      value: formatCurrency(queuedTreasuryAmount),
+    },
+  ];
 
   return (
     <>
-      <section className={`rounded-lg border p-6 sm:p-8 ${getHealthPanelClass(healthTone)}`} aria-labelledby="operations-status-heading">
-        <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="text-sm font-medium text-neutral-300">Operations Status</p>
-              <span className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/40 px-2.5 py-1 text-xs text-neutral-400">
-                <span
-                  aria-hidden="true"
-                  className={`h-1.5 w-1.5 rounded-full ${isFetching ? 'bg-amber-300' : 'bg-emerald-300'}`}
-                />
-                {isFetching ? 'Updating' : 'Live'}
-                <span className="text-neutral-600">5s</span>
-              </span>
-            </div>
-            <h1 id="operations-status-heading" className={`mt-2 text-4xl font-semibold tracking-normal sm:text-5xl ${getHealthTextClass(healthTone)}`}>
-              {healthTitle}
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-neutral-300">{healthSummary}</p>
+      <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+        <section className={`rounded-lg border p-5 sm:p-6 ${getHealthPanelClass(healthTone)}`} aria-labelledby="operations-status-heading">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-medium text-neutral-300">Operations Status</p>
+            <LiveBadge isFetching={isFetching} timestamp={data.generatedAt} />
           </div>
-          <div className="grid gap-2 text-sm text-neutral-400 lg:text-right">
-            <span>Last update {formatTime(data.generatedAt)}</span>
-            <span>{formatDate(data.generatedAt)}</span>
+          <h1
+            id="operations-status-heading"
+            className={`mt-3 text-4xl font-semibold tracking-normal sm:text-5xl ${getHealthTextClass(healthTone)}`}
+          >
+            {healthTitle}
+          </h1>
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-neutral-300">{healthSummary}</p>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            <InlineMetric label="Active exceptions" value={healthIssues.length} tone={healthTone === 'green' ? 'green' : healthTone} />
+            <InlineMetric label="Last update" value={formatTime(data.generatedAt)} />
           </div>
-        </div>
+        </section>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <StatusCheck
-            label="Ledger"
-            value={liveLedgerOverview.reconciliationStatus}
-            tone={liveLedgerOverview.reconciliationStatus === 'Matched' ? 'green' : 'amber'}
+        <Panel aria-labelledby="capital-position-heading">
+          <SectionHeader
+            eyebrow="Capital Position"
+            title="Money and pool state"
+            titleId="capital-position-heading"
+            description="A compact read on deposits, settlement availability, pool equity, and treasury queue."
           />
-          <StatusCheck label="Money records" value={moneyMovement.available ? 'Readable' : 'Unavailable'} tone={moneyMovement.available ? 'green' : 'red'} />
-          <StatusCheck
-            label="Stripe settlement"
-            value={moneyMovement.settlementTrackingAvailable ? 'Tracked' : 'Missing table'}
-            tone={moneyMovement.settlementTrackingAvailable ? 'green' : 'amber'}
-          />
-          <StatusCheck
-            label="Treasury queue"
-            value={moneyMovement.treasuryQueueAvailable ? 'Online' : 'Missing table'}
-            tone={moneyMovement.treasuryQueueAvailable ? 'green' : 'amber'}
-          />
-          <StatusCheck
-            label="Pool NAV"
-            value={poolMarking.available ? 'Markable' : 'Missing table'}
-            tone={poolMarking.available ? 'green' : 'amber'}
-          />
-        </div>
-      </section>
-
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-7" aria-label="Money overview">
-        <StatCard label="Ledger balance" value={formatCurrency(liveLedgerOverview.balance)} tone={liveLedgerOverview.reconciliationStatus === 'Matched' ? 'green' : 'amber'} />
-        <StatCard label="Deposited" value={formatCurrency(liveLedgerOverview.totalDeposited)} />
-        <StatCard label="Pool equity" value={formatCurrency(poolEquity)} tone={poolMarking.available ? 'green' : 'amber'} />
-        <StatCard
-          label="Available net"
-          value={formatCurrency(availableSettlementNet)}
-          tone={availableSettlements.length ? 'green' : 'neutral'}
-        />
-        <StatCard
-          label="Pending settlement"
-          value={formatCurrency(pendingSettlementNet)}
-          tone={pendingSettlements.length ? 'amber' : 'neutral'}
-        />
-        <StatCard
-          label="Treasury queue"
-          value={formatCurrency(queuedTreasuryAmount)}
-          tone={queuedTreasuryTasks.length ? 'amber' : 'green'}
-        />
-        <StatCard
-          label="Reconciliation"
-          value={liveLedgerOverview.reconciliationStatus}
-          tone={liveLedgerOverview.reconciliationStatus === 'Matched' ? 'green' : 'amber'}
-        />
-      </section>
-
-      <section className="rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8" aria-labelledby="pool-nav-heading">
-        <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="text-sm font-medium text-neutral-400">Pool NAV</p>
-              <span className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/40 px-2.5 py-1 text-xs text-neutral-500">
-                <span
-                  aria-hidden="true"
-                  className={`h-1.5 w-1.5 rounded-full ${isFetching ? 'bg-amber-300' : 'bg-emerald-300'}`}
-                />
-                {isFetching ? 'Updating' : 'Live'}
-                <span className="text-neutral-600">5s</span>
-              </span>
-            </div>
-            <h2 id="pool-nav-heading" className="mt-1 text-2xl font-semibold text-neutral-50">
-              Pool NAV Marking V1
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">
-              Mark total pool equity and current balances. The system derives NAV per unit and refreshes user
-              positions from the pool unit ledger.
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <InlineMetric label="Active pools" value={activePools.length} tone={poolMarking.available ? 'green' : 'amber'} />
-            <InlineMetric label="Pool equity" value={formatCurrency(poolEquity)} tone={poolEquity > 0 ? 'green' : 'neutral'} />
-            <InlineMetric label="Open PnL" value={formatCurrency(poolOpenPnl)} tone={poolOpenPnl > 0 ? 'green' : poolOpenPnl < 0 ? 'red' : 'neutral'} />
-            <InlineMetric label="Total units" value={formatUnits(poolTotalUnits)} />
-          </div>
-        </div>
-
-        {!poolMarking.available ? (
-          <div className="mt-5 rounded-md border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">
-            Pool unit accounting is not installed yet. Run <span className="font-mono">supabase/pool-unit-accounting-v1.sql</span>
-            {' '}to enable NAV marks and user pool projections.
-          </div>
-        ) : poolMarking.pools.length ? (
-          <div className="mt-6 grid gap-4">
-            {poolMarking.pools.map((poolMark) => (
-              <PoolNavMarkCard key={poolMark.pool.id} poolMark={poolMark} />
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {capitalStats.map((stat) => (
+              <StatCard key={stat.label} detail={stat.detail} label={stat.label} tone={stat.tone} value={stat.value} />
             ))}
           </div>
-        ) : (
-          <p className="mt-5 rounded-md border border-neutral-800 bg-neutral-950/30 px-4 py-3 text-sm text-neutral-500">
-            No strategy pools are available.
-          </p>
-        )}
-      </section>
+        </Panel>
+      </div>
 
-      <section className="rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8" aria-labelledby="exceptions-heading">
-        <div className="grid gap-4 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
-          <div>
-            <p className="text-sm font-medium text-neutral-400">Exceptions</p>
-            <h2 id="exceptions-heading" className="mt-1 text-2xl font-semibold text-neutral-50">
-              {healthIssues.length ? `${healthIssues.length} active ${healthIssues.length === 1 ? 'signal' : 'signals'}` : 'No active exceptions'}
-            </h2>
-          </div>
-          <div className="grid gap-3">
+      <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+        <Panel aria-labelledby="exceptions-heading">
+          <SectionHeader
+            eyebrow="Exceptions"
+            title={healthIssues.length ? `${healthIssues.length} active ${healthIssues.length === 1 ? 'signal' : 'signals'}` : 'No active exceptions'}
+            titleId="exceptions-heading"
+          />
+          <div className="mt-5 grid gap-3">
             {healthIssues.length ? (
               healthIssues.map((issue) => (
                 <article key={`${issue.label}-${issue.detail}`} className={`rounded-md border px-4 py-3 ${getHealthPanelClass(issue.tone)}`}>
@@ -662,33 +692,60 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
               </p>
             )}
           </div>
-        </div>
-      </section>
+        </Panel>
 
-      <section className="rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8" aria-labelledby="money-movement-heading">
-        <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="text-sm font-medium text-neutral-400">Money Movement</p>
-              <span className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/40 px-2.5 py-1 text-xs text-neutral-500">
-                <span
-                  aria-hidden="true"
-                  className={`h-1.5 w-1.5 rounded-full ${isFetching ? 'bg-amber-300' : 'bg-emerald-300'}`}
-                />
-                {isFetching ? 'Updating' : 'Live'}
-                <span className="text-neutral-600">5s</span>
-                <span className="text-neutral-600">{formatTime(data.generatedAt)}</span>
-              </span>
-            </div>
-            <h2 id="money-movement-heading" className="mt-1 text-2xl font-semibold text-neutral-50">
-              Deposit pipeline
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">
-              Stripe sessions, settlement availability, posted deposits, ledger entries, and automated treasury state in
-              one operating view.
-            </p>
+        <Panel aria-labelledby="system-checks-heading">
+          <SectionHeader
+            description="Each rail needed for deposits, pool accounting, and dashboard projection."
+            eyebrow="Readiness"
+            title="Core checks"
+            titleId="system-checks-heading"
+          />
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {systemChecks.map((check) => (
+              <StatusCheck key={check.label} label={check.label} tone={check.tone} value={check.value} />
+            ))}
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        </Panel>
+      </div>
+
+      <Panel aria-labelledby="pool-nav-heading">
+        <SectionHeader
+          actions={<LiveBadge isFetching={isFetching} />}
+          description="Mark total pool equity and current balances. The system derives NAV per unit and refreshes user positions from the pool unit ledger."
+          eyebrow="Pool NAV"
+          title="Pool NAV Marking"
+          titleId="pool-nav-heading"
+        />
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <InlineMetric label="Active pools" value={activePools.length} tone={poolMarking.available ? 'green' : 'amber'} />
+          <InlineMetric label="Pool equity" value={formatCurrency(poolEquity)} tone={poolEquity > 0 ? 'green' : 'neutral'} />
+          <InlineMetric label="Open PnL" value={formatCurrency(poolOpenPnl)} tone={poolOpenPnl > 0 ? 'green' : poolOpenPnl < 0 ? 'red' : 'neutral'} />
+          <InlineMetric label="Total units" value={formatUnits(poolTotalUnits)} />
+        </div>
+
+        {!poolMarking.available ? (
+          <div className="mt-5 rounded-md border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">
+            Pool unit accounting is not installed yet. Run <span className="font-mono">supabase/pool-unit-accounting-v1.sql</span>
+            {' '}to enable NAV marks and user pool projections.
+          </div>
+        ) : poolMarking.pools.length ? (
+          <div className="mt-5 grid gap-4 xl:grid-cols-3">
+            {poolMarking.pools.map((poolMark) => (
+              <PoolNavMarkCard key={poolMark.pool.id} poolMark={poolMark} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-5 rounded-md border border-neutral-800 bg-neutral-950/30 px-4 py-3 text-sm text-neutral-500">
+            No strategy pools are available.
+          </p>
+        )}
+      </Panel>
+
+      <Panel aria-labelledby="money-movement-heading">
+        <SectionHeader
+          actions={
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <InlineMetric label="Stripe sessions" value={moneyMovement.stripeSessions.length} />
             <InlineMetric label="Posted deposits" value={postedDeposits.length} tone="green" />
             <InlineMetric
@@ -703,7 +760,12 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
             />
             <InlineMetric label="Treasury queue" value={queuedTreasuryTasks.length} tone={queuedTreasuryTasks.length ? 'amber' : 'neutral'} />
           </div>
-        </div>
+          }
+          description="Stripe sessions, settlement availability, posted deposits, ledger entries, and automated treasury state in one operating view."
+          eyebrow="Money Movement"
+          title="Deposit pipeline"
+          titleId="money-movement-heading"
+        />
 
         {error ? (
           <div className="mt-5 rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm leading-6 text-red-100">
@@ -725,7 +787,7 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
             {' '}to track Stripe fees, net funds, and availability dates before treasury funding.
           </div>
         ) : null}
-        <div className="mt-6 grid gap-4 xl:grid-cols-2">
+        <div className="mt-5 grid gap-4 xl:grid-cols-2">
           <article className="rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -892,7 +954,7 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
             </div>
           </article>
         </div>
-      </section>
+      </Panel>
     </>
   );
 }

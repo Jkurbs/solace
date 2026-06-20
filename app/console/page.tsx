@@ -50,7 +50,7 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
     <main className="min-h-screen bg-[#10100e] text-neutral-50">
       <ConsoleHeader pendingAccessCount={pendingAccessCount} />
 
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
         <ConsoleLivePanels initialData={consoleLiveData} />
       </div>
     </main>
