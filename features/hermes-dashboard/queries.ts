@@ -34,13 +34,13 @@ export async function updateRiskProfile(riskProfile: RiskProfile) {
   return payload.riskProfile;
 }
 
-export async function startMoneyMovement(type: MoneyMovementType) {
+export async function startMoneyMovement(type: MoneyMovementType, amount?: number) {
   const response = await fetch('/api/dashboard/money-movement', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ type }),
+    body: JSON.stringify({ amount, type }),
   });
   const payload = (await response.json()) as { message?: string; url?: string };
 

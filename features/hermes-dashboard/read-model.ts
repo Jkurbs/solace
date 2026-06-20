@@ -33,12 +33,11 @@ type AccountMoneyState = {
   pendingSettlement: StripeDepositSettlement | null;
 };
 
-const activeTreasuryTaskStatuses = new Set<TreasuryTask['status']>([
+const blockingTreasuryTaskStatuses = new Set<TreasuryTask['status']>([
   'WAITING_SETTLEMENT',
   'QUEUED',
   'REVIEWING',
   'FUNDABLE',
-  'APPROVED',
   'SUBMITTED',
 ]);
 
@@ -211,7 +210,7 @@ async function getAccountMoneyState(accountId: string): Promise<AccountMoneyStat
   const accountTasks = moneyMovement.treasuryTasks.filter((task) => task.accountId === accountId);
 
   return {
-    activeTreasuryTask: accountTasks.find((task) => activeTreasuryTaskStatuses.has(task.status)) ?? null,
+    activeTreasuryTask: accountTasks.find((task) => blockingTreasuryTaskStatuses.has(task.status)) ?? null,
     pendingSettlement: accountSettlements.find((settlement) => settlement.status === 'pending') ?? null,
   };
 }

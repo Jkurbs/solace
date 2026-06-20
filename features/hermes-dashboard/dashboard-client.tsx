@@ -121,6 +121,18 @@ function formatTodaysChange(change: HermesDashboardSnapshot['portfolio']['todays
   return `${formatCurrency(change.amount, { signed: true })} (${formatPercent(change.percentage, true)})`;
 }
 
+function parseCapitalAmountInput(value: string) {
+  const amount = Number(value.replace(/[$,\s]/g, ''));
+
+  if (!Number.isFinite(amount)) {
+    return null;
+  }
+
+  const rounded = Math.round(amount * 100) / 100;
+
+  return rounded >= 1 ? rounded : null;
+}
+
 function getEquityStateBadgeClass(code: HermesDashboardSnapshot['portfolio']['equityState']['code']) {
   if (code === 'LIVE_EQUITY') {
     return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300';
@@ -224,6 +236,7 @@ function ActivationStep({
 
 export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const [actionStatus, setActionStatus] = useState('');
+  const [depositAmount, setDepositAmount] = useState(() => String(initialSnapshot.account.depositIntent?.amount ?? 1000));
   const [identityStatus, setIdentityStatus] = useState('');
   const [logoutStatus, setLogoutStatus] = useState('');
   const [riskStatus, setRiskStatus] = useState('');
@@ -239,7 +252,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   });
 
   const moneyMovement = useMutation({
-    mutationFn: (type: MoneyMovementType) => startMoneyMovement(type),
+    mutationFn: ({ amount, type }: { amount?: number; type: MoneyMovementType }) => startMoneyMovement(type, amount),
     onMutate() {
       setActionStatus('');
     },
@@ -335,6 +348,17 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       window.localStorage.setItem('hermes_dashboard_theme', next);
       return next;
     });
+  }
+
+  function handleDeposit() {
+    const amount = parseCapitalAmountInput(depositAmount);
+
+    if (!amount) {
+      setActionStatus('Enter a deposit amount of at least $1.');
+      return;
+    }
+
+    moneyMovement.mutate({ amount, type: 'deposit' });
   }
 
   const allocationGradient = useMemo(() => buildAllocationGradient(data.allocation, theme), [data.allocation, theme]);
@@ -602,11 +626,31 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               </div>
             </CardHeader>
             <CardContent>
+              <label htmlFor="deposit-amount" className="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                {isAwaitingDeposit ? 'Initial amount' : 'Amount to add'}
+              </label>
+              <div className="mt-2 grid grid-cols-[auto_1fr] overflow-hidden rounded-md border border-neutral-200 bg-neutral-50 focus-within:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950/40 dark:focus-within:border-neutral-600">
+                <span className="grid h-11 place-items-center border-r border-neutral-200 px-3 text-sm text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  $
+                </span>
+                <input
+                  id="deposit-amount"
+                  inputMode="decimal"
+                  min="1"
+                  name="depositAmount"
+                  onChange={(event) => setDepositAmount(event.target.value)}
+                  placeholder="1000"
+                  type="text"
+                  value={depositAmount}
+                  className="h-11 min-w-0 bg-transparent px-3 text-base font-medium text-neutral-950 outline-none placeholder:text-neutral-400 dark:text-neutral-50 dark:placeholder:text-neutral-600"
+                />
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   type="button"
-                  onClick={() => moneyMovement.mutate('deposit')}
-                  disabled={moneyMovement.isPending}
+                  onClick={handleDeposit}
+                  disabled={moneyMovement.isPending || setupIncomplete}
+                  className="mt-3"
                 >
                   <ArrowDownToLine size={16} aria-hidden="true" />
                   Deposit
@@ -614,8 +658,9 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => moneyMovement.mutate('withdraw')}
+                  onClick={() => moneyMovement.mutate({ type: 'withdraw' })}
                   disabled={moneyMovement.isPending || isAwaitingDeposit || isFundingPending}
+                  className="mt-3"
                 >
                   <ArrowUpFromLine size={16} aria-hidden="true" />
                   Withdraw

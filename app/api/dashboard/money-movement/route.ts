@@ -8,9 +8,24 @@ import { recordStripeDepositSession } from '@/features/ledger/store';
 import { getStripeServerClient } from '@/lib/stripe/server';
 
 const validTypes = new Set(['deposit', 'withdraw']);
+const minimumDepositAmount = 1;
 
 function getRequestOrigin(request: Request) {
   return new URL(request.url).origin;
+}
+
+function parseDepositAmount(value: unknown) {
+  if (typeof value !== 'number' && typeof value !== 'string') {
+    return null;
+  }
+
+  const amount = typeof value === 'number' ? value : Number(value.replace(/[$,\s]/g, ''));
+
+  if (!Number.isFinite(amount)) {
+    return null;
+  }
+
+  return Math.round(amount * 100) / 100;
 }
 
 function dollarsToCents(amount: number) {
@@ -34,7 +49,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Dashboard access required.' }, { status: 401 });
   }
 
-  const body = (await request.json().catch(() => null)) as { type?: string } | null;
+  const body = (await request.json().catch(() => null)) as { amount?: unknown; type?: string } | null;
   const type = body?.type;
 
   if (!type || !validTypes.has(type)) {
@@ -67,10 +82,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Approved account could not be found. Open your invite link again or contact Solace.' }, { status: 404 });
   }
 
-  const amount = onboarding?.depositIntentAmount;
+  const hasRequestedAmount = body ? Object.prototype.hasOwnProperty.call(body, 'amount') : false;
+  const requestedAmount = hasRequestedAmount ? parseDepositAmount(body?.amount) : null;
 
-  if (!amount || amount <= 0) {
-    return NextResponse.json({ message: 'Complete onboarding before opening a deposit.' }, { status: 409 });
+  if (hasRequestedAmount && requestedAmount === null) {
+    return NextResponse.json({ message: 'Enter a valid deposit amount.' }, { status: 400 });
+  }
+
+  const amount = requestedAmount ?? onboarding?.depositIntentAmount;
+
+  if (!amount || amount < minimumDepositAmount) {
+    return NextResponse.json({ message: `Deposit amount must be at least $${minimumDepositAmount}.` }, { status: 400 });
   }
 
   const stripe = getStripeServerClient();

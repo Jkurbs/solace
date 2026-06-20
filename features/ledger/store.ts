@@ -6,6 +6,7 @@ import type { IdentityVerificationStatus } from '@/features/hermes-dashboard/typ
 
 import type { LedgerActivity, LedgerDataset, LedgerDeposit, LedgerEntry, StripeDepositSettlementStatus } from './types';
 import { mintPoolUnitsForDeposit } from './pool-units';
+import { automateTreasuryTasks } from './treasury-automation';
 import { evaluateTreasuryPolicy } from './treasury-policy';
 
 type SolaceActivityRow = Database['public']['Tables']['solace_activities']['Row'];
@@ -251,6 +252,8 @@ async function queueTreasuryTaskForDeposit({
     console.warn('[ledger] Treasury task could not be persisted.', taskResult.error.message);
     return false;
   }
+
+  await automateTreasuryTasks({ taskIds: [taskId] });
 
   return true;
 }

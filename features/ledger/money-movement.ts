@@ -13,6 +13,7 @@ import type {
   TreasuryTask,
   TreasuryTaskStatus,
 } from './types';
+import { automateTreasuryTasks } from './treasury-automation';
 
 type DashboardInviteRow = Database['public']['Tables']['dashboard_invites']['Row'];
 type HermesAccountRow = Database['public']['Tables']['hermes_accounts']['Row'];
@@ -215,6 +216,8 @@ export async function listMoneyMovementRecords(): Promise<MoneyMovementRecords> 
 
   try {
     const supabase = await createSupabaseDataClient();
+    await automateTreasuryTasks();
+
     const [
       sessionsResult,
       depositsResult,

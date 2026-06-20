@@ -20,7 +20,7 @@ type ConsoleLivePanelsProps = {
 
 const consoleLiveQueryKey = ['console-live'] as const;
 const refreshIntervalMs = 5_000;
-const activeTreasuryStatuses = ['WAITING_SETTLEMENT', 'QUEUED', 'REVIEWING', 'FUNDABLE', 'APPROVED', 'SUBMITTED'];
+const treasuryAttentionStatuses = ['WAITING_SETTLEMENT', 'QUEUED', 'REVIEWING', 'FUNDABLE', 'SUBMITTED'];
 
 type Tone = 'neutral' | 'amber' | 'green' | 'red';
 
@@ -454,8 +454,10 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
   const pendingSettlements = moneyMovement.stripeSettlements.filter((settlement) => settlement.status === 'pending');
   const availableSettlementNet = availableSettlements.reduce((total, settlement) => total + settlement.netAmount, 0);
   const pendingSettlementNet = pendingSettlements.reduce((total, settlement) => total + settlement.netAmount, 0);
-  const queuedTreasuryTasks = moneyMovement.treasuryTasks.filter((task) => activeTreasuryStatuses.includes(task.status));
-  const queuedTreasuryAmount = queuedTreasuryTasks.reduce((total, task) => total + task.amount, 0);
+  const treasuryTasksNeedingAttention = moneyMovement.treasuryTasks.filter((task) => treasuryAttentionStatuses.includes(task.status));
+  const treasuryAttentionAmount = treasuryTasksNeedingAttention.reduce((total, task) => total + task.amount, 0);
+  const autoApprovedTreasuryTasks = moneyMovement.treasuryTasks.filter((task) => task.status === 'APPROVED');
+  const autoApprovedTreasuryAmount = autoApprovedTreasuryTasks.reduce((total, task) => total + task.amount, 0);
   const failedSessions = moneyMovement.stripeSessions.filter((session) => session.status === 'failed');
   const failedDeposits = moneyMovement.deposits.filter((deposit) => deposit.status === 'failed');
   const failedTreasuryTasks = moneyMovement.treasuryTasks.filter((task) => task.status === 'FAILED');
@@ -638,8 +640,8 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
     {
       detail: 'Queued for treasury',
       label: 'Treasury queue',
-      tone: queuedTreasuryTasks.length ? ('amber' as const) : ('green' as const),
-      value: formatCurrency(queuedTreasuryAmount),
+      tone: treasuryTasksNeedingAttention.length ? ('amber' as const) : ('green' as const),
+      value: formatCurrency(treasuryAttentionAmount),
     },
   ];
 
@@ -766,7 +768,12 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
                 value={pendingSettlements.length}
                 tone={pendingSettlements.length ? 'amber' : 'neutral'}
               />
-              <InlineMetric label="Treasury queue" value={queuedTreasuryTasks.length} tone={queuedTreasuryTasks.length ? 'amber' : 'neutral'} />
+              <InlineMetric
+                label="Needs attention"
+                value={treasuryTasksNeedingAttention.length}
+                tone={treasuryTasksNeedingAttention.length ? 'amber' : 'green'}
+              />
+              <InlineMetric label="Auto-approved" value={autoApprovedTreasuryTasks.length} tone={autoApprovedTreasuryTasks.length ? 'green' : 'neutral'} />
             </div>
           }
           description="Stripe sessions, settlement availability, posted deposits, ledger entries, and automated treasury state in one operating view."
@@ -933,6 +940,18 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
           <article className="rounded-md border border-neutral-800 bg-neutral-950/30 p-5">
             <p className="text-sm font-medium text-neutral-400">Treasury Queue</p>
             <h3 className="mt-1 text-lg font-semibold text-neutral-50">Automated funding state</h3>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <InlineMetric
+                label="Needs attention"
+                value={formatCurrency(treasuryAttentionAmount)}
+                tone={treasuryTasksNeedingAttention.length ? 'amber' : 'green'}
+              />
+              <InlineMetric
+                label="Auto-approved"
+                value={formatCurrency(autoApprovedTreasuryAmount)}
+                tone={autoApprovedTreasuryTasks.length ? 'green' : 'neutral'}
+              />
+            </div>
             <div className="mt-5 grid gap-4">
               {moneyMovement.treasuryTasks.length ? (
                 moneyMovement.treasuryTasks.slice(0, 5).map((task) => (
