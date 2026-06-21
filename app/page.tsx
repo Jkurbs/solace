@@ -71,7 +71,7 @@ function Header() {
     <header className="site-header">
       <div className="site-header-inner">
         <Link href="/" className="site-wordmark" aria-label="Solace home">
-          <Mark size={28} className="site-mark" />
+          <Mark size={26} className="site-mark" />
           Solace
         </Link>
 
@@ -150,7 +150,7 @@ export default function Home() {
             >
               Systems for reading complexity.
             </motion.h1>
-            <motion.p variants={fade} className="hero-body mt-7 max-w-2xl text-base leading-8 text-muted md:text-lg">
+            <motion.p variants={fade} className="hero-body mt-7 max-w-2xl text-lg leading-8 text-muted md:text-xl">
               Solace builds instruments for uncertainty: systems that observe, model, deploy, and keep only what
               survives contact with the world.
             </motion.p>

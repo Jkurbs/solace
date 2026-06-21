@@ -173,6 +173,11 @@ export default function HermesPage() {
               Hermes is an allocation interface for users who want visibility into how capital is being
               deployed without managing daily decisions or constantly adjusting account posture.
             </p>
+            <div className="hermes-impact-hero-actions">
+              <a href="#request-access" className="primary-link">
+                Request Hermes
+              </a>
+            </div>
           </div>
         </section>
 
@@ -390,7 +395,7 @@ export default function HermesPage() {
           </div>
         </section>
 
-        <section className="hermes-access-form-section">
+        <section id="request-access" className="hermes-access-form-section scroll-mt-28">
           <div className="hermes-access-form-head">
             <p className="section-kicker">Request access</p>
             <Link href="/brief" className="text-link">
