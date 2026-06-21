@@ -267,6 +267,56 @@ async function queueTreasuryTaskForDeposit({
   return true;
 }
 
+async function recordCompletedSimulationTreasuryTask({
+  accountId,
+  amount,
+  currency,
+  depositId,
+  occurredAt,
+  simulationReference,
+}: {
+  accountId: string;
+  amount: number;
+  currency: 'USD';
+  depositId: string;
+  occurredAt: string;
+  simulationReference: string;
+}) {
+  const supabase = await createSupabaseDataClient();
+  const taskId = `treasury_task_${simulationReference}`;
+
+  const { error } = await supabase.from('treasury_tasks').upsert(
+    {
+      amount,
+      checkout_session_id: simulationReference,
+      completed_at: occurredAt,
+      created_at: occurredAt,
+      currency,
+      deposit_id: depositId,
+      external_reference: simulationReference,
+      id: taskId,
+      ledger_account_id: accountId,
+      notes: 'Simulation treasury: capital was routed through the Solace treasury lifecycle and marked ready for Hermes projection.',
+      status: 'COMPLETED',
+      type: 'FUND_HERMES' as const,
+      updated_at: occurredAt,
+    },
+    { onConflict: 'id' },
+  );
+
+  if (error) {
+    if (isMissingTreasuryTasksTable(error.message)) {
+      console.warn('[ledger] Treasury task queue table is not installed yet.', error.message);
+      return true;
+    }
+
+    console.warn('[ledger] Simulated treasury task could not be persisted.', error.message);
+    return false;
+  }
+
+  return true;
+}
+
 async function recordStripeDepositSettlement({
   accountId,
   amount,
@@ -585,7 +635,7 @@ export async function postStripeCheckoutDeposit({
 
     const { data: ledgerAccount, error: ledgerAccountError } = await supabase
       .from('ledger_accounts')
-      .select('hermes_account_id, solace_user_id')
+      .select('account_mode, hermes_account_id, solace_user_id')
       .eq('id', accountId)
       .maybeSingle();
 
@@ -691,19 +741,6 @@ export async function postStripeCheckoutDeposit({
       return false;
     }
 
-    const poolUnitsMinted = await mintPoolUnitsForDeposit({
-      accountId,
-      amount: normalizedAmount,
-      currency,
-      depositId,
-      occurredAt,
-      sourceReference: checkoutSessionId,
-    });
-
-    if (!poolUnitsMinted) {
-      return false;
-    }
-
     const treasuryTaskQueued = await queueTreasuryTaskForDeposit({
       accountId,
       amount: normalizedAmount,
@@ -717,6 +754,56 @@ export async function postStripeCheckoutDeposit({
 
     if (!treasuryTaskQueued) {
       return false;
+    }
+
+    if ((ledgerAccount as { account_mode?: string | null }).account_mode === 'SIMULATION') {
+      const taskId = `treasury_task_${checkoutSessionId}`;
+      const { error: taskCompletionError } = await supabase
+        .from('treasury_tasks')
+        .update({
+          completed_at: occurredAt,
+          external_reference: checkoutSessionId,
+          notes: 'Stripe sandbox simulation treasury: checkout completed, capital routed through Solace treasury, and pool units minted automatically.',
+          status: 'COMPLETED',
+          updated_at: occurredAt,
+        })
+        .eq('id', taskId);
+
+      if (taskCompletionError) {
+        if (isMissingTreasuryTasksTable(taskCompletionError.message)) {
+          console.warn('[ledger] Treasury task queue table is not installed yet.', taskCompletionError.message);
+          return true;
+        }
+
+        console.warn('[ledger] Stripe sandbox simulation treasury completion failed.', taskCompletionError.message);
+        return false;
+      }
+
+      const poolUnitsMinted = await mintPoolUnitsForDeposit({
+        accountId,
+        amount: normalizedAmount,
+        currency,
+        depositId,
+        occurredAt,
+        sourceReference: checkoutSessionId,
+      });
+
+      if (!poolUnitsMinted) {
+        return false;
+      }
+
+      const { error: treasuryActivityError } = await supabase.from('solace_activities').upsert({
+        created_at: occurredAt,
+        id: `act_${taskId}_completed`,
+        ledger_account_id: accountId,
+        message: 'Stripe sandbox simulation treasury allocation completed',
+        type: 'treasury_transfer',
+      });
+
+      if (treasuryActivityError) {
+        console.warn('[ledger] Stripe sandbox simulation treasury activity failed.', treasuryActivityError.message);
+        return false;
+      }
     }
 
     return true;
@@ -744,6 +831,7 @@ export async function postSimulatedDashboardDeposit({
     const depositId = `dep_${simulationReference}`;
     const entryId = `entry_${simulationReference}`;
     const activityId = `act_${simulationReference}`;
+    const treasuryActivityId = `act_treasury_${simulationReference}`;
 
     const { data: ledgerAccount, error: ledgerAccountError } = await supabase
       .from('ledger_accounts')
@@ -796,7 +884,7 @@ export async function postSimulatedDashboardDeposit({
       created_at: occurredAt,
       id: activityId,
       ledger_account_id: accountId,
-      message: 'Simulated capital added',
+      message: 'Simulated capital received',
       type: 'deposit_posted',
     });
 
@@ -819,7 +907,20 @@ export async function postSimulatedDashboardDeposit({
       return false;
     }
 
-    return mintPoolUnitsForDeposit({
+    const treasuryTaskRecorded = await recordCompletedSimulationTreasuryTask({
+      accountId,
+      amount: normalizedAmount,
+      currency,
+      depositId,
+      occurredAt,
+      simulationReference,
+    });
+
+    if (!treasuryTaskRecorded) {
+      return false;
+    }
+
+    const poolUnitsMinted = await mintPoolUnitsForDeposit({
       accountId,
       amount: normalizedAmount,
       currency,
@@ -827,6 +928,25 @@ export async function postSimulatedDashboardDeposit({
       occurredAt,
       sourceReference: simulationReference,
     });
+
+    if (!poolUnitsMinted) {
+      return false;
+    }
+
+    const { error: treasuryActivityError } = await supabase.from('solace_activities').insert({
+      created_at: occurredAt,
+      id: treasuryActivityId,
+      ledger_account_id: accountId,
+      message: 'Simulation treasury allocation completed',
+      type: 'treasury_transfer',
+    });
+
+    if (treasuryActivityError) {
+      console.warn('[ledger] Simulated treasury activity post failed.', treasuryActivityError.message);
+      return false;
+    }
+
+    return true;
   } catch (error) {
     console.warn('[ledger] Simulated deposit posting failed.', error);
     return false;

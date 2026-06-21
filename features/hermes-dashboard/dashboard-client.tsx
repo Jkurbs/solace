@@ -441,10 +441,12 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       : isAwaitingDeposit
         ? 'Deposits are reviewed before Hermes begins allocation.'
         : isFundingPending
-          ? 'Deposit received. Treasury allocation is pending before Hermes begins deployment.'
-        : isSimulationMode
-          ? 'Simulation mode adds ledger capital without moving real money.'
-          : 'Capital movement runs through the approved account rails.');
+          ? isSimulationMode
+            ? 'Simulation capital received. Solace treasury routing is being recorded before Hermes projection updates.'
+            : 'Deposit received. Treasury allocation is pending before Hermes begins deployment.'
+          : isSimulationMode
+            ? 'Simulation mode uses Stripe sandbox when configured. No real money moves.'
+            : 'Capital movement runs through the approved account rails.');
   const identityVerificationLabel = formatIdentityStatus(data.account.identityVerification.status);
   const identityHelper =
     identityStatus ||
@@ -755,17 +757,35 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               <div className="grid gap-3 sm:grid-cols-3">
                 <ActivationStep
                   detail={formatCurrency(data.portfolio.deposited, { whole: true })}
-                  label="Capital received"
+                  label={isSimulationMode ? 'Simulation capital received' : 'Capital received'}
                   state="complete"
                 />
                 <ActivationStep
-                  detail={equityState.code === 'PENDING_SETTLEMENT' ? 'Awaiting Stripe availability' : 'Solace treasury is preparing allocation'}
-                  label={equityState.code === 'PENDING_SETTLEMENT' ? 'Settlement tracking' : 'Treasury allocation'}
+                  detail={
+                    isSimulationMode
+                      ? 'Solace treasury routing is being recorded'
+                      : equityState.code === 'PENDING_SETTLEMENT'
+                        ? 'Awaiting Stripe availability'
+                        : 'Solace treasury is preparing allocation'
+                  }
+                  label={
+                    isSimulationMode
+                      ? 'Simulation treasury'
+                      : equityState.code === 'PENDING_SETTLEMENT'
+                        ? 'Settlement tracking'
+                        : 'Treasury allocation'
+                  }
                   state={equityState.code === 'PENDING_SETTLEMENT' ? 'pending' : equityState.code === 'TREASURY_QUEUED' ? 'pending' : 'complete'}
                 />
                 <ActivationStep
-                  detail={equityState.code === 'NAV_PENDING' ? 'Waiting for NAV mark' : 'Begins after treasury clears'}
-                  label={equityState.code === 'NAV_PENDING' ? 'NAV mark' : 'Hermes deployment'}
+                  detail={
+                    equityState.code === 'NAV_PENDING'
+                      ? 'Waiting for NAV mark'
+                      : isSimulationMode
+                        ? 'Updates after treasury routing completes'
+                        : 'Begins after treasury clears'
+                  }
+                  label={equityState.code === 'NAV_PENDING' ? 'NAV mark' : isSimulationMode ? 'Hermes projection' : 'Hermes deployment'}
                   state="pending"
                 />
               </div>

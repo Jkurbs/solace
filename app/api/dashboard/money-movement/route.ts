@@ -95,7 +95,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: `Deposit amount must be at least $${minimumDepositAmount}.` }, { status: 400 });
   }
 
-  if (bundle.ledgerAccount.accountMode === 'SIMULATION') {
+  const stripe = getStripeServerClient();
+  const isSimulationMode = bundle.ledgerAccount.accountMode === 'SIMULATION';
+
+  if (isSimulationMode && !stripe) {
     const posted = await postSimulatedDashboardDeposit({
       accountId,
       amount,
@@ -111,11 +114,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      message: 'Simulated capital added. No real money moved.',
+      message: 'Simulated capital received, routed through Solace treasury, and linked to Hermes projection.',
     });
   }
-
-  const stripe = getStripeServerClient();
 
   if (!stripe) {
     return NextResponse.json({ message: 'Stripe deposits are not configured yet.' }, { status: 503 });
@@ -131,7 +132,7 @@ export async function POST(request: Request) {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: 'Solace Hermes deposit',
+            name: isSimulationMode ? 'Solace Hermes simulated deposit' : 'Solace Hermes deposit',
           },
           unit_amount: dollarsToCents(amount),
         },
@@ -139,12 +140,14 @@ export async function POST(request: Request) {
       },
     ],
     metadata: {
+      account_mode: bundle.ledgerAccount.accountMode,
       ledger_account_id: accountId,
       purpose: 'solace_deposit',
     },
     mode: 'payment',
     payment_intent_data: {
       metadata: {
+        account_mode: bundle.ledgerAccount.accountMode,
         ledger_account_id: accountId,
         purpose: 'solace_deposit',
       },
@@ -171,7 +174,9 @@ export async function POST(request: Request) {
 
   return NextResponse.json(
     {
-      message: 'Opening Stripe Checkout for your Solace deposit.',
+      message: isSimulationMode
+        ? 'Opening Stripe sandbox Checkout for your simulated Solace deposit.'
+        : 'Opening Stripe Checkout for your Solace deposit.',
       url: session.url,
     },
   );

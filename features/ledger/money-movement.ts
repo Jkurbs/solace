@@ -14,6 +14,7 @@ import type {
   TreasuryTask,
   TreasuryTaskStatus,
 } from './types';
+import { mintPoolUnitsForDeposit } from './pool-units';
 import { automateTreasuryTasks } from './treasury-automation';
 
 type DashboardInviteRow = Database['public']['Tables']['dashboard_invites']['Row'];
@@ -320,7 +321,7 @@ export async function updateTreasuryTaskStatus({
     const now = new Date().toISOString();
     const { data: task, error: taskError } = await supabase
       .from('treasury_tasks')
-      .select('status')
+      .select('*')
       .eq('id', taskId)
       .maybeSingle();
 
@@ -338,14 +339,31 @@ export async function updateTreasuryTaskStatus({
       return false;
     }
 
+    const trimmedExternalReference = externalReference?.trim();
+
+    if (status === 'COMPLETED') {
+      const minted = await mintPoolUnitsForDeposit({
+        accountId: task.ledger_account_id,
+        amount: task.amount,
+        currency: task.currency,
+        depositId: task.deposit_id,
+        occurredAt: now,
+        sourceReference: trimmedExternalReference || task.external_reference || task.checkout_session_id,
+      });
+
+      if (!minted) {
+        return false;
+      }
+    }
+
     const update: Database['public']['Tables']['treasury_tasks']['Update'] = {
       completed_at: status === 'COMPLETED' ? now : null,
       status,
       updated_at: now,
     };
 
-    if (externalReference?.trim()) {
-      update.external_reference = externalReference.trim();
+    if (trimmedExternalReference) {
+      update.external_reference = trimmedExternalReference;
     }
 
     if (notes?.trim()) {
@@ -357,6 +375,20 @@ export async function updateTreasuryTaskStatus({
     if (error) {
       console.warn('[ledger] Treasury task status update failed.', error.message);
       return false;
+    }
+
+    if (status === 'COMPLETED') {
+      const { error: activityError } = await supabase.from('solace_activities').upsert({
+        created_at: now,
+        id: `act_${task.id}_completed`,
+        ledger_account_id: task.ledger_account_id,
+        message: 'Treasury allocation completed',
+        type: 'treasury_transfer',
+      });
+
+      if (activityError) {
+        console.warn('[ledger] Treasury completion activity could not be recorded.', activityError.message);
+      }
     }
 
     return true;

@@ -40,6 +40,7 @@ const blockingTreasuryTaskStatuses = new Set<TreasuryTask['status']>([
   'QUEUED',
   'REVIEWING',
   'FUNDABLE',
+  'APPROVED',
   'SUBMITTED',
 ]);
 
@@ -248,6 +249,15 @@ function getPortfolioEquityState({
       detail: 'No capital has posted to this Solace account yet.',
       label: 'Awaiting capital',
       updatedAt: ledger.generatedAt,
+    };
+  }
+
+  if (ledger.account.accountMode === 'SIMULATION' && poolProjection) {
+    return {
+      code: 'LIVE_EQUITY',
+      detail: 'Simulation portfolio value is calculated from your pool units and the latest Hermes NAV mark.',
+      label: 'Live simulation',
+      updatedAt: poolProjection.latestNav.effectiveAt,
     };
   }
 
