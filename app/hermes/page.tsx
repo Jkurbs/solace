@@ -158,9 +158,9 @@ export default function HermesPage() {
             <Mark size={20} />
             Solace
           </Link>
-          <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-muted transition-colors hover:text-foreground">
-            Home
-          </Link>
+          <a href="#request-access" className="header-request-button">
+            Request Hermes
+          </a>
         </div>
       </header>
 
@@ -173,11 +173,6 @@ export default function HermesPage() {
               Hermes is an allocation interface for users who want visibility into how capital is being
               deployed without managing daily decisions or constantly adjusting account posture.
             </p>
-            <div className="hermes-impact-hero-actions">
-              <a href="#request-access" className="primary-link">
-                Request Hermes
-              </a>
-            </div>
           </div>
         </section>
 
