@@ -6,6 +6,8 @@ import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/
 import type { Database, Json } from '@/lib/supabase/types';
 
 import type {
+  HermesSourceCapitalFlow,
+  HermesSourceCapitalFlowDirection,
   HermesPoolSourceMark,
   HermesPoolSourceMarkInput,
   HermesSourceMarkStatus,
@@ -19,6 +21,7 @@ import type {
 } from './types';
 
 type HermesPoolSourceMarkRow = Database['public']['Tables']['hermes_pool_source_marks']['Row'];
+type HermesSourceCapitalFlowRow = Database['public']['Tables']['hermes_source_capital_flows']['Row'];
 type PoolNavSnapshotRow = Database['public']['Tables']['pool_nav_snapshots']['Row'];
 type StrategyPoolRow = Database['public']['Tables']['strategy_pools']['Row'];
 type UserPoolPositionRow = Database['public']['Tables']['user_pool_positions']['Row'];
@@ -27,10 +30,12 @@ const emptyPoolMarkingRecords: PoolMarkingRecords = {
   available: false,
   generatedAt: new Date(0).toISOString(),
   pools: [],
+  sourceCapitalFlowsAvailable: false,
   sourceMarkingAvailable: false,
 };
 
 const poolAccountingObjects = [
+  'hermes_source_capital_flows',
   'hermes_pool_source_marks',
   'strategy_pools',
   'pool_nav_snapshots',
@@ -146,6 +151,20 @@ function fromHermesPoolSourceMarkRow(row: HermesPoolSourceMarkRow): HermesPoolSo
   };
 }
 
+function fromHermesSourceCapitalFlowRow(row: HermesSourceCapitalFlowRow): HermesSourceCapitalFlow {
+  return {
+    amount: normalizeAmount(row.amount),
+    createdAt: row.created_at,
+    currency: row.currency,
+    direction: row.direction,
+    effectiveAt: row.effective_at,
+    id: row.id,
+    notes: row.notes ?? undefined,
+    poolId: row.pool_id,
+    sourceExchange: row.source_exchange ?? undefined,
+  };
+}
+
 function fromUserPoolPositionRow(row: UserPoolPositionRow): UserPoolPosition {
   return {
     accountingVersion: row.accounting_version,
@@ -173,11 +192,13 @@ function getLatestSourceMarkForPool(poolId: string, marks: HermesPoolSourceMark[
 }
 
 function buildPoolMarkingPool({
+  capitalFlows,
   hermesSourceMarks,
   navs,
   pool,
   positions,
 }: {
+  capitalFlows: HermesSourceCapitalFlow[];
   hermesSourceMarks: HermesPoolSourceMark[];
   navs: PoolNavSnapshot[];
   pool: StrategyPool;
@@ -192,6 +213,10 @@ function buildPoolMarkingPool({
     positionCount: poolPositions.length,
     totalPositionEquity: normalizeAmount(poolPositions.reduce((total, position) => total + position.equity, 0)),
     totalPositionUnits: normalizeUnits(poolPositions.reduce((total, position) => total + position.units, 0)),
+    recentSourceCapitalFlows: capitalFlows
+      .filter((flow) => flow.poolId === pool.id)
+      .sort((a, b) => new Date(b.effectiveAt).getTime() - new Date(a.effectiveAt).getTime())
+      .slice(0, 5),
   };
 }
 
@@ -226,9 +251,19 @@ export async function listPoolMarkingRecords(): Promise<PoolMarkingRecords> {
       sourceMarksResult.error && isMissingPoolAccountingObject(sourceMarksResult.error.message)
         ? []
         : (sourceMarksResult.data ?? []).map(fromHermesPoolSourceMarkRow);
+    const capitalFlowsResult = await supabase.from('hermes_source_capital_flows').select('*');
+    const sourceCapitalFlowsAvailable = !capitalFlowsResult.error;
+    const capitalFlows =
+      capitalFlowsResult.error && isMissingPoolAccountingObject(capitalFlowsResult.error.message)
+        ? []
+        : (capitalFlowsResult.data ?? []).map(fromHermesSourceCapitalFlowRow);
 
     if (sourceMarksResult.error && !isMissingPoolAccountingObject(sourceMarksResult.error.message)) {
       console.warn('[pool-marking] Hermes source marks unavailable.', sourceMarksResult.error.message);
+    }
+
+    if (capitalFlowsResult.error && !isMissingPoolAccountingObject(capitalFlowsResult.error.message)) {
+      console.warn('[pool-marking] Hermes source capital flows unavailable.', capitalFlowsResult.error.message);
     }
 
     return {
@@ -237,7 +272,8 @@ export async function listPoolMarkingRecords(): Promise<PoolMarkingRecords> {
       pools: poolsResult.data
         .map(fromStrategyPoolRow)
         .sort((a, b) => a.name.localeCompare(b.name))
-        .map((pool) => buildPoolMarkingPool({ hermesSourceMarks, navs, pool, positions })),
+        .map((pool) => buildPoolMarkingPool({ capitalFlows, hermesSourceMarks, navs, pool, positions })),
+      sourceCapitalFlowsAvailable,
       sourceMarkingAvailable,
     };
   } catch (error) {
@@ -350,6 +386,44 @@ async function getLatestHermesSourceMark(poolId: string): Promise<HermesPoolSour
   return data[0] ? fromHermesPoolSourceMarkRow(data[0]) : null;
 }
 
+async function getNetSourceCapitalFlow({
+  after,
+  at,
+  poolId,
+}: {
+  after: string;
+  at?: string;
+  poolId: string;
+}) {
+  if (!at || new Date(at).getTime() <= new Date(after).getTime()) {
+    return 0;
+  }
+
+  const supabase = await createSupabaseDataClient();
+  const { data, error } = await supabase
+    .from('hermes_source_capital_flows')
+    .select('*')
+    .eq('pool_id', poolId)
+    .gt('effective_at', after)
+    .lte('effective_at', at);
+
+  if (error) {
+    if (!isMissingPoolAccountingObject(error.message)) {
+      console.warn('[pool-marking] Source capital flow lookup failed.', error.message);
+    }
+
+    return 0;
+  }
+
+  return normalizeAmount(
+    data.reduce((total, flow) => {
+      const sign = flow.direction === 'SOURCE_DEPOSIT' ? 1 : -1;
+
+      return total + sign * normalizeAmount(flow.amount);
+    }, 0),
+  );
+}
+
 function scaleSourceDelta(sourceDelta: number, sourceEquity: number, poolEquity: number) {
   if (sourceEquity <= 0 || poolEquity <= 0) {
     return 0;
@@ -411,12 +485,14 @@ function buildTranslatedNavMark({
 }
 
 async function insertHermesSourceMark({
+  externalSourceCapitalFlow = 0,
   input,
   navMark,
   navResult,
   sourceReturn,
   status,
 }: {
+  externalSourceCapitalFlow?: number;
   input: HermesPoolSourceMarkInput;
   navMark?: PoolNavMarkInput;
   navResult?: PoolNavMarkResult | null;
@@ -425,6 +501,7 @@ async function insertHermesSourceMark({
 }) {
   const supabase = await createSupabaseDataClient();
   const effectiveAt = input.effectiveAt ?? new Date().toISOString();
+  const rawPayload = toRecord(toJson(input.rawPayload));
   const { data, error } = await supabase
     .from('hermes_pool_source_marks')
     .insert({
@@ -434,7 +511,10 @@ async function insertHermesSourceMark({
       id: `hermes_source_${input.poolId}_${randomUUID().replace(/-/g, '')}`,
       nav_snapshot_id: navResult?.navSnapshotId ?? null,
       pool_id: input.poolId,
-      raw_payload: toJson(input.rawPayload),
+      raw_payload: toJson({
+        ...rawPayload,
+        externalSourceCapitalFlow: normalizeAmount(externalSourceCapitalFlow),
+      }),
       source: 'hermes_bridge',
       source_allocated_capital: normalizeAmount(input.allocatedCapital),
       source_cash_balance: normalizeAmount(input.cashBalance),
@@ -464,6 +544,63 @@ async function insertHermesSourceMark({
   return fromHermesPoolSourceMarkRow(data);
 }
 
+export async function recordHermesSourceCapitalFlow({
+  amount,
+  direction,
+  effectiveAt,
+  notes,
+  poolId,
+  sourceExchange = 'kucoin_futures',
+}: {
+  amount: number;
+  direction: HermesSourceCapitalFlowDirection;
+  effectiveAt?: string;
+  notes?: string;
+  poolId: string;
+  sourceExchange?: string;
+}) {
+  if (!isSupabaseDataClientConfigured()) {
+    return null;
+  }
+
+  const normalizedAmount = normalizeAmount(amount);
+
+  if (!poolId || normalizedAmount <= 0) {
+    return null;
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    const timestamp = effectiveAt ?? new Date().toISOString();
+    const { data, error } = await supabase
+      .from('hermes_source_capital_flows')
+      .insert({
+        amount: normalizedAmount,
+        direction,
+        effective_at: timestamp,
+        id: `hermes_source_flow_${poolId}_${randomUUID().replace(/-/g, '')}`,
+        notes: notes || null,
+        pool_id: poolId,
+        source_exchange: sourceExchange,
+      })
+      .select('*')
+      .single();
+
+    if (error) {
+      if (!isMissingPoolAccountingObject(error.message)) {
+        console.warn('[pool-marking] Source capital flow insert failed.', error.message);
+      }
+
+      return null;
+    }
+
+    return fromHermesSourceCapitalFlowRow(data);
+  } catch (error) {
+    console.warn('[pool-marking] Source capital flow insert failed.', error);
+    return null;
+  }
+}
+
 export async function postTranslatedHermesPoolMark(
   input: HermesPoolSourceMarkInput,
 ): Promise<HermesTranslatedPoolMarkResult | null> {
@@ -487,9 +624,18 @@ export async function postTranslatedHermesPoolMark(
       return sourceMark ? { sourceMark, status: 'baseline' } : null;
     }
 
+    const externalSourceCapitalFlow = await getNetSourceCapitalFlow({
+      after: previousSourceMark.effectiveAt,
+      at: input.effectiveAt,
+      poolId: input.poolId,
+    });
+
     if (!latestNav || latestNav.totalUnits <= 0) {
-      const sourceReturn = normalizeRatio((input.grossEquity - previousSourceMark.sourceEquity) / previousSourceMark.sourceEquity);
+      const sourceReturn = normalizeRatio(
+        (input.grossEquity - previousSourceMark.sourceEquity - externalSourceCapitalFlow) / previousSourceMark.sourceEquity,
+      );
       const sourceMark = await insertHermesSourceMark({
+        externalSourceCapitalFlow,
         input,
         sourceReturn,
         status: 'stored',
@@ -500,6 +646,7 @@ export async function postTranslatedHermesPoolMark(
 
     if (new Date(previousSourceMark.effectiveAt).getTime() < new Date(latestNav.effectiveAt).getTime()) {
       const sourceMark = await insertHermesSourceMark({
+        externalSourceCapitalFlow,
         input,
         sourceReturn: 0,
         status: 'baseline',
@@ -508,11 +655,14 @@ export async function postTranslatedHermesPoolMark(
       return sourceMark ? { sourceMark, status: 'baseline' } : null;
     }
 
-    const sourceReturn = normalizeRatio((input.grossEquity - previousSourceMark.sourceEquity) / previousSourceMark.sourceEquity);
+    const sourceReturn = normalizeRatio(
+      (input.grossEquity - previousSourceMark.sourceEquity - externalSourceCapitalFlow) / previousSourceMark.sourceEquity,
+    );
     const maximumSourceReturn = getMaximumSourceReturnPerMark();
 
     if (Math.abs(sourceReturn) > maximumSourceReturn) {
       const sourceMark = await insertHermesSourceMark({
+        externalSourceCapitalFlow,
         input,
         sourceReturn,
         status: 'stored',
@@ -534,6 +684,7 @@ export async function postTranslatedHermesPoolMark(
     }
 
     const sourceMark = await insertHermesSourceMark({
+      externalSourceCapitalFlow,
       input,
       navMark,
       navResult,

@@ -705,6 +705,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      hermes_source_capital_flows: {
+        Row: {
+          id: string;
+          pool_id: string;
+          direction: 'SOURCE_DEPOSIT' | 'SOURCE_WITHDRAWAL';
+          amount: number;
+          currency: 'USD';
+          source_exchange: string | null;
+          notes: string | null;
+          effective_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          pool_id: string;
+          direction: 'SOURCE_DEPOSIT' | 'SOURCE_WITHDRAWAL';
+          amount: number;
+          currency?: 'USD';
+          source_exchange?: string | null;
+          notes?: string | null;
+          effective_at: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          pool_id?: string;
+          direction?: 'SOURCE_DEPOSIT' | 'SOURCE_WITHDRAWAL';
+          amount?: number;
+          currency?: 'USD';
+          source_exchange?: string | null;
+          notes?: string | null;
+          effective_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       pool_unit_events: {
         Row: {
           id: string;

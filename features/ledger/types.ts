@@ -51,6 +51,8 @@ export type PoolAllocationSide = 'LONG' | 'SHORT' | 'CASH';
 
 export type HermesSourceMarkStatus = 'baseline' | 'applied' | 'stored';
 
+export type HermesSourceCapitalFlowDirection = 'SOURCE_DEPOSIT' | 'SOURCE_WITHDRAWAL';
+
 export type LedgerActivityType =
   | 'account_created'
   | 'deposit_posted'
@@ -249,6 +251,18 @@ export interface HermesPoolSourceMark {
   createdAt: IsoDateString;
 }
 
+export interface HermesSourceCapitalFlow {
+  id: string;
+  poolId: string;
+  direction: HermesSourceCapitalFlowDirection;
+  amount: number;
+  currency: LedgerCurrency;
+  sourceExchange?: string;
+  notes?: string;
+  effectiveAt: IsoDateString;
+  createdAt: IsoDateString;
+}
+
 export interface PoolAllocationItem {
   asset: string;
   percentage: number;
@@ -319,6 +333,7 @@ export interface PoolMarkingPool {
   pool: StrategyPool;
   latestNav?: PoolNavSnapshot;
   latestHermesSourceMark?: HermesPoolSourceMark;
+  recentSourceCapitalFlows: HermesSourceCapitalFlow[];
   positionCount: number;
   totalPositionEquity: number;
   totalPositionUnits: number;
@@ -327,6 +342,7 @@ export interface PoolMarkingPool {
 export interface PoolMarkingRecords {
   generatedAt: IsoDateString;
   available: boolean;
+  sourceCapitalFlowsAvailable: boolean;
   sourceMarkingAvailable: boolean;
   pools: PoolMarkingPool[];
 }

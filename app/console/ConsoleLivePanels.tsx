@@ -259,6 +259,26 @@ async function postPoolNavMarkRequest(formData: FormData): Promise<{ message: st
   };
 }
 
+async function postSourceCapitalFlowRequest(formData: FormData): Promise<{ message: string; status: string }> {
+  const response = await fetch('/api/console/source-capital-flows', {
+    body: formData,
+    headers: {
+      Accept: 'application/json',
+    },
+    method: 'POST',
+  });
+  const payload = (await response.json()) as { message?: string; status?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.message ?? 'Source capital flow could not be recorded.');
+  }
+
+  return {
+    message: payload.message ?? 'Source capital flow recorded.',
+    status: payload.status ?? 'recorded',
+  };
+}
+
 function StatCard({
   detail,
   label,
@@ -358,6 +378,7 @@ function NumberField({
 function PoolNavMarkCard({ poolMark }: { poolMark: PoolMarkingPool }) {
   const queryClient = useQueryClient();
   const [statusMessage, setStatusMessage] = useState('');
+  const [sourceFlowMessage, setSourceFlowMessage] = useState('');
   const latestNav = poolMark.latestNav;
   const mutation = useMutation({
     mutationFn: postPoolNavMarkRequest,
@@ -369,6 +390,19 @@ function PoolNavMarkCard({ poolMark }: { poolMark: PoolMarkingPool }) {
     },
     onSuccess(payload) {
       setStatusMessage(payload.message);
+      queryClient.invalidateQueries({ queryKey: consoleLiveQueryKey });
+    },
+  });
+  const sourceFlowMutation = useMutation({
+    mutationFn: postSourceCapitalFlowRequest,
+    onError(error) {
+      setSourceFlowMessage(error.message);
+    },
+    onMutate() {
+      setSourceFlowMessage('');
+    },
+    onSuccess(payload) {
+      setSourceFlowMessage(payload.message);
       queryClient.invalidateQueries({ queryKey: consoleLiveQueryKey });
     },
   });
@@ -438,6 +472,67 @@ function PoolNavMarkCard({ poolMark }: { poolMark: PoolMarkingPool }) {
           tone={hermesSourceMark?.status === 'applied' ? 'green' : 'amber'}
         />
       </div>
+
+      <form
+        className="mt-4 grid gap-3 rounded-md border border-neutral-800 bg-neutral-950/30 p-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          sourceFlowMutation.mutate(new FormData(event.currentTarget));
+        }}
+      >
+        <input type="hidden" name="poolId" value={poolMark.pool.id} />
+        <div className="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_1.4fr_auto] lg:items-end">
+          <label className="grid gap-1">
+            <span className="text-xs text-neutral-500">Source flow</span>
+            <select
+              className="h-10 rounded-md border border-neutral-800 bg-neutral-950/40 px-3 text-sm text-neutral-50 outline-none transition-colors focus:border-neutral-600"
+              name="direction"
+              defaultValue="SOURCE_WITHDRAWAL"
+            >
+              <option value="SOURCE_WITHDRAWAL">KuCoin withdrawal</option>
+              <option value="SOURCE_DEPOSIT">KuCoin deposit</option>
+            </select>
+          </label>
+          <NumberField defaultValue="" label="Amount" name="amount" />
+          <label className="grid gap-1">
+            <span className="text-xs text-neutral-500">Effective time</span>
+            <input
+              className="h-10 rounded-md border border-neutral-800 bg-neutral-950/40 px-3 text-sm text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-600"
+              name="effectiveAt"
+              type="datetime-local"
+            />
+          </label>
+          <label className="grid gap-1">
+            <span className="text-xs text-neutral-500">Notes</span>
+            <input
+              className="h-10 rounded-md border border-neutral-800 bg-neutral-950/40 px-3 text-sm text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-600"
+              name="notes"
+              placeholder="External treasury movement"
+              type="text"
+            />
+          </label>
+          <button
+            className="inline-flex h-10 items-center justify-center rounded-md border border-neutral-700 px-4 text-sm font-medium text-neutral-100 transition-colors hover:border-neutral-500 disabled:opacity-50"
+            disabled={sourceFlowMutation.isPending}
+            type="submit"
+          >
+            {sourceFlowMutation.isPending ? 'Recording' : 'Record'}
+          </button>
+        </div>
+        <div className="grid gap-2 text-xs leading-5 text-neutral-500 md:grid-cols-[1fr_auto]">
+          <p aria-live="polite">
+            {sourceFlowMessage ||
+              'Record external KuCoin cash movements so Hermes performance excludes deposits and withdrawals.'}
+          </p>
+          <p>
+            {poolMark.recentSourceCapitalFlows.length
+              ? `Last flow: ${formatConstant(poolMark.recentSourceCapitalFlows[0].direction)} ${formatCurrency(
+                  poolMark.recentSourceCapitalFlows[0].amount,
+                )}`
+              : 'No source flows recorded'}
+          </p>
+        </div>
+      </form>
 
       <form
         key={`${poolMark.pool.id}-${latestNav?.id ?? 'empty'}`}
@@ -627,6 +722,15 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
           {
             detail: 'Hermes source marks are not installed, so raw KuCoin performance cannot be translated into Solace pool NAV.',
             label: 'Hermes translation unavailable',
+            tone: 'amber' as const,
+          },
+        ]
+      : []),
+    ...(poolMarking.available && !poolMarking.sourceCapitalFlowsAvailable
+      ? [
+          {
+            detail: 'Source capital flows are not installed, so external KuCoin deposits and withdrawals still affect performance.',
+            label: 'Source flow guard unavailable',
             tone: 'amber' as const,
           },
         ]
