@@ -4,6 +4,8 @@ import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-das
 import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
 import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   if (!(await hasDashboardAccess())) {
     return NextResponse.json({ message: 'Dashboard access required.' }, { status: 401 });

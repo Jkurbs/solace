@@ -4,6 +4,7 @@ export const hermesDashboardQueryKey = ['hermes-dashboard', 'snapshot'] as const
 
 export async function getHermesDashboardSnapshot(): Promise<HermesDashboardSnapshot> {
   const response = await fetch('/api/dashboard', {
+    cache: 'no-store',
     headers: {
       Accept: 'application/json',
     },

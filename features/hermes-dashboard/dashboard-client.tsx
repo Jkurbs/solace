@@ -86,6 +86,8 @@ const riskProfiles: Array<{ label: RiskProfile; icon: typeof ShieldCheck }> = [
   { label: 'Velocity', icon: Zap },
 ];
 
+const liveRefreshIntervalMs = 5_000;
+
 function getAllocationColor(asset: string, index: number, theme: DashboardTheme) {
   const resolvedTheme: DashboardTheme = theme === 'light' ? 'light' : 'dark';
   const fallbackColors = fallbackAllocationColors[resolvedTheme];
@@ -250,13 +252,14 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const [riskStatus, setRiskStatus] = useState('');
   const [theme, setTheme] = useState<DashboardTheme>('dark');
   const queryClient = useQueryClient();
-  const { data } = useQuery({
+  const { data, isFetching } = useQuery({
     queryKey: hermesDashboardQueryKey,
     queryFn: getHermesDashboardSnapshot,
     initialData: initialSnapshot,
-    refetchInterval: 10_000,
+    refetchInterval: liveRefreshIntervalMs,
+    refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
-    staleTime: 30_000,
+    staleTime: 0,
   });
 
   const moneyMovement = useMutation({
@@ -530,6 +533,16 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               Contract
             </Link>
             <span className="hidden sm:inline">{data.account.label}</span>
+            <Badge variant="secondary" className="hidden sm:inline-flex">
+              <span
+                className={cn(
+                  'mr-1.5 h-1.5 w-1.5 rounded-full',
+                  isFetching ? 'bg-amber-300' : 'bg-emerald-300',
+                )}
+                aria-hidden="true"
+              />
+              {isFetching ? 'Syncing' : 'Live 5s'}
+            </Badge>
             <Badge variant={isSimulationMode ? 'secondary' : 'success'}>{isSimulationMode ? 'Simulation' : 'Live'}</Badge>
             <Button
               type="button"
@@ -980,7 +993,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
         </Card>
 
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          Last updated {formatUpdatedAt(equityState.updatedAt ?? data.updatedAt)}
+          Live refresh every 5s · Last updated {formatUpdatedAt(equityState.updatedAt ?? data.updatedAt)}
         </p>
       </div>
     </main>
