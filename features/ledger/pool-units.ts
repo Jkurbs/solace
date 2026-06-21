@@ -146,12 +146,15 @@ function buildProjection({
     updatedAt: latestNav.effectiveAt,
   };
   const shareRatio = currentPosition.poolShare / 100;
-  const availableUnits = position.availableUnits || position.units;
+  const availableUnits = Math.min(position.units, Math.max(0, position.availableUnits));
+  const accountCashBalance = normalizeAmount(latestNav.cashBalance * shareRatio);
+  const unitAvailabilityCap = normalizeAmount(availableUnits * latestNav.navPerUnit);
+  const withdrawable = normalizeAmount(Math.max(0, Math.min(accountCashBalance, unitAvailabilityCap, currentPosition.equity)));
 
   return {
     allocatedCapital: normalizeAmount(latestNav.allocatedCapital * shareRatio),
-    availableBalance: normalizeAmount(latestNav.cashBalance * shareRatio),
-    cashBalance: normalizeAmount(latestNav.cashBalance * shareRatio),
+    availableBalance: accountCashBalance,
+    cashBalance: accountCashBalance,
     fees: normalizeAmount(latestNav.fees * shareRatio),
     funding: normalizeAmount(latestNav.funding * shareRatio),
     latestNav,
@@ -160,7 +163,7 @@ function buildProjection({
     position: currentPosition,
     reservedMargin: normalizeAmount(latestNav.reservedMargin * shareRatio),
     unrealizedPnl: normalizeAmount(latestNav.unrealizedPnl * shareRatio),
-    withdrawable: normalizeAmount(availableUnits * latestNav.navPerUnit),
+    withdrawable,
   };
 }
 
