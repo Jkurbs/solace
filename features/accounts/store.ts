@@ -242,6 +242,93 @@ function toAccountOnboardingRow(record: AccountOnboardingRecord): Database['publ
   };
 }
 
+function getSolaceUserStatusRank(status: SolaceUserRecord['status']) {
+  return status === 'SUSPENDED' ? 3 : status === 'ACTIVE' ? 2 : 1;
+}
+
+function getHermesAccountStatusRank(status: HermesAccountRecord['status']) {
+  if (status === 'CLOSED') {
+    return 4;
+  }
+
+  if (status === 'PAUSED') {
+    return 3;
+  }
+
+  return status === 'ACTIVE' ? 2 : 1;
+}
+
+function getLedgerAccountStatusRank(status: LedgerAccountRecord['status']) {
+  return status === 'ACTIVE' ? 2 : 1;
+}
+
+function mergeSolaceUserRecord(seed: SolaceUserRecord, existing?: SolaceUserRecord | null): SolaceUserRecord {
+  if (!existing) {
+    return seed;
+  }
+
+  return {
+    ...seed,
+    accessRequestId: existing.accessRequestId ?? seed.accessRequestId,
+    createdAt: existing.createdAt,
+    status: getSolaceUserStatusRank(existing.status) >= getSolaceUserStatusRank(seed.status) ? existing.status : seed.status,
+  };
+}
+
+function mergeHermesAccountRecord(seed: HermesAccountRecord, existing?: HermesAccountRecord | null): HermesAccountRecord {
+  if (!existing) {
+    return seed;
+  }
+
+  return {
+    ...seed,
+    createdAt: existing.createdAt,
+    riskProfile: existing.riskProfile ?? seed.riskProfile,
+    status:
+      getHermesAccountStatusRank(existing.status) >= getHermesAccountStatusRank(seed.status)
+        ? existing.status
+        : seed.status,
+  };
+}
+
+function mergeLedgerAccountRecord(seed: LedgerAccountRecord, existing?: LedgerAccountRecord | null): LedgerAccountRecord {
+  if (!existing) {
+    return seed;
+  }
+
+  return {
+    ...seed,
+    accountMode: existing.accountMode ?? seed.accountMode,
+    createdAt: existing.createdAt,
+    label: existing.label || seed.label,
+    status:
+      getLedgerAccountStatusRank(existing.status) >= getLedgerAccountStatusRank(seed.status)
+        ? existing.status
+        : seed.status,
+  };
+}
+
+function mergeDashboardInviteRecord(
+  seed: DashboardInviteRecord | null,
+  existing?: DashboardInviteRecord | null,
+): DashboardInviteRecord | null {
+  if (!seed) {
+    return existing ?? null;
+  }
+
+  if (!existing) {
+    return seed;
+  }
+
+  return {
+    ...seed,
+    createdAt: existing.createdAt,
+    id: existing.id,
+    status: existing.status,
+    usedAt: existing.usedAt ?? seed.usedAt,
+  };
+}
+
 function normalizeStore(store: Partial<AccountPersistenceStore> | null): AccountPersistenceStore {
   return {
     dashboardInvites: Array.isArray(store?.dashboardInvites) ? store.dashboardInvites : [],
@@ -375,22 +462,32 @@ async function upsertSupabaseBundle(bundle: PersistedAccountBundle) {
 
   try {
     const supabase = await createSupabaseDataClient();
+    const existingBundle = await getSupabaseAccountBundle(bundle.ledgerAccount.id);
+    const mergedBundle: PersistedAccountBundle = {
+      dashboardInvite: mergeDashboardInviteRecord(bundle.dashboardInvite, existingBundle?.dashboardInvite),
+      hermesAccount: mergeHermesAccountRecord(bundle.hermesAccount, existingBundle?.hermesAccount),
+      ledgerAccount: mergeLedgerAccountRecord(bundle.ledgerAccount, existingBundle?.ledgerAccount),
+      onboarding: existingBundle?.onboarding ?? bundle.onboarding,
+      user: mergeSolaceUserRecord(bundle.user, existingBundle?.user),
+    };
 
-    const { error: userError } = await supabase.from('solace_users').upsert(toSolaceUserRow(bundle.user));
+    const { error: userError } = await supabase.from('solace_users').upsert(toSolaceUserRow(mergedBundle.user));
 
     if (userError) {
       console.warn('[accounts] Supabase user upsert unavailable.', userError.message);
       return null;
     }
 
-    const { error: hermesError } = await supabase.from('hermes_accounts').upsert(toHermesAccountRow(bundle.hermesAccount));
+    const { error: hermesError } = await supabase
+      .from('hermes_accounts')
+      .upsert(toHermesAccountRow(mergedBundle.hermesAccount));
 
     if (hermesError) {
       console.warn('[accounts] Supabase Hermes account upsert unavailable.', hermesError.message);
       return null;
     }
 
-    const ledgerRow = toLedgerAccountRow(bundle.ledgerAccount);
+    const ledgerRow = toLedgerAccountRow(mergedBundle.ledgerAccount);
     let { error: ledgerError } = await supabase.from('ledger_accounts').upsert(ledgerRow);
 
     if (ledgerError?.message.includes('account_mode')) {
@@ -404,8 +501,10 @@ async function upsertSupabaseBundle(bundle: PersistedAccountBundle) {
       return null;
     }
 
-    if (bundle.dashboardInvite) {
-      const { error: inviteError } = await supabase.from('dashboard_invites').upsert(toDashboardInviteRow(bundle.dashboardInvite));
+    if (mergedBundle.dashboardInvite) {
+      const { error: inviteError } = await supabase
+        .from('dashboard_invites')
+        .upsert(toDashboardInviteRow(mergedBundle.dashboardInvite));
 
       if (inviteError) {
         console.warn('[accounts] Supabase dashboard invite upsert unavailable.', inviteError.message);
@@ -413,11 +512,11 @@ async function upsertSupabaseBundle(bundle: PersistedAccountBundle) {
       }
     }
 
-    if (bundle.onboarding) {
+    if (mergedBundle.onboarding) {
       const { data: existingOnboarding, error: onboardingReadError } = await supabase
         .from('account_onboarding')
-        .select('*')
-        .eq('ledger_account_id', bundle.ledgerAccount.id)
+        .select('ledger_account_id')
+        .eq('ledger_account_id', mergedBundle.ledgerAccount.id)
         .maybeSingle();
 
       if (onboardingReadError) {
@@ -428,7 +527,7 @@ async function upsertSupabaseBundle(bundle: PersistedAccountBundle) {
       if (!existingOnboarding) {
         const { error: onboardingError } = await supabase
           .from('account_onboarding')
-          .insert(toAccountOnboardingRow(bundle.onboarding));
+          .insert(toAccountOnboardingRow(mergedBundle.onboarding));
 
         if (onboardingError) {
           console.warn('[accounts] Supabase onboarding insert unavailable.', onboardingError.message);
@@ -437,7 +536,7 @@ async function upsertSupabaseBundle(bundle: PersistedAccountBundle) {
       }
     }
 
-    return (await getSupabaseAccountBundle(bundle.ledgerAccount.id)) ?? bundle;
+    return (await getSupabaseAccountBundle(mergedBundle.ledgerAccount.id)) ?? mergedBundle;
   } catch (error) {
     console.warn('[accounts] Supabase account persistence failed.', error);
     return null;
@@ -446,22 +545,33 @@ async function upsertSupabaseBundle(bundle: PersistedAccountBundle) {
 
 async function upsertFallbackBundle(bundle: PersistedAccountBundle) {
   const store = await readFallbackStore();
+  const existingBundle = await getFallbackAccountBundle(bundle.ledgerAccount.id);
+  const mergedBundle: PersistedAccountBundle = {
+    dashboardInvite: mergeDashboardInviteRecord(bundle.dashboardInvite, existingBundle?.dashboardInvite),
+    hermesAccount: mergeHermesAccountRecord(bundle.hermesAccount, existingBundle?.hermesAccount),
+    ledgerAccount: mergeLedgerAccountRecord(bundle.ledgerAccount, existingBundle?.ledgerAccount),
+    onboarding: existingBundle?.onboarding ?? bundle.onboarding,
+    user: mergeSolaceUserRecord(bundle.user, existingBundle?.user),
+  };
 
-  upsertById(store.users, bundle.user);
-  upsertById(store.hermesAccounts, bundle.hermesAccount);
-  upsertById(store.ledgerAccounts, bundle.ledgerAccount);
+  upsertById(store.users, mergedBundle.user);
+  upsertById(store.hermesAccounts, mergedBundle.hermesAccount);
+  upsertById(store.ledgerAccounts, mergedBundle.ledgerAccount);
 
-  if (bundle.dashboardInvite) {
-    upsertById(store.dashboardInvites, bundle.dashboardInvite);
+  if (mergedBundle.dashboardInvite) {
+    upsertById(store.dashboardInvites, mergedBundle.dashboardInvite);
   }
 
-  if (bundle.onboarding && !store.onboardings.some((onboarding) => onboarding.ledgerAccountId === bundle.ledgerAccount.id)) {
-    upsertOnboarding(store.onboardings, bundle.onboarding);
+  if (
+    mergedBundle.onboarding &&
+    !store.onboardings.some((onboarding) => onboarding.ledgerAccountId === mergedBundle.ledgerAccount.id)
+  ) {
+    upsertOnboarding(store.onboardings, mergedBundle.onboarding);
   }
 
   await writeFallbackStore(store);
 
-  return bundle;
+  return mergedBundle;
 }
 
 async function getSupabaseAccountBundle(accountId: string): Promise<PersistedAccountBundle | null> {
@@ -726,7 +836,22 @@ export async function getPersistedAccountBundleByUserEmail(email: string) {
 
   const bundles = await listPersistedAccountBundles();
 
-  return bundles.find((bundle) => bundle.user.email.toLowerCase() === normalizedEmail) ?? null;
+  const matchingBundles = bundles.filter((bundle) => bundle.user.email.toLowerCase() === normalizedEmail);
+
+  return (
+    matchingBundles.sort((a, b) => {
+      const statusDelta =
+        getLedgerAccountStatusRank(b.ledgerAccount.status) - getLedgerAccountStatusRank(a.ledgerAccount.status) ||
+        getHermesAccountStatusRank(b.hermesAccount.status) - getHermesAccountStatusRank(a.hermesAccount.status) ||
+        Number(Boolean(b.onboarding?.complete)) - Number(Boolean(a.onboarding?.complete));
+
+      if (statusDelta !== 0) {
+        return statusDelta;
+      }
+
+      return new Date(b.ledgerAccount.createdAt).getTime() - new Date(a.ledgerAccount.createdAt).getTime();
+    })[0] ?? null
+  );
 }
 
 export async function getPersistedAccountBundle(accountId: string) {

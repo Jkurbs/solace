@@ -52,9 +52,9 @@ function getAppOrigin(fallbackOrigin: string) {
   }
 }
 
-function getEmailRedirectTo(request: Request) {
+function getEmailRedirectTo(request: Request, nextPath: string) {
   const callbackUrl = new URL('/auth/callback', getAppOrigin(new URL(request.url).origin));
-  callbackUrl.searchParams.set('next', '/dashboard/onboarding?welcome=1');
+  callbackUrl.searchParams.set('next', nextPath);
 
   return callbackUrl.toString();
 }
@@ -75,7 +75,7 @@ async function sendDashboardMagicLink(request: Request, email: string) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: getEmailRedirectTo(request),
+      emailRedirectTo: getEmailRedirectTo(request, bundle.onboarding?.complete ? '/dashboard' : '/dashboard/onboarding?welcome=1'),
       shouldCreateUser: true,
     },
   });
