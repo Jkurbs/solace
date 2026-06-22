@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Bug, Check, Clock3, LogOut, Moon, Scale, Send, ShieldCheck, Sun, Zap } from 'lucide-react';
+import { ArrowRight, Check, Clock3, LogOut, Moon, Scale, ShieldCheck, Sun, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import Mark from '@/app/Mark';
@@ -17,7 +17,6 @@ import {
   hermesDashboardQueryKey,
   logoutUser,
   startIdentityVerification,
-  submitBugReport,
   updateRiskProfile,
 } from './queries';
 import { riskProfileDescriptions } from './contract';
@@ -228,199 +227,6 @@ function ActivationStep({
   );
 }
 
-type BugReproducibility = 'yes' | 'sometimes' | 'no' | 'unknown';
-
-const reproducibilityOptions: Array<{ label: string; value: BugReproducibility }> = [
-  { label: 'Yes', value: 'yes' },
-  { label: 'Sometimes', value: 'sometimes' },
-  { label: 'No', value: 'no' },
-  { label: 'Unknown', value: 'unknown' },
-];
-
-function splitReproductionSteps(value: string) {
-  return value
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-}
-
-function getDeviceContext() {
-  if (typeof window === 'undefined') {
-    return '';
-  }
-
-  return `${window.navigator.platform || 'Unknown platform'} · ${window.innerWidth}x${window.innerHeight} · ${window.devicePixelRatio}x`;
-}
-
-function IssueReportPanel() {
-  const [canReproduce, setCanReproduce] = useState<BugReproducibility>('unknown');
-  const [expectedBehavior, setExpectedBehavior] = useState('');
-  const [screenshotUrl, setScreenshotUrl] = useState('');
-  const [statusMessage, setStatusMessage] = useState('');
-  const [stepsToReproduce, setStepsToReproduce] = useState('');
-  const [summary, setSummary] = useState('');
-  const [whatHappened, setWhatHappened] = useState('');
-
-  const bugReport = useMutation({
-    mutationFn: submitBugReport,
-    onMutate() {
-      setStatusMessage('');
-    },
-    onError(error) {
-      setStatusMessage(error.message);
-    },
-    onSuccess(payload) {
-      const missingInfo = payload.missingInfo.length ? ` Missing: ${payload.missingInfo.join(', ')}.` : '';
-
-      setStatusMessage(`${payload.message} Severity: ${payload.severity}.${missingInfo}`);
-      setExpectedBehavior('');
-      setScreenshotUrl('');
-      setStepsToReproduce('');
-      setSummary('');
-      setWhatHappened('');
-      setCanReproduce('unknown');
-    },
-  });
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (whatHappened.trim().length < 8) {
-      setStatusMessage('Describe what happened before submitting.');
-      return;
-    }
-
-    bugReport.mutate({
-      browser: typeof window === 'undefined' ? undefined : window.navigator.userAgent,
-      canReproduce,
-      device: getDeviceContext(),
-      expectedBehavior,
-      pageUrl: typeof window === 'undefined' ? undefined : window.location.href,
-      screenshotUrl,
-      stepsToReproduce: splitReproductionSteps(stepsToReproduce),
-      summary,
-      whatHappened,
-    });
-  }
-
-  return (
-    <Card>
-      <CardHeader className="pb-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">BugOps</p>
-            <CardTitle>Report issue</CardTitle>
-          </div>
-          <Badge variant="secondary">
-            <Bug size={14} aria-hidden="true" />
-            Beta
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <form className="grid gap-4" onSubmit={handleSubmit}>
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="grid gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              Short title
-              <input
-                type="text"
-                value={summary}
-                onChange={(event) => setSummary(event.target.value)}
-                placeholder="NAV did not update after pool selection"
-                className="h-11 rounded-md border border-neutral-200 bg-neutral-50 px-3 text-sm text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950/40 dark:text-neutral-50 dark:placeholder:text-neutral-600 dark:focus:border-neutral-600"
-              />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              Screenshot or recording URL
-              <input
-                type="url"
-                value={screenshotUrl}
-                onChange={(event) => setScreenshotUrl(event.target.value)}
-                placeholder="https://..."
-                className="h-11 rounded-md border border-neutral-200 bg-neutral-50 px-3 text-sm text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950/40 dark:text-neutral-50 dark:placeholder:text-neutral-600 dark:focus:border-neutral-600"
-              />
-            </label>
-          </div>
-
-          <label className="grid gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-            What happened?
-            <textarea
-              required
-              value={whatHappened}
-              onChange={(event) => setWhatHappened(event.target.value)}
-              rows={4}
-              className="min-h-28 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm leading-6 text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950/40 dark:text-neutral-50 dark:placeholder:text-neutral-600 dark:focus:border-neutral-600"
-            />
-          </label>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="grid gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              Expected result
-              <textarea
-                value={expectedBehavior}
-                onChange={(event) => setExpectedBehavior(event.target.value)}
-                rows={3}
-                className="min-h-24 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm leading-6 text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950/40 dark:text-neutral-50 dark:placeholder:text-neutral-600 dark:focus:border-neutral-600"
-              />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              Steps to reproduce
-              <textarea
-                value={stepsToReproduce}
-                onChange={(event) => setStepsToReproduce(event.target.value)}
-                rows={3}
-                placeholder="One step per line"
-                className="min-h-24 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm leading-6 text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950/40 dark:text-neutral-50 dark:placeholder:text-neutral-600 dark:focus:border-neutral-600"
-              />
-            </label>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
-            <div>
-              <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Can reproduce?</span>
-              <div
-                className="mt-2 grid gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-900 sm:grid-cols-4"
-                role="radiogroup"
-                aria-label="Can reproduce issue"
-              >
-                {reproducibilityOptions.map((option) => {
-                  const selected = option.value === canReproduce;
-
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => setCanReproduce(option.value)}
-                      className={cn(
-                        'inline-flex min-h-10 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors',
-                        selected
-                          ? 'bg-white text-neutral-950 shadow-sm dark:bg-neutral-700 dark:text-neutral-50'
-                          : 'text-neutral-600 hover:bg-white/70 hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-50',
-                      )}
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <Button type="submit" disabled={bugReport.isPending} className="w-full md:w-auto">
-              <Send size={16} aria-hidden="true" />
-              {bugReport.isPending ? 'Submitting' : 'Submit issue'}
-            </Button>
-          </div>
-
-          <p className="min-h-6 text-sm leading-6 text-neutral-500 dark:text-neutral-400" aria-live="polite">
-            {statusMessage}
-          </p>
-        </form>
-      </CardContent>
-    </Card>
-  );
-}
-
 export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const [identityStatus, setIdentityStatus] = useState('');
   const [logoutStatus, setLogoutStatus] = useState('');
@@ -566,13 +372,6 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
     : 'Pending';
   const accountReviewSubmitted = data.account.review?.status === 'SUBMITTED';
   const setupIncomplete = isAwaitingDeposit && (!accountReviewSubmitted || !data.account.depositIntent?.amount);
-  const actionHelper = setupIncomplete
-    ? 'Complete setup before capital movement opens.'
-    : isFundingPending
-      ? 'Funding status and capital movement live on the capital page.'
-      : isSimulationMode
-        ? 'Simulation deposits and withdrawal requests live on the capital page.'
-        : 'Deposits and withdrawal requests live on the capital page.';
   const identityVerificationLabel = formatIdentityStatus(data.account.identityVerification.status);
   const identityHelper =
     identityStatus ||
@@ -705,7 +504,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       </header>
 
       <div className="mx-auto grid max-w-6xl gap-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <div className="grid gap-5 lg:grid-cols-[1fr_22rem]">
+        <div>
           <motion.section
             initial={false}
             animate={{ opacity: 1, y: 0 }}
@@ -713,7 +512,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-[#181715] dark:shadow-none sm:p-8"
             aria-labelledby="portfolio-value"
           >
-            <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
+            <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
               <div>
                 <div className="flex flex-wrap items-center gap-3">
                   <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Portfolio Value</p>
@@ -741,13 +540,21 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                   </p>
                 ) : null}
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 md:min-w-[22rem]">
-                <Metric
-                  label="Today's Change"
-                  value={todaysChange}
-                  positive={!isAwaitingDeposit && data.portfolio.todaysChange.amount > 0}
-                />
-                <Metric label="Since Inception" value={sinceInception} positive={!isAwaitingDeposit && data.portfolio.sinceInception > 0} />
+              <div className="grid gap-4 lg:min-w-[27rem]">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Metric
+                    label="Today's Change"
+                    value={todaysChange}
+                    positive={!isAwaitingDeposit && data.portfolio.todaysChange.amount > 0}
+                  />
+                  <Metric label="Since Inception" value={sinceInception} positive={!isAwaitingDeposit && data.portfolio.sinceInception > 0} />
+                </div>
+                <Button asChild className="w-full sm:w-auto sm:justify-self-start" variant={setupIncomplete ? 'secondary' : 'default'}>
+                  <Link href={setupIncomplete ? '/dashboard/onboarding' : '/dashboard/capital'}>
+                    {setupIncomplete ? 'Complete setup' : 'Move capital'}
+                    <ArrowRight size={16} aria-hidden="true" />
+                  </Link>
+                </Button>
               </div>
             </div>
             <div className="mt-6 grid gap-4 border-t border-neutral-200 pt-5 dark:border-neutral-800 sm:grid-cols-2 lg:grid-cols-4">
@@ -756,40 +563,6 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               ))}
             </div>
           </motion.section>
-
-          <Card>
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Actions</p>
-                  <CardTitle>{setupIncomplete ? 'Complete setup' : 'Move capital'}</CardTitle>
-                </div>
-                <Badge variant={data.status.status === 'ACTIVE' && !isFundingPending ? 'success' : 'secondary'}>
-                  {isAwaitingDeposit || isFundingPending ? 'PENDING' : data.status.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3">
-                <div className="grid gap-3 rounded-md border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/60">
-                  <Metric
-                    label="Withdrawable"
-                    value={isAwaitingDeposit ? 'Pending' : formatCurrency(data.portfolio.withdrawable ?? data.portfolio.availableToWithdraw)}
-                  />
-                  <Metric label="Available Balance" value={isAwaitingDeposit ? 'Pending' : formatCurrency(availableBalance)} />
-                </div>
-                <Button asChild className="w-full" variant={setupIncomplete ? 'secondary' : 'default'}>
-                  <Link href={setupIncomplete ? '/dashboard/onboarding' : '/dashboard/capital'}>
-                    {setupIncomplete ? 'Complete setup' : 'Move capital'}
-                    <ArrowRight size={16} aria-hidden="true" />
-                  </Link>
-                </Button>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-neutral-500 dark:text-neutral-400" aria-live="polite">
-                {actionHelper}
-              </p>
-            </CardContent>
-          </Card>
         </div>
 
         {isAwaitingDeposit ? (
@@ -1063,8 +836,6 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             <p className="max-w-3xl text-lg leading-8 text-neutral-800 dark:text-neutral-200">{data.commentary}</p>
           </CardContent>
         </Card>
-
-        <IssueReportPanel />
 
         <Card>
           <CardHeader className="pb-4">

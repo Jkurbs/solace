@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDownToLine, ArrowLeft, ArrowUpFromLine, Clock3, LogOut, Moon, Sun, Wallet } from 'lucide-react';
+import { ArrowDownToLine, ArrowLeft, ArrowUpFromLine, LogOut, Moon, Sun, Wallet } from 'lucide-react';
 
 import Mark from '@/app/Mark';
 import { Badge } from '@/components/ui/badge';
@@ -33,19 +33,12 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
 });
 
-const wholeCurrencyFormatter = new Intl.NumberFormat('en-US', {
-  currency: 'USD',
-  maximumFractionDigits: 0,
-  style: 'currency',
-});
-
 const liveRefreshIntervalMs = 5_000;
 
-function formatCurrency(value: number, options: { signed?: boolean; whole?: boolean } = {}) {
-  const sign = options.signed && value > 0 ? '+' : value < 0 ? '-' : '';
-  const formatter = options.whole ? wholeCurrencyFormatter : currencyFormatter;
+function formatCurrency(value: number) {
+  const sign = value < 0 ? '-' : '';
 
-  return `${sign}${formatter.format(Math.abs(value))}`;
+  return `${sign}${currencyFormatter.format(Math.abs(value))}`;
 }
 
 function parseCapitalAmountInput(value: string) {
@@ -81,37 +74,6 @@ function MoneyMetric({
       >
         {value}
       </strong>
-    </div>
-  );
-}
-
-function FundingStep({
-  detail,
-  label,
-  state,
-}: {
-  detail: string;
-  label: string;
-  state: 'complete' | 'pending';
-}) {
-  return (
-    <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/60">
-      <div className="flex items-start gap-3">
-        <span
-          className={cn(
-            'grid h-9 w-9 shrink-0 place-items-center rounded-full border',
-            state === 'complete'
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300'
-              : 'border-neutral-300 bg-white text-neutral-500 dark:border-neutral-700 dark:bg-[#181715] dark:text-neutral-400',
-          )}
-        >
-          {state === 'complete' ? <ArrowDownToLine size={17} aria-hidden="true" /> : <Clock3 size={17} aria-hidden="true" />}
-        </span>
-        <div>
-          <strong className="block text-sm font-semibold text-neutral-950 dark:text-neutral-50">{label}</strong>
-          <span className="mt-1 block text-sm leading-5 text-neutral-500 dark:text-neutral-400">{detail}</span>
-        </div>
-      </div>
     </div>
   );
 }
@@ -311,8 +273,8 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+      <div className="mx-auto grid max-w-3xl gap-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <div className="grid gap-4">
           <div>
             <Button asChild variant="ghost" className="-ml-3">
               <Link href="/dashboard">
@@ -327,32 +289,18 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
               Move capital
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-neutral-600 dark:text-neutral-400">
-              Deposit capital, request withdrawals, and track where funding sits before Hermes allocation.
+              Deposit capital or request a withdrawal.
             </p>
           </div>
-          <Card className="md:min-w-[21rem]">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <span className="block text-sm text-neutral-500 dark:text-neutral-400">Funding status</span>
-                  <strong className="mt-1 block text-xl font-semibold text-neutral-950 dark:text-neutral-50">
-                    {fundingCopy.title}
-                  </strong>
-                </div>
-                <Badge variant={fundingCopy.badge === 'ACTIVE' ? 'success' : 'secondary'}>{fundingCopy.badge}</Badge>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <MoneyMetric label="Portfolio Value" value={isAwaitingDeposit ? 'Pending' : formatCurrency(data.portfolio.value)} />
+        <div className="grid gap-4 sm:grid-cols-3">
           <MoneyMetric label="Available Balance" value={isAwaitingDeposit ? 'Pending' : formatCurrency(availableBalance)} />
-          <MoneyMetric label="In Strategy" value={isAwaitingDeposit ? '-' : formatCurrency(allocatedCapital)} />
+          <MoneyMetric label="In Strategy" value={isAwaitingDeposit ? '-' : formatCurrency(allocatedCapital)} tone="muted" />
           <MoneyMetric label="Withdrawable" tone={withdrawable > 0 ? 'green' : 'muted'} value={isAwaitingDeposit ? 'Pending' : formatCurrency(withdrawable)} />
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-5">
           <Card>
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between gap-3">
@@ -445,50 +393,8 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Funding Status</p>
-                <CardTitle>{fundingCopy.title}</CardTitle>
-              </div>
-              <Badge variant={fundingCopy.badge === 'ACTIVE' ? 'success' : 'secondary'}>{fundingCopy.badge}</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <FundingStep
-                detail={data.portfolio.deposited > 0 ? formatCurrency(data.portfolio.deposited, { whole: true }) : 'No capital posted'}
-                label={isSimulationMode ? 'Simulation capital' : 'Capital received'}
-                state={data.portfolio.deposited > 0 ? 'complete' : 'pending'}
-              />
-              <FundingStep
-                detail={
-                  equityState.code === 'PENDING_SETTLEMENT'
-                    ? 'Waiting for Stripe availability'
-                    : equityState.code === 'TREASURY_QUEUED'
-                      ? 'Treasury routing pending'
-                      : data.portfolio.deposited > 0
-                        ? 'Treasury state recorded'
-                        : 'Begins after deposit'
-                }
-                label="Solace treasury"
-                state={!isAwaitingDeposit && equityState.code !== 'PENDING_SETTLEMENT' && equityState.code !== 'TREASURY_QUEUED' ? 'complete' : 'pending'}
-              />
-              <FundingStep
-                detail={equityState.code === 'LIVE_EQUITY' ? 'Live equity projection active' : 'Begins after treasury clears'}
-                label="Hermes allocation"
-                state={equityState.code === 'LIVE_EQUITY' ? 'complete' : 'pending'}
-              />
-            </div>
-            <p className="mt-5 border-t border-neutral-200 pt-4 text-sm leading-6 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
-              {actionStatus || fundingCopy.body}
-            </p>
-          </CardContent>
-        </Card>
-
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          Live refresh every 5s. Capital movement is separated from portfolio oversight so the dashboard stays focused.
+        <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400" aria-live="polite">
+          {actionStatus || fundingCopy.body}
         </p>
       </div>
     </main>
