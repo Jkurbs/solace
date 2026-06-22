@@ -596,11 +596,46 @@ async function getSupabaseAccountBundle(accountId: string): Promise<PersistedAcc
       return null;
     }
 
+    let activeLedgerRow = ledgerRow;
+
+    if (ledgerRow.status !== 'ACTIVE') {
+      const { data: postedDeposits, error: postedDepositsError } = await supabase
+        .from('solace_deposits')
+        .select('id')
+        .eq('ledger_account_id', ledgerRow.id)
+        .eq('status', 'posted')
+        .limit(1);
+
+      if (postedDepositsError) {
+        console.warn('[accounts] Supabase posted deposit check unavailable.', postedDepositsError.message);
+      } else if (postedDeposits.length > 0) {
+        const updatedAt = now();
+        const [ledgerActivation, hermesActivation, userActivation] = await Promise.all([
+          supabase.from('ledger_accounts').update({ status: 'ACTIVE', updated_at: updatedAt }).eq('id', ledgerRow.id),
+          supabase.from('hermes_accounts').update({ status: 'ACTIVE', updated_at: updatedAt }).eq('id', ledgerRow.hermes_account_id),
+          supabase.from('solace_users').update({ status: 'ACTIVE', updated_at: updatedAt }).eq('id', ledgerRow.solace_user_id),
+        ]);
+
+        if (ledgerActivation.error || hermesActivation.error || userActivation.error) {
+          console.warn(
+            '[accounts] Supabase account activation repair failed.',
+            ledgerActivation.error?.message ?? hermesActivation.error?.message ?? userActivation.error?.message,
+          );
+        } else {
+          activeLedgerRow = {
+            ...ledgerRow,
+            status: 'ACTIVE',
+            updated_at: updatedAt,
+          };
+        }
+      }
+    }
+
     const [userResult, hermesResult, inviteResult, onboardingResult] = await Promise.all([
-      supabase.from('solace_users').select('*').eq('id', ledgerRow.solace_user_id).maybeSingle(),
-      supabase.from('hermes_accounts').select('*').eq('id', ledgerRow.hermes_account_id).maybeSingle(),
-      supabase.from('dashboard_invites').select('*').eq('ledger_account_id', ledgerRow.id).eq('status', 'ACTIVE').maybeSingle(),
-      supabase.from('account_onboarding').select('*').eq('ledger_account_id', ledgerRow.id).maybeSingle(),
+      supabase.from('solace_users').select('*').eq('id', activeLedgerRow.solace_user_id).maybeSingle(),
+      supabase.from('hermes_accounts').select('*').eq('id', activeLedgerRow.hermes_account_id).maybeSingle(),
+      supabase.from('dashboard_invites').select('*').eq('ledger_account_id', activeLedgerRow.id).eq('status', 'ACTIVE').maybeSingle(),
+      supabase.from('account_onboarding').select('*').eq('ledger_account_id', activeLedgerRow.id).maybeSingle(),
     ]);
 
     if (userResult.error || hermesResult.error || inviteResult.error || onboardingResult.error) {
@@ -618,7 +653,7 @@ async function getSupabaseAccountBundle(accountId: string): Promise<PersistedAcc
     return {
       dashboardInvite: inviteResult.data ? fromDashboardInviteRow(inviteResult.data) : null,
       hermesAccount: fromHermesAccountRow(hermesResult.data),
-      ledgerAccount: fromLedgerAccountRow(ledgerRow),
+      ledgerAccount: fromLedgerAccountRow(activeLedgerRow),
       onboarding: onboardingResult.data ? fromAccountOnboardingRow(onboardingResult.data) : null,
       user: fromSolaceUserRow(userResult.data),
     };
