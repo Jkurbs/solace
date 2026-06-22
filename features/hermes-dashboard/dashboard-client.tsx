@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDownToLine, ArrowRight, ArrowUpFromLine, Bug, Check, Clock3, LogOut, Moon, Scale, Send, ShieldCheck, Sun, Zap } from 'lucide-react';
+import { ArrowRight, Bug, Check, Clock3, LogOut, Moon, Scale, Send, ShieldCheck, Sun, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import Mark from '@/app/Mark';
@@ -17,12 +17,11 @@ import {
   hermesDashboardQueryKey,
   logoutUser,
   startIdentityVerification,
-  startMoneyMovement,
   submitBugReport,
   updateRiskProfile,
 } from './queries';
 import { riskProfileDescriptions } from './contract';
-import type { HermesDashboardSnapshot, IdentityVerificationStatus, MoneyMovementType, RiskProfile } from './types';
+import type { HermesDashboardSnapshot, IdentityVerificationStatus, RiskProfile } from './types';
 
 type HermesDashboardProps = {
   initialSnapshot: HermesDashboardSnapshot;
@@ -45,10 +44,6 @@ const wholeCurrencyFormatter = new Intl.NumberFormat('en-US', {
 
 const numberFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
-});
-
-const unitFormatter = new Intl.NumberFormat('en-US', {
-  maximumFractionDigits: 4,
 });
 
 const activityDatePartsFormatter = new Intl.DateTimeFormat('en-US', {
@@ -122,18 +117,6 @@ function formatPercent(value: number, signed = false) {
 
 function formatTodaysChange(change: HermesDashboardSnapshot['portfolio']['todaysChange']) {
   return `${formatCurrency(change.amount, { signed: true })} (${formatPercent(change.percentage, true)})`;
-}
-
-function parseCapitalAmountInput(value: string) {
-  const amount = Number(value.replace(/[$,\s]/g, ''));
-
-  if (!Number.isFinite(amount)) {
-    return null;
-  }
-
-  const rounded = Math.round(amount * 100) / 100;
-
-  return rounded >= 1 ? rounded : null;
 }
 
 function getEquityStateBadgeClass(code: HermesDashboardSnapshot['portfolio']['equityState']['code']) {
@@ -439,8 +422,6 @@ function IssueReportPanel() {
 }
 
 export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
-  const [actionStatus, setActionStatus] = useState('');
-  const [depositAmount, setDepositAmount] = useState(() => String(initialSnapshot.account.depositIntent?.amount ?? 1000));
   const [identityStatus, setIdentityStatus] = useState('');
   const [logoutStatus, setLogoutStatus] = useState('');
   const [riskStatus, setRiskStatus] = useState('');
@@ -454,20 +435,6 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     staleTime: 0,
-  });
-
-  const moneyMovement = useMutation({
-    mutationFn: ({ amount, type }: { amount?: number; type: MoneyMovementType }) => startMoneyMovement(type, amount),
-    onMutate() {
-      setActionStatus('');
-    },
-    onError(error) {
-      setActionStatus(error.message);
-    },
-    onSuccess(payload) {
-      setActionStatus(payload.message ?? '');
-      queryClient.invalidateQueries({ queryKey: hermesDashboardQueryKey });
-    },
   });
 
   const identityVerification = useMutation({
@@ -556,17 +523,6 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
     });
   }
 
-  function handleDeposit() {
-    const amount = parseCapitalAmountInput(depositAmount);
-
-    if (!amount) {
-      setActionStatus('Enter a deposit amount of at least $1.');
-      return;
-    }
-
-    moneyMovement.mutate({ amount, type: 'deposit' });
-  }
-
   const allocationGradient = useMemo(() => buildAllocationGradient(data.allocation, theme), [data.allocation, theme]);
   const isAwaitingDeposit = data.account.lifecycle === 'AWAITING_DEPOSIT';
   const isSimulationMode = data.account.mode === 'SIMULATION';
@@ -604,46 +560,19 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       value: isAwaitingDeposit ? 'Pending' : formatCurrency(data.portfolio.withdrawable ?? data.portfolio.availableToWithdraw),
     },
   ];
-  const poolMetrics = data.portfolio.pool
-    ? [
-        {
-          label: 'Pool Share',
-          value: formatPercent(data.portfolio.pool.poolShare),
-        },
-        {
-          label: 'Units',
-          value: unitFormatter.format(data.portfolio.pool.units),
-        },
-        {
-          label: 'NAV / Unit',
-          value: formatCurrency(data.portfolio.pool.navPerUnit),
-        },
-      ]
-    : [
-        {
-          label: 'Projection',
-          value: isAwaitingDeposit ? 'Pending' : formatConstantLabel(equityState.code),
-        },
-      ];
   const operatingStatus = isAwaitingDeposit ? 'Awaiting deposit' : isFundingPending ? 'Allocation pending' : data.status.status;
   const depositIntentLabel = data.account.depositIntent?.amount
     ? formatCurrency(data.account.depositIntent.amount, { whole: true })
     : 'Pending';
   const accountReviewSubmitted = data.account.review?.status === 'SUBMITTED';
   const setupIncomplete = isAwaitingDeposit && (!accountReviewSubmitted || !data.account.depositIntent?.amount);
-  const actionHelper =
-    actionStatus ||
-    (setupIncomplete
-      ? 'You can review Hermes now. Complete setup before deposits open.'
-      : isAwaitingDeposit
-        ? 'Deposits are reviewed before Hermes begins allocation.'
-        : isFundingPending
-          ? isSimulationMode
-            ? 'Simulation capital received. Solace treasury routing is being recorded before Hermes projection updates.'
-            : 'Deposit received. Treasury allocation is pending before Hermes begins deployment.'
-          : isSimulationMode
-            ? 'Simulation mode uses Stripe sandbox when configured. No real money moves.'
-            : 'Capital movement runs through the approved account rails.');
+  const actionHelper = setupIncomplete
+    ? 'Complete setup before capital movement opens.'
+    : isFundingPending
+      ? 'Funding status and capital movement live on the capital page.'
+      : isSimulationMode
+        ? 'Simulation deposits and withdrawal requests live on the capital page.'
+        : 'Deposits and withdrawal requests live on the capital page.';
   const identityVerificationLabel = formatIdentityStatus(data.account.identityVerification.status);
   const identityHelper =
     identityStatus ||
@@ -725,6 +654,12 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               className="hidden text-neutral-700 transition-colors hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-neutral-50 sm:inline"
             >
               Contract
+            </Link>
+            <Link
+              href="/dashboard/capital"
+              className="hidden text-neutral-700 transition-colors hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-neutral-50 sm:inline"
+            >
+              Capital
             </Link>
             <span className="hidden sm:inline">{data.account.label}</span>
             <Badge variant="secondary" className="hidden sm:inline-flex">
@@ -820,22 +755,6 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 <Metric key={item.label} label={item.label} value={item.value} positive={item.positive} />
               ))}
             </div>
-            <div className="mt-5 grid gap-4 rounded-md border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/60 lg:grid-cols-[1fr_auto] lg:items-center">
-              <div>
-                <span className="block text-sm text-neutral-500 dark:text-neutral-400">Equity Source</span>
-                <strong className="mt-1 block text-base font-semibold text-neutral-950 dark:text-neutral-50">
-                  {data.portfolio.pool?.poolName ?? equityState.label}
-                </strong>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                  {equityState.detail}
-                </p>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-3 lg:min-w-[24rem]">
-                {poolMetrics.map((item) => (
-                  <Metric key={item.label} label={item.label} value={item.value} />
-                ))}
-              </div>
-            </div>
           </motion.section>
 
           <Card>
@@ -843,9 +762,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Actions</p>
-                  <CardTitle>
-                    {isAwaitingDeposit ? 'Complete setup' : isFundingPending ? 'Allocation pending' : isSimulationMode ? 'Simulate capital' : 'Move capital'}
-                  </CardTitle>
+                  <CardTitle>{setupIncomplete ? 'Complete setup' : 'Move capital'}</CardTitle>
                 </div>
                 <Badge variant={data.status.status === 'ACTIVE' && !isFundingPending ? 'success' : 'secondary'}>
                   {isAwaitingDeposit || isFundingPending ? 'PENDING' : data.status.status}
@@ -853,44 +770,19 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               </div>
             </CardHeader>
             <CardContent>
-              <label htmlFor="deposit-amount" className="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                {isAwaitingDeposit ? 'Initial amount' : 'Amount to add'}
-              </label>
-              <div className="mt-2 grid grid-cols-[auto_1fr] overflow-hidden rounded-md border border-neutral-200 bg-neutral-50 focus-within:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950/40 dark:focus-within:border-neutral-600">
-                <span className="grid h-11 place-items-center border-r border-neutral-200 px-3 text-sm text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
-                  $
-                </span>
-                <input
-                  id="deposit-amount"
-                  inputMode="decimal"
-                  min="1"
-                  name="depositAmount"
-                  onChange={(event) => setDepositAmount(event.target.value)}
-                  placeholder="1000"
-                  type="text"
-                  value={depositAmount}
-                  className="h-11 min-w-0 bg-transparent px-3 text-base font-medium text-neutral-950 outline-none placeholder:text-neutral-400 dark:text-neutral-50 dark:placeholder:text-neutral-600"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  type="button"
-                  onClick={handleDeposit}
-                  disabled={moneyMovement.isPending || setupIncomplete}
-                  className="mt-3"
-                >
-                  <ArrowDownToLine size={16} aria-hidden="true" />
-                  {isSimulationMode ? 'Add simulated' : 'Deposit'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => moneyMovement.mutate({ type: 'withdraw' })}
-                  disabled={moneyMovement.isPending || isAwaitingDeposit || isFundingPending}
-                  className="mt-3"
-                >
-                  <ArrowUpFromLine size={16} aria-hidden="true" />
-                  Withdraw
+              <div className="grid gap-3">
+                <div className="grid gap-3 rounded-md border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/60">
+                  <Metric
+                    label="Withdrawable"
+                    value={isAwaitingDeposit ? 'Pending' : formatCurrency(data.portfolio.withdrawable ?? data.portfolio.availableToWithdraw)}
+                  />
+                  <Metric label="Available Balance" value={isAwaitingDeposit ? 'Pending' : formatCurrency(availableBalance)} />
+                </div>
+                <Button asChild className="w-full" variant={setupIncomplete ? 'secondary' : 'default'}>
+                  <Link href={setupIncomplete ? '/dashboard/onboarding' : '/dashboard/capital'}>
+                    {setupIncomplete ? 'Complete setup' : 'Move capital'}
+                    <ArrowRight size={16} aria-hidden="true" />
+                  </Link>
                 </Button>
               </div>
               <p className="mt-3 text-sm leading-6 text-neutral-500 dark:text-neutral-400" aria-live="polite">

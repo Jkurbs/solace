@@ -124,7 +124,7 @@ export async function POST(request: Request) {
 
   const origin = getRequestOrigin(request);
   const session = await stripe.checkout.sessions.create({
-    cancel_url: `${origin}/dashboard?deposit=canceled`,
+    cancel_url: `${origin}/dashboard/capital?deposit=canceled`,
     client_reference_id: accountId,
     customer_email: bundle.user.email,
     line_items: [
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
         purpose: 'solace_deposit',
       },
     },
-    success_url: `${origin}/dashboard?deposit=success`,
+    success_url: `${origin}/dashboard/capital?deposit=success`,
   });
 
   const recorded = await recordStripeDepositSession({
