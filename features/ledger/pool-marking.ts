@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/supabase/server';
 import type { Database, Json } from '@/lib/supabase/types';
 
+import { getHermesRealizedTradePerformance } from './hermes-realized-trades';
 import type {
   HermesSourceCapitalFlow,
   HermesSourceCapitalFlowDirection,
@@ -35,6 +36,7 @@ const emptyPoolMarkingRecords: PoolMarkingRecords = {
 };
 
 const poolAccountingObjects = [
+  'hermes_realized_trade_events',
   'hermes_source_capital_flows',
   'hermes_pool_source_marks',
   'strategy_pools',
@@ -452,29 +454,43 @@ function buildTranslatedNavMark({
   input,
   latestNav,
   previousSourceMark,
+  sourceFeesDelta,
+  sourceFundingDelta,
+  sourceRealizedPnlDelta,
   sourceReturn,
 }: {
   input: HermesPoolSourceMarkInput;
   latestNav: PoolNavSnapshot;
   previousSourceMark: HermesPoolSourceMark;
+  sourceFeesDelta?: number;
+  sourceFundingDelta?: number;
+  sourceRealizedPnlDelta?: number;
   sourceReturn: number;
 }): PoolNavMarkInput {
   const rawPoolEquity = latestNav.grossEquity * (1 + sourceReturn);
   const grossEquity = normalizeAmount(Math.max(latestNav.totalUnits > 0 ? 0.01 : 0, rawPoolEquity));
   const sourceScaleEquity = latestNav.grossEquity;
   const realizedPnlDelta = scaleSourceDelta(
-    input.realizedPnl - previousSourceMark.sourceRealizedPnl,
+    sourceRealizedPnlDelta ?? input.realizedPnl - previousSourceMark.sourceRealizedPnl,
     previousSourceMark.sourceEquity,
     sourceScaleEquity,
   );
-  const feesDelta = scaleSourceDelta(input.fees - previousSourceMark.sourceFees, previousSourceMark.sourceEquity, sourceScaleEquity);
-  const fundingDelta = scaleSourceDelta(input.funding - previousSourceMark.sourceFunding, previousSourceMark.sourceEquity, sourceScaleEquity);
+  const fundingDelta = scaleSourceDelta(
+    sourceFundingDelta ?? input.funding - previousSourceMark.sourceFunding,
+    previousSourceMark.sourceEquity,
+    sourceScaleEquity,
+  );
+  const effectiveFeesDelta = scaleSourceDelta(
+    sourceFeesDelta ?? input.fees - previousSourceMark.sourceFees,
+    previousSourceMark.sourceEquity,
+    sourceScaleEquity,
+  );
 
   return {
     allocatedCapital: scaleSourceControlBalance(input.allocatedCapital, input.grossEquity, grossEquity),
     cashBalance: scaleSourceControlBalance(input.cashBalance, input.grossEquity, grossEquity),
     effectiveAt: input.effectiveAt,
-    fees: normalizeAmount(Math.max(0, latestNav.fees + feesDelta)),
+    fees: normalizeAmount(Math.max(0, latestNav.fees + effectiveFeesDelta)),
     funding: normalizeAmount(Math.max(0, latestNav.funding + fundingDelta)),
     grossEquity,
     poolId: input.poolId,
@@ -489,6 +505,7 @@ async function insertHermesSourceMark({
   input,
   navMark,
   navResult,
+  performanceMetadata,
   sourceReturn,
   status,
 }: {
@@ -496,6 +513,7 @@ async function insertHermesSourceMark({
   input: HermesPoolSourceMarkInput;
   navMark?: PoolNavMarkInput;
   navResult?: PoolNavMarkResult | null;
+  performanceMetadata?: Record<string, unknown>;
   sourceReturn: number;
   status: HermesSourceMarkStatus;
 }) {
@@ -514,6 +532,7 @@ async function insertHermesSourceMark({
       raw_payload: toJson({
         ...rawPayload,
         externalSourceCapitalFlow: normalizeAmount(externalSourceCapitalFlow),
+        ...performanceMetadata,
       }),
       source: 'hermes_bridge',
       source_allocated_capital: normalizeAmount(input.allocatedCapital),
@@ -629,14 +648,30 @@ export async function postTranslatedHermesPoolMark(
       at: input.effectiveAt,
       poolId: input.poolId,
     });
+    const realizedTradePerformance = await getHermesRealizedTradePerformance({
+      after: previousSourceMark.effectiveAt,
+      at: input.effectiveAt,
+      poolId: input.poolId,
+    });
+    const hasRealizedTradePerformance = realizedTradePerformance.available && realizedTradePerformance.eventCount > 0;
+    const sourceOpenPnlDelta = normalizeAmount(input.unrealizedPnl - previousSourceMark.sourceUnrealizedPnl);
+    const performanceMetadata = {
+      performanceSource: hasRealizedTradePerformance ? 'realized_trade_events' : 'source_equity_return',
+      realizedTradeEventCount: realizedTradePerformance.eventCount,
+      realizedTradeNetPnl: realizedTradePerformance.netPnl,
+      sourceOpenPnlDelta,
+    };
 
     if (!latestNav || latestNav.totalUnits <= 0) {
-      const sourceReturn = normalizeRatio(
-        (input.grossEquity - previousSourceMark.sourceEquity - externalSourceCapitalFlow) / previousSourceMark.sourceEquity,
-      );
+      const sourceReturn = hasRealizedTradePerformance
+        ? normalizeRatio((realizedTradePerformance.netPnl + sourceOpenPnlDelta) / previousSourceMark.sourceEquity)
+        : normalizeRatio(
+            (input.grossEquity - previousSourceMark.sourceEquity - externalSourceCapitalFlow) / previousSourceMark.sourceEquity,
+          );
       const sourceMark = await insertHermesSourceMark({
         externalSourceCapitalFlow,
         input,
+        performanceMetadata,
         sourceReturn,
         status: 'stored',
       });
@@ -656,7 +691,9 @@ export async function postTranslatedHermesPoolMark(
     }
 
     const sourceReturn = normalizeRatio(
-      (input.grossEquity - previousSourceMark.sourceEquity - externalSourceCapitalFlow) / previousSourceMark.sourceEquity,
+      hasRealizedTradePerformance
+        ? (realizedTradePerformance.netPnl + sourceOpenPnlDelta) / previousSourceMark.sourceEquity
+        : (input.grossEquity - previousSourceMark.sourceEquity - externalSourceCapitalFlow) / previousSourceMark.sourceEquity,
     );
     const maximumSourceReturn = getMaximumSourceReturnPerMark();
 
@@ -664,6 +701,7 @@ export async function postTranslatedHermesPoolMark(
       const sourceMark = await insertHermesSourceMark({
         externalSourceCapitalFlow,
         input,
+        performanceMetadata,
         sourceReturn,
         status: 'stored',
       });
@@ -675,6 +713,9 @@ export async function postTranslatedHermesPoolMark(
       input,
       latestNav,
       previousSourceMark,
+      sourceFeesDelta: hasRealizedTradePerformance ? realizedTradePerformance.fees : undefined,
+      sourceFundingDelta: hasRealizedTradePerformance ? realizedTradePerformance.funding : undefined,
+      sourceRealizedPnlDelta: hasRealizedTradePerformance ? realizedTradePerformance.netPnl : undefined,
       sourceReturn,
     });
     const navResult = await postPoolNavMarkResult(navMark);
@@ -688,6 +729,7 @@ export async function postTranslatedHermesPoolMark(
       input,
       navMark,
       navResult,
+      performanceMetadata,
       sourceReturn,
       status: 'applied',
     });

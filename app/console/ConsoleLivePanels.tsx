@@ -415,6 +415,7 @@ function PoolNavMarkCard({ poolMark }: { poolMark: PoolMarkingPool }) {
   const fees = latestNav?.fees ?? 0;
   const funding = latestNav?.funding ?? 0;
   const hermesSourceMark = poolMark.latestHermesSourceMark;
+  const hasPoolActivity = Boolean(hermesSourceMark) || (latestNav?.totalUnits ?? poolMark.totalPositionUnits) > 0;
   const hermesSourceTone =
     !hermesSourceMark || hermesSourceMark.status === 'stored'
       ? 'amber'
@@ -473,99 +474,115 @@ function PoolNavMarkCard({ poolMark }: { poolMark: PoolMarkingPool }) {
         />
       </div>
 
-      <form
-        className="mt-4 grid gap-3 rounded-md border border-neutral-800 bg-neutral-950/30 p-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          sourceFlowMutation.mutate(new FormData(event.currentTarget));
-        }}
-      >
-        <input type="hidden" name="poolId" value={poolMark.pool.id} />
-        <div className="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_1.4fr_auto] lg:items-end">
-          <label className="grid gap-1">
-            <span className="text-xs text-neutral-500">Source flow</span>
-            <select
-              className="h-10 rounded-md border border-neutral-800 bg-neutral-950/40 px-3 text-sm text-neutral-50 outline-none transition-colors focus:border-neutral-600"
-              name="direction"
-              defaultValue="SOURCE_WITHDRAWAL"
-            >
-              <option value="SOURCE_WITHDRAWAL">KuCoin withdrawal</option>
-              <option value="SOURCE_DEPOSIT">KuCoin deposit</option>
-            </select>
-          </label>
-          <NumberField defaultValue="" label="Amount" name="amount" />
-          <label className="grid gap-1">
-            <span className="text-xs text-neutral-500">Effective time</span>
-            <input
-              className="h-10 rounded-md border border-neutral-800 bg-neutral-950/40 px-3 text-sm text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-600"
-              name="effectiveAt"
-              type="datetime-local"
-            />
-          </label>
-          <label className="grid gap-1">
-            <span className="text-xs text-neutral-500">Notes</span>
-            <input
-              className="h-10 rounded-md border border-neutral-800 bg-neutral-950/40 px-3 text-sm text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-600"
-              name="notes"
-              placeholder="External treasury movement"
-              type="text"
-            />
-          </label>
-          <button
-            className="inline-flex h-10 items-center justify-center rounded-md border border-neutral-700 px-4 text-sm font-medium text-neutral-100 transition-colors hover:border-neutral-500 disabled:opacity-50"
-            disabled={sourceFlowMutation.isPending}
-            type="submit"
+      {hasPoolActivity ? (
+        <details className="mt-4 rounded-md border border-neutral-900 bg-neutral-950/20">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-300">
+            Advanced source cashflow correction
+          </summary>
+          <form
+            className="grid gap-3 border-t border-neutral-900 p-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              sourceFlowMutation.mutate(new FormData(event.currentTarget));
+            }}
           >
-            {sourceFlowMutation.isPending ? 'Recording' : 'Record'}
-          </button>
-        </div>
-        <div className="grid gap-2 text-xs leading-5 text-neutral-500 md:grid-cols-[1fr_auto]">
-          <p aria-live="polite">
-            {sourceFlowMessage ||
-              'Record external KuCoin cash movements so Hermes performance excludes deposits and withdrawals.'}
-          </p>
-          <p>
-            {poolMark.recentSourceCapitalFlows.length
-              ? `Last flow: ${formatConstant(poolMark.recentSourceCapitalFlows[0].direction)} ${formatCurrency(
-                  poolMark.recentSourceCapitalFlows[0].amount,
-                )}`
-              : 'No source flows recorded'}
-          </p>
-        </div>
-      </form>
+            <input type="hidden" name="poolId" value={poolMark.pool.id} />
+            <div>
+              <p className="text-sm font-medium text-neutral-200">External KuCoin movement</p>
+              <p className="mt-1 text-xs leading-5 text-neutral-500">
+                Temporary fallback until Hermes posts transfer events automatically. This prevents source deposits and
+                withdrawals from being interpreted as strategy performance.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="grid gap-1">
+                <span className="text-xs text-neutral-500">Flow</span>
+                <select
+                  className="h-10 min-w-0 rounded-md border border-neutral-800 bg-neutral-950/40 px-3 text-sm text-neutral-50 outline-none transition-colors focus:border-neutral-600"
+                  name="direction"
+                  defaultValue="SOURCE_WITHDRAWAL"
+                >
+                  <option value="SOURCE_WITHDRAWAL">KuCoin withdrawal</option>
+                  <option value="SOURCE_DEPOSIT">KuCoin deposit</option>
+                </select>
+              </label>
+              <NumberField defaultValue="" label="Amount" name="amount" />
+              <label className="grid gap-1">
+                <span className="text-xs text-neutral-500">Effective time</span>
+                <input
+                  className="h-10 min-w-0 rounded-md border border-neutral-800 bg-neutral-950/40 px-3 text-sm text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-600"
+                  name="effectiveAt"
+                  type="datetime-local"
+                />
+              </label>
+              <label className="grid gap-1">
+                <span className="text-xs text-neutral-500">Notes</span>
+                <input
+                  className="h-10 min-w-0 rounded-md border border-neutral-800 bg-neutral-950/40 px-3 text-sm text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-600"
+                  name="notes"
+                  placeholder="External treasury movement"
+                  type="text"
+                />
+              </label>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs leading-5 text-neutral-500" aria-live="polite">
+                {sourceFlowMessage ||
+                  (poolMark.recentSourceCapitalFlows.length
+                    ? `Last flow: ${formatConstant(poolMark.recentSourceCapitalFlows[0].direction)} ${formatCurrency(
+                        poolMark.recentSourceCapitalFlows[0].amount,
+                      )}`
+                    : 'No source flows recorded')}
+              </p>
+              <button
+                className="inline-flex h-10 items-center justify-center rounded-md border border-neutral-700 px-4 text-sm font-medium text-neutral-100 transition-colors hover:border-neutral-500 disabled:opacity-50"
+                disabled={sourceFlowMutation.isPending}
+                type="submit"
+              >
+                {sourceFlowMutation.isPending ? 'Recording' : 'Record flow'}
+              </button>
+            </div>
+          </form>
+        </details>
+      ) : null}
 
-      <form
-        key={`${poolMark.pool.id}-${latestNav?.id ?? 'empty'}`}
-        className="mt-5 grid gap-4 border-t border-neutral-800 pt-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          mutation.mutate(new FormData(event.currentTarget));
-        }}
-      >
-        <input type="hidden" name="poolId" value={poolMark.pool.id} />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <NumberField defaultValue={getDefaultAmount(grossEquity)} label="Total equity" name="grossEquity" />
-          <NumberField defaultValue={getDefaultAmount(cashBalance)} label="Cash balance" name="cashBalance" />
-          <NumberField defaultValue={getDefaultAmount(allocatedCapital)} label="Allocated capital" name="allocatedCapital" />
-          <NumberField defaultValue={getDefaultAmount(reservedMargin)} label="Reserved margin" name="reservedMargin" />
-          <NumberField allowNegative defaultValue={getDefaultAmount(realizedPnl)} label="Realized PnL" name="realizedPnl" />
-          <NumberField allowNegative defaultValue={getDefaultAmount(unrealizedPnl)} label="Open PnL" name="unrealizedPnl" />
-          <NumberField defaultValue={getDefaultAmount(fees)} label="Fees" name="fees" />
-          <NumberField defaultValue={getDefaultAmount(funding)} label="Funding" name="funding" />
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm leading-6 text-neutral-500" aria-live="polite">
-            {statusMessage || 'Posting creates a new append-only pool NAV snapshot.'}
-          </p>
-          <button
-            className="inline-flex h-10 items-center justify-center rounded-md bg-neutral-100 px-4 text-sm font-medium text-neutral-950 transition-colors hover:bg-white disabled:opacity-50"
-            disabled={mutation.isPending}
-            type="submit"
-          >
-            {mutation.isPending ? 'Posting' : 'Post mark'}
-          </button>
-        </div>
-      </form>
+      <details className="mt-4 rounded-md border border-neutral-900 bg-neutral-950/20">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-300">
+          Advanced manual NAV override
+        </summary>
+        <form
+          key={`${poolMark.pool.id}-${latestNav?.id ?? 'empty'}`}
+          className="grid gap-4 border-t border-neutral-900 p-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            mutation.mutate(new FormData(event.currentTarget));
+          }}
+        >
+          <input type="hidden" name="poolId" value={poolMark.pool.id} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <NumberField defaultValue={getDefaultAmount(grossEquity)} label="Total equity" name="grossEquity" />
+            <NumberField defaultValue={getDefaultAmount(cashBalance)} label="Cash balance" name="cashBalance" />
+            <NumberField defaultValue={getDefaultAmount(allocatedCapital)} label="Allocated capital" name="allocatedCapital" />
+            <NumberField defaultValue={getDefaultAmount(reservedMargin)} label="Reserved margin" name="reservedMargin" />
+            <NumberField allowNegative defaultValue={getDefaultAmount(realizedPnl)} label="Realized PnL" name="realizedPnl" />
+            <NumberField allowNegative defaultValue={getDefaultAmount(unrealizedPnl)} label="Open PnL" name="unrealizedPnl" />
+            <NumberField defaultValue={getDefaultAmount(fees)} label="Fees" name="fees" />
+            <NumberField defaultValue={getDefaultAmount(funding)} label="Funding" name="funding" />
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm leading-6 text-neutral-500" aria-live="polite">
+              {statusMessage || 'Operator-only fallback. Hermes bridge marks should be the normal source.'}
+            </p>
+            <button
+              className="inline-flex h-10 items-center justify-center rounded-md bg-neutral-100 px-4 text-sm font-medium text-neutral-950 transition-colors hover:bg-white disabled:opacity-50"
+              disabled={mutation.isPending}
+              type="submit"
+            >
+              {mutation.isPending ? 'Posting' : 'Post override'}
+            </button>
+          </div>
+        </form>
+      </details>
     </article>
   );
 }

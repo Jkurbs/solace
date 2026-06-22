@@ -53,6 +53,8 @@ export type HermesSourceMarkStatus = 'baseline' | 'applied' | 'stored';
 
 export type HermesSourceCapitalFlowDirection = 'SOURCE_DEPOSIT' | 'SOURCE_WITHDRAWAL';
 
+export type HermesRealizedTradeSide = 'LONG' | 'SHORT';
+
 export type LedgerActivityType =
   | 'account_created'
   | 'deposit_posted'
@@ -261,6 +263,46 @@ export interface HermesSourceCapitalFlow {
   notes?: string;
   effectiveAt: IsoDateString;
   createdAt: IsoDateString;
+}
+
+export interface HermesRealizedTradeEvent {
+  id: string;
+  poolId: string;
+  sourceExchange: string;
+  sourceTradeId: string;
+  sourcePositionId?: string;
+  symbol: string;
+  side: HermesRealizedTradeSide;
+  quantity: number;
+  entryPrice?: number;
+  exitPrice?: number;
+  realizedPnl: number;
+  fees: number;
+  funding: number;
+  netPnl: number;
+  openedAt?: IsoDateString;
+  closedAt: IsoDateString;
+  rawPayload: Record<string, unknown>;
+  createdAt: IsoDateString;
+}
+
+export interface HermesRealizedTradeEventInput {
+  closedAt: IsoDateString;
+  entryPrice?: number;
+  exitPrice?: number;
+  fees?: number;
+  funding?: number;
+  netPnl?: number;
+  openedAt?: IsoDateString;
+  poolId: string;
+  quantity?: number;
+  rawPayload?: Record<string, unknown>;
+  realizedPnl: number;
+  side: HermesRealizedTradeSide;
+  sourceExchange?: string;
+  sourcePositionId?: string;
+  sourceTradeId: string;
+  symbol: string;
 }
 
 export interface PoolAllocationItem {

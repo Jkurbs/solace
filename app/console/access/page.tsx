@@ -20,6 +20,7 @@ type AccessApprovalsPageProps = {
     email?: string | string[];
     mode?: string | string[];
     notification?: string | string[];
+    q?: string | string[];
     review?: string | string[];
   }>;
 };
@@ -113,8 +114,10 @@ function isActivationComplete(account: AccountActivationStatus) {
 
 function ActivationPill({ label, status }: { label?: string; status: string }) {
   return (
-    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${getActivationStatusClass(status)}`}>
-      {label ? `${label} ` : ''}
+    <span
+      className={`inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-xs font-medium ${getActivationStatusClass(status)}`}
+    >
+      {label ? <span className="font-normal opacity-60">{label}</span> : null}
       {formatConstant(status)}
     </span>
   );
@@ -146,9 +149,13 @@ function AccountModeForm({ accountId, accountMode }: { accountId: string; accoun
 function AccountActivationPanel({
   accounts,
   available,
+  query,
+  total,
 }: {
   accounts: AccountActivationStatus[];
   available: boolean;
+  query: string;
+  total: number;
 }) {
   return (
     <section className="rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8" aria-labelledby="account-activation-heading">
@@ -159,43 +166,71 @@ function AccountActivationPanel({
             User, Hermes, ledger, and access status
           </h2>
         </div>
-        <span className="text-sm text-neutral-500">{accounts.length} tracked</span>
+        <span className="text-sm text-neutral-500">
+          {query ? `${accounts.length} of ${total}` : total} tracked
+        </span>
       </div>
 
-      <div className="mt-5 grid gap-3">
+      <form method="get" className="mt-5">
+        <div className="relative">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" strokeLinecap="round" />
+          </svg>
+          <input
+            type="search"
+            name="q"
+            defaultValue={query}
+            placeholder="Search users by name, email, or account"
+            aria-label="Search users"
+            className="h-10 w-full rounded-md border border-neutral-700 bg-[#10100e] pl-9 pr-3 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
+          />
+        </div>
+      </form>
+
+      <div className="mt-4 grid gap-3">
         {!available ? (
           <p className="rounded-md border border-amber-300/25 bg-amber-300/10 p-4 text-sm text-amber-100">
             Account activation records are unavailable. Confirm the production service-role key is configured.
           </p>
         ) : accounts.length ? (
-          accounts.slice(0, 8).map((account) => {
+          accounts.map((account) => {
             const activationComplete = isActivationComplete(account);
 
             return (
               <article
                 key={account.accountId}
-                className="grid gap-4 rounded-md border border-neutral-800 bg-neutral-950/30 p-4 lg:grid-cols-[1fr_auto]"
+                className="rounded-md border border-neutral-800 bg-neutral-950/30 p-4"
               >
-                <div className="min-w-0">
-                  <strong className="block text-sm font-semibold text-neutral-50">{account.userName}</strong>
-                  <span className="mt-1 block text-xs text-neutral-500">{account.userEmail}</span>
-                  <span className="mt-1 block text-xs text-neutral-500">{account.accountLabel}</span>
-                </div>
-                <div className="flex flex-wrap gap-2 lg:justify-end">
-                  <ActivationPill label="User" status={account.solaceUserStatus} />
-                  <ActivationPill label="Hermes" status={account.hermesAccountStatus} />
-                  <ActivationPill label="Ledger" status={account.ledgerAccountStatus} />
-                  <ActivationPill label="Mode" status={account.accountMode} />
-                  <ActivationPill label="Access" status={account.dashboardInviteStatus ?? 'missing'} />
-                  <ActivationPill status={activationComplete ? 'ACTIVE' : 'PENDING_ACTIVATION'} />
-                  <AccountModeForm accountId={account.accountId} accountMode={account.accountMode} />
+                <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+                  <div className="min-w-[11rem] max-w-full">
+                    <strong className="block truncate text-sm font-semibold text-neutral-50">{account.userName}</strong>
+                    <span className="mt-0.5 block truncate text-xs text-neutral-500">{account.userEmail}</span>
+                    <span className="mt-0.5 block truncate text-xs text-neutral-600">{account.accountLabel}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ActivationPill label="User" status={account.solaceUserStatus} />
+                    <ActivationPill label="Hermes" status={account.hermesAccountStatus} />
+                    <ActivationPill label="Ledger" status={account.ledgerAccountStatus} />
+                    <ActivationPill label="Mode" status={account.accountMode} />
+                    <ActivationPill label="Access" status={account.dashboardInviteStatus ?? 'missing'} />
+                    <ActivationPill status={activationComplete ? 'ACTIVE' : 'PENDING_ACTIVATION'} />
+                    <AccountModeForm accountId={account.accountId} accountMode={account.accountMode} />
+                  </div>
                 </div>
               </article>
             );
           })
         ) : (
           <p className="rounded-md border border-neutral-800 bg-neutral-950/30 p-4 text-sm text-neutral-500">
-            No account activation records available.
+            {query ? `No users match “${query}”.` : 'No account activation records available.'}
           </p>
         )}
       </div>
@@ -314,13 +349,39 @@ export default async function AccessApprovalsPage({ searchParams }: AccessApprov
   const notificationStatus = Array.isArray(params?.notification) ? params.notification[0] : params?.notification;
   const emailStatus = Array.isArray(params?.email) ? params.email[0] : params?.email;
   const modeStatus = Array.isArray(params?.mode) ? params.mode[0] : params?.mode;
+  const accountQuery = (Array.isArray(params?.q) ? params.q[0] : params?.q)?.trim() ?? '';
+  const normalizedAccountQuery = accountQuery.toLowerCase();
+  const accountStatuses = normalizedAccountQuery
+    ? moneyMovement.accountStatuses.filter((account) =>
+        [
+          account.accountId,
+          account.accountLabel,
+          account.accountMode,
+          account.dashboardInviteStatus,
+          account.hermesAccountStatus,
+          account.ledgerAccountStatus,
+          account.solaceUserStatus,
+          account.userEmail,
+          account.userName,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+          .includes(normalizedAccountQuery),
+      )
+    : moneyMovement.accountStatuses;
 
   return (
     <main className="min-h-screen bg-[#10100e] text-neutral-50">
       <ConsoleHeader pendingAccessCount={pendingAccessCount} />
 
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <AccountActivationPanel accounts={moneyMovement.accountStatuses} available={moneyMovement.available} />
+        <AccountActivationPanel
+          accounts={accountStatuses}
+          available={moneyMovement.available}
+          query={accountQuery}
+          total={moneyMovement.accountStatuses.length}
+        />
 
         <section className="grid gap-5 rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
           <div>

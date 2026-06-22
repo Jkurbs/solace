@@ -2,6 +2,28 @@ import type { HermesDashboardSnapshot, MoneyMovementType, RiskProfile } from './
 
 export const hermesDashboardQueryKey = ['hermes-dashboard', 'snapshot'] as const;
 
+export type SubmitBugReportPayload = {
+  browser?: string;
+  canReproduce?: 'yes' | 'sometimes' | 'no' | 'unknown';
+  device?: string;
+  expectedBehavior?: string;
+  pageUrl?: string;
+  screenshotUrl?: string;
+  seriousness?: string;
+  stepsToReproduce?: string[];
+  summary?: string;
+  whatHappened: string;
+};
+
+export type SubmitBugReportResponse = {
+  displayId: string;
+  message: string;
+  missingInfo: string[];
+  severity: 'P0' | 'P1' | 'P2' | 'P3';
+  status: string;
+  title: string;
+};
+
 export async function getHermesDashboardSnapshot(): Promise<HermesDashboardSnapshot> {
   const response = await fetch('/api/dashboard', {
     cache: 'no-store',
@@ -89,4 +111,22 @@ export async function logoutUser() {
   window.location.assign(payload.url ?? '/');
 
   return payload;
+}
+
+export async function submitBugReport(payload: SubmitBugReportPayload) {
+  const response = await fetch('/api/bug-report', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const responsePayload = (await response.json()) as SubmitBugReportResponse | { message?: string };
+
+  if (!response.ok) {
+    throw new Error(responsePayload.message ?? 'Bug report could not be submitted.');
+  }
+
+  return responsePayload as SubmitBugReportResponse;
 }

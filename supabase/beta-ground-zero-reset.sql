@@ -14,6 +14,7 @@ truncate table
   public.user_pool_positions,
   public.pool_nav_snapshots,
   public.pool_allocation_snapshots,
+  public.hermes_realized_trade_events,
   public.hermes_source_capital_flows,
   public.hermes_pool_source_marks,
   public.treasury_tasks,
@@ -106,6 +107,7 @@ select
   (select count(*) from public.treasury_tasks) as treasury_tasks,
   (select count(*) from public.pool_unit_events) as pool_unit_events,
   (select count(*) from public.user_pool_positions) as user_pool_positions,
+  (select count(*) from public.hermes_realized_trade_events) as hermes_realized_trade_events,
   (select count(*) from public.hermes_source_capital_flows) as hermes_source_capital_flows,
   (select count(*) from public.hermes_pool_source_marks) as hermes_source_marks,
   (select count(*) from public.pool_nav_snapshots) as pool_nav_snapshots;

@@ -231,6 +231,162 @@ export type Database = {
         };
         Relationships: [];
       };
+      bugops_reports: {
+        Row: {
+          id: string;
+          display_id: string;
+          source: 'dashboard' | 'in_app' | 'group_chat' | 'operator' | 'logs';
+          reporter_email: string | null;
+          reporter_name: string | null;
+          ledger_account_id: string | null;
+          page_url: string | null;
+          browser: string | null;
+          device: string | null;
+          screenshot_url: string | null;
+          session_id: string | null;
+          summary: string | null;
+          what_happened: string;
+          expected_behavior: string | null;
+          actual_behavior: string | null;
+          steps_to_reproduce: Json;
+          can_reproduce: 'yes' | 'sometimes' | 'no' | 'unknown';
+          seriousness: string | null;
+          console_errors: string | null;
+          severity: 'P0' | 'P1' | 'P2' | 'P3';
+          trust_impact: 'trust_breaking' | 'core_product' | 'confusing' | 'cosmetic';
+          area: string;
+          title: string;
+          user_impact: string;
+          likely_cause: string;
+          labels: Json;
+          missing_info: Json;
+          reproduction_steps: Json;
+          duplicate_of_id: string | null;
+          duplicate_candidates: Json;
+          status:
+            | 'NEW'
+            | 'NEEDS_INFO'
+            | 'REPRODUCED'
+            | 'ASSIGNED'
+            | 'FIX_PROPOSED'
+            | 'IN_REVIEW'
+            | 'FIXED'
+            | 'RELEASED'
+            | 'VERIFIED'
+            | 'CLOSED';
+          reporter_reply: string;
+          raw_context: Json;
+          created_at: string;
+          updated_at: string;
+          fixed_at: string | null;
+          released_at: string | null;
+          verified_at: string | null;
+          closed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          display_id: string;
+          source?: 'dashboard' | 'in_app' | 'group_chat' | 'operator' | 'logs';
+          reporter_email?: string | null;
+          reporter_name?: string | null;
+          ledger_account_id?: string | null;
+          page_url?: string | null;
+          browser?: string | null;
+          device?: string | null;
+          screenshot_url?: string | null;
+          session_id?: string | null;
+          summary?: string | null;
+          what_happened: string;
+          expected_behavior?: string | null;
+          actual_behavior?: string | null;
+          steps_to_reproduce?: Json;
+          can_reproduce?: 'yes' | 'sometimes' | 'no' | 'unknown';
+          seriousness?: string | null;
+          console_errors?: string | null;
+          severity: 'P0' | 'P1' | 'P2' | 'P3';
+          trust_impact: 'trust_breaking' | 'core_product' | 'confusing' | 'cosmetic';
+          area: string;
+          title: string;
+          user_impact: string;
+          likely_cause: string;
+          labels?: Json;
+          missing_info?: Json;
+          reproduction_steps?: Json;
+          duplicate_of_id?: string | null;
+          duplicate_candidates?: Json;
+          status:
+            | 'NEW'
+            | 'NEEDS_INFO'
+            | 'REPRODUCED'
+            | 'ASSIGNED'
+            | 'FIX_PROPOSED'
+            | 'IN_REVIEW'
+            | 'FIXED'
+            | 'RELEASED'
+            | 'VERIFIED'
+            | 'CLOSED';
+          reporter_reply: string;
+          raw_context?: Json;
+          created_at?: string;
+          updated_at?: string;
+          fixed_at?: string | null;
+          released_at?: string | null;
+          verified_at?: string | null;
+          closed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          display_id?: string;
+          source?: 'dashboard' | 'in_app' | 'group_chat' | 'operator' | 'logs';
+          reporter_email?: string | null;
+          reporter_name?: string | null;
+          ledger_account_id?: string | null;
+          page_url?: string | null;
+          browser?: string | null;
+          device?: string | null;
+          screenshot_url?: string | null;
+          session_id?: string | null;
+          summary?: string | null;
+          what_happened?: string;
+          expected_behavior?: string | null;
+          actual_behavior?: string | null;
+          steps_to_reproduce?: Json;
+          can_reproduce?: 'yes' | 'sometimes' | 'no' | 'unknown';
+          seriousness?: string | null;
+          console_errors?: string | null;
+          severity?: 'P0' | 'P1' | 'P2' | 'P3';
+          trust_impact?: 'trust_breaking' | 'core_product' | 'confusing' | 'cosmetic';
+          area?: string;
+          title?: string;
+          user_impact?: string;
+          likely_cause?: string;
+          labels?: Json;
+          missing_info?: Json;
+          reproduction_steps?: Json;
+          duplicate_of_id?: string | null;
+          duplicate_candidates?: Json;
+          status?:
+            | 'NEW'
+            | 'NEEDS_INFO'
+            | 'REPRODUCED'
+            | 'ASSIGNED'
+            | 'FIX_PROPOSED'
+            | 'IN_REVIEW'
+            | 'FIXED'
+            | 'RELEASED'
+            | 'VERIFIED'
+            | 'CLOSED';
+          reporter_reply?: string;
+          raw_context?: Json;
+          created_at?: string;
+          updated_at?: string;
+          fixed_at?: string | null;
+          released_at?: string | null;
+          verified_at?: string | null;
+          closed_at?: string | null;
+        };
+        Relationships: [];
+      };
       ledger_accounts: {
         Row: {
           id: string;
@@ -737,6 +893,69 @@ export type Database = {
           source_exchange?: string | null;
           notes?: string | null;
           effective_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      hermes_realized_trade_events: {
+        Row: {
+          id: string;
+          pool_id: string;
+          source_exchange: string;
+          source_trade_id: string;
+          source_position_id: string | null;
+          symbol: string;
+          side: 'LONG' | 'SHORT';
+          quantity: number;
+          entry_price: number | null;
+          exit_price: number | null;
+          realized_pnl: number;
+          fees: number;
+          funding: number;
+          net_pnl: number;
+          opened_at: string | null;
+          closed_at: string;
+          raw_payload: Json;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          pool_id: string;
+          source_exchange?: string;
+          source_trade_id: string;
+          source_position_id?: string | null;
+          symbol: string;
+          side: 'LONG' | 'SHORT';
+          quantity?: number;
+          entry_price?: number | null;
+          exit_price?: number | null;
+          realized_pnl?: number;
+          fees?: number;
+          funding?: number;
+          net_pnl?: number;
+          opened_at?: string | null;
+          closed_at: string;
+          raw_payload?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          pool_id?: string;
+          source_exchange?: string;
+          source_trade_id?: string;
+          source_position_id?: string | null;
+          symbol?: string;
+          side?: 'LONG' | 'SHORT';
+          quantity?: number;
+          entry_price?: number | null;
+          exit_price?: number | null;
+          realized_pnl?: number;
+          fees?: number;
+          funding?: number;
+          net_pnl?: number;
+          opened_at?: string | null;
+          closed_at?: string;
+          raw_payload?: Json;
           created_at?: string;
         };
         Relationships: [];
