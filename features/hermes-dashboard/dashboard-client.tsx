@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Check, Clock3, LogOut, Moon, Scale, ShieldCheck, Sun, Zap } from 'lucide-react';
+import { ArrowRight, Bug, Check, Clock3, LogOut, Moon, Scale, ShieldCheck, Sun, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import Mark from '@/app/Mark';
@@ -484,6 +484,13 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               {theme === 'dark' ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}
               <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </Button>
+            <Link
+              href="/dashboard/report"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-50 sm:px-3"
+            >
+              <Bug size={16} aria-hidden="true" />
+              <span className="hidden sm:inline">Report a bug</span>
+            </Link>
             <Button
               type="button"
               variant="ghost"
