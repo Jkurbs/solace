@@ -29,9 +29,9 @@ export const sourceOfFundsValues: SourceOfFunds[] = [
 ];
 
 export const riskProfileDescriptions: Record<RiskProfile, string> = {
-  Preservation: 'Preservation prioritizes drawdown control, lower activity, and larger cash reserves.',
-  Balanced: 'Balanced keeps Hermes selective while allowing measured deployment when conditions are favorable.',
-  Velocity: 'Velocity allows more active deployment when Hermes finds strong opportunity and sufficient liquidity.',
+  Preservation: 'Preservation records a conservative preference for beta; capital still routes through the single live Hermes pool.',
+  Balanced: 'Balanced is the current live Hermes beta pool for measured deployment when conditions are favorable.',
+  Velocity: 'Velocity records a higher-activity preference for beta; capital still routes through the single live Hermes pool.',
 };
 
 export const dashboardFieldSources: DashboardFieldSource[] = [

@@ -299,16 +299,13 @@ begin
     raise exception 'Ledger account % does not have an active Hermes account.', p_ledger_account_id;
   end if;
 
-  v_pool_id := case v_risk_profile
-    when 'Preservation' then 'pool_preservation_v1'
-    when 'Balanced' then 'pool_balanced_v1'
-    when 'Velocity' then 'pool_velocity_v1'
-    else null
-  end;
-
-  if v_pool_id is null then
+  if v_risk_profile not in ('Preservation', 'Balanced', 'Velocity') then
     raise exception 'Unsupported risk profile for pool allocation: %', v_risk_profile;
   end if;
+
+  -- Beta uses one live Hermes source. Risk profile is a user preference label
+  -- until separate source accounts or allocation policies exist per pool.
+  v_pool_id := 'pool_balanced_v1';
 
   perform 1
   from public.strategy_pools pool
