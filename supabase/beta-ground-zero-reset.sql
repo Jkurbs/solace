@@ -31,16 +31,16 @@ restart identity cascade;
 
 insert into public.strategy_pools (id, name, risk_profile, status, currency, accounting_version)
 values
-  ('pool_preservation_v1', 'Hermes Preservation Pool', 'Preservation', 'ACTIVE', 'USD', 'pool_units_v1'),
+  ('pool_preservation_v1', 'Hermes Preservation Pool', 'Preservation', 'PAUSED', 'USD', 'pool_units_v1'),
   ('pool_balanced_v1', 'Hermes Balanced Pool', 'Balanced', 'ACTIVE', 'USD', 'pool_units_v1'),
-  ('pool_velocity_v1', 'Hermes Velocity Pool', 'Velocity', 'ACTIVE', 'USD', 'pool_units_v1')
+  ('pool_velocity_v1', 'Hermes Velocity Pool', 'Velocity', 'PAUSED', 'USD', 'pool_units_v1')
 on conflict (id) do update
 set
   accounting_version = excluded.accounting_version,
   currency = excluded.currency,
   name = excluded.name,
   risk_profile = excluded.risk_profile,
-  status = 'ACTIVE',
+  status = excluded.status,
   updated_at = now();
 
 insert into public.pool_nav_snapshots (
