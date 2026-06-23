@@ -569,6 +569,7 @@ export async function recordHermesSourceCapitalFlow({
   effectiveAt,
   notes,
   poolId,
+  sourceFlowId,
   sourceExchange = 'kucoin_futures',
 }: {
   amount: number;
@@ -576,6 +577,7 @@ export async function recordHermesSourceCapitalFlow({
   effectiveAt?: string;
   notes?: string;
   poolId: string;
+  sourceFlowId?: string;
   sourceExchange?: string;
 }) {
   if (!isSupabaseDataClientConfigured()) {
@@ -591,6 +593,30 @@ export async function recordHermesSourceCapitalFlow({
   try {
     const supabase = await createSupabaseDataClient();
     const timestamp = effectiveAt ?? new Date().toISOString();
+    const normalizedSourceFlowId = sourceFlowId?.trim();
+    const storedNotes = [normalizedSourceFlowId ? `source_flow_id=${normalizedSourceFlowId}` : '', notes?.trim() || '']
+      .filter(Boolean)
+      .join(' | ');
+
+    if (normalizedSourceFlowId) {
+      const { data: existing, error: existingError } = await supabase
+        .from('hermes_source_capital_flows')
+        .select('*')
+        .eq('pool_id', poolId)
+        .eq('direction', direction)
+        .eq('source_exchange', sourceExchange)
+        .eq('notes', storedNotes)
+        .maybeSingle();
+
+      if (existingError && !isMissingPoolAccountingObject(existingError.message)) {
+        console.warn('[pool-marking] Source capital flow idempotency lookup failed.', existingError.message);
+      }
+
+      if (existing) {
+        return fromHermesSourceCapitalFlowRow(existing);
+      }
+    }
+
     const { data, error } = await supabase
       .from('hermes_source_capital_flows')
       .insert({
@@ -598,7 +624,7 @@ export async function recordHermesSourceCapitalFlow({
         direction,
         effective_at: timestamp,
         id: `hermes_source_flow_${poolId}_${randomUUID().replace(/-/g, '')}`,
-        notes: notes || null,
+        notes: storedNotes || null,
         pool_id: poolId,
         source_exchange: sourceExchange,
       })
