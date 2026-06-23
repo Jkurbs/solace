@@ -7,8 +7,28 @@
 -- Run after:
 --   1. supabase/pool-unit-accounting-v1.sql
 --   2. supabase/pool-empty-deposit-guard-v1.sql
+--
+-- Optional Hermes bridge tables are skipped if they have not been installed yet.
 
 begin;
+
+create or replace function pg_temp.table_count(p_table regclass)
+returns bigint
+language plpgsql
+as $$
+declare
+  v_count bigint := 0;
+begin
+  if p_table is null then
+    return 0;
+  end if;
+
+  execute format('select count(*) from %s', p_table)
+  into v_count;
+
+  return coalesce(v_count, 0);
+end;
+$$;
 
 do $$
 declare
@@ -20,9 +40,11 @@ begin
     into v_paid_withdrawals;
   end if;
 
-  select count(*)
-  into v_pool_redemptions
-  from public.pool_withdrawal_redemptions;
+  if to_regclass('public.pool_withdrawal_redemptions') is not null then
+    select count(*)
+    into v_pool_redemptions
+    from public.pool_withdrawal_redemptions;
+  end if;
 
   if v_paid_withdrawals > 0 or v_pool_redemptions > 0 then
     raise exception
@@ -32,17 +54,32 @@ begin
   end if;
 end $$;
 
-truncate table
-  public.pool_deposit_allocations,
-  public.pool_withdrawal_redemptions,
-  public.pool_unit_events,
-  public.user_pool_positions,
-  public.hermes_pool_source_marks,
-  public.pool_nav_snapshots,
-  public.pool_allocation_snapshots,
-  public.hermes_realized_trade_events,
-  public.hermes_source_capital_flows
-restart identity;
+do $$
+declare
+  v_existing_tables text[] := array[]::text[];
+  v_table text;
+begin
+  foreach v_table in array array[
+    'public.pool_deposit_allocations',
+    'public.pool_withdrawal_redemptions',
+    'public.pool_unit_events',
+    'public.user_pool_positions',
+    'public.hermes_pool_source_marks',
+    'public.pool_nav_snapshots',
+    'public.pool_allocation_snapshots',
+    'public.hermes_realized_trade_events',
+    'public.hermes_source_capital_flows'
+  ]
+  loop
+    if to_regclass(v_table) is not null then
+      v_existing_tables := array_append(v_existing_tables, v_table);
+    end if;
+  end loop;
+
+  if array_length(v_existing_tables, 1) > 0 then
+    execute 'truncate table ' || array_to_string(v_existing_tables, ', ') || ' restart identity';
+  end if;
+end $$;
 
 insert into public.strategy_pools (id, name, risk_profile, status, currency, accounting_version)
 values
@@ -145,9 +182,9 @@ commit;
 select
   (select count(*) from public.strategy_pools where status = 'ACTIVE') as active_pools,
   (select count(*) from public.strategy_pools where status = 'PAUSED') as paused_pools,
-  (select count(*) from public.pool_nav_snapshots) as pool_nav_snapshots,
-  (select count(*) from public.pool_unit_events) as pool_unit_events,
-  (select count(*) from public.user_pool_positions) as user_pool_positions,
-  (select count(*) from public.pool_deposit_allocations) as pool_deposit_allocations,
+  pg_temp.table_count(to_regclass('public.pool_nav_snapshots')) as pool_nav_snapshots,
+  pg_temp.table_count(to_regclass('public.pool_unit_events')) as pool_unit_events,
+  pg_temp.table_count(to_regclass('public.user_pool_positions')) as user_pool_positions,
+  pg_temp.table_count(to_regclass('public.pool_deposit_allocations')) as pool_deposit_allocations,
   (select coalesce(sum(gross_equity), 0) from public.pool_nav_snapshots where pool_id = 'pool_balanced_v1') as balanced_snapshot_equity_total,
   (select coalesce(sum(units), 0) from public.user_pool_positions where pool_id = 'pool_balanced_v1') as balanced_user_units;
