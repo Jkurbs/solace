@@ -77,9 +77,10 @@ function getAppOrigin(fallbackOrigin: string) {
   }
 }
 
-function getDashboardLoginUrl(origin: string, email: string) {
+function getDashboardLoginUrl(origin: string, email: string, nextPath = '/dashboard/onboarding?welcome=1') {
   const url = new URL('/dashboard', getAppOrigin(origin));
   url.searchParams.set('email', email);
+  url.searchParams.set('next', nextPath);
 
   return url.toString();
 }

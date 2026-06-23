@@ -42,6 +42,7 @@ type DashboardPageProps = {
   searchParams?: Promise<{
     auth?: string | string[];
     email?: string | string[];
+    next?: string | string[];
   }>;
 };
 
@@ -52,8 +53,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     const params = await searchParams;
     const status = Array.isArray(params?.auth) ? params.auth[0] : params?.auth;
     const email = Array.isArray(params?.email) ? params.email[0] : params?.email;
+    const nextPath = Array.isArray(params?.next) ? params.next[0] : params?.next;
 
-    return <DashboardAccessGate email={email} status={status === 'denied' || status === 'expired' || status === 'failed' || status === 'invalid' || status === 'sent' ? status : undefined} />;
+    return (
+      <DashboardAccessGate
+        email={email}
+        nextPath={nextPath}
+        status={status === 'denied' || status === 'expired' || status === 'failed' || status === 'invalid' || status === 'sent' ? status : undefined}
+      />
+    );
   }
 
   const accountId = await getDashboardAccountId();

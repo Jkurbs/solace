@@ -9,6 +9,14 @@ function normalizeEmail(value: FormDataEntryValue | string | null) {
   return typeof value === 'string' ? value.trim().toLowerCase() : '';
 }
 
+function getSafeNextPath(value: FormDataEntryValue | string | null) {
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) {
+    return null;
+  }
+
+  return value;
+}
+
 function getRedirectUrl(request: Request, status: string, email?: string) {
   const url = new URL('/dashboard', request.url);
   url.searchParams.set('auth', status);
@@ -59,7 +67,7 @@ function getEmailRedirectTo(request: Request, nextPath: string) {
   return callbackUrl.toString();
 }
 
-async function sendDashboardMagicLink(request: Request, email: string) {
+async function sendDashboardMagicLink(request: Request, email: string, requestedNextPath: string | null) {
   if (!isSupabaseServerConfigured()) {
     console.warn('[dashboard-access] Supabase Auth is not configured.');
     return false;
@@ -72,10 +80,12 @@ async function sendDashboardMagicLink(request: Request, email: string) {
   }
 
   const supabase = await createSupabaseServerClient();
+  const defaultNextPath = bundle.onboarding?.complete ? '/dashboard' : '/dashboard/onboarding?welcome=1';
+  const nextPath = requestedNextPath ?? defaultNextPath;
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: getEmailRedirectTo(request, bundle.onboarding?.complete ? '/dashboard' : '/dashboard/onboarding?welcome=1'),
+      emailRedirectTo: getEmailRedirectTo(request, nextPath),
       shouldCreateUser: true,
     },
   });
@@ -95,12 +105,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const formData = await request.formData().catch(() => null);
   const email = normalizeEmail(formData?.get('email') ?? null);
+  const requestedNextPath = getSafeNextPath(formData?.get('next') ?? null);
 
   if (!email) {
     return NextResponse.redirect(getRedirectUrl(request, 'invalid'), 303);
   }
 
-  const sent = await sendDashboardMagicLink(request, email);
+  const sent = await sendDashboardMagicLink(request, email, requestedNextPath);
 
   if (sent === null) {
     return NextResponse.redirect(getRedirectUrl(request, 'denied', email), 303);

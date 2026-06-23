@@ -4,6 +4,14 @@ import Mark from '@/app/Mark';
 
 type AuthStatus = 'denied' | 'expired' | 'failed' | 'invalid' | 'sent' | undefined;
 
+function getSafeNextPath(value: string | undefined) {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) {
+    return undefined;
+  }
+
+  return value;
+}
+
 function getStatusMessage(status: AuthStatus, email?: string) {
   switch (status) {
     case 'sent':
@@ -36,8 +44,17 @@ function getStatusMessage(status: AuthStatus, email?: string) {
   }
 }
 
-export default function DashboardAccessGate({ email, status }: { email?: string; status?: AuthStatus }) {
+export default function DashboardAccessGate({
+  email,
+  nextPath,
+  status,
+}: {
+  email?: string;
+  nextPath?: string;
+  status?: AuthStatus;
+}) {
   const message = getStatusMessage(status, email);
+  const safeNextPath = getSafeNextPath(nextPath);
 
   return (
     <main className="min-h-screen bg-[#10100e] text-neutral-50">
@@ -78,6 +95,7 @@ export default function DashboardAccessGate({ email, status }: { email?: string;
             className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
             placeholder="you@example.com"
           />
+          {safeNextPath ? <input type="hidden" name="next" value={safeNextPath} /> : null}
           {message ? (
             <p
               className={`mt-3 text-sm ${message.tone === 'success' ? 'text-emerald-300' : 'text-red-300'}`}
