@@ -2,17 +2,16 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { ArrowRight, Check, Scale, ShieldCheck, Zap } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 
 import Mark from '@/app/Mark';
+import RiskProfileSelector from '@/app/dashboard/onboarding/risk-profile-selector';
 import { findApprovedAccessRequestByAccountId } from '@/features/access-review/store';
 import type { HermesAccessRequest } from '@/features/access-review/types';
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import {
   accountTypeValues,
   intendedDepositRangeValues,
-  riskProfileDescriptions,
-  riskProfileValues,
   sourceOfFundsValues,
 } from '@/features/hermes-dashboard/contract';
 import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
@@ -24,12 +23,6 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = 'force-dynamic';
-
-const riskProfileIcons: Record<RiskProfile, typeof ShieldCheck> = {
-  Balanced: Scale,
-  Preservation: ShieldCheck,
-  Velocity: Zap,
-};
 
 function getMatchedValue<T extends string>(values: readonly T[], value: string | undefined, fallback: T) {
   return values.includes(value as T) ? (value as T) : fallback;
@@ -124,6 +117,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
 
   const params = await searchParams;
   const invalid = Array.isArray(params?.setup) ? params?.setup.includes('invalid') : params?.setup === 'invalid';
+  const unavailable = Array.isArray(params?.setup) ? params?.setup.includes('unavailable') : params?.setup === 'unavailable';
   const welcomeMode = Array.isArray(params?.welcome) ? params?.welcome.includes('1') : params?.welcome === '1';
   const accountId = await getDashboardAccountId();
   const onboarding = await getDashboardOnboardingState(accountId);
@@ -228,30 +222,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
           <div>
             <p className="text-sm font-medium text-neutral-400">Risk Profile</p>
             <h2 className="mt-1 text-xl font-semibold text-neutral-50">Choose operating posture</h2>
-            <div className="mt-5 grid gap-3">
-              {riskProfileValues.map((riskProfile) => {
-                const Icon = riskProfileIcons[riskProfile];
-
-                return (
-                  <label key={riskProfile} className="block cursor-pointer">
-                    <input
-                      className="peer sr-only"
-                      type="radio"
-                      name="riskProfile"
-                      value={riskProfile}
-                      defaultChecked={riskProfile === reviewValues.riskProfile}
-                    />
-                    <div className="rounded-md border border-neutral-800 bg-neutral-950/30 p-4 transition-colors peer-checked:border-neutral-200 peer-checked:bg-neutral-50 peer-checked:text-neutral-950">
-                      <div className="flex items-center gap-3">
-                        <Icon size={18} aria-hidden="true" />
-                        <strong className="text-sm font-semibold">{riskProfile}</strong>
-                      </div>
-                      <p className="mt-3 text-sm leading-6 text-inherit opacity-70">{riskProfileDescriptions[riskProfile]}</p>
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
+            <RiskProfileSelector initialRiskProfile={reviewValues.riskProfile} />
           </div>
 
           <div className="mt-8 border-t border-neutral-800 pt-6">
@@ -398,9 +369,11 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
               />
             </div>
 
-            {invalid ? (
+            {invalid || unavailable ? (
               <p className="mt-3 text-sm text-red-300" role="alert">
-                Select a risk profile and enter a valid amount.
+                {unavailable
+                  ? 'For the beta, Preservation and Velocity are unavailable. Balanced is the only live Hermes pool right now.'
+                  : 'Select a risk profile and enter a valid amount.'}
               </p>
             ) : null}
           </div>

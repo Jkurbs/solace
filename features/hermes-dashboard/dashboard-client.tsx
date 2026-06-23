@@ -19,7 +19,12 @@ import {
   startIdentityVerification,
   updateRiskProfile,
 } from './queries';
-import { riskProfileDescriptions } from './contract';
+import {
+  betaLiveRiskProfile,
+  betaUnavailableRiskProfileMessage,
+  isRiskProfileAvailableForBeta,
+  riskProfileDescriptions,
+} from './contract';
 import type { HermesDashboardSnapshot, IdentityVerificationStatus, RiskProfile } from './types';
 
 type HermesDashboardProps = {
@@ -347,6 +352,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const allocatedCapital =
     data.portfolio.allocatedCapital ?? (isAwaitingDeposit ? 0 : (data.portfolio.value * data.status.deployedCapital) / 100);
   const openPnl = data.portfolio.unrealizedPnl ?? 0;
+  const activeRiskProfile = isRiskProfileAvailableForBeta(data.status.riskProfile) ? data.status.riskProfile : betaLiveRiskProfile;
   const equityMetrics = [
     {
       label: 'Available Balance',
@@ -380,7 +386,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       : 'Verification uses Stripe Identity when test-mode keys are configured.');
   const activationSteps = [
     {
-      detail: data.status.riskProfile,
+      detail: activeRiskProfile,
       label: 'Risk profile selected',
       state: 'complete',
     },
@@ -683,7 +689,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Metric label="Status" value={operatingStatus} positive={data.status.status === 'ACTIVE'} />
-              <Metric label="Risk Profile" value={data.status.riskProfile} />
+              <Metric label="Risk Profile" value={activeRiskProfile} />
               <Metric label="Capital Deployed" value={formatPercent(data.status.deployedCapital)} />
               <Metric label="Conviction" value={formatConstantLabel(data.status.conviction)} />
             </div>
@@ -696,7 +702,8 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               >
                 {riskProfiles.map((profile) => {
                   const Icon = profile.icon;
-                  const selected = data.status.riskProfile === profile.label;
+                  const available = isRiskProfileAvailableForBeta(profile.label);
+                  const selected = activeRiskProfile === profile.label;
 
                   return (
                     <button
@@ -704,13 +711,23 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                       type="button"
                       role="radio"
                       aria-checked={selected}
-                      disabled={riskProfileMutation.isPending}
-                      onClick={() => riskProfileMutation.mutate(profile.label)}
+                      aria-disabled={!available || riskProfileMutation.isPending}
+                      disabled={available && riskProfileMutation.isPending}
+                      onClick={() => {
+                        if (!available) {
+                          setRiskStatus(betaUnavailableRiskProfileMessage);
+                          return;
+                        }
+
+                        riskProfileMutation.mutate(profile.label);
+                      }}
                       className={cn(
                         'inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium transition-colors',
                         selected
                           ? 'bg-white text-neutral-950 shadow-sm dark:bg-neutral-700 dark:text-neutral-50'
-                          : 'text-neutral-600 hover:bg-white/70 hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-50',
+                          : available
+                            ? 'text-neutral-600 hover:bg-white/70 hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-50'
+                            : 'cursor-not-allowed text-neutral-400 opacity-60 dark:text-neutral-600',
                       )}
                     >
                       <Icon size={16} aria-hidden="true" />
@@ -720,11 +737,23 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 })}
               </div>
               <p className="mt-3 text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                {riskProfileDescriptions[data.status.riskProfile]}
+                {riskProfileDescriptions[activeRiskProfile]}
               </p>
-              <p className="sr-only" aria-live="polite">
-                {riskStatus}
-              </p>
+              {riskStatus ? (
+                <p
+                  className={cn(
+                    'mt-2 text-sm leading-6',
+                    riskStatus === betaUnavailableRiskProfileMessage
+                      ? 'text-amber-600 dark:text-amber-300'
+                      : 'text-neutral-500 dark:text-neutral-400',
+                  )}
+                  role="status"
+                >
+                  {riskStatus}
+                </p>
+              ) : (
+                <p className="sr-only" aria-live="polite" />
+              )}
             </div>
           </CardContent>
         </Card>

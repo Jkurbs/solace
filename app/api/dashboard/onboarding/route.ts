@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { ensureApprovedAccountRecordsForAccountId } from '@/features/access-review/store';
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
+import { isRiskProfileAvailableForBeta } from '@/features/hermes-dashboard/contract';
 import {
   buildAccountReview,
   completeDashboardOnboarding,
@@ -23,6 +24,10 @@ export async function POST(request: Request) {
 
   if (!isRiskProfile(riskProfile) || !accountReview || !depositIntentAmount) {
     return NextResponse.redirect(new URL('/dashboard/onboarding?setup=invalid', request.url), 303);
+  }
+
+  if (!isRiskProfileAvailableForBeta(riskProfile)) {
+    return NextResponse.redirect(new URL('/dashboard/onboarding?setup=unavailable', request.url), 303);
   }
 
   const accountId = await getDashboardAccountId();

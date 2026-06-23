@@ -11,6 +11,15 @@ export const hermesDashboardContractVersion: HermesDashboardContractVersion = 'h
 
 export const riskProfileValues: RiskProfile[] = ['Preservation', 'Balanced', 'Velocity'];
 
+export const betaLiveRiskProfile: RiskProfile = 'Balanced';
+
+export const betaUnavailableRiskProfileMessage =
+  'For the beta, Preservation and Velocity are unavailable. Balanced is the only live Hermes pool right now.';
+
+export function isRiskProfileAvailableForBeta(riskProfile: RiskProfile) {
+  return riskProfile === betaLiveRiskProfile;
+}
+
 export const accountTypeValues: AccountType[] = ['Individual', 'Entity'];
 
 export const intendedDepositRangeValues: IntendedDepositRange[] = [

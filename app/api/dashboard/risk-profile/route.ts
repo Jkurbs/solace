@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
+import { betaUnavailableRiskProfileMessage, isRiskProfileAvailableForBeta } from '@/features/hermes-dashboard/contract';
 import {
   isRiskProfile,
   setPersistedRiskProfilePreference,
@@ -18,6 +19,10 @@ export async function POST(request: Request) {
 
   if (!isRiskProfile(riskProfile)) {
     return NextResponse.json({ message: 'Invalid risk profile.' }, { status: 400 });
+  }
+
+  if (!isRiskProfileAvailableForBeta(riskProfile)) {
+    return NextResponse.json({ message: betaUnavailableRiskProfileMessage }, { status: 409 });
   }
 
   const accountId = await getDashboardAccountId();
