@@ -1,8 +1,13 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import { HermesDashboard } from '@/features/hermes-dashboard/dashboard-client';
-import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
+import {
+  getDashboardOnboardingState,
+  getStoredRiskProfile,
+  type DashboardOnboardingState,
+} from '@/features/hermes-dashboard/preferences';
 import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
 
 import DashboardAccessGate from './DashboardAccessGate';
@@ -14,10 +19,14 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-async function getInitialDashboardSnapshot() {
-  const accountId = await getDashboardAccountId();
+async function getInitialDashboardSnapshot({
+  accountId,
+  onboarding,
+}: {
+  accountId: string | null;
+  onboarding: DashboardOnboardingState;
+}) {
   const storedRiskProfile = await getStoredRiskProfile(accountId);
-  const onboarding = await getDashboardOnboardingState(accountId);
 
   return getHermesDashboardSnapshot({
     accountId,
@@ -47,7 +56,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     return <DashboardAccessGate email={email} status={status === 'denied' || status === 'expired' || status === 'failed' || status === 'invalid' || status === 'sent' ? status : undefined} />;
   }
 
-  const initialSnapshot = await getInitialDashboardSnapshot();
+  const accountId = await getDashboardAccountId();
+  const onboarding = await getDashboardOnboardingState(accountId);
+
+  if (!onboarding.complete) {
+    redirect('/dashboard/onboarding?welcome=1');
+  }
+
+  const initialSnapshot = await getInitialDashboardSnapshot({ accountId, onboarding });
 
   return <HermesDashboard initialSnapshot={initialSnapshot} />;
 }

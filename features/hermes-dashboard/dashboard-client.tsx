@@ -432,6 +432,54 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       value: formatCurrency(data.portfolio.withdrawable ?? data.portfolio.availableToWithdraw, { whole: true }),
     },
   ];
+  const activationStatusCard = isAwaitingDeposit ? (
+    <Card>
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Activation Status</p>
+            <CardTitle>Pending activation</CardTitle>
+          </div>
+          <Badge variant="secondary">IN REVIEW</Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {activationSteps.map((step) => (
+            <ActivationStep key={step.label} detail={step.detail} label={step.label} state={step.state} />
+          ))}
+        </div>
+        <div className="mt-5 grid gap-4 border-t border-neutral-200 pt-4 dark:border-neutral-800 md:grid-cols-[1fr_auto] md:items-center">
+          <p className="text-sm leading-6 text-neutral-600 dark:text-neutral-400">
+            Hermes will begin allocation after identity verification, capital receipt, and account activation.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 md:flex md:justify-end">
+            {setupIncomplete ? (
+              <Button asChild variant="secondary" className="w-full md:w-auto">
+                <Link href="/dashboard/onboarding">
+                  <ArrowRight size={16} aria-hidden="true" />
+                  Complete setup
+                </Link>
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => identityVerification.mutate()}
+              disabled={identityVerification.isPending || data.account.identityVerification.status === 'VERIFIED'}
+              className="w-full md:w-auto"
+            >
+              <ShieldCheck size={16} aria-hidden="true" />
+              {identityVerification.isPending ? 'Opening' : 'Start verification'}
+            </Button>
+          </div>
+        </div>
+        <p className="mt-3 text-sm leading-6 text-neutral-500 dark:text-neutral-400" aria-live="polite">
+          {identityHelper}
+        </p>
+      </CardContent>
+    </Card>
+  ) : null;
 
   return (
     <main
@@ -517,6 +565,8 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       </header>
 
       <div className="mx-auto grid max-w-6xl gap-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        {activationStatusCard}
+
         <div>
           <motion.section
             initial={false}
@@ -577,55 +627,6 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             </div>
           </motion.section>
         </div>
-
-        {isAwaitingDeposit ? (
-          <Card>
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Activation Status</p>
-                  <CardTitle>Pending activation</CardTitle>
-                </div>
-                <Badge variant="secondary">IN REVIEW</Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {activationSteps.map((step) => (
-                  <ActivationStep key={step.label} detail={step.detail} label={step.label} state={step.state} />
-                ))}
-              </div>
-              <div className="mt-5 grid gap-4 border-t border-neutral-200 pt-4 dark:border-neutral-800 md:grid-cols-[1fr_auto] md:items-center">
-                <p className="text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                  Hermes will begin allocation after identity verification, capital receipt, and account activation.
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2 md:flex md:justify-end">
-                  {setupIncomplete ? (
-                    <Button asChild variant="secondary" className="w-full md:w-auto">
-                      <Link href="/dashboard/onboarding">
-                        <ArrowRight size={16} aria-hidden="true" />
-                        Complete setup
-                      </Link>
-                    </Button>
-                  ) : null}
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => identityVerification.mutate()}
-                    disabled={identityVerification.isPending || data.account.identityVerification.status === 'VERIFIED'}
-                    className="w-full md:w-auto"
-                  >
-                    <ShieldCheck size={16} aria-hidden="true" />
-                    {identityVerification.isPending ? 'Opening' : 'Start verification'}
-                  </Button>
-                </div>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-neutral-500 dark:text-neutral-400" aria-live="polite">
-                {identityHelper}
-              </p>
-            </CardContent>
-          </Card>
-        ) : null}
 
         {isFundingPending ? (
           <Card>
