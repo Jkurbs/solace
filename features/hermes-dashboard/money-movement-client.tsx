@@ -273,8 +273,8 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-3xl gap-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <div className="grid gap-4">
+      <div className="mx-auto grid max-w-6xl gap-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
             <Button asChild variant="ghost" className="-ml-3">
               <Link href="/dashboard">
@@ -292,6 +292,15 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
               Deposit capital or request a withdrawal.
             </p>
           </div>
+          <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/60 lg:w-80">
+            <div className="flex items-center justify-between gap-3">
+              <strong className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">{fundingCopy.title}</strong>
+              <Badge variant={fundingCopy.badge === 'ACTIVE' ? 'success' : 'secondary'}>{fundingCopy.badge}</Badge>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-neutral-500 dark:text-neutral-400" aria-live="polite">
+              {actionStatus || fundingCopy.body}
+            </p>
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
@@ -300,8 +309,8 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
           <MoneyMetric label="Withdrawable" tone={withdrawable > 0 ? 'green' : 'muted'} value={isAwaitingDeposit ? 'Pending' : formatCurrency(withdrawable)} />
         </div>
 
-        <div className="grid gap-5">
-          <Card>
+        <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+          <Card className="h-full">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -351,7 +360,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="h-full">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -392,10 +401,6 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
             </CardContent>
           </Card>
         </div>
-
-        <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400" aria-live="polite">
-          {actionStatus || fundingCopy.body}
-        </p>
       </div>
     </main>
   );
