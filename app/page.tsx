@@ -185,7 +185,10 @@ export default function Home() {
           <div className="hermes-product-copy">
             <p className="section-kicker">The first instrument</p>
             <h2>Hermes is the first instrument.</h2>
-            <p>Live intelligence for liquidity, timing, and regime — read until signal earns action.</p>
+            <p>
+              Hermes is a live capital allocation instrument. It reads liquidity, timing, and regime,
+              translating market structure into posture before capital is deployed.
+            </p>
             <div className="hermes-product-actions">
               <Link href="/hermes" className="hermes-product-button hermes-product-button-light">
                 Learn More
