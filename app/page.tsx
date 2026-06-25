@@ -178,9 +178,6 @@ export default function Home() {
         <div className="hermes-product-bg" aria-hidden="true">
           <HermesLiquidityFieldRender />
         </div>
-        <div className="hermes-render-caption" aria-hidden="true">
-          Liquidity field · 6 candidate paths · 1 survivor
-        </div>
         <div className="hermes-product-shell relative z-10 mx-auto flex max-w-7xl flex-col justify-center px-5 py-24 md:px-8 md:py-28">
           <div className="hermes-product-copy">
             <p className="section-kicker">The first instrument</p>
@@ -213,9 +210,6 @@ export default function Home() {
       <section id="oracle" className="oracle-section scroll-mt-24">
         <div className="oracle-product-bg" aria-hidden="true">
           <OracleFuturesRender />
-        </div>
-        <div className="hermes-render-caption oracle-caption" aria-hidden="true">
-          Event markets · 7 futures weighted · 1 resolved
         </div>
         <div className="hermes-product-shell relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-center px-5 py-24 md:px-8 md:py-28">
           <div className="hermes-product-copy lg:ml-auto">
