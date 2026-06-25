@@ -114,8 +114,8 @@ export default function PrivacyPage() {
                   <p>
                     Questions about privacy, or a request to access or delete your information, can
                     be sent to{' '}
-                    <a href="mailto:jkurbs18@gmail.com" className="brief-author-link">
-                      jkurbs18@gmail.com
+                    <a href="mailto:privacy@solace.fyi" className="brief-author-link">
+                      privacy@solace.fyi
                     </a>
                     .
                   </p>

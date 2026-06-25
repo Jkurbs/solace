@@ -120,8 +120,8 @@ export default function TermsPage() {
                 <div className="mt-5 space-y-4 text-base leading-8 text-[#3f3a30]">
                   <p>
                     Questions about these terms can be sent to{' '}
-                    <a href="mailto:jkurbs18@gmail.com" className="brief-author-link">
-                      jkurbs18@gmail.com
+                    <a href="mailto:legal@solace.fyi" className="brief-author-link">
+                      legal@solace.fyi
                     </a>
                     .
                   </p>
