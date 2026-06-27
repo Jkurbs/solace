@@ -254,8 +254,8 @@ export default function Home() {
             <p className="section-kicker">The first instrument</p>
             <h2>Hermes is the first instrument.</h2>
             <p>
-              Live market intelligence for liquidity, timing, and regime. Hermes observes structure,
-              measures risk, and stands down until signal earns action.
+              A live capital allocation engine for markets under uncertainty. Hermes reads liquidity, timing,
+              and regime to decide when capital should move, wait, or be preserved.
             </p>
 
             <div className="hermes-product-actions">
