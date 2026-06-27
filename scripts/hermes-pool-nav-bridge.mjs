@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 
 function loadLocalEnv() {
   const envPath = resolve(process.cwd(), '.env.local');
@@ -341,6 +341,317 @@ function buildAllocationMark(snapshot, poolMark) {
   };
 }
 
+function isRecord(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function normalizePublicPosture(value) {
+  const posture = String(value || '').trim().toUpperCase();
+
+  return ['SELECTIVE', 'DEPLOYED', 'DEFENSIVE', 'STANDING_DOWN', 'RISK_OFF'].includes(posture)
+    ? posture
+    : undefined;
+}
+
+function getNestedValue(source, path) {
+  return path.reduce((value, key) => (isRecord(value) ? value[key] : undefined), source);
+}
+
+function getExplicitPublicReadingValue(snapshot, paths) {
+  for (const path of paths) {
+    const value = getNestedValue(snapshot, path);
+
+    if (value !== undefined && value !== null && value !== '') {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+function getPublicReadingPulse(updatedAt) {
+  const updatedTime = new Date(updatedAt).getTime();
+  const ageMinutes = Math.max(0, Math.floor((Date.now() - updatedTime) / 60_000));
+
+  if (!Number.isFinite(updatedTime)) {
+    return {
+      label: 'STALE',
+      subtext: 'awaiting update',
+    };
+  }
+
+  if (ageMinutes <= 10) {
+    return {
+      label: 'LIVE',
+      subtext: ageMinutes <= 0 ? 'updated just now' : `updated ${ageMinutes}m ago`,
+    };
+  }
+
+  if (ageMinutes <= 30) {
+    return {
+      label: 'RECENT',
+      subtext: `updated ${ageMinutes}m ago`,
+    };
+  }
+
+  return {
+    label: 'STALE',
+    subtext: ageMinutes < 60 ? `updated ${ageMinutes}m ago` : 'older than 30m',
+  };
+}
+
+function isExplicitFalse(value) {
+  return value === false || String(value || '').trim().toLowerCase() === 'false';
+}
+
+function getCandidateQuality(candidate) {
+  const quality = getOptionalNumber(
+    candidate.quality_score,
+    candidate.qualityScore,
+    candidate.path_quality,
+    candidate.pathQuality,
+    candidate.confidence,
+    candidate.urgency_score,
+    candidate.urgencyScore,
+    candidate.sweep_probability,
+    candidate.sweepProbability,
+  );
+
+  if (quality === undefined) {
+    return undefined;
+  }
+
+  return quality > 1 ? quality / 100 : quality;
+}
+
+function isActiveCandidatePath(candidate) {
+  if (!isRecord(candidate)) {
+    return false;
+  }
+
+  const status = String(candidate.status || candidate.state || '').trim().toLowerCase();
+
+  if (/(deployed|invalid|expired|closed|filled|cancelled|canceled)/.test(status)) {
+    return false;
+  }
+
+  if (
+    isExplicitFalse(candidate.target_valid ?? candidate.targetValid ?? candidate.targetStillValid) ||
+    isExplicitFalse(candidate.liquidity_structure_active ?? candidate.liquidityStructureActive ?? candidate.liquidityActive)
+  ) {
+    return false;
+  }
+
+  const quality = getCandidateQuality(candidate);
+  const threshold = Math.max(0, Math.min(1, getNumber(process.env.HERMES_PUBLIC_READING_MIN_QUALITY, 0.55)));
+
+  if (quality !== undefined && quality < threshold) {
+    return false;
+  }
+
+  if (status) {
+    return /(observing|eligible|candidate|under_review|watch|pending|active)/.test(status);
+  }
+
+  return Boolean(
+    candidate.target_price ||
+      candidate.targetPrice ||
+      candidate.reason ||
+      candidate.symbol ||
+      candidate.timeframe ||
+      quality !== undefined,
+  );
+}
+
+function getCandidatePathArrays(snapshot) {
+  const fields = [
+    ['candidate_paths'],
+    ['candidatePaths'],
+    ['public_reading', 'candidate_paths'],
+    ['publicReading', 'candidatePaths'],
+    ['market_paths'],
+    ['marketPaths'],
+    ['paths'],
+    ['setups'],
+    ['signals'],
+    ['state', 'candidate_paths'],
+    ['state', 'candidatePaths'],
+    ['market', 'candidate_paths'],
+    ['market', 'candidatePaths'],
+  ];
+
+  return fields
+    .map((path) => getNestedValue(snapshot, path))
+    .filter((value) => Array.isArray(value));
+}
+
+function getPathsUnderReview(snapshot) {
+  const explicit = getOptionalNumber(
+    getExplicitPublicReadingValue(snapshot, [
+      ['public_reading', 'paths', 'count'],
+      ['publicReading', 'paths', 'count'],
+      ['paths_under_review'],
+      ['pathsUnderReview'],
+      ['public_reading', 'paths_under_review'],
+      ['publicReading', 'pathsUnderReview'],
+    ]),
+  );
+
+  if (explicit !== undefined) {
+    return Math.max(0, Math.floor(explicit));
+  }
+
+  const candidates = getCandidatePathArrays(snapshot).flat();
+
+  return candidates.filter(isActiveCandidatePath).length;
+}
+
+function hasActiveExposure(snapshot, poolMark) {
+  const positions = Array.isArray(snapshot?.positions) ? snapshot.positions : [];
+
+  return poolMark.reservedMargin > 0 || positions.some((position) => getPositionExposure(position) > 0);
+}
+
+function getPublicPosture(snapshot, poolMark, pathsUnderReview) {
+  const explicit = normalizePublicPosture(
+    getExplicitPublicReadingValue(snapshot, [
+      ['public_reading', 'posture', 'label'],
+      ['publicReading', 'posture', 'label'],
+      ['posture'],
+      ['public_reading', 'posture'],
+      ['publicReading', 'posture'],
+    ]),
+  );
+
+  if (explicit) {
+    return explicit;
+  }
+
+  const stateText = [
+    snapshot?.source,
+    snapshot?.state,
+    snapshot?.mode,
+    snapshot?.risk_state,
+    snapshot?.riskState,
+    getNestedValue(snapshot, ['account', 'risk_state']),
+    getNestedValue(snapshot, ['account', 'riskState']),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if (stateText.includes('risk_off') || stateText.includes('risk-off')) {
+    return 'RISK_OFF';
+  }
+
+  if (stateText.includes('defensive') || stateText.includes('reduced')) {
+    return 'DEFENSIVE';
+  }
+
+  if (hasActiveExposure(snapshot, poolMark)) {
+    return 'DEPLOYED';
+  }
+
+  if (pathsUnderReview > 0) {
+    return 'SELECTIVE';
+  }
+
+  return 'STANDING_DOWN';
+}
+
+function getPublicPostureSubtext(snapshot, posture) {
+  const explicit = String(
+    getExplicitPublicReadingValue(snapshot, [
+      ['public_reading', 'posture', 'subtext'],
+      ['publicReading', 'posture', 'subtext'],
+      ['posture_subtext'],
+      ['postureSubtext'],
+    ]) || '',
+  ).trim();
+
+  if (explicit) {
+    return explicit;
+  }
+
+  switch (posture) {
+    case 'DEPLOYED':
+      return 'active exposure';
+    case 'DEFENSIVE':
+      return 'risk reduced';
+    case 'RISK_OFF':
+      return 'market unreliable';
+    case 'STANDING_DOWN':
+      return 'conditions not clean';
+    case 'SELECTIVE':
+    default:
+      return 'waiting for confirmation';
+  }
+}
+
+function getPublicReadingSummary(snapshot, posture, pathsUnderReview) {
+  const explicit = String(getExplicitPublicReadingValue(snapshot, [['public_reading', 'summary'], ['publicReading', 'summary'], ['summary']]) || '').trim();
+
+  if (explicit) {
+    return explicit;
+  }
+
+  if (posture === 'DEPLOYED') {
+    return 'Hermes has active exposure and continues to monitor market structure.';
+  }
+
+  if (posture === 'DEFENSIVE') {
+    return 'Hermes is reducing risk while market structure remains elevated.';
+  }
+
+  if (posture === 'RISK_OFF') {
+    return 'Hermes is preserving capital while market conditions remain hostile.';
+  }
+
+  if (pathsUnderReview > 0) {
+    return `Hermes is tracking ${pathsUnderReview} possible market paths. No path has earned deployment.`;
+  }
+
+  return 'Hermes is standing down until market structure earns action.';
+}
+
+function buildPublicReading(snapshot, poolMark) {
+  const updatedAt = poolMark.effectiveAt ?? new Date().toISOString();
+  const pathsUnderReview = getPathsUnderReview(snapshot);
+  const posture = getPublicPosture(snapshot, poolMark, pathsUnderReview);
+  const disclosure = String(
+    getExplicitPublicReadingValue(snapshot, [['public_reading', 'disclosure'], ['publicReading', 'disclosure'], ['disclosure']]) ||
+      'Founder capital only · Beta portfolios are simulated · No customer funds are managed by Solace',
+  ).trim();
+
+  return {
+    updated_at: updatedAt,
+    paths: {
+      count: pathsUnderReview,
+      label: 'under review',
+    },
+    posture: {
+      label: posture,
+      subtext: getPublicPostureSubtext(snapshot, posture),
+    },
+    pulse: getPublicReadingPulse(updatedAt),
+    summary: getPublicReadingSummary(snapshot, posture, pathsUnderReview),
+    disclosure,
+  };
+}
+
+function writePublicReadingFile(publicReading) {
+  const targetPath = process.env.HERMES_PUBLIC_READING_PATH
+    ? resolve(process.env.HERMES_PUBLIC_READING_PATH)
+    : resolve(process.cwd(), '.hermes_state', 'public_reading.json');
+  const tempPath = `${targetPath}.tmp`;
+
+  mkdirSync(dirname(targetPath), { recursive: true });
+  writeFileSync(tempPath, `${JSON.stringify(publicReading, null, 2)}\n`, 'utf8');
+  renameSync(tempPath, targetPath);
+
+  return targetPath;
+}
+
 async function fetchHermesPortfolio(hermesApiUrl) {
   const url = getUrl(hermesApiUrl, '/api/portfolio/kucoin');
   url.searchParams.set('refresh', process.env.HERMES_REFRESH_PORTFOLIO ?? 'true');
@@ -518,6 +829,26 @@ async function postSolaceTradeEvents(solaceAppUrl, secret, tradeEvents) {
   return payload;
 }
 
+async function postSolacePublicReading(solaceAppUrl, secret, publicReading) {
+  const response = await fetch(getUrl(solaceAppUrl, '/api/hermes/public-reading'), {
+    body: JSON.stringify(publicReading),
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${secret}`,
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+  });
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(`Solace public reading ingest failed (${response.status}): ${JSON.stringify(payload)}`);
+  }
+
+  return payload;
+}
+
 function getBridgeConfig() {
   return {
     hermesApiUrl: process.env.HERMES_API_URL ?? 'http://127.0.0.1:8000',
@@ -586,12 +917,23 @@ async function runBridgeOnce({ hermesApiUrl, secret, solaceAppUrl }) {
   });
   const poolMark = buildPoolMark(snapshot);
   const allocationMark = buildAllocationMark(snapshot, poolMark);
+  const publicReading = buildPublicReading(snapshot, poolMark);
+  const publicReadingPath = writePublicReadingFile(publicReading);
 
   if (poolMark.grossEquity <= 0) {
     throw new Error(`Hermes gross equity must be positive. Received ${poolMark.grossEquity}.`);
   }
 
   const result = await postSolacePoolMark(solaceAppUrl, secret, allocationMark);
+  const publicReadingResult = await postSolacePublicReading(solaceAppUrl, secret, publicReading).catch((error) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(message);
+
+    return {
+      error: message,
+      message: 'Hermes public reading ingest skipped after failure.',
+    };
+  });
 
   console.log(
     JSON.stringify(
@@ -603,6 +945,11 @@ async function runBridgeOnce({ hermesApiUrl, secret, solaceAppUrl }) {
         },
         posted: result,
         poolMark,
+        publicReading: {
+          path: publicReadingPath,
+          posted: publicReadingResult,
+          reading: publicReading,
+        },
         sourceFlows: sourceFlowResult,
         tradeEvents: tradeEventResult,
       },

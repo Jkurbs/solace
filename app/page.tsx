@@ -2,12 +2,17 @@
 
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Shield } from 'lucide-react';
 
 import SkyBackground from './SkyBackground';
 import Mark from './Mark';
 import { calibration } from './calibration';
+import {
+  fallbackHermesPublicReading,
+  type HermesPublicReading,
+} from '@/features/hermes-public-reading/types';
 
 const HermesLiquidityFieldRender = dynamic(() => import('./HermesLiquidityFieldRender'), {
   ssr: false,
@@ -50,29 +55,6 @@ const footerSystems = [
 ];
 
 const footerEmails = ['hello@solace.fyi', 'support@solace.fyi', 'security@solace.fyi'];
-
-const hermesMetrics = [
-  {
-    label: 'Signal',
-    value: 'Structure',
-  },
-  {
-    label: 'Posture',
-    value: 'Selective',
-  },
-  {
-    label: 'Feedback',
-    value: 'Live',
-  },
-];
-
-const hermesCurrentReading = [
-  { label: 'Posture', value: 'Selective' },
-  { label: 'Field', value: 'Liquidity-driven chop' },
-  { label: 'Action', value: 'Standing down' },
-];
-
-const hermesPulse = ['Market scan active', 'Risk engine active', 'Founder account tracking active', 'Beta simulation running'];
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -129,6 +111,87 @@ function Header() {
         </Link>
       </div>
     </header>
+  );
+}
+
+function HermesPublicReadingPanel() {
+  const [reading, setReading] = useState<HermesPublicReading>(fallbackHermesPublicReading);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch('/api/hermes/public-reading', {
+      cache: 'no-store',
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Hermes public reading is unavailable.');
+        }
+
+        return response.json() as Promise<HermesPublicReading>;
+      })
+      .then((payload) => {
+        if (active) {
+          setReading(payload);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setReading(fallbackHermesPublicReading);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const pulseClass = reading.pulse.label.toLowerCase().replace('_', '-');
+  const disclosureParts = reading.disclosure
+    .split('·')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return (
+    <div className={`hermes-public-reading is-${pulseClass}`} aria-label="Hermes public reading">
+      <div className="hermes-public-reading-grid">
+        <div className="hermes-public-reading-cell">
+          <span>Paths</span>
+          <strong className="hermes-public-reading-count">{reading.paths.count}</strong>
+          <small>{reading.paths.label}</small>
+        </div>
+        <div className="hermes-public-reading-cell">
+          <span>Posture</span>
+          <strong>{reading.posture.label.replace('_', ' ')}</strong>
+          <small>{reading.posture.subtext}</small>
+        </div>
+        <div className="hermes-public-reading-cell">
+          <span>Pulse</span>
+          <strong className="hermes-public-pulse-value">
+            <i aria-hidden="true" />
+            {reading.pulse.label}
+          </strong>
+          <small>{reading.pulse.subtext}</small>
+        </div>
+      </div>
+
+      <p className="hermes-public-reading-summary">{reading.summary}</p>
+
+      <div className="hermes-public-reading-disclosure">
+        <Shield size={22} strokeWidth={1.8} aria-hidden="true" />
+        <p>
+          {disclosureParts.map((part, index) => (
+            <span key={part}>
+              {index > 0 ? <b aria-hidden="true">·</b> : null}
+              {part}
+            </span>
+          ))}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -191,39 +254,9 @@ export default function Home() {
             <p className="section-kicker">The first instrument</p>
             <h2>Hermes is the first instrument.</h2>
             <p>
-              Hermes is a live capital allocation instrument. It reads liquidity, timing, and regime,
-              translating market structure into posture before capital is deployed.
+              Live market intelligence for liquidity, timing, and regime. Hermes observes structure,
+              measures risk, and stands down until signal earns action.
             </p>
-
-            <div className="hermes-current-reading" aria-label="Hermes current reading">
-              <div className="hermes-current-reading-topline">
-                <span>Hermes Current Reading</span>
-                <span>Updated recently</span>
-              </div>
-              <div className="hermes-current-reading-grid">
-                {hermesCurrentReading.map((item) => (
-                  <div key={item.label}>
-                    <span>{item.label}</span>
-                    <strong>{item.value}</strong>
-                  </div>
-                ))}
-              </div>
-              <p>
-                Hermes is preserving capital while market structure remains noisy. Candidate paths remain under
-                observation; none have earned deployment.
-              </p>
-              <div className="hermes-current-pulse">
-                <span>Pulse</span>
-                <ul>
-                  {hermesPulse.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-              <p className="hermes-current-disclosure">
-                Beta portfolios are simulated. No customer funds are currently held or managed by Solace.
-              </p>
-            </div>
 
             <div className="hermes-product-actions">
               <Link href="/hermes" className="hermes-product-button hermes-product-button-light">
@@ -234,14 +267,7 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="hermes-product-metrics">
-              {hermesMetrics.map((metric) => (
-                <div key={metric.label}>
-                  <span>{metric.label}</span>
-                  <strong>{metric.value}</strong>
-                </div>
-              ))}
-            </div>
+            <HermesPublicReadingPanel />
           </div>
         </div>
       </section>
