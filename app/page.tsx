@@ -66,6 +66,14 @@ const hermesMetrics = [
   },
 ];
 
+const hermesCurrentReading = [
+  { label: 'Posture', value: 'Selective' },
+  { label: 'Field', value: 'Liquidity-driven chop' },
+  { label: 'Action', value: 'Standing down' },
+];
+
+const hermesPulse = ['Market scan active', 'Risk engine active', 'Founder account tracking active', 'Beta simulation running'];
+
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -186,6 +194,37 @@ export default function Home() {
               Hermes is a live capital allocation instrument. It reads liquidity, timing, and regime,
               translating market structure into posture before capital is deployed.
             </p>
+
+            <div className="hermes-current-reading" aria-label="Hermes current reading">
+              <div className="hermes-current-reading-topline">
+                <span>Hermes Current Reading</span>
+                <span>Updated recently</span>
+              </div>
+              <div className="hermes-current-reading-grid">
+                {hermesCurrentReading.map((item) => (
+                  <div key={item.label}>
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                  </div>
+                ))}
+              </div>
+              <p>
+                Hermes is preserving capital while market structure remains noisy. Candidate paths remain under
+                observation; none have earned deployment.
+              </p>
+              <div className="hermes-current-pulse">
+                <span>Pulse</span>
+                <ul>
+                  {hermesPulse.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <p className="hermes-current-disclosure">
+                Beta portfolios are simulated. No customer funds are currently held or managed by Solace.
+              </p>
+            </div>
+
             <div className="hermes-product-actions">
               <Link href="/hermes" className="hermes-product-button hermes-product-button-light">
                 Learn More

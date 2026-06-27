@@ -119,6 +119,25 @@ function StatusMessage({ children, tone }: { children: string; tone: 'green' | '
   return <p className={`mt-3 rounded-md border px-3 py-2 text-sm ${toneClass}`}>{children}</p>;
 }
 
+function EvidenceLink({ value }: { value: string }) {
+  const isUploadedFile = value.startsWith('data:');
+
+  return (
+    <span className="md:col-span-2">
+      Evidence:{' '}
+      <a
+        href={value}
+        target="_blank"
+        rel="noreferrer"
+        download={isUploadedFile ? 'solace-bug-evidence' : undefined}
+        className="font-medium text-neutral-100 underline decoration-neutral-500 underline-offset-4 transition-colors hover:text-white"
+      >
+        {isUploadedFile ? 'Open uploaded evidence' : value}
+      </a>
+    </span>
+  );
+}
+
 function Metric({ label, value, tone = 'neutral' }: { label: string; value: string | number; tone?: 'neutral' | 'amber' | 'red' }) {
   const valueClass =
     tone === 'red' ? 'text-red-100' : tone === 'amber' ? 'text-amber-100' : 'text-neutral-50';
@@ -337,7 +356,7 @@ export default async function BugOpsPage({ searchParams }: BugOpsPageProps) {
                     <span>Browser: {report.browser || 'Not captured'}</span>
                     <span>Device: {report.device || 'Not captured'}</span>
                     {report.pageUrl ? <span className="break-words md:col-span-2">Page: {report.pageUrl}</span> : null}
-                    {report.screenshotUrl ? <span className="break-words md:col-span-2">Evidence: {report.screenshotUrl}</span> : null}
+                    {report.screenshotUrl ? <EvidenceLink value={report.screenshotUrl} /> : null}
                   </div>
 
                   {report.duplicateCandidates.length ? (

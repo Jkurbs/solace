@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { listMoneyMovementRecords } from '@/features/ledger/money-movement';
-import { getLatestPoolAllocationSnapshot } from '@/features/ledger/pool-allocations';
+import { getRecentPoolAllocationSnapshots } from '@/features/ledger/pool-allocations';
 import { getPoolAccountProjection } from '@/features/ledger/pool-units';
 import { getLedgerReadModel } from '@/features/ledger/read-model';
 import type {
@@ -208,6 +208,102 @@ function getHermesPoolAllocation(allocationSnapshot: PoolAllocationSnapshot | nu
   }));
 }
 
+function isAllocationFreshForProjection(
+  allocationSnapshot: PoolAllocationSnapshot | null,
+  poolProjection: PoolAccountProjection | null,
+) {
+  if (!allocationSnapshot) {
+    return false;
+  }
+
+  if (!poolProjection) {
+    return true;
+  }
+
+  const allocationTime = new Date(allocationSnapshot.effectiveAt).getTime();
+  const navTime = new Date(poolProjection.latestNav.effectiveAt).getTime();
+
+  if (!Number.isFinite(allocationTime) || !Number.isFinite(navTime)) {
+    return false;
+  }
+
+  return allocationTime >= navTime - 60_000;
+}
+
+function getFreshHermesPoolAllocation(
+  allocationSnapshot: PoolAllocationSnapshot | null,
+  poolProjection: PoolAccountProjection | null,
+) {
+  if (!isAllocationFreshForProjection(allocationSnapshot, poolProjection)) {
+    return null;
+  }
+
+  return getHermesPoolAllocation(allocationSnapshot);
+}
+
+function getAllocationActivityLabel(allocationSnapshot: PoolAllocationSnapshot) {
+  const activeAllocations = allocationSnapshot.allocations
+    .filter((allocation) => allocation.percentage > 0)
+    .slice()
+    .sort((first, second) => second.percentage - first.percentage);
+
+  if (!activeAllocations.length) {
+    return 'Hermes allocation updated';
+  }
+
+  const cashOnly = activeAllocations.length === 1 && activeAllocations[0]?.side === 'CASH';
+
+  if (cashOnly) {
+    return 'Hermes moved allocation to cash';
+  }
+
+  const allocationSummary = activeAllocations
+    .slice(0, 3)
+    .map((allocation) => {
+      const side = allocation.side && allocation.side !== 'CASH' ? ` ${allocation.side.toLowerCase()}` : '';
+
+      return `${allocation.asset}${side} ${roundPercent(allocation.percentage)}%`;
+    })
+    .join(', ');
+
+  return `Hermes allocation updated: ${allocationSummary}`;
+}
+
+function getAllocationFingerprint(allocationSnapshot: PoolAllocationSnapshot) {
+  return allocationSnapshot.allocations
+    .filter((allocation) => allocation.percentage > 0)
+    .map((allocation) => `${allocation.asset}:${allocation.side ?? 'NONE'}`)
+    .sort()
+    .join('|');
+}
+
+function getAllocationActivity(
+  allocationSnapshots: PoolAllocationSnapshot[],
+  poolProjection: PoolAccountProjection | null,
+) {
+  const seen = new Set<string>();
+
+  return allocationSnapshots.reduce<Array<{ timestamp: string; summary: string }>>((items, snapshot) => {
+    if (!isAllocationFreshForProjection(snapshot, poolProjection)) {
+      return items;
+    }
+
+    const fingerprint = getAllocationFingerprint(snapshot);
+
+    if (!fingerprint || seen.has(fingerprint)) {
+      return items;
+    }
+
+    seen.add(fingerprint);
+    items.push({
+      timestamp: snapshot.effectiveAt,
+      summary: getAllocationActivityLabel(snapshot),
+    });
+
+    return items;
+  }, []);
+}
+
 async function getAccountMoneyState(accountId: string): Promise<AccountMoneyState> {
   const moneyMovement = await listMoneyMovementRecords().catch((error) => {
     console.warn('[hermes-dashboard] Money movement state unavailable.', {
@@ -310,11 +406,18 @@ function getActiveSnapshotFromLedger(
   ledger: LedgerReadModel,
   moneyState: AccountMoneyState,
   riskProfile: RiskProfile,
-  poolAllocation: PoolAllocationSnapshot | null,
+  poolAllocations: PoolAllocationSnapshot[],
   poolProjection: PoolAccountProjection | null,
 ): HermesDashboardSnapshot {
   const hermesActivity = ledger.activities.filter((activity) => activity.type === 'hermes_decision');
-  const visibleActivity = hermesActivity.length ? hermesActivity : ledger.activities;
+  const allocationActivity = getAllocationActivity(poolAllocations, poolProjection);
+  const visibleActivity = [
+    ...allocationActivity,
+    ...(hermesActivity.length ? hermesActivity : ledger.activities).map((activity) => ({
+      timestamp: activity.createdAt,
+      summary: activity.message,
+    })),
+  ].sort((first, second) => new Date(second.timestamp).getTime() - new Date(first.timestamp).getTime());
   const portfolioValue = poolProjection?.position.equity ?? ledger.portfolio.value;
   const availableToWithdraw = poolProjection?.withdrawable ?? ledger.portfolio.availableToWithdraw;
   const netProfit = roundCurrency(portfolioValue + ledger.portfolio.totalWithdrawn - ledger.portfolio.totalDeposited);
@@ -328,7 +431,7 @@ function getActiveSnapshotFromLedger(
     equityState.code === 'PENDING_SETTLEMENT' ||
     equityState.code === 'TREASURY_QUEUED' ||
     equityState.code === 'NAV_PENDING';
-  const hermesAllocation = getHermesPoolAllocation(poolAllocation);
+  const hermesAllocation = getFreshHermesPoolAllocation(poolAllocations[0] ?? null, poolProjection);
   const allocation = hermesAllocation
     ? hermesAllocation
     : poolProjection
@@ -396,10 +499,7 @@ function getActiveSnapshotFromLedger(
         }
       : baseSnapshot.outlook,
     allocation,
-    activity: visibleActivity.slice(0, 3).map((activity) => ({
-      timestamp: activity.createdAt,
-      summary: activity.message,
-    })),
+    activity: visibleActivity.slice(0, 3),
     commentary: fundingPending
       ? equityState.detail
       : baseSnapshot.commentary,
@@ -459,9 +559,9 @@ export async function getHermesDashboardSnapshot({
         getAccountMoneyState(ledger.account.id),
         getPoolAccountProjection(ledger.account.id),
       ]);
-      const poolAllocation = poolProjection ? await getLatestPoolAllocationSnapshot(poolProjection.pool.id) : null;
+      const poolAllocations = poolProjection ? await getRecentPoolAllocationSnapshots(poolProjection.pool.id, 8) : [];
 
-      return getActiveSnapshotFromLedger(baseSnapshot, ledger, moneyState, selectedRiskProfile, poolAllocation, poolProjection);
+      return getActiveSnapshotFromLedger(baseSnapshot, ledger, moneyState, selectedRiskProfile, poolAllocations, poolProjection);
     }
 
     return {
@@ -480,7 +580,7 @@ export async function getHermesDashboardSnapshot({
     getAccountMoneyState(ledger.account.id),
     getPoolAccountProjection(ledger.account.id),
   ]);
-  const poolAllocation = poolProjection ? await getLatestPoolAllocationSnapshot(poolProjection.pool.id) : null;
+  const poolAllocations = poolProjection ? await getRecentPoolAllocationSnapshots(poolProjection.pool.id, 8) : [];
 
-  return getActiveSnapshotFromLedger(baseSnapshot, ledger, moneyState, selectedRiskProfile, poolAllocation, poolProjection);
+  return getActiveSnapshotFromLedger(baseSnapshot, ledger, moneyState, selectedRiskProfile, poolAllocations, poolProjection);
 }

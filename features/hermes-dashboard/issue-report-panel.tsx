@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Bug, Send } from 'lucide-react';
+import { Bug, Send, Upload } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,8 @@ const reproducibilityOptions: Array<{ label: string; value: BugReproducibility }
   { label: 'Unknown', value: 'unknown' },
 ];
 
+const maxAttachmentSizeBytes = 2 * 1024 * 1024;
+
 function splitReproductionSteps(value: string) {
   return value
     .split('\n')
@@ -35,7 +37,26 @@ function getDeviceContext() {
   return `${window.navigator.platform || 'Unknown platform'} · ${window.innerWidth}x${window.innerHeight} · ${window.devicePixelRatio}x`;
 }
 
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.addEventListener('load', () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error('Attachment could not be read.'));
+    });
+    reader.addEventListener('error', () => reject(new Error('Attachment could not be read.')));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function IssueReportPanel() {
+  const [attachmentInputKey, setAttachmentInputKey] = useState(0);
+  const [attachmentName, setAttachmentName] = useState('');
   const [canReproduce, setCanReproduce] = useState<BugReproducibility>('unknown');
   const [expectedBehavior, setExpectedBehavior] = useState('');
   const [screenshotUrl, setScreenshotUrl] = useState('');
@@ -56,6 +77,8 @@ export default function IssueReportPanel() {
       const missingInfo = payload.missingInfo.length ? ` Missing: ${payload.missingInfo.join(', ')}.` : '';
 
       setStatusMessage(`${payload.message} Severity: ${payload.severity}.${missingInfo}`);
+      setAttachmentInputKey((current) => current + 1);
+      setAttachmentName('');
       setExpectedBehavior('');
       setScreenshotUrl('');
       setStepsToReproduce('');
@@ -64,6 +87,37 @@ export default function IssueReportPanel() {
       setCanReproduce('unknown');
     },
   });
+
+  async function handleAttachmentChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+
+    setStatusMessage('');
+
+    if (!file) {
+      setAttachmentName('');
+      setScreenshotUrl('');
+      return;
+    }
+
+    if (file.size > maxAttachmentSizeBytes) {
+      setAttachmentName('');
+      setScreenshotUrl('');
+      event.currentTarget.value = '';
+      setStatusMessage('Upload a screenshot or recording under 2 MB.');
+      return;
+    }
+
+    try {
+      setAttachmentName(`Reading ${file.name}`);
+      setScreenshotUrl(await readFileAsDataUrl(file));
+      setAttachmentName(file.name);
+    } catch (error) {
+      setAttachmentName('');
+      setScreenshotUrl('');
+      event.currentTarget.value = '';
+      setStatusMessage(error instanceof Error ? error.message : 'Attachment could not be read.');
+    }
+  }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -114,14 +168,23 @@ export default function IssueReportPanel() {
               />
             </label>
             <label className="grid gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              Screenshot or recording URL
-              <input
-                type="url"
-                value={screenshotUrl}
-                onChange={(event) => setScreenshotUrl(event.target.value)}
-                placeholder="https://..."
-                className="h-11 rounded-md border border-neutral-200 bg-neutral-50 px-3 text-sm text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950/40 dark:text-neutral-50 dark:placeholder:text-neutral-600 dark:focus:border-neutral-600"
-              />
+              Screenshot or recording
+              <span className="relative grid min-h-11 cursor-pointer place-items-center rounded-md border border-dashed border-neutral-300 bg-neutral-50 px-3 text-sm text-neutral-600 transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-950/40 dark:text-neutral-300 dark:hover:border-neutral-600 dark:hover:bg-neutral-900">
+                <input
+                  key={attachmentInputKey}
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={handleAttachmentChange}
+                  className="absolute inset-0 cursor-pointer opacity-0"
+                />
+                <span className="inline-flex max-w-full items-center gap-2 truncate">
+                  <Upload size={16} aria-hidden="true" />
+                  <span className="truncate">{attachmentName || 'Upload from device'}</span>
+                </span>
+              </span>
+              <span className="text-xs font-normal text-neutral-500 dark:text-neutral-500">
+                PNG, JPG, GIF, or short recording up to 2 MB.
+              </span>
             </label>
           </div>
 

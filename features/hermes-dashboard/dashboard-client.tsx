@@ -233,6 +233,7 @@ function ActivationStep({
 }
 
 export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
+  const [capitalNavigationPending, setCapitalNavigationPending] = useState(false);
   const [identityStatus, setIdentityStatus] = useState('');
   const [logoutStatus, setLogoutStatus] = useState('');
   const [riskStatus, setRiskStatus] = useState('');
@@ -613,8 +614,11 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                   <Metric label="Since Inception" value={sinceInception} positive={!isAwaitingDeposit && data.portfolio.sinceInception > 0} />
                 </div>
                 <Button asChild className="w-full sm:w-auto sm:justify-self-start" variant={setupIncomplete ? 'secondary' : 'default'}>
-                  <Link href={setupIncomplete ? '/dashboard/onboarding' : '/dashboard/capital'}>
-                    {setupIncomplete ? 'Complete setup' : 'Move capital'}
+                  <Link
+                    href={setupIncomplete ? '/dashboard/onboarding' : '/dashboard/capital'}
+                    onClick={() => setCapitalNavigationPending(true)}
+                  >
+                    {capitalNavigationPending ? 'Opening' : setupIncomplete ? 'Complete setup' : 'Move capital'}
                     <ArrowRight size={16} aria-hidden="true" />
                   </Link>
                 </Button>

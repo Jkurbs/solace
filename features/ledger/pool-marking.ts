@@ -442,14 +442,6 @@ function scaleSourceControlBalance(sourceAmount: number, sourceEquity: number, p
   return normalizeAmount(poolEquity * Math.max(0, sourceAmount / sourceEquity));
 }
 
-function scaleSignedSourceBalance(sourceAmount: number, sourceEquity: number, poolEquity: number) {
-  if (sourceEquity <= 0 || poolEquity <= 0) {
-    return 0;
-  }
-
-  return normalizeAmount(sourceAmount * (poolEquity / sourceEquity));
-}
-
 function buildTranslatedNavMark({
   input,
   latestNav,
@@ -480,6 +472,11 @@ function buildTranslatedNavMark({
     previousSourceMark.sourceEquity,
     sourceScaleEquity,
   );
+  const unrealizedPnlDelta = scaleSourceDelta(
+    input.unrealizedPnl - previousSourceMark.sourceUnrealizedPnl,
+    previousSourceMark.sourceEquity,
+    sourceScaleEquity,
+  );
   const effectiveFeesDelta = scaleSourceDelta(
     sourceFeesDelta ?? input.fees - previousSourceMark.sourceFees,
     previousSourceMark.sourceEquity,
@@ -496,7 +493,7 @@ function buildTranslatedNavMark({
     poolId: input.poolId,
     realizedPnl: normalizeAmount(latestNav.realizedPnl + realizedPnlDelta),
     reservedMargin: scaleSourceControlBalance(input.reservedMargin, input.grossEquity, grossEquity),
-    unrealizedPnl: scaleSignedSourceBalance(input.unrealizedPnl, input.grossEquity, grossEquity),
+    unrealizedPnl: normalizeAmount(latestNav.unrealizedPnl + unrealizedPnlDelta),
   };
 }
 

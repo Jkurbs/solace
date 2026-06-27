@@ -564,8 +564,26 @@ async function runBridgeOnce({ hermesApiUrl, secret, solaceAppUrl }) {
     ...recentTrades.map(buildTradeEventFromHermesTrade),
     ...positionHistory.map(buildTradeEventFromPositionHistory),
   ].filter(Boolean);
-  const tradeEventResult = await postSolaceTradeEvents(solaceAppUrl, secret, tradeEvents);
-  const sourceFlowResult = await postSolaceSourceCapitalFlows(solaceAppUrl, secret, sourceFlows);
+  const tradeEventResult = await postSolaceTradeEvents(solaceAppUrl, secret, tradeEvents).catch((error) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(message);
+
+    return {
+      count: 0,
+      error: message,
+      message: 'Hermes realized trade ingest skipped after failure.',
+    };
+  });
+  const sourceFlowResult = await postSolaceSourceCapitalFlows(solaceAppUrl, secret, sourceFlows).catch((error) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(message);
+
+    return {
+      count: 0,
+      error: message,
+      message: 'Hermes source capital flow ingest skipped after failure.',
+    };
+  });
   const poolMark = buildPoolMark(snapshot);
   const allocationMark = buildAllocationMark(snapshot, poolMark);
 

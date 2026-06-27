@@ -115,11 +115,17 @@ const fragmentShader = `
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
     float aspect = uResolution.x / max(uResolution.y, 1.0);
     float mobile = 1.0 - smoothstep(0.94, 1.22, aspect);
+    float instBoost = mix(1.0, 1.45, mobile);
 
     vec2 w = uv;
-    vec2 center = mix(vec2(0.67, 0.5), vec2(0.56, 0.44), mobile);
+    // On mobile, center horizontally and lift the instrument into the clear
+    // upper zone — the copy is bottom-aligned, so this keeps them from stacking.
+    vec2 center = mix(vec2(0.67, 0.5), vec2(0.5, 0.6), mobile);
     vec2 p = w - center;
     p.x *= aspect;
+    // The aspect correction stretches the orbits wider than a portrait screen;
+    // shrink the whole instrument so it reads as one object, not clipped arcs.
+    p *= mix(1.0, 1.5, mobile);
 
     // Cold night base, faint nebula — same floor as the Hermes field's void.
     vec3 color = vec3(0.0028, 0.0037, 0.0055);
@@ -131,9 +137,9 @@ const fragmentShader = `
     color += dustLayer(w, 54.0, 0.0028, 0.7, 19.0);
 
     // === THE INSTRUMENT (three tilted orbits, axes, center) ===
-    color += orbitRing(p, 0.21, 0.38, -0.28, 46.0, 0.0, vec3(0.83, 0.69, 0.44), 1.0);
-    color += orbitRing(p, 0.305, 0.52, 0.66, 58.0, 2.1, vec3(0.53, 0.86, 0.75), 0.7);
-    color += orbitRing(p, 0.405, 0.66, 1.33, 68.0, 4.4, vec3(0.95, 0.92, 0.86), 0.55);
+    color += orbitRing(p, 0.21, 0.38, -0.28, 46.0, 0.0, vec3(0.83, 0.69, 0.44), 1.0 * instBoost);
+    color += orbitRing(p, 0.305, 0.52, 0.66, 58.0, 2.1, vec3(0.53, 0.86, 0.75), 0.7 * instBoost);
+    color += orbitRing(p, 0.405, 0.66, 1.33, 68.0, 4.4, vec3(0.95, 0.92, 0.86), 0.55 * instBoost);
 
     float pxPerUnit = uResolution.y / uPixelRatio;
 
@@ -156,7 +162,7 @@ const fragmentShader = `
 
     // Center: the observatory's eye.
     float cd = length(p) * pxPerUnit;
-    color += vec3(0.97, 0.94, 0.88) * exp(-cd * cd / 4.5) * 1.1;
+    color += vec3(0.97, 0.94, 0.88) * exp(-cd * cd / 4.5) * 1.1 * instBoost;
     color += vec3(0.83, 0.69, 0.44) * exp(-cd * cd / (120.0 * 120.0)) * 0.05;
 
     // Warm foreshadow: the Hermes field glowing just below the fold.

@@ -161,6 +161,37 @@ export async function getLatestPoolAllocationSnapshot(poolId: string): Promise<P
   }
 }
 
+export async function getRecentPoolAllocationSnapshots(poolId: string, limit = 3): Promise<PoolAllocationSnapshot[]> {
+  if (!isSupabaseDataClientConfigured()) {
+    return [];
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    const { data, error } = await supabase
+      .from('pool_allocation_snapshots')
+      .select('*')
+      .eq('pool_id', poolId)
+      .order('effective_at', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(Math.max(1, Math.min(10, limit)));
+
+    if (error) {
+      if (isMissingPoolAllocationObject(error.message)) {
+        return [];
+      }
+
+      console.warn('[pool-allocations] Recent allocation lookup failed.', error.message);
+      return [];
+    }
+
+    return data.map(fromPoolAllocationSnapshotRow);
+  } catch (error) {
+    console.warn('[pool-allocations] Recent allocation lookup failed.', error);
+    return [];
+  }
+}
+
 export async function postPoolAllocationSnapshot(input: PoolAllocationMarkInput) {
   if (!isSupabaseDataClientConfigured()) {
     return false;
@@ -205,4 +236,3 @@ export async function postPoolAllocationSnapshot(input: PoolAllocationMarkInput)
     return false;
   }
 }
-

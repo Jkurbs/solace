@@ -45,6 +45,16 @@ function getNumber(value: unknown) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function getAssetFromSymbol(value: unknown) {
+  const raw = typeof value === 'string' ? value.trim().toUpperCase() : '';
+
+  if (!raw) {
+    return '';
+  }
+
+  return raw.split(/[-/:]/)[0] ?? raw;
+}
+
 function getAllocationBasis(value: unknown): PoolAllocationBasis | null {
   return typeof value === 'string' && allocationBasisValues.has(value as PoolAllocationBasis)
     ? (value as PoolAllocationBasis)
@@ -57,33 +67,44 @@ function getAllocationSide(value: unknown): PoolAllocationSide | undefined {
     : undefined;
 }
 
-function parseAllocationMarkPayload(
-  payload: Record<string, unknown>,
-  {
-    cashBalance,
-    effectiveAt,
-    poolId,
-  }: {
-    cashBalance: number;
-    effectiveAt?: string;
-    poolId: string;
-  },
-): PoolAllocationMarkInput | null {
-  if (!Object.prototype.hasOwnProperty.call(payload, 'allocations')) {
-    return null;
+function getPositionSide(value: unknown): PoolAllocationSide {
+  return typeof value === 'string' && value.toUpperCase() === 'SHORT' ? 'SHORT' : 'LONG';
+}
+
+function getPositionExposure(position: Record<string, unknown>) {
+  const notional = getNumber(position.notional);
+
+  if (notional !== null && notional > 0) {
+    return notional;
   }
 
-  if (!Array.isArray(payload.allocations)) {
-    return null;
+  const contracts = Math.abs(getNumber(position.contracts) ?? 0);
+  const markPrice = getNumber(position.mark_price) ?? getNumber(position.markPrice) ?? 0;
+
+  return contracts > 0 && markPrice > 0 ? contracts * markPrice : 0;
+}
+
+function getPositionMarginEstimate(position: Record<string, unknown>) {
+  const exposure = getPositionExposure(position);
+  const leverage = getNumber(position.leverage) ?? 0;
+
+  return exposure > 0 && leverage > 0 ? exposure / leverage : 0;
+}
+
+function parseAllocationItems(
+  value: unknown,
+  allocationBasis: PoolAllocationBasis,
+): PoolAllocationMarkInput['allocations'] {
+  if (!Array.isArray(value)) {
+    return [];
   }
 
-  const allocationBasis = getAllocationBasis(payload.allocationBasis) ?? 'capital';
-  const allocations = payload.allocations.reduce<PoolAllocationMarkInput['allocations']>((items, value) => {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  return value.reduce<PoolAllocationMarkInput['allocations']>((items, item) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
       return items;
     }
 
-    const candidate = value as Record<string, unknown>;
+    const candidate = item as Record<string, unknown>;
     const asset = typeof candidate.asset === 'string' ? candidate.asset.trim() : '';
     const percentage = getNumber(candidate.percentage);
     const exposureUsd = getNumber(candidate.exposureUsd);
@@ -104,6 +125,127 @@ function parseAllocationMarkPayload(
 
     return items;
   }, []);
+}
+
+function parsePositionAllocationItems({
+  allocationBasis,
+  cashBalance,
+  positions,
+  reservedMargin,
+}: {
+  allocationBasis: PoolAllocationBasis;
+  cashBalance: number;
+  positions: unknown;
+  reservedMargin: number;
+}): PoolAllocationMarkInput['allocations'] {
+  if (!Array.isArray(positions)) {
+    return [];
+  }
+
+  const positionRows = positions
+    .map((position) => {
+      if (!position || typeof position !== 'object' || Array.isArray(position)) {
+        return null;
+      }
+
+      const candidate = position as Record<string, unknown>;
+      const asset = getAssetFromSymbol(candidate.symbol ?? candidate.exchange_symbol ?? candidate.exchangeSymbol);
+      const exposureUsd = getPositionExposure(candidate);
+      const estimatedMarginUsd = getPositionMarginEstimate(candidate);
+
+      if (!asset || exposureUsd <= 0) {
+        return null;
+      }
+
+      return {
+        asset,
+        estimatedMarginUsd,
+        exposureUsd,
+        side: getPositionSide(candidate.side),
+      };
+    })
+    .filter((position): position is NonNullable<typeof position> => Boolean(position));
+  const estimatedMarginTotal = positionRows.reduce((total, position) => total + position.estimatedMarginUsd, 0);
+  const marginScale = estimatedMarginTotal > 0 && reservedMargin > 0 ? reservedMargin / estimatedMarginTotal : 1;
+  const strategyRows = positionRows.map((position) => ({
+    ...position,
+    marginUsd: Math.max(0, position.estimatedMarginUsd * marginScale),
+  }));
+  const totalCapitalBasis = cashBalance + strategyRows.reduce((total, position) => total + position.marginUsd, 0);
+  const allocations: PoolAllocationMarkInput['allocations'] = [
+    ...strategyRows.map((position) => ({
+      allocationBasis,
+      asset: position.asset,
+      exposureUsd: position.exposureUsd,
+      marginUsd: position.marginUsd,
+      percentage: totalCapitalBasis > 0 ? (position.marginUsd / totalCapitalBasis) * 100 : 0,
+      side: position.side,
+    })),
+    ...(cashBalance > 0
+      ? [
+          {
+            allocationBasis,
+            asset: 'Cash',
+            exposureUsd: cashBalance,
+            marginUsd: cashBalance,
+            percentage: totalCapitalBasis > 0 ? (cashBalance / totalCapitalBasis) * 100 : 0,
+            side: 'CASH' as const,
+          },
+        ]
+      : []),
+  ];
+
+  return allocations.filter((allocation) => allocation.percentage > 0);
+}
+
+function getCashOnlyAllocation(allocationBasis: PoolAllocationBasis, cashBalance: number) {
+  if (cashBalance <= 0) {
+    return [];
+  }
+
+  return [
+    {
+      allocationBasis,
+      asset: 'Cash',
+      exposureUsd: cashBalance,
+      marginUsd: cashBalance,
+      percentage: 100,
+      side: 'CASH' as const,
+    },
+  ] satisfies PoolAllocationMarkInput['allocations'];
+}
+
+function parseAllocationMarkPayload(
+  payload: Record<string, unknown>,
+  {
+    allocatedCapital,
+    cashBalance,
+    effectiveAt,
+    poolId,
+    reservedMargin,
+  }: {
+    allocatedCapital: number;
+    cashBalance: number;
+    effectiveAt?: string;
+    poolId: string;
+    reservedMargin: number;
+  },
+): PoolAllocationMarkInput | null {
+  const allocationBasis = getAllocationBasis(payload.allocationBasis) ?? 'capital';
+  let allocations = parseAllocationItems(payload.allocations, allocationBasis);
+
+  if (!allocations.length) {
+    allocations = parsePositionAllocationItems({
+      allocationBasis,
+      cashBalance,
+      positions: payload.positions,
+      reservedMargin,
+    });
+  }
+
+  if (!allocations.length && allocatedCapital <= 0 && reservedMargin <= 0) {
+    allocations = getCashOnlyAllocation(allocationBasis, cashBalance);
+  }
 
   if (!allocations.length) {
     return null;
@@ -185,9 +327,11 @@ function parsePoolMarkPayload(value: unknown): ParsedHermesIngestPayload | null 
 
   return {
     allocationMark: parseAllocationMarkPayload(payload, {
+      allocatedCapital,
       cashBalance,
       effectiveAt: navMark.effectiveAt,
       poolId,
+      reservedMargin,
     }),
     sourceMark: {
       ...navMark,
