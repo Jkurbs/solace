@@ -3217,6 +3217,21 @@ h2 {
     text-shadow: 0 0.9rem 2.8rem rgba(0, 0, 0, 0.46);
   }
 
+  .hermes-beta-version {
+    display: inline-flex;
+    margin-top: 1.05rem;
+    border: 1px solid rgba(250, 196, 94, 0.24);
+    border-radius: 999px;
+    background: rgba(250, 196, 94, 0.055);
+    color: rgba(250, 196, 94, 0.82);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    line-height: 1;
+    padding: 0.48rem 0.62rem;
+    text-transform: uppercase;
+  }
+
   .hermes-product-actions {
     display: flex;
     flex-wrap: wrap;
@@ -4118,6 +4133,13 @@ h2 {
       max-width: 21rem;
       font-size: 1.04rem;
       line-height: 1.6;
+    }
+
+    .hermes-beta-version {
+      margin-top: 0.9rem;
+      font-size: 0.58rem;
+      letter-spacing: 0.12em;
+      padding: 0.42rem 0.52rem;
     }
 
     .hermes-product-actions {

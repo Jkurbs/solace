@@ -9,6 +9,7 @@ import { Shield } from 'lucide-react';
 import SkyBackground from './SkyBackground';
 import Mark from './Mark';
 import { calibration } from './calibration';
+import { hermesBetaVersionLabel } from '@/features/hermes-version';
 import {
   fallbackHermesPublicReading,
   type HermesPublicReading,
@@ -257,6 +258,7 @@ export default function Home() {
               A live capital allocation engine for markets under uncertainty. Hermes reads liquidity, timing,
               and regime to decide when capital should move, wait, or be preserved.
             </p>
+            <span className="hermes-beta-version">{hermesBetaVersionLabel}</span>
 
             <div className="hermes-product-actions">
               <Link href="/hermes" className="hermes-product-button hermes-product-button-light">

@@ -10,6 +10,7 @@ import Mark from '@/app/Mark';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { hermesBetaVersionLabel } from '@/features/hermes-version';
 import { cn } from '@/lib/utils';
 
 import {
@@ -892,8 +893,12 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
           </CardContent>
         </Card>
 
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          Live refresh every 5s · Last updated {formatUpdatedAt(equityState.updatedAt ?? data.updatedAt)}
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-500 dark:text-neutral-400">
+          <span>{hermesBetaVersionLabel}</span>
+          <span aria-hidden="true">·</span>
+          <span>Live refresh every 5s</span>
+          <span aria-hidden="true">·</span>
+          <span>Last updated {formatUpdatedAt(equityState.updatedAt ?? data.updatedAt)}</span>
         </p>
       </div>
     </main>
