@@ -60,11 +60,11 @@ export default function DashboardAccessGate({
     <main className="min-h-screen bg-[#10100e] text-neutral-50">
       <header className="border-b border-neutral-800 bg-[#10100e]/90">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-50">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-neutral-50">
             <Mark size={22} />
             Solace
           </Link>
-          <Link href="/hermes" className="text-sm text-neutral-400 transition-colors hover:text-neutral-50">
+          <Link href="/hermes" className="text-sm font-bold text-neutral-400 transition-colors hover:text-neutral-50">
             Hermes
           </Link>
         </div>

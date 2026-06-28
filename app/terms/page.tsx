@@ -54,14 +54,14 @@ export default function TermsPage() {
         <div className="mx-auto flex max-w-4xl items-center justify-between px-5 py-4 md:px-8">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-[#6b6354] transition-colors hover:text-[#13110c]"
+            className="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.2em] text-[#6b6354] transition-colors hover:text-[#13110c]"
           >
             <Mark size={20} />
             Solace
           </Link>
           <Link
             href="/"
-            className="font-mono text-xs uppercase tracking-[0.2em] text-[#6b6354] transition-colors hover:text-[#13110c]"
+            className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-[#6b6354] transition-colors hover:text-[#13110c]"
           >
             Home
           </Link>

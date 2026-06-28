@@ -23,11 +23,11 @@ export default function OraclePage() {
 
       <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-[rgba(4,4,3,0.58)] backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 md:px-8">
-          <Link href="/" className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-muted transition-colors hover:text-foreground">
+          <Link href="/" className="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.2em] text-muted transition-colors hover:text-foreground">
             <Mark size={20} />
             Solace
           </Link>
-          <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-muted transition-colors hover:text-foreground">
+          <Link href="/" className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-muted transition-colors hover:text-foreground">
             Home
           </Link>
         </div>

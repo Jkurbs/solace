@@ -12,13 +12,13 @@ export default function ConsoleHeader({ pendingAccessCount = 0 }: { pendingAcces
   return (
     <header className="sticky top-0 z-30 border-b border-neutral-800 bg-[#10100e]/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-50">
+        <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-neutral-50">
           <Mark size={22} />
           Solace
         </Link>
         <div className="flex items-center gap-4">
           <ConsoleLiveRefresh />
-          <nav className="flex items-center gap-4 text-sm text-neutral-400">
+          <nav className="flex items-center gap-4 text-sm font-bold text-neutral-400">
             <Link href="/console" className="transition-colors hover:text-neutral-50">
               Console
             </Link>

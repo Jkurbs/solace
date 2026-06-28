@@ -493,30 +493,30 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
     >
       <header className="sticky top-0 z-30 border-b border-neutral-200 bg-[#f7f5ef]/90 backdrop-blur dark:border-neutral-800 dark:bg-[#10100e]/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-950 dark:text-neutral-50">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-neutral-950 dark:text-neutral-50">
             <Mark size={22} />
             Solace
           </Link>
           <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400 sm:gap-4">
             <Link
               href="/hermes"
-              className="hidden text-neutral-700 transition-colors hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-neutral-50 sm:inline"
+              className="hidden font-bold text-neutral-700 transition-colors hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-neutral-50 sm:inline"
             >
               Hermes
             </Link>
             <Link
               href="/dashboard/contract"
-              className="hidden text-neutral-700 transition-colors hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-neutral-50 sm:inline"
+              className="hidden font-bold text-neutral-700 transition-colors hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-neutral-50 sm:inline"
             >
               Contract
             </Link>
             <Link
               href="/dashboard/capital"
-              className="hidden text-neutral-700 transition-colors hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-neutral-50 sm:inline"
+              className="hidden font-bold text-neutral-700 transition-colors hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-neutral-50 sm:inline"
             >
               Capital
             </Link>
-            <span className="hidden sm:inline">{data.account.label}</span>
+            <span className="hidden font-bold sm:inline">{data.account.label}</span>
             <Badge variant="secondary" className="hidden sm:inline-flex">
               <span
                 className={cn(
@@ -532,7 +532,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               type="button"
               variant="ghost"
               size="sm"
-              className="px-2 sm:px-3"
+              className="px-2 font-bold sm:px-3"
               onClick={toggleTheme}
               aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
               aria-pressed={theme === 'dark'}
@@ -542,7 +542,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             </Button>
             <Link
               href="/dashboard/report"
-              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-50 sm:px-3"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-sm font-bold text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-50 sm:px-3"
             >
               <Bug size={16} aria-hidden="true" />
               <span className="hidden sm:inline">Report a bug</span>
@@ -551,7 +551,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               type="button"
               variant="ghost"
               size="sm"
-              className="px-2 sm:px-3"
+              className="px-2 font-bold sm:px-3"
               disabled={logout.isPending}
               onClick={() => logout.mutate()}
               aria-label="Logout"
