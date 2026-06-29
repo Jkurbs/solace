@@ -366,6 +366,11 @@ export default function Home() {
             <div className="footer-col">
               <p className="footer-heading">Contact</p>
               <ul>
+                <li>
+                  <a href="https://x.com/solacefyi" target="_blank" rel="noreferrer">
+                    X @solacefyi
+                  </a>
+                </li>
                 {footerEmails.map((email) => (
                   <li key={email}>
                     <a href={`mailto:${email}`}>{email}</a>
