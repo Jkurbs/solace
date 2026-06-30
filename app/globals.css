@@ -213,6 +213,7 @@ h2 {
     font-size: 0.92rem;
     line-height: 1;
     letter-spacing: 0.04em;
+    text-decoration: none;
     transition:
       color 180ms ease,
       border-color 180ms ease;
@@ -231,7 +232,7 @@ h2 {
   }
 
   .site-action-primary {
-    border-bottom: 1px solid rgba(250, 250, 250, 0.66);
+    border-bottom: 0;
     color: var(--foreground);
   }
 
