@@ -130,6 +130,15 @@ h2 {
     transform: translateY(-1px);
   }
 
+  @media (max-width: 520px) {
+    .header-request-button {
+      height: 2.05rem;
+      padding: 0 0.75rem;
+      font-size: 0.62rem;
+      letter-spacing: 0.06em;
+    }
+  }
+
   .text-link {
     gap: 0.58rem;
     color: var(--foreground);
@@ -1134,12 +1143,22 @@ h2 {
   }
 
   .hermes-dashboard-frame {
+    position: relative;
     overflow: hidden;
-    border: 1px solid rgba(242, 234, 219, 0.13);
-    border-radius: 1.1rem;
+    border: 1px solid rgba(242, 234, 219, 0.14);
+    border-radius: 1.45rem;
     background:
-      linear-gradient(145deg, rgba(242, 234, 219, 0.1), rgba(242, 234, 219, 0.025)),
-      rgba(10, 10, 8, 0.78);
+      linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
+      rgba(9, 9, 8, 0.88);
+  }
+
+  .hermes-dashboard-frame::before {
+    content: "";
+    position: absolute;
+    inset: 0 10% auto;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(242, 234, 219, 0.46), transparent);
+    pointer-events: none;
   }
 
   .hermes-dashboard-showcase-full {
@@ -1152,8 +1171,8 @@ h2 {
   .hermes-dashboard-frame-focus {
     width: 100%;
     margin-top: 0;
-    border-color: rgba(242, 234, 219, 0.17);
-    border-radius: 1.25rem;
+    border-color: rgba(242, 234, 219, 0.18);
+    border-radius: 1.6rem;
   }
 
   .hermes-dashboard-preview {
@@ -1167,13 +1186,39 @@ h2 {
   }
 
   .hermes-dashboard-frame-focus .hermes-dashboard-preview {
-    margin: 0.85rem;
+    margin: 0.9rem;
     padding: 0;
   }
 
   .hermes-dashboard-preview-real {
-    border-color: rgba(242, 234, 219, 0.08);
-    background: #10100e;
+    border-color: rgba(242, 234, 219, 0.095);
+    background:
+      linear-gradient(180deg, rgba(250, 250, 250, 0.035), transparent 34rem),
+      #0f0f0d;
+  }
+
+  .hermes-dashboard-preview-head {
+    display: grid;
+    max-width: 48rem;
+    gap: 0.8rem;
+    margin-bottom: 1.6rem;
+  }
+
+  .hermes-dashboard-preview-head h2 {
+    margin: 0;
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(2.2rem, 5vw, 5rem);
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 0.95;
+  }
+
+  .hermes-dashboard-preview-head p:not(.section-kicker) {
+    margin: 0;
+    color: rgba(250, 250, 250, 0.66);
+    font-size: clamp(1rem, 1.4vw, 1.18rem);
+    line-height: 1.65;
   }
 
   .hermes-preview-nav {
@@ -1181,11 +1226,11 @@ h2 {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    min-height: 4rem;
-    border-bottom: 1px solid rgba(242, 234, 219, 0.08);
-    padding: 0 2rem;
-    color: rgba(242, 234, 219, 0.58);
-    font-size: 0.92rem;
+    min-height: 4.15rem;
+    border-bottom: 1px solid rgba(242, 234, 219, 0.075);
+    padding: 0 2.1rem;
+    color: rgba(242, 234, 219, 0.5);
+    font-size: 0.86rem;
   }
 
   .hermes-preview-brand {
@@ -1204,10 +1249,10 @@ h2 {
 
   .hermes-preview-shell {
     display: grid;
-    max-width: 72rem;
-    gap: 1.25rem;
+    max-width: 74rem;
+    gap: 1rem;
     margin: 0 auto;
-    padding: 2rem;
+    padding: clamp(1.05rem, 2.2vw, 2rem);
   }
 
   .hermes-dashboard-preview span {
@@ -1215,10 +1260,12 @@ h2 {
   }
 
   .hermes-preview-panel {
-    border: 1px solid rgba(242, 234, 219, 0.1);
-    border-radius: 0.5rem;
-    background: #181715;
-    padding: 1.6rem;
+    border: 1px solid rgba(242, 234, 219, 0.095);
+    border-radius: 0.78rem;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+      rgba(24, 23, 21, 0.78);
+    padding: 1.45rem;
   }
 
   .hermes-preview-panel > span,
@@ -1241,6 +1288,7 @@ h2 {
     grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.45fr);
     align-items: end;
     gap: 2rem;
+    min-height: 9.75rem;
   }
 
   .hermes-preview-portfolio > div:first-child > span {
@@ -1253,9 +1301,14 @@ h2 {
     display: block;
     margin-top: 1rem;
     color: #f2eadb;
-    font-size: 4.2rem;
+    font-size: clamp(2.75rem, 5.3vw, 4.05rem);
     font-weight: 750;
-    line-height: 0.9;
+    line-height: 0.88;
+    overflow-wrap: anywhere;
+  }
+
+  .hermes-preview-main-value {
+    text-transform: uppercase;
   }
 
   .hermes-preview-portfolio-metrics {
@@ -1288,9 +1341,19 @@ h2 {
     font-weight: 750;
   }
 
-  .hermes-preview-portfolio-metrics strong,
-  .hermes-preview-status-grid strong.is-positive {
+  .hermes-preview-portfolio-metrics strong.is-positive,
+  .hermes-preview-status-grid strong.is-positive,
+  .hermes-preview-legend strong.is-positive {
     color: rgba(135, 219, 192, 0.95);
+  }
+
+  .hermes-preview-portfolio-metrics strong.is-watch {
+    color: rgba(216, 168, 91, 0.95);
+  }
+
+  .hermes-preview-status-grid strong,
+  .hermes-preview-capital-row strong {
+    overflow-wrap: anywhere;
   }
 
   .hermes-preview-status-grid {
@@ -1302,7 +1365,7 @@ h2 {
 
   .hermes-preview-risk {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
     gap: 0.5rem;
     margin-top: 1.7rem;
     border-top: 1px solid rgba(242, 234, 219, 0.09);
@@ -1317,11 +1380,13 @@ h2 {
     color: rgba(242, 234, 219, 0.5);
     font-size: 0.95rem;
     font-weight: 700;
+    text-align: center;
   }
 
   .hermes-preview-risk span.is-selected {
-    background: rgba(242, 234, 219, 0.18);
+    background: rgba(242, 234, 219, 0.16);
     color: #f2eadb;
+    box-shadow: inset 0 0 0 1px rgba(242, 234, 219, 0.07);
   }
 
   .hermes-preview-risk-note {
@@ -1351,6 +1416,7 @@ h2 {
     font-size: 2.6rem;
     font-weight: 750;
     line-height: 1;
+    overflow-wrap: anywhere;
   }
 
   .hermes-preview-outlook em {
@@ -1382,10 +1448,15 @@ h2 {
   }
 
   .hermes-preview-capital-row p {
-    border: 1px solid rgba(242, 234, 219, 0.08);
-    border-radius: 0.42rem;
-    background: rgba(16, 16, 14, 0.72);
+    border: 1px solid rgba(242, 234, 219, 0.075);
+    border-radius: 0.65rem;
+    background: rgba(10, 10, 9, 0.5);
     padding: 1rem;
+  }
+
+  .hermes-preview-capital-row p:last-child strong {
+    font-size: 0.94rem;
+    line-height: 1.45;
   }
 
   .hermes-preview-allocation-body {
@@ -1447,11 +1518,32 @@ h2 {
     width: 0.78rem;
     height: 0.78rem;
     border-radius: 999px;
+    background: #d8a85b;
+    box-shadow: 0 0 0 4px rgba(216, 168, 91, 0.08);
+  }
+
+  .hermes-preview-legend p:nth-child(2) i {
+    background: #87dbc0;
+    box-shadow: 0 0 0 4px rgba(135, 219, 192, 0.08);
+  }
+
+  .hermes-preview-legend p:nth-child(3) i {
+    background: #b8bec7;
+    box-shadow: 0 0 0 4px rgba(184, 190, 199, 0.08);
   }
 
   .hermes-preview-legend strong {
     color: #f2eadb;
     font-size: 0.94rem;
+  }
+
+  .hermes-preview-activity-foot {
+    margin: 1rem 0 0;
+    border-top: 1px solid rgba(242, 234, 219, 0.08);
+    padding-top: 0.9rem;
+    color: rgba(242, 234, 219, 0.48);
+    font-size: 0.82rem;
+    line-height: 1.5;
   }
 
   .hermes-preview-activity ol {
@@ -1484,10 +1576,229 @@ h2 {
     font-weight: 700;
   }
 
+  .hermes-preview-decision-label {
+    color: rgba(242, 234, 219, 0.48);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
   .hermes-impact-article {
     width: min(100%, 94rem);
     margin: 0 auto;
     padding: 8.5rem clamp(1rem, 3vw, 2.5rem) 6rem;
+  }
+
+  .hermes-product-article {
+    position: relative;
+    width: min(100%, 100rem);
+    padding-top: clamp(7rem, 10vw, 8.75rem);
+  }
+
+  .hermes-product-article::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 3rem 0 auto;
+    height: 36rem;
+    background:
+      linear-gradient(180deg, rgba(242, 234, 219, 0.055), transparent 58%),
+      linear-gradient(90deg, transparent, rgba(216, 168, 91, 0.05), transparent);
+    pointer-events: none;
+  }
+
+  .hermes-product-hero {
+    display: grid;
+    gap: clamp(1.8rem, 4.4vw, 3.6rem);
+    min-height: calc(100vh - 3rem);
+    align-content: start;
+    padding-bottom: clamp(3rem, 6vw, 5rem);
+  }
+
+  .hermes-product-hero-copy {
+    display: grid;
+    justify-items: center;
+    max-width: 76rem;
+    margin: 0 auto;
+    gap: 0.95rem;
+    text-align: center;
+  }
+
+  .hermes-product-hero-copy h1 {
+    margin: 0;
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(5rem, 15.2vw, 13.2rem);
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 0.82;
+  }
+
+  .hermes-product-hero-copy p:not(.section-kicker) {
+    max-width: 56rem;
+    margin: 0;
+    color: rgba(250, 250, 250, 0.68);
+    font-size: clamp(1.1rem, 1.7vw, 1.45rem);
+    line-height: 1.55;
+  }
+
+  .hermes-product-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .hermes-product-primary,
+  .hermes-product-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.85rem;
+    border-radius: 999px;
+    padding: 0 1.35rem;
+    font-size: 0.86rem;
+    font-weight: 700;
+    transition:
+      background 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease,
+      transform 180ms ease;
+  }
+
+  .hermes-product-primary {
+    border: 1px solid var(--foreground);
+    background: var(--foreground);
+    color: #060604;
+  }
+
+  .hermes-product-secondary {
+    border: 1px solid rgba(250, 250, 250, 0.18);
+    color: var(--foreground);
+  }
+
+  .hermes-product-primary:hover,
+  .hermes-product-secondary:hover {
+    transform: translateY(-1px);
+  }
+
+  .hermes-product-secondary:hover {
+    border-color: rgba(250, 250, 250, 0.36);
+    background: rgba(250, 250, 250, 0.06);
+  }
+
+  .hermes-product-hero-preview {
+    width: min(100%, 92rem);
+    margin: 0 auto;
+  }
+
+  .hermes-product-hero-preview .hermes-dashboard-frame {
+    transform: perspective(1600px) rotateX(1.4deg);
+    transform-origin: center top;
+    box-shadow:
+      0 2.5rem 9rem rgba(0, 0, 0, 0.52),
+      0 0 7rem rgba(216, 168, 91, 0.09);
+  }
+
+  .hermes-product-proof {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: clamp(1rem, 3vw, 2rem);
+    border-top: 1px solid rgba(250, 250, 250, 0.1);
+    border-bottom: 1px solid rgba(250, 250, 250, 0.1);
+  }
+
+  .hermes-product-proof > div {
+    min-height: 14rem;
+    border-right: 1px solid rgba(250, 250, 250, 0.085);
+    padding: clamp(1.4rem, 3vw, 2.4rem);
+  }
+
+  .hermes-product-proof > div:last-child {
+    border-right: 0;
+  }
+
+  .hermes-product-proof span,
+  .hermes-product-grid-list li {
+    color: var(--accent);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .hermes-product-proof strong {
+    display: block;
+    margin-top: 1rem;
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(1.9rem, 3.2vw, 3.35rem);
+    font-weight: 500;
+    line-height: 0.95;
+  }
+
+  .hermes-product-proof p {
+    max-width: 22rem;
+    margin: 1.2rem 0 0;
+    color: rgba(250, 250, 250, 0.62);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .hermes-product-section,
+  .hermes-product-deep-dive {
+    display: grid;
+    grid-template-columns: minmax(18rem, 0.48fr) minmax(0, 0.52fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    align-items: center;
+    border-bottom: 1px solid rgba(250, 250, 250, 0.1);
+    padding: clamp(4rem, 7vw, 7rem) 0;
+  }
+
+  .hermes-product-section-right .hermes-impact-section-copy {
+    order: 2;
+  }
+
+  .hermes-product-section-right > :last-child {
+    order: 1;
+  }
+
+  .hermes-product-grid-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid rgba(250, 250, 250, 0.12);
+  }
+
+  .hermes-product-grid-list li {
+    min-height: 5rem;
+    border-right: 1px solid rgba(250, 250, 250, 0.1);
+    border-bottom: 1px solid rgba(250, 250, 250, 0.1);
+    padding: 1.2rem 0;
+  }
+
+  .hermes-product-grid-list li:nth-child(even) {
+    border-right: 0;
+    padding-left: 1.2rem;
+  }
+
+  .hermes-product-deep-dive {
+    align-items: end;
+  }
+
+  .hermes-product-deep-dive-copy {
+    display: grid;
+    gap: 1rem;
+    max-width: 38rem;
+  }
+
+  .hermes-product-deep-dive-copy p {
+    margin: 0;
+    color: rgba(250, 250, 250, 0.66);
+    font-size: clamp(1.05rem, 1.5vw, 1.2rem);
+    line-height: 1.75;
   }
 
   .hermes-impact-hero {
@@ -2275,13 +2586,31 @@ h2 {
 
   @media (max-width: 980px) {
     .hermes-impact-section,
-    .hermes-impact-impact {
+    .hermes-impact-impact,
+    .hermes-product-section,
+    .hermes-product-deep-dive {
       grid-template-columns: 1fr;
     }
 
     .hermes-impact-section-right .hermes-impact-section-copy,
-    .hermes-impact-section-right > :last-child {
+    .hermes-impact-section-right > :last-child,
+    .hermes-product-section-right .hermes-impact-section-copy,
+    .hermes-product-section-right > :last-child {
       order: 0;
+    }
+
+    .hermes-product-proof {
+      grid-template-columns: 1fr;
+    }
+
+    .hermes-product-proof > div {
+      min-height: auto;
+      border-right: 0;
+      border-bottom: 1px solid rgba(250, 250, 250, 0.1);
+    }
+
+    .hermes-product-proof > div:last-child {
+      border-bottom: 0;
     }
 
     .hermes-drawing-allocation {
@@ -2312,6 +2641,65 @@ h2 {
       padding: 6.5rem 0.75rem 4rem;
     }
 
+    .hermes-product-article {
+      padding-top: 5.75rem;
+    }
+
+    .hermes-product-hero {
+      gap: 1.6rem;
+      min-height: auto;
+      padding-bottom: 2.5rem;
+    }
+
+    .hermes-product-hero-copy {
+      justify-items: start;
+      text-align: left;
+    }
+
+    .hermes-product-hero-copy h1 {
+      font-size: clamp(4.8rem, 25vw, 6.8rem);
+      line-height: 0.84;
+    }
+
+    .hermes-product-hero-copy p:not(.section-kicker) {
+      font-size: 1.05rem;
+      line-height: 1.65;
+    }
+
+    .hermes-product-hero-actions {
+      justify-content: flex-start;
+    }
+
+    .hermes-product-primary,
+    .hermes-product-secondary {
+      min-height: 2.65rem;
+      padding: 0 1.05rem;
+      font-size: 0.82rem;
+    }
+
+    .hermes-product-hero-preview .hermes-dashboard-frame {
+      transform: none;
+    }
+
+    .hermes-product-proof > div {
+      padding: 1.35rem 0;
+    }
+
+    .hermes-product-section,
+    .hermes-product-deep-dive {
+      padding: 3.5rem 0;
+    }
+
+    .hermes-product-grid-list {
+      grid-template-columns: 1fr;
+    }
+
+    .hermes-product-grid-list li,
+    .hermes-product-grid-list li:nth-child(even) {
+      border-right: 0;
+      padding-left: 0;
+    }
+
     .hermes-impact-hero {
       gap: 2rem;
     }
@@ -2321,7 +2709,8 @@ h2 {
     }
 
     .hermes-impact-hero-copy h1 {
-      font-size: 3.2rem;
+      font-size: clamp(2.65rem, 11.5vw, 3.2rem);
+      overflow-wrap: break-word;
     }
 
     .hermes-impact-quote {
@@ -2385,7 +2774,7 @@ h2 {
     }
 
     .hermes-impact-media {
-      max-height: min(34rem, 74vh);
+      max-height: none;
     }
 
     .hermes-preview-nav {
@@ -2420,12 +2809,6 @@ h2 {
       gap: 1rem;
     }
 
-    .hermes-impact-dashboard .hermes-preview-risk,
-    .hermes-impact-dashboard .hermes-preview-risk-note,
-    .hermes-impact-dashboard .hermes-preview-lower-grid {
-      display: none;
-    }
-
     .hermes-preview-portfolio-metrics,
     .hermes-preview-status-grid,
     .hermes-preview-risk,
@@ -2444,15 +2827,15 @@ h2 {
     }
 
     .hermes-impact-dashboard .hermes-preview-outlook > div {
-      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      grid-template-columns: 1fr;
       gap: 0.9rem;
     }
 
     .hermes-impact-dashboard .hermes-preview-outlook p:last-child {
-      border-top: 0;
-      border-left: 1px solid rgba(250, 250, 250, 0.1);
-      padding-top: 0;
-      padding-left: 0.9rem;
+      border-top: 1px solid rgba(250, 250, 250, 0.1);
+      border-left: 0;
+      padding-top: 0.9rem;
+      padding-left: 0;
     }
 
     .hermes-impact-dashboard .hermes-preview-outlook strong {
@@ -2460,7 +2843,7 @@ h2 {
     }
 
     .hermes-impact-dashboard .hermes-preview-outlook p:last-child span {
-      display: none;
+      display: block;
     }
 
     .hermes-preview-donut {

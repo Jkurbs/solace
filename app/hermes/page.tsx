@@ -1,31 +1,24 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { hermesDashboardSnapshot } from '@/features/hermes-dashboard/mock-data';
+import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
+import type {
+  HermesBriefCapitalState,
+  HermesBriefPosture,
+  HermesBriefPulse,
+  HermesBriefSnapshot,
+} from '@/features/hermes-brief-snapshot/types';
 
 import Mark from '../Mark';
 import RequestAccessForm from './RequestAccessForm';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Solace — Hermes · Capital Allocation',
   description:
     'Hermes evaluates opportunity, posture, and conviction before allocating capital. Direct deposits through Solace. No performance claims.',
 };
-
-const postures = [
-  {
-    name: 'Preservation',
-    text: 'Capital first. Hermes acts rarely, sizes conservatively, and treats drawdown as the enemy.',
-  },
-  {
-    name: 'Balanced',
-    text: 'The house posture. Selective deployment, measured size, and discipline that bends without breaking.',
-  },
-  {
-    name: 'Velocity',
-    text: 'The full read of the field. When liquidity runs deep Hermes presses; when it thins it stands down.',
-  },
-];
 
 const allocationDemands = [
   'continuous evaluation',
@@ -34,48 +27,120 @@ const allocationDemands = [
   'emotional discipline',
 ];
 
-const dashboardPreview = hermesDashboardSnapshot;
+const productProofItems = [
+  {
+    label: 'Reads',
+    value: 'Structure',
+    text: 'Liquidity, timing, and regime become a single operating read.',
+  },
+  {
+    label: 'Decides',
+    value: 'Posture',
+    text: 'Hermes compresses noisy market state into preserve, wait, reduce, or deploy.',
+  },
+  {
+    label: 'Shows',
+    value: 'Reason',
+    text: 'Every public read includes current action and the condition Hermes is waiting for.',
+  },
+];
 
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  currency: 'USD',
-  maximumFractionDigits: 2,
-  minimumFractionDigits: 2,
-  style: 'currency',
-});
-
-const numberFormatter = new Intl.NumberFormat('en-US', {
-  maximumFractionDigits: 2,
-});
+const productSections = [
+  {
+    kicker: 'Built for uncertainty',
+    title: 'The product is the instrument.',
+    text:
+      'Hermes is designed around oversight instead of manual control. The user sees what the system is reading, what posture it has chosen, and why capital is moving or staying preserved.',
+    items: allocationDemands,
+  },
+  {
+    kicker: 'Public-safe by design',
+    title: 'Signals stay inside the engine.',
+    text:
+      'The Learn More page previews the Hermes experience without becoming a trade-signal surface. It exposes posture, paths, freshness, capital state, and reasoning while keeping raw execution data private.',
+    items: ['no entries', 'no targets', 'no balances', 'no pnl'],
+  },
+];
 
 const activityDateFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
+  hour: 'numeric',
+  hour12: true,
+  minute: '2-digit',
   month: 'short',
   timeZone: 'America/New_York',
 });
 
-const previewAllocationColors: Record<string, string> = {
-  BTC: '#f2eadb',
-  Cash: '#697067',
-  Other: '#d8a85b',
-  SUI: '#6ea8ff',
+const postureDescriptions: Record<HermesBriefPosture, string> = {
+  SELECTIVE: 'Hermes sees candidates but is waiting for cleaner confirmation before capital moves.',
+  DEPLOYED: 'Hermes has earned active exposure and is monitoring the position of the field.',
+  DEFENSIVE: 'Risk is elevated, so Hermes is protecting the account and reducing room for error.',
+  STANDING_DOWN: 'Conditions are not clean enough for deployment, so Hermes is staying out.',
+  RISK_OFF: 'Market conditions are hostile or unreliable, so preservation is the active posture.',
 };
 
-const previewRiskDescriptions: Record<string, string> = {
-  Preservation: 'Preservation prioritizes drawdown control, lower activity, and larger cash reserves.',
-  Balanced: 'Balanced keeps Hermes selective while allowing measured deployment when conditions are favorable.',
-  Velocity: 'Velocity allows more active deployment when Hermes finds strong opportunity and sufficient liquidity.',
+const capitalStateVisuals: Record<HermesBriefCapitalState, { gradient: string; label: string }> = {
+  PRESERVED: {
+    gradient: 'conic-gradient(#f2eadb 0% 100%)',
+    label: 'Preserved',
+  },
+  PARTIALLY_DEPLOYED: {
+    gradient: 'conic-gradient(#d8a85b 0% 46%, #697067 46% 100%)',
+    label: 'Partial',
+  },
+  DEPLOYED: {
+    gradient: 'conic-gradient(#87dbc0 0% 100%)',
+    label: 'Deployed',
+  },
+  REDUCED: {
+    gradient: 'conic-gradient(#b8bec7 0% 28%, #697067 28% 100%)',
+    label: 'Reduced',
+  },
 };
 
-function formatPreviewCurrency(value: number, signed = false) {
-  const sign = signed && value > 0 ? '+' : value < 0 ? '-' : '';
+function buildHermesProductPreviewSnapshot(snapshot: HermesBriefSnapshot): HermesBriefSnapshot {
+  if (snapshot.brief_id !== 'fallback') {
+    return snapshot;
+  }
 
-  return `${sign}${currencyFormatter.format(Math.abs(value))}`;
-}
+  const now = new Date().toISOString();
 
-function formatPreviewPercent(value: number, signed = false) {
-  const sign = signed && value > 0 ? '+' : value < 0 ? '-' : '';
-
-  return `${sign}${numberFormatter.format(Math.abs(value))}%`;
+  return {
+    brief_id: 'product-preview',
+    generated_at: now,
+    data_as_of: now,
+    pulse: 'LIVE',
+    posture: 'SELECTIVE',
+    posture_reason: 'Hermes sees candidate paths, but is waiting for cleaner confirmation before capital moves.',
+    market_regime: {
+      label: 'Mixed liquidity',
+      summary: 'Liquidity is active enough to observe, but not clean enough to force deployment.',
+      liquidity: 'MIXED',
+      volatility: 'NORMAL',
+    },
+    paths: {
+      under_review: 6,
+      deployed: 0,
+      invalidated_since_last: 1,
+      themes: ['confirmation pending', 'capital preserved', 'liquidity active'],
+    },
+    risk: {
+      capital_state: 'PRESERVED',
+      risk_level: 'MODERATE',
+      reason: 'Capital remains preserved until the signal earns action.',
+    },
+    actions: {
+      current_action: 'WAITING',
+      next_condition: 'Cleaner confirmation across liquidity and timing.',
+    },
+    summary: 'Hermes is tracking 6 possible market paths. No path has earned deployment.',
+    bullets: [
+      'Capital is preserved while candidates remain under review.',
+      'Hermes is monitoring timing, liquidity quality, and regime confirmation.',
+      'No public brief exposes symbols, entries, targets, leverage, or PnL.',
+    ],
+    disclosure: snapshot.disclosure,
+  };
 }
 
 function formatConstantLabel(value: string) {
@@ -86,49 +151,87 @@ function formatConstantLabel(value: string) {
     .join(' ');
 }
 
-function coercePreviewDate(value: string) {
-  return new Date(value);
-}
-
 function formatActivityDate(value: string) {
-  const parts = activityDateFormatter.formatToParts(coercePreviewDate(value));
+  const date = new Date(value);
+
+  if (!Number.isFinite(date.getTime()) || date.getUTCFullYear() < 2024) {
+    return 'Awaiting update';
+  }
+
+  const parts = activityDateFormatter.formatToParts(date);
   const month = parts.find((part) => part.type === 'month')?.value ?? '';
   const day = parts.find((part) => part.type === 'day')?.value ?? '';
+  const hour = parts.find((part) => part.type === 'hour')?.value ?? '';
+  const minute = parts.find((part) => part.type === 'minute')?.value ?? '';
+  const dayPeriod = parts.find((part) => part.type === 'dayPeriod')?.value ?? '';
 
-  return `${month} ${day}`;
+  return `${month} ${day}, ${hour}:${minute} ${dayPeriod}`;
 }
 
-function buildPreviewAllocationGradient() {
-  let cursor = 0;
+function formatAgeLabel(value: string, now = new Date()) {
+  const updatedAt = new Date(value);
 
-  return `conic-gradient(${dashboardPreview.allocation
-    .map((item) => {
-      const start = cursor;
-      cursor += item.percentage;
+  if (!Number.isFinite(updatedAt.getTime()) || updatedAt.getUTCFullYear() < 2024) {
+    return 'awaiting update';
+  }
 
-      return `${previewAllocationColors[item.asset] ?? '#87dbc0'} ${start}% ${cursor}%`;
-    })
-    .join(', ')})`;
+  const ageMinutes = Math.max(0, Math.floor((now.getTime() - updatedAt.getTime()) / 60_000));
+
+  if (ageMinutes < 1) {
+    return 'updated just now';
+  }
+
+  if (ageMinutes < 60) {
+    return `updated ${ageMinutes}m ago`;
+  }
+
+  if (ageMinutes >= 1_440) {
+    return `updated ${formatActivityDate(value)}`;
+  }
+
+  const ageHours = Math.floor(ageMinutes / 60);
+  return `updated ${ageHours}h ago`;
 }
 
-const previewStatusMetrics = [
-  { label: 'Status', value: dashboardPreview.status.status, positive: true },
-  { label: 'Risk Profile', value: dashboardPreview.status.riskProfile },
-  { label: 'Capital Deployed', value: formatPreviewPercent(dashboardPreview.status.deployedCapital) },
-  { label: 'Conviction', value: formatConstantLabel(dashboardPreview.status.conviction) },
-];
+function getPulseTone(pulse: HermesBriefPulse) {
+  if (pulse === 'LIVE') {
+    return 'is-positive';
+  }
 
-const previewCashReserve =
-  dashboardPreview.allocation.find((item) => item.asset.toLowerCase() === 'cash')?.percentage ??
-  100 - dashboardPreview.status.deployedCapital;
+  if (pulse === 'RECENT') {
+    return 'is-watch';
+  }
 
-const previewAllocationGradient = buildPreviewAllocationGradient();
+  return undefined;
+}
+
+function getPreviewDecisionRows(snapshot: HermesBriefSnapshot) {
+  const rows = [
+    { label: 'Read', summary: snapshot.summary },
+    ...snapshot.bullets.map((summary, index) => ({ label: `Note ${index + 1}`, summary })),
+    { label: 'Risk', summary: snapshot.risk.reason },
+    { label: 'Next', summary: snapshot.actions.next_condition },
+  ];
+
+  const seen = new Set<string>();
+
+  return rows.filter((row) => {
+    const key = row.summary.toLowerCase();
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  }).slice(0, 4);
+}
 
 const impactItems = [
   'Users can understand what Hermes is doing without parsing technical systems or raw operational detail.',
-  'Portfolio value, capital deployed, cash reserve, activity, and commentary are visible in one read.',
-  'Risk profile is explicit and adjustable, so allocation follows the selected posture.',
-  'Commentary turns system state into a current read instead of another stream of noise.',
+  'Posture, capital state, risk level, current action, and decision rationale are visible in one read.',
+  'The public preview uses the same sanitized brief contract that powers public Hermes updates.',
+  'Sensitive signals, exact trades, prices, balances, PnL, and user-specific data stay out of the public surface.',
 ];
 
 const fees = [
@@ -149,7 +252,181 @@ const fees = [
   },
 ];
 
-export default function HermesPage() {
+type HermesDashboardPreviewProps = {
+  capitalVisual: { gradient: string; label: string };
+  dashboardPreview: HermesBriefSnapshot;
+  decisionRows: ReturnType<typeof getPreviewDecisionRows>;
+  pathMetrics: Array<{ label: string; positive?: boolean; value: string }>;
+  postureOptions: HermesBriefPosture[];
+  pulseTone?: string;
+  statusMetrics: Array<{ label: string; positive?: boolean; value: string }>;
+  updatedLabel: string;
+};
+
+function HermesDashboardPreview({
+  capitalVisual,
+  dashboardPreview,
+  decisionRows,
+  pathMetrics,
+  postureOptions,
+  pulseTone,
+  statusMetrics,
+  updatedLabel,
+}: HermesDashboardPreviewProps) {
+  return (
+    <div className="hermes-dashboard-frame hermes-dashboard-frame-focus hermes-impact-media" aria-label="Hermes interface preview">
+      <div className="hermes-dashboard-preview hermes-dashboard-preview-real">
+        <div className="hermes-preview-nav">
+          <span className="hermes-preview-brand">
+            <Mark size={18} />
+            Solace
+          </span>
+          <span className="hermes-preview-nav-links">
+            <span>Hermes</span>
+            <span>Public Preview</span>
+            <span>Brief</span>
+            <span>Access</span>
+          </span>
+        </div>
+
+        <div className="hermes-preview-shell">
+          <div className="hermes-preview-panel hermes-preview-portfolio">
+            <div>
+              <span>Hermes Readout</span>
+              <strong className="hermes-preview-main-value">{formatConstantLabel(dashboardPreview.posture)}</strong>
+            </div>
+            <div className="hermes-preview-portfolio-metrics">
+              <p>
+                <span>Pulse</span>
+                <strong className={pulseTone}>{dashboardPreview.pulse}</strong>
+              </p>
+              <p>
+                <span>Updated</span>
+                <strong>{updatedLabel}</strong>
+              </p>
+            </div>
+          </div>
+
+          <div className="hermes-preview-panel hermes-preview-status">
+            <span>Hermes Status</span>
+            <h3>Operating posture</h3>
+            <div className="hermes-preview-status-grid">
+              {statusMetrics.map((item) => (
+                <p key={item.label}>
+                  <span>{item.label}</span>
+                  <strong className={item.positive ? 'is-positive' : undefined}>{item.value}</strong>
+                </p>
+              ))}
+            </div>
+            <div className="hermes-preview-risk">
+              {postureOptions.map((posture) => (
+                <span
+                  key={posture}
+                  className={posture === dashboardPreview.posture ? 'is-selected' : undefined}
+                >
+                  {formatConstantLabel(posture)}
+                </span>
+              ))}
+            </div>
+            <p className="hermes-preview-risk-note">
+              {dashboardPreview.posture_reason || postureDescriptions[dashboardPreview.posture]}
+            </p>
+          </div>
+
+          <div className="hermes-preview-panel hermes-preview-outlook">
+            <span>Market Regime</span>
+            <h3>Liquidity environment</h3>
+            <div>
+              <p>
+                <span>Current Read</span>
+                <strong>{dashboardPreview.market_regime.label}</strong>
+              </p>
+              <p>
+                <em>
+                  {formatConstantLabel(dashboardPreview.market_regime.liquidity)} liquidity ·{' '}
+                  {formatConstantLabel(dashboardPreview.market_regime.volatility)} volatility
+                </em>
+                <span>{dashboardPreview.market_regime.summary}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="hermes-preview-lower-grid">
+            <div className="hermes-preview-panel hermes-preview-allocation">
+              <span>Capital Oversight</span>
+              <h3>Preserve or deploy</h3>
+              <div className="hermes-preview-capital-row">
+                <p>
+                  <span>Capital State</span>
+                  <strong>{formatConstantLabel(dashboardPreview.risk.capital_state)}</strong>
+                </p>
+                <p>
+                  <span>Next Condition</span>
+                  <strong>{dashboardPreview.actions.next_condition}</strong>
+                </p>
+              </div>
+              <div className="hermes-preview-allocation-body">
+                <div
+                  className="hermes-preview-donut"
+                  style={{ background: capitalVisual.gradient }}
+                  aria-hidden="true"
+                >
+                  <span>Capital</span>
+                  <strong>{capitalVisual.label}</strong>
+                </div>
+                <div className="hermes-preview-legend">
+                  {pathMetrics.map((item) => (
+                    <p key={item.label}>
+                      <i aria-hidden="true" />
+                      <span>{item.label}</span>
+                      <strong className={item.positive ? 'is-positive' : undefined}>{item.value}</strong>
+                    </p>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="hermes-preview-panel hermes-preview-activity">
+              <span>Recent Decisions</span>
+              <h3>Reasoning</h3>
+              <ol>
+                {decisionRows.map((activity) => (
+                  <li key={`${activity.label}-${activity.summary}`}>
+                    <span className="hermes-preview-decision-label">{activity.label}</span>
+                    <strong>{activity.summary}</strong>
+                  </li>
+                ))}
+              </ol>
+              <p className="hermes-preview-activity-foot">
+                Data as of {formatActivityDate(dashboardPreview.data_as_of)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default async function HermesPage() {
+  const dashboardPreview = buildHermesProductPreviewSnapshot(await getStoredHermesBriefSnapshot());
+  const statusMetrics = [
+    { label: 'Posture', value: formatConstantLabel(dashboardPreview.posture), positive: dashboardPreview.posture === 'DEPLOYED' },
+    { label: 'Capital State', value: formatConstantLabel(dashboardPreview.risk.capital_state) },
+    { label: 'Risk Level', value: formatConstantLabel(dashboardPreview.risk.risk_level) },
+    { label: 'Current Action', value: formatConstantLabel(dashboardPreview.actions.current_action) },
+  ];
+  const pathMetrics = [
+    { label: 'Under Review', value: dashboardPreview.paths.under_review.toString() },
+    { label: 'Deployed', value: dashboardPreview.paths.deployed.toString(), positive: dashboardPreview.paths.deployed > 0 },
+    { label: 'Invalidated Since Last', value: dashboardPreview.paths.invalidated_since_last.toString() },
+  ];
+  const decisionRows = getPreviewDecisionRows(dashboardPreview);
+  const capitalVisual = capitalStateVisuals[dashboardPreview.risk.capital_state];
+  const postureOptions = Object.keys(postureDescriptions) as HermesBriefPosture[];
+  const pulseTone = getPulseTone(dashboardPreview.pulse);
+  const updatedLabel = formatAgeLabel(dashboardPreview.data_as_of);
+
   return (
     <main className="oracle-page relative min-h-screen overflow-x-hidden text-foreground">
       <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-[rgba(4,4,3,0.58)] backdrop-blur-xl">
@@ -164,189 +441,86 @@ export default function HermesPage() {
         </div>
       </header>
 
-      <article className="hermes-impact-article">
-        <section className="hermes-impact-hero">
-          <div className="hermes-impact-hero-copy">
-            <p className="section-kicker">Hermes + Solace</p>
-            <h1>Capital oversight without constant intervention.</h1>
+      <article className="hermes-impact-article hermes-product-article">
+        <section className="hermes-product-hero">
+          <div className="hermes-product-hero-copy">
+            <p className="section-kicker">Hermes by Solace</p>
+            <h1>Hermes</h1>
             <p>
-              Hermes is an allocation interface for users who want visibility into how capital is being
-              deployed without managing daily decisions or constantly adjusting account posture.
+              A live capital allocation instrument for markets under uncertainty. Hermes reads liquidity,
+              timing, and regime to decide when capital should move, wait, or be preserved.
             </p>
+            <div className="hermes-product-hero-actions">
+              <a href="#request-access" className="hermes-product-primary">
+                Request Access
+              </a>
+              <Link href="/brief" className="hermes-product-secondary">
+                Read brief
+              </Link>
+            </div>
+          </div>
+
+          <div className="hermes-product-hero-preview">
+            <HermesDashboardPreview
+              capitalVisual={capitalVisual}
+              dashboardPreview={dashboardPreview}
+              decisionRows={decisionRows}
+              pathMetrics={pathMetrics}
+              postureOptions={postureOptions}
+              pulseTone={pulseTone}
+              statusMetrics={statusMetrics}
+              updatedLabel={updatedLabel}
+            />
           </div>
         </section>
 
-        <section className="hermes-impact-section hermes-exists-section">
-          <div className="hermes-impact-section-copy">
-            <p className="section-kicker">Why Hermes exists</p>
-            <h2>Capital requires decisions.</h2>
-          </div>
-          <div className="hermes-exists-body">
-            <p>
-              Most people do not have the time, interest, or expertise to continuously evaluate changing
-              conditions and adjust allocation accordingly.
-            </p>
-            <ul className="hermes-exists-list">
-              {allocationDemands.map((item) => (
+        <section className="hermes-product-proof" aria-label="Hermes product proof">
+          {productProofItems.map((item) => (
+            <div key={item.label}>
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+              <p>{item.text}</p>
+            </div>
+          ))}
+        </section>
+
+        {productSections.map((section, index) => (
+          <section
+            key={section.kicker}
+            className={`hermes-product-section ${index % 2 === 1 ? 'hermes-product-section-right' : ''}`}
+          >
+            <div className="hermes-impact-section-copy">
+              <p className="section-kicker">{section.kicker}</p>
+              <h2>{section.title}</h2>
+              <p>{section.text}</p>
+            </div>
+            <ul className="hermes-product-grid-list">
+              {section.items.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
+          </section>
+        ))}
+
+        <section className="hermes-product-deep-dive">
+          <div className="hermes-dashboard-preview-head">
+            <p className="section-kicker">Oversight preview</p>
+            <h2>What a user would see.</h2>
             <p>
-              Hermes maintains that operating posture on behalf of the account while keeping the user
-              informed through a simple oversight interface.
+              The public page uses the same sanitized brief contract as live Hermes updates, so the preview
+              stays accurate without publishing sensitive trade intelligence.
             </p>
           </div>
-        </section>
 
-        <section className="hermes-impact-section hermes-custody-section hermes-impact-section-right">
-          <div className="hermes-impact-section-copy">
-            <p className="section-kicker">Capital architecture</p>
-            <h2>Trust is enforced through how capital moves.</h2>
-          </div>
-          <div className="hermes-custody-points">
+          <div className="hermes-product-deep-dive-copy">
             <p>
-              <span>01</span>
-              <strong>Users deposit capital directly into Solace.</strong>
+              The homepage compresses Hermes into Paths, Posture, and Pulse. This page expands that same
+              read into a guided product surface: current action, risk state, regime, and rationale.
             </p>
             <p>
-              <span>02</span>
-              <strong>Hermes allocates from the Solace account.</strong>
+              The full dashboard remains private. The public preview exists to show how Hermes thinks,
+              not to expose a live playbook.
             </p>
-            <p>
-              <span>03</span>
-              <strong>Deposits, value, and withdrawals stay visible in the dashboard.</strong>
-            </p>
-          </div>
-        </section>
-
-        <section className="hermes-impact-dashboard">
-          <div className="hermes-dashboard-frame hermes-dashboard-frame-focus hermes-impact-media" aria-label="Hermes interface preview">
-            <div className="hermes-dashboard-preview hermes-dashboard-preview-real">
-              <div className="hermes-preview-nav">
-                <span className="hermes-preview-brand">
-                  <Mark size={18} />
-                  Solace
-                </span>
-                <span className="hermes-preview-nav-links">
-                  <span>Hermes</span>
-                  <span>{dashboardPreview.account.label}</span>
-                  <span>Light</span>
-                  <span>Logout</span>
-                </span>
-              </div>
-
-              <div className="hermes-preview-shell">
-                <div className="hermes-preview-panel hermes-preview-portfolio">
-                  <div>
-                    <span>Portfolio Value</span>
-                    <strong>{formatPreviewCurrency(dashboardPreview.portfolio.value)}</strong>
-                  </div>
-                  <div className="hermes-preview-portfolio-metrics">
-                    <p>
-                      <span>Today's Change</span>
-                      <strong>
-                        {formatPreviewCurrency(dashboardPreview.portfolio.todaysChange.amount, true)} (
-                        {formatPreviewPercent(dashboardPreview.portfolio.todaysChange.percentage, true)})
-                      </strong>
-                    </p>
-                    <p>
-                      <span>Since Inception</span>
-                      <strong>{formatPreviewPercent(dashboardPreview.portfolio.sinceInception, true)}</strong>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="hermes-preview-panel hermes-preview-status">
-                  <span>Hermes Status</span>
-                  <h3>Operating posture</h3>
-                  <div className="hermes-preview-status-grid">
-                    {previewStatusMetrics.map((item) => (
-                      <p key={item.label}>
-                        <span>{item.label}</span>
-                        <strong className={item.positive ? 'is-positive' : undefined}>{item.value}</strong>
-                      </p>
-                    ))}
-                  </div>
-                  <div className="hermes-preview-risk">
-                    {postures.map((posture) => (
-                      <span
-                        key={posture.name}
-                        className={posture.name === dashboardPreview.status.riskProfile ? 'is-selected' : undefined}
-                      >
-                        {posture.name}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="hermes-preview-risk-note">
-                    {previewRiskDescriptions[dashboardPreview.status.riskProfile]}
-                  </p>
-                </div>
-
-                <div className="hermes-preview-panel hermes-preview-outlook">
-                  <span>Hermes Outlook</span>
-                  <h3>Opportunity environment</h3>
-                  <div>
-                    <p>
-                      <span>Current Outlook</span>
-                      <strong>{dashboardPreview.outlook.environment}</strong>
-                    </p>
-                    <p>
-                      <em>{dashboardPreview.outlook.stance}</em>
-                      <span>{dashboardPreview.outlook.note}</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="hermes-preview-lower-grid">
-                  <div className="hermes-preview-panel hermes-preview-allocation">
-                    <span>Current Allocation</span>
-                    <h3>Capital mix</h3>
-                    <div className="hermes-preview-capital-row">
-                      <p>
-                        <span>Capital Deployed</span>
-                        <strong>{formatPreviewPercent(dashboardPreview.status.deployedCapital)}</strong>
-                      </p>
-                      <p>
-                        <span>Cash Reserve</span>
-                        <strong>{formatPreviewPercent(previewCashReserve)}</strong>
-                      </p>
-                    </div>
-                    <div className="hermes-preview-allocation-body">
-                      <div
-                        className="hermes-preview-donut"
-                        style={{ background: previewAllocationGradient }}
-                        aria-hidden="true"
-                      >
-                        <span>Allocated</span>
-                        <strong>{formatPreviewPercent(dashboardPreview.status.deployedCapital)}</strong>
-                      </div>
-                      <div className="hermes-preview-legend">
-                        {dashboardPreview.allocation.map((item) => (
-                          <p key={item.asset}>
-                            <i style={{ backgroundColor: previewAllocationColors[item.asset] ?? '#87dbc0' }} aria-hidden="true" />
-                            <span>{item.asset}</span>
-                            <strong>{formatPreviewPercent(item.percentage)}</strong>
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="hermes-preview-panel hermes-preview-activity">
-                    <span>Recent Activity</span>
-                    <h3>Latest decisions</h3>
-                    <ol>
-                      {dashboardPreview.activity.map((activity) => (
-                        <li key={`${activity.timestamp}-${activity.summary}`}>
-                          <time dateTime={activity.timestamp}>{formatActivityDate(activity.timestamp)}</time>
-                          <strong>{activity.summary}</strong>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
