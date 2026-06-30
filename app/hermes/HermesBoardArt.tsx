@@ -7,7 +7,7 @@ import Mark from '../Mark';
  * simulation/beta figures shown in the product. Decorative - aria-hidden.
  */
 
-const card = 'rounded-lg border border-white/10 bg-[#181715] p-6 sm:p-7';
+const card = 'rounded-lg border border-white/10 bg-[#181715] p-6';
 const label = 'text-sm font-medium text-neutral-500';
 const title = 'block text-sm font-semibold text-neutral-50';
 
@@ -61,7 +61,7 @@ export default function HermesBoardArt() {
       <div className="mx-auto grid max-w-6xl gap-5 px-6 py-7">
         {/* Portfolio Value */}
         <div className={card}>
-          <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="grid grid-cols-[1fr_auto] items-end gap-6">
             <div>
               <span className="inline-flex items-center gap-2">
                 <span className={label}>Portfolio Value</span>
@@ -74,7 +74,7 @@ export default function HermesBoardArt() {
               </span>
               <span className="mt-2 block text-5xl font-semibold tracking-tight text-neutral-50">$50,897.01</span>
             </div>
-            <div className="grid gap-3 text-right sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3 text-right">
               <div>
                 <span className="block text-sm text-neutral-500">Today&apos;s Change</span>
                 <span className="mt-1 block text-lg font-semibold text-neutral-50">$0.00 (0%)</span>
@@ -85,7 +85,7 @@ export default function HermesBoardArt() {
               </div>
             </div>
           </div>
-          <div className="mt-6 grid gap-4 border-t border-white/10 pt-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-4 gap-4 border-t border-white/10 pt-5">
             {[
               ['Available Balance', '$490.64', 'text-neutral-50'],
               ['In Strategy', '$50,406.37', 'text-neutral-50'],
@@ -104,7 +104,7 @@ export default function HermesBoardArt() {
         <div className={card}>
           <span className={label}>Hermes Status</span>
           <span className={title}>Operating posture</span>
-          <div className="mt-5 grid gap-4 border-t border-white/10 pt-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 grid grid-cols-4 gap-4 border-t border-white/10 pt-5">
             {[
               ['Status', 'ACTIVE', 'text-emerald-400'],
               ['Risk Profile', 'Balanced', 'text-neutral-50'],
@@ -117,7 +117,7 @@ export default function HermesBoardArt() {
               </div>
             ))}
           </div>
-          <div className="mt-5 grid gap-2 rounded-lg bg-neutral-900 p-1 sm:grid-cols-3">
+          <div className="mt-5 grid grid-cols-3 gap-2 rounded-lg bg-neutral-900 p-1">
             <span className="rounded-md px-3 py-2 text-center text-sm font-medium text-neutral-500">Preservation</span>
             <span className="rounded-md bg-neutral-700/70 px-3 py-2 text-center text-sm font-semibold text-neutral-50">
               Balanced
@@ -130,12 +130,12 @@ export default function HermesBoardArt() {
         <div className={card}>
           <span className={label}>Hermes Outlook</span>
           <span className={title}>Opportunity environment</span>
-          <div className="mt-5 grid gap-7 border-t border-white/10 pt-5 sm:grid-cols-[13rem_1fr] sm:items-center">
+          <div className="mt-5 grid grid-cols-[13rem_1fr] items-center gap-7 border-t border-white/10 pt-5">
             <div>
               <span className="block text-sm text-neutral-500">Current Outlook</span>
               <span className="mt-1 block text-4xl font-semibold text-neutral-50">Moderate</span>
             </div>
-            <div className="border-white/10 sm:border-l sm:pl-6">
+            <div className="border-l border-white/10 pl-6">
               <span className="block text-sm font-semibold text-neutral-50">Selective deployment</span>
               <span className="mt-2 block text-sm leading-6 text-neutral-400">
                 Opportunity is present, but Hermes is preserving cash for clearer deployment.
@@ -145,11 +145,11 @@ export default function HermesBoardArt() {
         </div>
 
         {/* Allocation + Activity */}
-        <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid grid-cols-[1.1fr_0.9fr] gap-5">
           <div className={card}>
             <span className={label}>Current Allocation</span>
             <span className={title}>Capital mix</span>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-md border border-white/10 bg-neutral-900/60 p-4">
                 <span className="block text-sm text-neutral-500">Capital Deployed</span>
                 <span className="mt-1 block text-2xl font-semibold text-neutral-50">99.04%</span>
@@ -217,7 +217,7 @@ export default function HermesBoardArt() {
         <div className={card}>
           <span className={label}>Account</span>
           <span className={title}>Summary</span>
-          <div className="mt-6 grid gap-4 border-t border-white/10 pt-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-4 gap-4 border-t border-white/10 pt-5">
             {summary.map((item) => (
               <div key={item.label}>
                 <span className="block text-sm text-neutral-500">{item.label}</span>

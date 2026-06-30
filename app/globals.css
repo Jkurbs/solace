@@ -6196,9 +6196,10 @@ h2 {
     grid-template-columns: 1fr;
   }
 
-  /* On compact screens the desktop-width board is far too tall. Shrink the
-     whole window to a fitted thumbnail with zoom (scales layout height too,
-     unlike transform) instead of scrolling a giant full-height dashboard. */
+  /* On compact screens the desktop-width board (now layout-stable, always its
+     wide form) is shrunk to a fitted thumbnail with zoom — which scales the
+     layout height too, unlike transform. Each step is sized to fit the low end
+     of its range so the board centers and never clips. */
   @media (max-width: 860px) {
     .hx-reveal-static .hx-pin-static-frame {
       display: flex;
@@ -6209,13 +6210,43 @@ h2 {
 
     .hx-reveal-static .hx-window {
       width: 74rem;
-      zoom: 0.6;
+      zoom: 0.62;
     }
   }
 
-  @media (max-width: 560px) {
+  @media (max-width: 767px) {
+    .hx-reveal-static .hx-window {
+      zoom: 0.54;
+    }
+  }
+
+  @media (max-width: 679px) {
+    .hx-reveal-static .hx-window {
+      zoom: 0.47;
+    }
+  }
+
+  @media (max-width: 599px) {
+    .hx-reveal-static .hx-window {
+      zoom: 0.41;
+    }
+  }
+
+  @media (max-width: 519px) {
+    .hx-reveal-static .hx-window {
+      zoom: 0.35;
+    }
+  }
+
+  @media (max-width: 449px) {
     .hx-reveal-static .hx-window {
       zoom: 0.3;
+    }
+  }
+
+  @media (max-width: 379px) {
+    .hx-reveal-static .hx-window {
+      zoom: 0.26;
     }
   }
 }
