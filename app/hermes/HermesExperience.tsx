@@ -16,7 +16,7 @@ import {
 import type { HermesBriefPosture, HermesBriefSnapshot } from '@/features/hermes-brief-snapshot/types';
 
 import Mark from '../Mark';
-import HermesBoardArt from './HermesBoardArt';
+import HermesBoardArt, { HermesBoardMobileArt } from './HermesBoardArt';
 import RequestAccessForm from './RequestAccessForm';
 
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
@@ -179,9 +179,9 @@ function StepRow({ activeStep }: { activeStep: number | 'all' }) {
   );
 }
 
-function DashboardWindow({ pan }: { pan?: MotionValue<string> }) {
+function DashboardWindow({ compact = false, pan }: { compact?: boolean; pan?: MotionValue<string> }) {
   return (
-    <div className="hx-window">
+    <div className={`hx-window${compact ? ' hx-window-mobile' : ''}`}>
       <div className="hx-window-bar">
         <span className="hx-window-dots">
           <i />
@@ -191,8 +191,10 @@ function DashboardWindow({ pan }: { pan?: MotionValue<string> }) {
         <span className="hx-window-url">app.solace.fyi/dashboard · Live</span>
         <span className="hx-window-spacer" />
       </div>
-      <div className={`hx-window-view${pan ? '' : ' is-static'}`}>
-        {pan ? (
+      <div className={`hx-window-view${pan ? '' : ' is-static'}${compact ? ' is-mobile' : ''}`}>
+        {compact ? (
+          <HermesBoardMobileArt />
+        ) : pan ? (
           <motion.div className="hx-board-pan" style={{ y: pan }}>
             <HermesBoardArt />
           </motion.div>
@@ -225,7 +227,18 @@ function DashboardReveal() {
     setStep(value < 0.45 ? 0 : value < 0.72 ? 1 : 2);
   });
 
-  if (reduce || isCompact) {
+  if (isCompact) {
+    return (
+      <section className="hx-shell hx-reveal-static">
+        <StepRow activeStep="all" />
+        <div className="hx-pin-static-frame">
+          <DashboardWindow compact />
+        </div>
+      </section>
+    );
+  }
+
+  if (reduce) {
     return (
       <section className="hx-shell hx-reveal-static">
         <StepRow activeStep="all" />

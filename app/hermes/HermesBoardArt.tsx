@@ -31,6 +31,112 @@ const summary = [
   { label: 'Withdrawable', value: '$491' },
 ];
 
+export function HermesBoardMobileArt() {
+  return (
+    <div className="hxm-board" aria-hidden="true">
+      <div className="hxm-topbar">
+        <span className="hxm-brand">
+          <Mark size={16} />
+          Solace
+        </span>
+        <span className="hxm-live">
+          <i />
+          Live 5s
+        </span>
+      </div>
+
+      <section className="hxm-card hxm-portfolio">
+        <div className="hxm-card-head">
+          <span>
+            <span className="hxm-label">Portfolio Value</span>
+            <strong className="hxm-value">$50,897.01</strong>
+          </span>
+          <span className="hxm-pill">Simulation</span>
+        </div>
+        <div className="hxm-metrics hxm-metrics-two">
+          <span>
+            <span className="hxm-label">Today&apos;s Change</span>
+            <strong>$0.00 (0%)</strong>
+          </span>
+          <span>
+            <span className="hxm-label">Since Inception</span>
+            <strong>-49.1%</strong>
+          </span>
+        </div>
+        <div className="hxm-metrics hxm-metrics-four">
+          {[
+            ['Available', '$490.64'],
+            ['In Strategy', '$50,406.37'],
+            ['Open PnL', '+$19,692.98'],
+            ['Withdrawable', '$490.64'],
+          ].map(([key, value]) => (
+            <span key={key}>
+              <span className="hxm-label">{key}</span>
+              <strong>{value}</strong>
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="hxm-card">
+        <span className="hxm-label">Hermes Status</span>
+        <strong className="hxm-title">Operating posture</strong>
+        <div className="hxm-status-grid">
+          {[
+            ['Status', 'ACTIVE'],
+            ['Risk Profile', 'Balanced'],
+            ['Capital Deployed', '99.04%'],
+            ['Conviction', 'High'],
+          ].map(([key, value]) => (
+            <span key={key}>
+              <span className="hxm-label">{key}</span>
+              <strong className={key === 'Status' ? 'hxm-positive' : undefined}>{value}</strong>
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="hxm-card">
+        <span className="hxm-label">Hermes Outlook</span>
+        <strong className="hxm-title">Moderate</strong>
+        <p>Selective deployment while Hermes preserves cash for clearer deployment.</p>
+      </section>
+
+      <section className="hxm-card">
+        <div className="hxm-allocation-head">
+          <span>
+            <span className="hxm-label">Current Allocation</span>
+            <strong className="hxm-title">Capital mix</strong>
+          </span>
+          <span className="hxm-donut" />
+        </div>
+        <div className="hxm-allocation-list">
+          {allocation.map((item) => (
+            <span key={item.name}>
+              <i style={{ background: item.color }} />
+              <span>{item.name}</span>
+              <strong>{item.value}</strong>
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="hxm-card">
+        <span className="hxm-label">Recent Activity</span>
+        <strong className="hxm-title">Latest decisions</strong>
+        <div className="hxm-activity">
+          {activity.slice(0, 2).map((item) => (
+            <span key={item.text}>
+              <small>{item.date}</small>
+              <strong>{item.text}</strong>
+            </span>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function HermesBoardArt() {
   return (
     <div className="mx-auto w-[74rem] text-neutral-50" aria-hidden="true">
