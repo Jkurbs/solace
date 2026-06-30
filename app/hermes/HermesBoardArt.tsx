@@ -4,7 +4,7 @@ import Mark from '../Mark';
  * A static, faithful recreation of the live Hermes dashboard, used as the
  * product visual on the Learn More page. Mirrors the real dashboard's structure
  * and styling (dark cards, neutral palette, conic allocation donut) with the
- * simulation/beta figures shown in the product. Decorative and aria-hidden.
+ * simulation/beta figures shown in the product. Decorative - aria-hidden.
  */
 
 const card = 'rounded-lg border border-white/10 bg-[#181715] p-6 sm:p-7';
@@ -12,23 +12,23 @@ const label = 'text-sm font-medium text-neutral-500';
 const title = 'block text-sm font-semibold text-neutral-50';
 
 const allocation = [
-  { name: 'Active Strategy', value: '64%', color: '#f2eadb' },
-  { name: 'Review Reserve', value: '20%', color: '#5b8def' },
-  { name: 'Risk Buffer', value: '12%', color: '#8a8f98' },
-  { name: 'Cash', value: '4%', color: '#54524d' },
+  { name: 'SOL Long', value: '87.47%', color: '#f2eadb' },
+  { name: 'BEAT Long', value: '10.43%', color: '#5b8def' },
+  { name: 'ZEC Long', value: '1.14%', color: '#8a8f98' },
+  { name: 'Cash', value: '0.96%', color: '#54524d' },
 ];
 
 const activity = [
-  { date: 'Jun 24', text: 'Hermes allocation posture updated after liquidity review' },
-  { date: 'Jun 23', text: 'Capital event recorded in beta simulation mode' },
-  { date: 'Jun 23', text: 'Treasury simulation completed and reconciled' },
+  { date: 'Jun 24', text: 'Hermes allocation updated: SOL long 87.47%, BEAT long 10.43%, ZEC long 1.14%' },
+  { date: 'Jun 23', text: 'Capital posted through Stripe' },
+  { date: 'Jun 23', text: 'Stripe sandbox simulation treasury allocation completed' },
 ];
 
 const summary = [
-  { label: 'Customer Funds', value: '$0' },
-  { label: 'Portfolio Values', value: 'Private' },
-  { label: 'Performance', value: 'Private' },
-  { label: 'Withdrawable', value: 'Private' },
+  { label: 'Total Deposited', value: '$100,000' },
+  { label: 'Current Value', value: '$50,897' },
+  { label: 'Net Profit', value: '-$49,103' },
+  { label: 'Withdrawable', value: '$491' },
 ];
 
 export default function HermesBoardArt() {
@@ -45,7 +45,7 @@ export default function HermesBoardArt() {
             <span className="text-neutral-50">Hermes</span>
             <span>Contract</span>
             <span>Capital</span>
-            <span className="text-neutral-500">Demo account</span>
+            <span className="text-neutral-500">Account ending 98D5</span>
           </span>
           <span className="flex items-center gap-3 text-sm text-neutral-400">
             <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2 py-1">
@@ -72,25 +72,25 @@ export default function HermesBoardArt() {
                   Simulation capital
                 </span>
               </span>
-              <span className="mt-2 block text-5xl font-semibold tracking-tight text-neutral-50">Beta Preview</span>
+              <span className="mt-2 block text-5xl font-semibold tracking-tight text-neutral-50">$50,897.01</span>
             </div>
             <div className="grid gap-3 text-right sm:grid-cols-2">
               <div>
                 <span className="block text-sm text-neutral-500">Today&apos;s Change</span>
-                <span className="mt-1 block text-lg font-semibold text-neutral-50">Private</span>
+                <span className="mt-1 block text-lg font-semibold text-neutral-50">$0.00 (0%)</span>
               </div>
               <div>
                 <span className="block text-sm text-neutral-500">Since Inception</span>
-                <span className="mt-1 block text-lg font-semibold text-neutral-50">Private</span>
+                <span className="mt-1 block text-lg font-semibold text-neutral-50">-49.1%</span>
               </div>
             </div>
           </div>
           <div className="mt-6 grid gap-4 border-t border-white/10 pt-5 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              ['Available Balance', 'Private', 'text-neutral-50'],
-              ['In Strategy', 'Private', 'text-neutral-50'],
-              ['Performance', 'Private', 'text-neutral-50'],
-              ['Withdrawable', 'Private', 'text-neutral-50'],
+              ['Available Balance', '$490.64', 'text-neutral-50'],
+              ['In Strategy', '$50,406.37', 'text-neutral-50'],
+              ['Open PnL', '+$19,692.98', 'text-emerald-400'],
+              ['Withdrawable', '$490.64', 'text-neutral-50'],
             ].map(([k, v, tone]) => (
               <div key={k}>
                 <span className="block text-sm text-neutral-500">{k}</span>
@@ -108,7 +108,7 @@ export default function HermesBoardArt() {
             {[
               ['Status', 'ACTIVE', 'text-emerald-400'],
               ['Risk Profile', 'Balanced', 'text-neutral-50'],
-              ['Capital Deployed', 'Simulated', 'text-neutral-50'],
+              ['Capital Deployed', '99.04%', 'text-neutral-50'],
               ['Conviction', 'High', 'text-neutral-50'],
             ].map(([k, v, tone]) => (
               <div key={k}>
@@ -138,7 +138,7 @@ export default function HermesBoardArt() {
             <div className="border-white/10 sm:border-l sm:pl-6">
               <span className="block text-sm font-semibold text-neutral-50">Selective deployment</span>
               <span className="mt-2 block text-sm leading-6 text-neutral-400">
-                Opportunity is present, but Hermes is preserving room for clearer deployment.
+                Opportunity is present, but Hermes is preserving cash for clearer deployment.
               </span>
             </div>
           </div>
@@ -152,11 +152,11 @@ export default function HermesBoardArt() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="rounded-md border border-white/10 bg-neutral-900/60 p-4">
                 <span className="block text-sm text-neutral-500">Capital Deployed</span>
-                <span className="mt-1 block text-2xl font-semibold text-neutral-50">64%</span>
+                <span className="mt-1 block text-2xl font-semibold text-neutral-50">99.04%</span>
               </div>
               <div className="rounded-md border border-white/10 bg-neutral-900/60 p-4">
                 <span className="block text-sm text-neutral-500">Cash Reserve</span>
-                <span className="mt-1 block text-2xl font-semibold text-neutral-50">36%</span>
+                <span className="mt-1 block text-2xl font-semibold text-neutral-50">0.96%</span>
               </div>
             </div>
             <div className="mt-6 grid grid-cols-[auto_1fr] items-center gap-6">
@@ -164,13 +164,13 @@ export default function HermesBoardArt() {
                 className="grid aspect-square w-40 place-items-center rounded-full"
                 style={{
                   background:
-                    'conic-gradient(#f2eadb 0 64%, #5b8def 64% 84%, #8a8f98 84% 96%, #54524d 96% 100%)',
+                    'conic-gradient(#f2eadb 0 87.47%, #5b8def 87.47% 97.9%, #8a8f98 97.9% 99.04%, #54524d 99.04% 100%)',
                 }}
               >
                 <div className="grid h-[64%] w-[64%] place-items-center rounded-full bg-[#181715] text-center">
                   <span>
                     <span className="block text-xs text-neutral-500">Allocated</span>
-                    <span className="block text-xl font-semibold text-neutral-50">64%</span>
+                    <span className="block text-xl font-semibold text-neutral-50">99.04%</span>
                   </span>
                 </div>
               </div>
