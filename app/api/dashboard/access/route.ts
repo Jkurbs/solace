@@ -86,7 +86,7 @@ async function sendDashboardMagicLink(request: Request, email: string, requested
     email,
     options: {
       emailRedirectTo: getEmailRedirectTo(request, nextPath),
-      shouldCreateUser: true,
+      shouldCreateUser: false,
     },
   });
 
