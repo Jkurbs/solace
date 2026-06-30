@@ -12,24 +12,12 @@ import {
   useTransform,
 } from 'framer-motion';
 
-import type {
-  HermesBriefPosture,
-  HermesBriefPulse,
-  HermesBriefSnapshot,
-} from '@/features/hermes-brief-snapshot/types';
+import type { HermesBriefPosture, HermesBriefSnapshot } from '@/features/hermes-brief-snapshot/types';
 
 import Mark from '../Mark';
 import RequestAccessForm from './RequestAccessForm';
 
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
-
-const postureDescriptions: Record<HermesBriefPosture, string> = {
-  SELECTIVE: 'Hermes sees candidates but is waiting for cleaner confirmation before capital moves.',
-  DEPLOYED: 'Hermes has earned active exposure and is monitoring the position of the field.',
-  DEFENSIVE: 'Risk is elevated, so Hermes is protecting the account and reducing room for error.',
-  STANDING_DOWN: 'Conditions are not clean enough for deployment, so Hermes is staying out.',
-  RISK_OFF: 'Market conditions are hostile or unreliable, so preservation is the active posture.',
-};
 
 function formatConstantLabel(value: string) {
   return value
@@ -61,17 +49,17 @@ const sceneSteps = [
   {
     kicker: 'Reads',
     title: 'The field, as one read.',
-    text: 'Liquidity, timing, and regime collapse into a single operating posture.',
+    text: 'Liquidity, regime, and candidate paths collapse into a single operating picture.',
   },
   {
     kicker: 'Decides',
     title: 'Preserve, wait, or deploy.',
-    text: 'Noisy market state compresses into one decision about where capital should sit.',
+    text: 'That picture compresses into one decision about where capital should sit, and why.',
   },
   {
     kicker: 'Shows',
-    title: 'The reasoning, in the open.',
-    text: 'Every read carries the current action and the exact condition it is waiting for.',
+    title: 'The engine, reasoning in the open.',
+    text: 'Hermes streams what it evaluated and the exact condition it is still waiting for.',
   },
 ];
 
@@ -133,6 +121,8 @@ export type HermesExperienceProps = {
   updatedLabel: string;
 };
 
+type Focus = 'reads' | 'decides' | 'shows' | null;
+
 function useMediaQuery(query: string) {
   const [matches, setMatches] = useState(false);
 
@@ -180,42 +170,399 @@ function ScrollProgress() {
   return <motion.div className="hx-progress" style={{ scaleX }} aria-hidden="true" />;
 }
 
-function PinnedDashboard({ preview }: { preview: ReactNode }) {
+/* ---- Minimal inline icon set for the console mock ---- */
+type GlyphName =
+  | 'overview'
+  | 'paths'
+  | 'posture'
+  | 'pulse'
+  | 'liquidity'
+  | 'regime'
+  | 'timing'
+  | 'search'
+  | 'star'
+  | 'link'
+  | 'branch'
+  | 'expand'
+  | 'minimize'
+  | 'close'
+  | 'chevrons';
+
+function Glyph({ name, className }: { name: GlyphName; className?: string }) {
+  const base = {
+    width: 14,
+    height: 14,
+    viewBox: '0 0 16 16',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.4,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    className,
+    'aria-hidden': true,
+  };
+
+  switch (name) {
+    case 'overview':
+      return (
+        <svg {...base}>
+          <rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1" />
+          <rect x="9" y="2.5" width="4.5" height="4.5" rx="1" />
+          <rect x="2.5" y="9" width="4.5" height="4.5" rx="1" />
+          <rect x="9" y="9" width="4.5" height="4.5" rx="1" />
+        </svg>
+      );
+    case 'paths':
+      return (
+        <svg {...base}>
+          <circle cx="4" cy="4" r="1.8" />
+          <circle cx="12" cy="12" r="1.8" />
+          <path d="M4 5.8v2A4 4 0 0 0 8 12h2" />
+        </svg>
+      );
+    case 'posture':
+      return (
+        <svg {...base}>
+          <path d="M2 12a6 6 0 0 1 12 0" />
+          <path d="M8 12l3-3.2" />
+        </svg>
+      );
+    case 'pulse':
+      return (
+        <svg {...base}>
+          <path d="M1.5 8h3l1.8-4 2.6 8 1.8-4h3.8" />
+        </svg>
+      );
+    case 'liquidity':
+      return (
+        <svg {...base}>
+          <path d="M2 6c1.5 1.4 3 1.4 4.5 0S9.5 4.6 11 6s3 1.4 4.5 0" />
+          <path d="M2 10c1.5 1.4 3 1.4 4.5 0S9.5 8.6 11 10s3 1.4 4.5 0" />
+        </svg>
+      );
+    case 'regime':
+      return (
+        <svg {...base}>
+          <circle cx="8" cy="8" r="5.5" />
+          <path d="M3 9.5c2-2 3-2 5 0s3 2 5 0" />
+        </svg>
+      );
+    case 'timing':
+      return (
+        <svg {...base}>
+          <circle cx="8" cy="8" r="5.5" />
+          <path d="M8 5v3l2 1.4" />
+        </svg>
+      );
+    case 'search':
+      return (
+        <svg {...base}>
+          <circle cx="7" cy="7" r="4" />
+          <path d="M10 10l3.5 3.5" />
+        </svg>
+      );
+    case 'star':
+      return (
+        <svg {...base} fill="currentColor" stroke="none">
+          <path d="M8 1.8l1.8 3.7 4.1.6-3 2.9.7 4.1L8 12.2 4.3 14.1l.7-4.1-3-2.9 4.1-.6z" />
+        </svg>
+      );
+    case 'link':
+      return (
+        <svg {...base}>
+          <path d="M6.5 9.5l3-3" />
+          <path d="M7 4.6l1-1a2.5 2.5 0 0 1 3.5 3.5l-1 1" />
+          <path d="M9 11.4l-1 1A2.5 2.5 0 0 1 4.5 8.9l1-1" />
+        </svg>
+      );
+    case 'branch':
+      return (
+        <svg {...base}>
+          <circle cx="4.5" cy="4" r="1.5" />
+          <circle cx="4.5" cy="12" r="1.5" />
+          <circle cx="11.5" cy="4" r="1.5" />
+          <path d="M4.5 5.5v5M11.5 5.5v1.4a3 3 0 0 1-3 3H6" />
+        </svg>
+      );
+    case 'expand':
+      return (
+        <svg {...base}>
+          <path d="M9 3h4v4M13 3l-4 4M7 13H3V9M3 13l4-4" />
+        </svg>
+      );
+    case 'minimize':
+      return (
+        <svg {...base}>
+          <path d="M3.5 8h9" />
+        </svg>
+      );
+    case 'close':
+      return (
+        <svg {...base}>
+          <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" />
+        </svg>
+      );
+    case 'chevrons':
+      return (
+        <svg {...base}>
+          <path d="M5 6.5L8 4l3 2.5M5 9.5l3 2.5 3-2.5" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+/* ---- The Hermes console: a believable, public-safe product mock ---- */
+function HermesConsole({
+  dashboardPreview,
+  capitalVisual,
+  focus,
+}: {
+  dashboardPreview: HermesBriefSnapshot;
+  capitalVisual: CapitalVisual;
+  focus: Focus;
+}) {
+  const posture = formatConstantLabel(dashboardPreview.posture);
+  const capital = formatConstantLabel(dashboardPreview.risk.capital_state);
+  const capitalLower = capital.toLowerCase();
+  const risk = formatConstantLabel(dashboardPreview.risk.risk_level);
+  const action = formatConstantLabel(dashboardPreview.actions.current_action);
+  const liquidity = formatConstantLabel(dashboardPreview.market_regime.liquidity);
+  const volatility = formatConstantLabel(dashboardPreview.market_regime.volatility);
+  const underReview = dashboardPreview.paths.under_review;
+  const deployed = dashboardPreview.paths.deployed;
+  const invalidated = dashboardPreview.paths.invalidated_since_last;
+  const otherEvaluated = Math.max(0, underReview - 2);
+
+  const sidebarPaths = [
+    { code: 'PATH-2703', active: true },
+    { code: 'PATH-2588', active: false },
+    { code: 'PATH-2461', active: false },
+  ];
+
+  const activity = [
+    { tone: 'engine', strong: 'Hermes', rest: ' opened read via engine', time: '2m' },
+    { tone: 'risk', strong: 'Risk', rest: ' flagged Elevated-spread', time: '2m' },
+    { tone: 'path', strong: 'PATH-2461', rest: ' invalidated — timing failed confirmation', time: '4m' },
+    { tone: 'regime', strong: 'Regime', rest: ` updated → ${dashboardPreview.market_regime.label}`, time: 'now' },
+  ];
+
+  const properties: Array<{ label: string; value: string; tone?: 'pos' | 'amber' | 'cool' }> = [
+    { label: 'Posture', value: posture, tone: dashboardPreview.posture === 'DEPLOYED' ? 'pos' : 'amber' },
+    { label: 'Risk', value: risk, tone: 'cool' },
+    { label: 'Capital', value: capital, tone: 'cool' },
+    { label: 'Action', value: action, tone: 'amber' },
+  ];
+
+  const engineLines = [
+    'PATH-2703 · timing weak',
+    'PATH-2588 · spread wide',
+    `${otherEvaluated} more evaluated`,
+  ];
+
+  return (
+    <div className="hxd" data-focus={focus ?? undefined} aria-label="Hermes console preview">
+      <div className="hxd-bar">
+        <div className="hxd-bar-left">
+          <span className="hxd-brand">
+            <Mark size={15} />
+            Hermes
+            <i className="hxd-caret" aria-hidden="true" />
+          </span>
+          <span className="hxd-iconbtn">
+            <Glyph name="search" />
+          </span>
+        </div>
+        <div className="hxd-bar-center">
+          <span>Read 01 / {String(underReview).padStart(2, '0')}</span>
+          <Glyph name="chevrons" className="hxd-dim" />
+        </div>
+        <div className="hxd-bar-right">
+          <span className="hxd-pathid">PATH-2703</span>
+          <Glyph name="link" className="hxd-dim" />
+          <Glyph name="branch" className="hxd-dim" />
+        </div>
+      </div>
+
+      <div className="hxd-body">
+        <aside className="hxd-side hxd-region is-reads">
+          <nav className="hxd-nav">
+            <span className="hxd-nav-item is-active">
+              <Glyph name="overview" />
+              Overview
+            </span>
+            <span className="hxd-nav-item">
+              <Glyph name="paths" />
+              Paths
+            </span>
+            <span className="hxd-nav-item">
+              <Glyph name="posture" />
+              Posture
+            </span>
+            <span className="hxd-nav-item">
+              <Glyph name="pulse" />
+              Pulse
+            </span>
+          </nav>
+
+          <p className="hxd-side-head">Markets</p>
+          <nav className="hxd-nav">
+            <span className="hxd-nav-item">
+              <Glyph name="liquidity" />
+              Liquidity
+            </span>
+            <span className="hxd-nav-item">
+              <Glyph name="regime" />
+              Regime
+            </span>
+            <span className="hxd-nav-item">
+              <Glyph name="timing" />
+              Timing
+            </span>
+          </nav>
+
+          <p className="hxd-side-head">Paths under review</p>
+          <nav className="hxd-nav">
+            {sidebarPaths.map((path) => (
+              <span key={path.code} className={`hxd-nav-item${path.active ? ' is-active' : ''}`}>
+                <span className="hxd-pathdot" />
+                {path.code}
+              </span>
+            ))}
+            <span className="hxd-nav-item hxd-dim">
+              <span className="hxd-pathdot is-muted" />
+              Watchlist
+            </span>
+          </nav>
+        </aside>
+
+        <main className="hxd-center hxd-region is-reads">
+          <div className="hxd-read-head">
+            <Glyph name="star" className="hxd-star" />
+            <h4>
+              {posture} — capital {capitalLower}
+            </h4>
+          </div>
+          <p className="hxd-read-desc">
+            Hermes is tracking {underReview} candidate paths. Liquidity is{' '}
+            <span className="hxd-token">{liquidity}</span>, volatility{' '}
+            <span className="hxd-token">{volatility}</span>; none have earned deployment.
+          </p>
+
+          <p className="hxd-activity-head">Activity</p>
+          <ul className="hxd-activity">
+            {activity.map((item) => (
+              <li key={item.strong + item.rest} className={`hxd-act hxd-act-${item.tone}`}>
+                <span className="hxd-act-dot" />
+                <span className="hxd-act-text">
+                  <strong>{item.strong}</strong>
+                  {item.rest}
+                </span>
+                <span className="hxd-act-time">{item.time}</span>
+              </li>
+            ))}
+          </ul>
+        </main>
+
+        <aside className="hxd-rail hxd-region is-decides">
+          <p className="hxd-rail-head">Properties</p>
+          {properties.map((prop) => (
+            <div key={prop.label} className="hxd-prop">
+              <span>{prop.label}</span>
+              <strong className={prop.tone ? `hxd-tone-${prop.tone}` : undefined}>
+                <span className="hxd-prop-dot" />
+                {prop.value}
+              </strong>
+            </div>
+          ))}
+
+          <div className="hxd-next">
+            <span>Next condition</span>
+            <p>{dashboardPreview.actions.next_condition}</p>
+          </div>
+
+          <div className="hxd-capital">
+            <span className="hxd-donut" style={{ background: capitalVisual.gradient }} aria-hidden="true" />
+            <div>
+              <strong>{capitalVisual.label}</strong>
+              <em>
+                {deployed} deployed · {invalidated} invalidated
+              </em>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div className="hxd-engine hxd-region is-shows" aria-label="Hermes engine">
+        <div className="hxd-engine-bar">
+          <span className="hxd-engine-title">
+            <Mark size={13} />
+            Hermes <em>Engine</em>
+          </span>
+          <span className="hxd-engine-ctrls">
+            <Glyph name="minimize" className="hxd-dim" />
+            <Glyph name="expand" className="hxd-dim" />
+            <Glyph name="close" className="hxd-dim" />
+          </span>
+        </div>
+        <div className="hxd-engine-body">
+          <p className="hxd-engine-status">
+            <span className="hxd-engine-pulse" />
+            Scanning liquidity across {underReview} paths…
+          </p>
+          <p className="hxd-engine-worked">Worked for 7s ▾</p>
+          <ul className="hxd-engine-lines">
+            {engineLines.map((line, index) => (
+              <li key={line} style={{ transitionDelay: `${0.12 + index * 0.09}s` }}>
+                {line}
+              </li>
+            ))}
+          </ul>
+          <div className="hxd-engine-result">
+            <span>Result</span>
+            <strong>
+              {deployed} deployed → capital {capitalLower}
+            </strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PinnedDashboard(props: HermesExperienceProps) {
   const reduce = useReducedMotion();
   const isCompact = useMediaQuery('(max-width: 860px)');
   const ref = useRef<HTMLElement | null>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] });
 
-  const scale = useTransform(scrollYProgress, [0, 0.22], [0.88, 1]);
-  const rotateX = useTransform(scrollYProgress, [0, 0.22], [7, 0]);
-  const lift = useTransform(scrollYProgress, [0, 0.22], [70, 0]);
-  const pan = useTransform(scrollYProgress, [0.22, 1], ['0%', '-42%']);
+  const scale = useTransform(scrollYProgress, [0, 0.2, 1], [0.9, 1, 1.03]);
+  const rotateX = useTransform(scrollYProgress, [0, 0.2], [8, 0]);
+  const lift = useTransform(scrollYProgress, [0, 0.2], [64, 0]);
 
   const [step, setStep] = useState(0);
   useMotionValueEvent(scrollYProgress, 'change', (value) => {
-    setStep(value < 0.46 ? 0 : value < 0.73 ? 1 : 2);
+    setStep(value < 0.4 ? 0 : value < 0.7 ? 1 : 2);
   });
 
-  const steps = (
-    <div className="hx-pin-steps">
-      {sceneSteps.map((item, index) => (
-        <div
-          key={item.title}
-          className={`hx-pin-step${reduce || isCompact || index === step ? ' is-active' : ''}`}
-        >
-          <span>{item.kicker}</span>
-          <strong>{item.title}</strong>
-          <p>{item.text}</p>
-        </div>
-      ))}
-    </div>
-  );
+  const focus = (['reads', 'decides', 'shows'] as const)[step];
 
   if (reduce || isCompact) {
     return (
       <section className="hx-shell hx-pin-static">
-        {steps}
-        <div className="hx-pin-static-frame">{preview}</div>
+        <div className="hx-pin-steps">
+          {sceneSteps.map((item) => (
+            <div key={item.title} className="hx-pin-step is-active">
+              <span>{item.kicker}</span>
+              <strong>{item.title}</strong>
+              <p>{item.text}</p>
+            </div>
+          ))}
+        </div>
+        <div className="hx-pin-static-frame">
+          <HermesConsole dashboardPreview={props.dashboardPreview} capitalVisual={props.capitalVisual} focus={null} />
+        </div>
       </section>
     );
   }
@@ -225,10 +572,18 @@ function PinnedDashboard({ preview }: { preview: ReactNode }) {
       <div className="hx-pin-sticky">
         <div className="hx-pin-glow" aria-hidden="true" />
         <div className="hx-pin-inner">
-          {steps}
+          <div className="hx-pin-steps">
+            {sceneSteps.map((item, index) => (
+              <div key={item.title} className={`hx-pin-step${index === step ? ' is-active' : ''}`}>
+                <span>{item.kicker}</span>
+                <strong>{item.title}</strong>
+                <p>{item.text}</p>
+              </div>
+            ))}
+          </div>
           <div className="hx-pin-stage">
-            <motion.div className="hx-pin-frame" style={{ scale, rotateX, y: lift }}>
-              <motion.div style={{ y: pan }}>{preview}</motion.div>
+            <motion.div className="hx-pin-frame" style={{ scale, rotateX, y: lift, transformPerspective: 1600 }}>
+              <HermesConsole dashboardPreview={props.dashboardPreview} capitalVisual={props.capitalVisual} focus={focus} />
             </motion.div>
           </div>
         </div>
@@ -237,158 +592,7 @@ function PinnedDashboard({ preview }: { preview: ReactNode }) {
   );
 }
 
-type HermesDashboardPreviewProps = {
-  capitalVisual: CapitalVisual;
-  dashboardPreview: HermesBriefSnapshot;
-  dataAsOfLabel: string;
-  decisionRows: DecisionRow[];
-  pathMetrics: Metric[];
-  postureOptions: HermesBriefPosture[];
-  pulseTone?: string;
-  statusMetrics: Metric[];
-  updatedLabel: string;
-};
-
-function HermesDashboardPreview({
-  capitalVisual,
-  dashboardPreview,
-  dataAsOfLabel,
-  decisionRows,
-  pathMetrics,
-  postureOptions,
-  pulseTone,
-  statusMetrics,
-  updatedLabel,
-}: HermesDashboardPreviewProps) {
-  return (
-    <div className="hermes-dashboard-frame hermes-dashboard-frame-focus hermes-impact-media" aria-label="Hermes interface preview">
-      <div className="hermes-dashboard-preview hermes-dashboard-preview-real">
-        <div className="hermes-preview-nav">
-          <span className="hermes-preview-brand">
-            <Mark size={18} />
-            Solace
-          </span>
-          <span className="hermes-preview-nav-links">
-            <span>Hermes</span>
-            <span>Public Preview</span>
-            <span>Brief</span>
-            <span>Access</span>
-          </span>
-        </div>
-
-        <div className="hermes-preview-shell">
-          <div className="hermes-preview-panel hermes-preview-portfolio">
-            <div>
-              <span>Hermes Readout</span>
-              <strong className="hermes-preview-main-value">{formatConstantLabel(dashboardPreview.posture)}</strong>
-            </div>
-            <div className="hermes-preview-portfolio-metrics">
-              <p>
-                <span>Pulse</span>
-                <strong className={pulseTone}>{dashboardPreview.pulse}</strong>
-              </p>
-              <p>
-                <span>Updated</span>
-                <strong>{updatedLabel}</strong>
-              </p>
-            </div>
-          </div>
-
-          <div className="hermes-preview-panel hermes-preview-status">
-            <span>Hermes Status</span>
-            <h3>Operating posture</h3>
-            <div className="hermes-preview-status-grid">
-              {statusMetrics.map((item) => (
-                <p key={item.label}>
-                  <span>{item.label}</span>
-                  <strong className={item.positive ? 'is-positive' : undefined}>{item.value}</strong>
-                </p>
-              ))}
-            </div>
-            <div className="hermes-preview-risk">
-              {postureOptions.map((posture) => (
-                <span key={posture} className={posture === dashboardPreview.posture ? 'is-selected' : undefined}>
-                  {formatConstantLabel(posture)}
-                </span>
-              ))}
-            </div>
-            <p className="hermes-preview-risk-note">
-              {dashboardPreview.posture_reason || postureDescriptions[dashboardPreview.posture]}
-            </p>
-          </div>
-
-          <div className="hermes-preview-panel hermes-preview-outlook">
-            <span>Market Regime</span>
-            <h3>Liquidity environment</h3>
-            <div>
-              <p>
-                <span>Current Read</span>
-                <strong>{dashboardPreview.market_regime.label}</strong>
-              </p>
-              <p>
-                <em>
-                  {formatConstantLabel(dashboardPreview.market_regime.liquidity)} liquidity ·{' '}
-                  {formatConstantLabel(dashboardPreview.market_regime.volatility)} volatility
-                </em>
-                <span>{dashboardPreview.market_regime.summary}</span>
-              </p>
-            </div>
-          </div>
-
-          <div className="hermes-preview-lower-grid">
-            <div className="hermes-preview-panel hermes-preview-allocation">
-              <span>Capital Oversight</span>
-              <h3>Preserve or deploy</h3>
-              <div className="hermes-preview-capital-row">
-                <p>
-                  <span>Capital State</span>
-                  <strong>{formatConstantLabel(dashboardPreview.risk.capital_state)}</strong>
-                </p>
-                <p>
-                  <span>Next Condition</span>
-                  <strong>{dashboardPreview.actions.next_condition}</strong>
-                </p>
-              </div>
-              <div className="hermes-preview-allocation-body">
-                <div className="hermes-preview-donut" style={{ background: capitalVisual.gradient }} aria-hidden="true">
-                  <span>Capital</span>
-                  <strong>{capitalVisual.label}</strong>
-                </div>
-                <div className="hermes-preview-legend">
-                  {pathMetrics.map((item) => (
-                    <p key={item.label}>
-                      <i aria-hidden="true" />
-                      <span>{item.label}</span>
-                      <strong className={item.positive ? 'is-positive' : undefined}>{item.value}</strong>
-                    </p>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="hermes-preview-panel hermes-preview-activity">
-              <span>Recent Decisions</span>
-              <h3>Reasoning</h3>
-              <ol>
-                {decisionRows.map((activity) => (
-                  <li key={`${activity.label}-${activity.summary}`}>
-                    <span className="hermes-preview-decision-label">{activity.label}</span>
-                    <strong>{activity.summary}</strong>
-                  </li>
-                ))}
-              </ol>
-              <p className="hermes-preview-activity-foot">Data as of {dataAsOfLabel}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function HermesExperience(props: HermesExperienceProps) {
-  const preview = <HermesDashboardPreview {...props} />;
-
   return (
     <main className="hx-page">
       <ScrollProgress />
@@ -449,7 +653,7 @@ export default function HermesExperience(props: HermesExperienceProps) {
         </div>
       </section>
 
-      <PinnedDashboard preview={preview} />
+      <PinnedDashboard {...props} />
 
       <section className="hx-shell">
         {featureSections.map((section, index) => (

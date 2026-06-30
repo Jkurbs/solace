@@ -107,9 +107,6 @@ function Header() {
         <Link href="/oracle" onClick={() => setMenuOpen(false)}>
           Oracle
         </Link>
-        <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
-          Login
-        </Link>
       </div>
     </header>
   );
