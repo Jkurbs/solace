@@ -506,7 +506,7 @@ export default function HermesExperience({
         <Reveal delay={0.18}>
           <div className="hx-hero-actions">
             <a href="#request-access" className="hx-btn hx-btn-primary">
-              Request Access
+              Request Beta Access
             </a>
             <Link href="/brief" className="hx-btn hx-btn-secondary">
               Read brief
