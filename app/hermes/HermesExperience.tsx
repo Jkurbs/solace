@@ -11,8 +11,6 @@ import {
   useTransform,
 } from 'framer-motion';
 
-import type { HermesBriefPosture, HermesBriefSnapshot } from '@/features/hermes-brief-snapshot/types';
-
 import Mark from '../Mark';
 import HermesBoardArt, { HermesBoardMobileArt, type HermesBoardFocus } from './HermesBoardArt';
 import RequestAccessForm from './RequestAccessForm';
@@ -89,22 +87,6 @@ const fees = [
     note: 'Access terms are provided before onboarding. No hidden spreads or interface upsells.',
   },
 ];
-
-type Metric = { label: string; positive?: boolean; value: string };
-type DecisionRow = { label: string; summary: string };
-type CapitalVisual = { gradient: string; label: string };
-
-export type HermesExperienceProps = {
-  capitalVisual: CapitalVisual;
-  dashboardPreview: HermesBriefSnapshot;
-  dataAsOfLabel: string;
-  decisionRows: DecisionRow[];
-  pathMetrics: Metric[];
-  postureOptions: HermesBriefPosture[];
-  pulseTone?: string;
-  statusMetrics: Metric[];
-  updatedLabel: string;
-};
 
 function useMediaQuery(query: string) {
   const [matches, setMatches] = useState(false);
@@ -216,68 +198,6 @@ function useWalkthroughStep(
   }, [enabled, itemAnchorRatio, ref, viewportAnchorRatio]);
 
   return step;
-}
-
-function LiveReadoutBand({
-  capitalVisual,
-  dashboardPreview,
-  dataAsOfLabel,
-  pulseTone,
-  updatedLabel,
-}: {
-  capitalVisual: CapitalVisual;
-  dashboardPreview: HermesBriefSnapshot;
-  dataAsOfLabel: string;
-  pulseTone?: string;
-  updatedLabel: string;
-}) {
-  const readout = [
-    {
-      label: 'Paths',
-      subtext: 'under review',
-      value: dashboardPreview.paths.under_review.toString(),
-    },
-    {
-      label: 'Posture',
-      subtext: dashboardPreview.posture_reason,
-      value: dashboardPreview.posture,
-    },
-    {
-      label: 'Pulse',
-      subtext: updatedLabel,
-      value: dashboardPreview.pulse,
-    },
-    {
-      label: 'Capital',
-      subtext: dashboardPreview.risk.reason,
-      value: capitalVisual.label,
-    },
-  ];
-
-  return (
-    <section className="hx-shell hx-live-shell" aria-label="Hermes live readout">
-      <Reveal className="hx-live-panel">
-        <div className="hx-live-head">
-          <span className={`hx-live-dot ${pulseTone ?? ''}`} aria-hidden="true" />
-          <div>
-            <p className="section-kicker">Live readout</p>
-            <strong>{dashboardPreview.summary}</strong>
-          </div>
-          <span className="hx-live-asof">{dataAsOfLabel}</span>
-        </div>
-        <div className="hx-live-grid">
-          {readout.map((item) => (
-            <div key={item.label} className="hx-live-card">
-              <span>{item.label}</span>
-              <strong>{item.value}</strong>
-              <p>{item.subtext}</p>
-            </div>
-          ))}
-        </div>
-        <p className="hx-live-disclosure">{dashboardPreview.disclosure}</p>
-      </Reveal>
-    </section>
-  );
 }
 
 function StepRow({ activeStep }: { activeStep: number | 'all' }) {
@@ -466,13 +386,7 @@ function DashboardReveal() {
   );
 }
 
-export default function HermesExperience({
-  capitalVisual,
-  dashboardPreview,
-  dataAsOfLabel,
-  pulseTone,
-  updatedLabel,
-}: HermesExperienceProps) {
+export default function HermesExperience() {
   return (
     <main className="hx-page">
       <ScrollProgress />
@@ -520,14 +434,6 @@ export default function HermesExperience({
           </div>
         </Reveal>
       </section>
-
-      <LiveReadoutBand
-        capitalVisual={capitalVisual}
-        dashboardPreview={dashboardPreview}
-        dataAsOfLabel={dataAsOfLabel}
-        pulseTone={pulseTone}
-        updatedLabel={updatedLabel}
-      />
 
       <DashboardReveal />
 

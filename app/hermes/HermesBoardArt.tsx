@@ -139,7 +139,7 @@ export function HermesBoardMobileArt({ focus }: { focus?: HermesBoardFocus }) {
 
 export default function HermesBoardArt({ focus }: { focus?: HermesBoardFocus }) {
   return (
-    <div className="hxb-board mx-auto w-[74rem] text-neutral-50" data-focus={focus} aria-hidden="true">
+    <div className="hxb-board mx-auto w-full max-w-[74rem] text-neutral-50" data-focus={focus} aria-hidden="true">
       {/* Top nav */}
       <div className="border-b border-white/10 bg-[#10100e]/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
