@@ -6744,6 +6744,24 @@ h2 {
     padding: clamp(2rem, 8vw, 3.5rem) 0 clamp(3rem, 14vw, 5.5rem);
   }
 
+  .hx-mobile-flow {
+    display: grid;
+    gap: clamp(3.25rem, 14vw, 5.25rem);
+    padding-inline: clamp(1rem, 4.5vw, 1.4rem);
+  }
+
+  .hx-mobile-step {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: clamp(1.4rem, 6vw, 2.15rem);
+  }
+
+  .hx-mobile-step-panel {
+    display: grid;
+    justify-items: center;
+  }
+
   .hx-mobile-sticky {
     position: sticky;
     top: 3.95rem;
@@ -6782,13 +6800,13 @@ h2 {
 
   .hx-mobile-walk .hx-walk-step {
     min-height: 78svh;
-    opacity: 0;
     padding: clamp(3rem, 13vw, 4.75rem) 0;
     padding-left: 1rem;
   }
 
-  .hx-mobile-walk .hx-walk-step.is-active {
-    opacity: 1;
+  .hx-mobile-flow .hx-walk-step {
+    min-height: 0;
+    padding: 0 0 0 1rem;
   }
 
   .hx-mobile-walk .hx-walk-step strong {
@@ -7113,6 +7131,10 @@ h2 {
 
     .hx-mobile-walk .hx-walk-step {
       min-height: 76svh;
+    }
+
+    .hx-mobile-flow .hx-walk-step {
+      min-height: 0;
     }
 
     .hxm-board {

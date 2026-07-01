@@ -311,6 +311,26 @@ function WalkthroughCopy({ activeStep }: { activeStep: number }) {
   );
 }
 
+function MobileWalkthrough({ refProp }: { refProp: RefObject<HTMLElement | null> }) {
+  return (
+    <section ref={refProp} id="walkthrough" className="hx-mobile-walk hx-mobile-flow">
+      <div className="hx-pin-glow" aria-hidden="true" />
+      {sceneSteps.map((item) => (
+        <article key={item.title} className="hx-mobile-step">
+          <div className="hx-mobile-step-panel">
+            <DashboardWindow compact focus={item.focus} panTarget={mobileWalkthroughPanTargets[item.focus]} />
+          </div>
+          <div className="hx-walk-step is-active">
+            <span>{item.kicker}</span>
+            <strong>{item.title}</strong>
+            <p>{item.text}</p>
+          </div>
+        </article>
+      ))}
+    </section>
+  );
+}
+
 function DashboardWindow({
   animateCompact = false,
   compact = false,
@@ -388,7 +408,7 @@ function DashboardReveal() {
   const scale = useTransform(scrollYProgress, [0, 0.16], [0.94, 1]);
   const rotateX = useTransform(scrollYProgress, [0, 0.16], [7, 0]);
   const lift = useTransform(scrollYProgress, [0, 0.16], [34, 0]);
-  const step = useWalkthroughStep(ref, !reduce, isCompact ? 0.48 : 0.5, isCompact ? 0 : 0.5);
+  const step = useWalkthroughStep(ref, !isCompact && !reduce);
   const activeFocus = sceneSteps[step]?.focus ?? sceneSteps[0].focus;
 
   if (isCompact && reduce) {
@@ -403,15 +423,7 @@ function DashboardReveal() {
   }
 
   if (isCompact) {
-    return (
-      <section ref={ref} id="walkthrough" className="hx-mobile-walk">
-        <div className="hx-pin-glow" aria-hidden="true" />
-        <div className="hx-mobile-sticky">
-          <DashboardWindow compact focus={activeFocus} panTarget={mobileWalkthroughPanTargets[activeFocus]} />
-        </div>
-        <WalkthroughCopy activeStep={step} />
-      </section>
-    );
+    return <MobileWalkthrough refProp={ref} />;
   }
 
   if (reduce) {
