@@ -4939,7 +4939,7 @@ h2 {
     z-index: 60;
     height: 2px;
     transform-origin: 0 50%;
-    background: linear-gradient(90deg, rgba(216, 168, 91, 0.9), rgba(242, 234, 219, 0.95));
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 1));
     will-change: transform;
   }
 
