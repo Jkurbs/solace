@@ -1,11 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import {
   motion,
-  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useSpring,
@@ -147,6 +146,66 @@ function ScrollProgress() {
   return <motion.div className="hx-progress" style={{ scaleX }} aria-hidden="true" />;
 }
 
+function useWalkthroughStep(ref: RefObject<HTMLElement | null>, enabled: boolean) {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) {
+      setStep(0);
+      return;
+    }
+
+    let frame = 0;
+
+    const update = () => {
+      frame = 0;
+      const element = ref.current;
+
+      if (!element) {
+        return;
+      }
+
+      const steps = Array.from(element.querySelectorAll<HTMLElement>('.hx-walk-step'));
+      const viewportAnchor = window.innerHeight * 0.5;
+      const nextStep = steps.reduce(
+        (best, item, index) => {
+          const rect = item.getBoundingClientRect();
+          const center = rect.top + rect.height / 2;
+          const distance = Math.abs(center - viewportAnchor);
+
+          return distance < best.distance ? { distance, index } : best;
+        },
+        { distance: Number.POSITIVE_INFINITY, index: 0 },
+      ).index;
+
+      setStep((current) => (current === nextStep ? current : nextStep));
+    };
+
+    const requestUpdate = () => {
+      if (frame) {
+        return;
+      }
+
+      frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', requestUpdate);
+
+    return () => {
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+
+      window.removeEventListener('scroll', requestUpdate);
+      window.removeEventListener('resize', requestUpdate);
+    };
+  }, [enabled, ref]);
+
+  return step;
+}
+
 function LiveReadoutBand({
   capitalVisual,
   dashboardPreview,
@@ -226,6 +285,20 @@ function StepRow({ activeStep }: { activeStep: number | 'all' }) {
   );
 }
 
+function WalkthroughCopy({ activeStep }: { activeStep: number }) {
+  return (
+    <div className="hx-walk-copy">
+      {sceneSteps.map((item, index) => (
+        <div key={item.title} className={`hx-walk-step${activeStep === index ? ' is-active' : ''}`}>
+          <span>{item.kicker}</span>
+          <strong>{item.title}</strong>
+          <p>{item.text}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function DashboardWindow({
   animateCompact = false,
   compact = false,
@@ -283,10 +356,7 @@ function DashboardReveal() {
   const scale = useTransform(scrollYProgress, [0, 0.16], [0.94, 1]);
   const rotateX = useTransform(scrollYProgress, [0, 0.16], [7, 0]);
   const lift = useTransform(scrollYProgress, [0, 0.16], [34, 0]);
-  const [step, setStep] = useState(0);
-  useMotionValueEvent(scrollYProgress, 'change', (value) => {
-    setStep(value < 0.27 ? 0 : value < 0.51 ? 1 : value < 0.73 ? 2 : 3);
-  });
+  const step = useWalkthroughStep(ref, !isCompact && !reduce);
   const activeFocus = sceneSteps[step]?.focus ?? sceneSteps[0].focus;
 
   if (isCompact) {
@@ -313,34 +383,36 @@ function DashboardReveal() {
 
   return (
     <section ref={ref} id="walkthrough" className="hx-pin">
-      <div className="hx-pin-sticky">
-        <div className="hx-pin-glow" aria-hidden="true" />
-        <div className="hx-reveal-inner">
-          <StepRow activeStep={step} />
-          <div className="hx-pin-stage">
-            <motion.div
-              className="hx-window hx-window-motion"
-              style={{ opacity, scale, rotateX, y: lift, transformPerspective: 1700 }}
-            >
-              <div className="hx-window-bar">
-                <span className="hx-window-dots">
-                  <i />
-                  <i />
-                  <i />
-                </span>
-                <span className="hx-window-url">app.solace.fyi/dashboard · Live</span>
-                <span className="hx-window-spacer" />
-              </div>
-              <div className="hx-window-view">
-                <motion.div
-                  className="hx-board-pan"
-                  animate={{ y: walkthroughPanTargets[activeFocus] }}
-                  transition={{ duration: 0.85, ease: EASE }}
-                >
-                  <HermesBoardArt focus={activeFocus} />
-                </motion.div>
-              </div>
-            </motion.div>
+      <div className="hx-pin-glow" aria-hidden="true" />
+      <div className="hx-walk-shell">
+        <WalkthroughCopy activeStep={step} />
+        <div className="hx-walk-stage">
+          <div className="hx-walk-sticky">
+            <div className="hx-pin-stage">
+              <motion.div
+                className="hx-window hx-window-motion"
+                style={{ opacity, scale, rotateX, y: lift, transformPerspective: 1700 }}
+              >
+                <div className="hx-window-bar">
+                  <span className="hx-window-dots">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                  <span className="hx-window-url">app.solace.fyi/dashboard · Live</span>
+                  <span className="hx-window-spacer" />
+                </div>
+                <div className="hx-window-view">
+                  <motion.div
+                    className="hx-board-pan"
+                    animate={{ y: walkthroughPanTargets[activeFocus] }}
+                    transition={{ duration: 0.85, ease: EASE }}
+                  >
+                    <HermesBoardArt focus={activeFocus} />
+                  </motion.div>
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
       </div>
