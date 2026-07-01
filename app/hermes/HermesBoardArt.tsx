@@ -31,7 +31,7 @@ const summary = [
   { label: 'Withdrawable', value: '$491' },
 ];
 
-export type HermesBoardFocus = 'outlook' | 'posture' | 'capital' | 'decisions';
+export type HermesBoardFocus = 'overview' | 'posture' | 'outlook' | 'execution';
 
 export function HermesBoardMobileArt() {
   return (
@@ -168,7 +168,7 @@ export default function HermesBoardArt({ focus }: { focus?: HermesBoardFocus }) 
 
       <div className="mx-auto grid max-w-6xl gap-5 px-6 py-7">
         {/* Portfolio Value */}
-        <div className={`${card} hxb-region is-outlook`}>
+        <div className={`${card} hxb-region is-overview`}>
           <div className="grid grid-cols-[1fr_auto] items-end gap-6">
             <div>
               <span className="inline-flex items-center gap-2">
@@ -254,7 +254,7 @@ export default function HermesBoardArt({ focus }: { focus?: HermesBoardFocus }) 
 
         {/* Allocation + Activity */}
         <div className="grid grid-cols-[1.1fr_0.9fr] gap-5">
-          <div className={`${card} hxb-region is-capital`}>
+          <div className={`${card} hxb-region is-execution`}>
             <span className={label}>Current Allocation</span>
             <span className={title}>Capital mix</span>
             <div className="mt-4 grid grid-cols-2 gap-3">
@@ -294,7 +294,7 @@ export default function HermesBoardArt({ focus }: { focus?: HermesBoardFocus }) 
             </div>
           </div>
 
-          <div className={`${card} hxb-region is-decisions`}>
+          <div className={`${card} hxb-region is-execution`}>
             <span className={label}>Recent Activity</span>
             <span className={title}>Latest decisions</span>
             <div className="mt-4 grid gap-0">
@@ -312,7 +312,7 @@ export default function HermesBoardArt({ focus }: { focus?: HermesBoardFocus }) 
         </div>
 
         {/* Commentary */}
-        <div className={`${card} hxb-region is-decisions`}>
+        <div className={`${card} hxb-region is-execution`}>
           <span className={label}>Hermes Commentary</span>
           <span className={title}>Current read</span>
           <p className="mt-4 max-w-3xl text-lg leading-8 text-neutral-200">
@@ -322,7 +322,7 @@ export default function HermesBoardArt({ focus }: { focus?: HermesBoardFocus }) 
         </div>
 
         {/* Account Summary */}
-        <div className={`${card} hxb-region is-capital`}>
+        <div className={`${card} hxb-region is-execution`}>
           <span className={label}>Account</span>
           <span className={title}>Summary</span>
           <div className="mt-6 grid grid-cols-4 gap-4 border-t border-white/10 pt-5">

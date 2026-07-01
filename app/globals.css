@@ -5269,7 +5269,7 @@ h2 {
   /* --- PINNED DASHBOARD SCENE --- */
   .hx-pin {
     position: relative;
-    height: 360vh;
+    height: 340vh;
   }
 
   .hx-pin-sticky {
@@ -6598,24 +6598,24 @@ h2 {
       transform 0.55s ease;
   }
 
-  .hxb-board[data-focus="outlook"] .hxb-region:not(.is-outlook),
+  .hxb-board[data-focus="overview"] .hxb-region:not(.is-overview),
   .hxb-board[data-focus="posture"] .hxb-region:not(.is-posture),
-  .hxb-board[data-focus="capital"] .hxb-region:not(.is-capital),
-  .hxb-board[data-focus="decisions"] .hxb-region:not(.is-decisions) {
-    opacity: 0.22;
+  .hxb-board[data-focus="outlook"] .hxb-region:not(.is-outlook),
+  .hxb-board[data-focus="execution"] .hxb-region:not(.is-execution) {
+    opacity: 0.18;
     filter: saturate(0.8);
   }
 
-  .hxb-board[data-focus="outlook"] .hxb-region.is-outlook,
+  .hxb-board[data-focus="overview"] .hxb-region.is-overview,
   .hxb-board[data-focus="posture"] .hxb-region.is-posture,
-  .hxb-board[data-focus="capital"] .hxb-region.is-capital,
-  .hxb-board[data-focus="decisions"] .hxb-region.is-decisions {
+  .hxb-board[data-focus="outlook"] .hxb-region.is-outlook,
+  .hxb-board[data-focus="execution"] .hxb-region.is-execution {
     opacity: 1;
-    transform: translateY(-1px);
+    transform: translateY(-2px) scale(1.006);
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.16),
+      0 0 0 1px rgba(255, 255, 255, 0.24),
       0 1.4rem 4rem rgba(0, 0, 0, 0.45),
-      0 0 3rem rgba(255, 255, 255, 0.045);
+      0 0 4rem rgba(255, 255, 255, 0.075);
   }
 
   .hxm-board-track {

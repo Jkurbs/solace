@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import type { MotionValue } from 'framer-motion';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -24,27 +23,27 @@ const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const sceneSteps = [
   {
     kicker: 'Reads',
-    title: 'The current read.',
-    text: 'Outlook, regime, and next condition stay compressed into one view.',
-    focus: 'outlook',
+    title: 'One live surface.',
+    text: 'Portfolio state, simulation status, and live freshness arrive before any detail.',
+    focus: 'overview',
   },
   {
     kicker: 'Waits',
-    title: 'Waiting is a position.',
-    text: 'Posture, risk, and conviction make restraint visible before capital moves.',
+    title: 'Posture before action.',
+    text: 'Risk profile, conviction, and exposure show why Hermes is waiting or acting.',
     focus: 'posture',
   },
   {
-    kicker: 'Allocates',
-    title: 'Capital state, visible.',
-    text: 'The account shows what is preserved, what is deployed, and why.',
-    focus: 'capital',
+    kicker: 'Reads',
+    title: 'The opportunity environment.',
+    text: 'Hermes compresses regime, timing, and deployment conditions into one current read.',
+    focus: 'outlook',
   },
   {
-    kicker: 'Explains',
-    title: 'Every decision leaves a trail.',
-    text: 'Recent activity keeps the system legible without exposing trade signals.',
-    focus: 'decisions',
+    kicker: 'Shows',
+    title: 'Capital and decisions.',
+    text: 'Allocation and recent activity stay visible without exposing entries, targets, or leverage.',
+    focus: 'execution',
   },
 ] satisfies Array<{
   kicker: string;
@@ -52,6 +51,13 @@ const sceneSteps = [
   text: string;
   focus: HermesBoardFocus;
 }>;
+
+const walkthroughPanTargets: Record<HermesBoardFocus, string> = {
+  overview: '0%',
+  posture: '-18%',
+  outlook: '-33%',
+  execution: '-50%',
+};
 
 const impactItems = [
   'Users understand what Hermes is doing without parsing technical systems or raw operational detail.',
@@ -224,12 +230,12 @@ function DashboardWindow({
   animateCompact = false,
   compact = false,
   focus,
-  pan,
+  panTarget,
 }: {
   animateCompact?: boolean;
   compact?: boolean;
   focus?: HermesBoardFocus;
-  pan?: MotionValue<string>;
+  panTarget?: string;
 }) {
   return (
     <div className={`hx-window${compact ? ' hx-window-mobile' : ''}`}>
@@ -242,13 +248,17 @@ function DashboardWindow({
         <span className="hx-window-url">app.solace.fyi/dashboard · Live</span>
         <span className="hx-window-spacer" />
       </div>
-      <div className={`hx-window-view${pan ? '' : ' is-static'}${compact ? ' is-mobile' : ''}`}>
+      <div className={`hx-window-view${panTarget ? '' : ' is-static'}${compact ? ' is-mobile' : ''}`}>
         {compact ? (
           <div className={`hxm-board-track${animateCompact ? ' is-animated' : ''}`}>
             <HermesBoardMobileArt />
           </div>
-        ) : pan ? (
-          <motion.div className="hx-board-pan" style={{ y: pan }}>
+        ) : panTarget ? (
+          <motion.div
+            className="hx-board-pan"
+            animate={{ y: panTarget }}
+            transition={{ duration: 0.85, ease: EASE }}
+          >
             <HermesBoardArt focus={focus} />
           </motion.div>
         ) : (
@@ -273,11 +283,9 @@ function DashboardReveal() {
   const scale = useTransform(scrollYProgress, [0, 0.16], [0.94, 1]);
   const rotateX = useTransform(scrollYProgress, [0, 0.16], [7, 0]);
   const lift = useTransform(scrollYProgress, [0, 0.16], [34, 0]);
-  const pan = useTransform(scrollYProgress, [0.16, 0.4, 0.68, 1], ['0%', '-14%', '-32%', '-50%']);
-
   const [step, setStep] = useState(0);
   useMotionValueEvent(scrollYProgress, 'change', (value) => {
-    setStep(value < 0.32 ? 0 : value < 0.56 ? 1 : value < 0.78 ? 2 : 3);
+    setStep(value < 0.27 ? 0 : value < 0.51 ? 1 : value < 0.73 ? 2 : 3);
   });
   const activeFocus = sceneSteps[step]?.focus ?? sceneSteps[0].focus;
 
@@ -304,7 +312,7 @@ function DashboardReveal() {
   }
 
   return (
-    <section ref={ref} className="hx-pin">
+    <section ref={ref} id="walkthrough" className="hx-pin">
       <div className="hx-pin-sticky">
         <div className="hx-pin-glow" aria-hidden="true" />
         <div className="hx-reveal-inner">
@@ -324,7 +332,11 @@ function DashboardReveal() {
                 <span className="hx-window-spacer" />
               </div>
               <div className="hx-window-view">
-                <motion.div className="hx-board-pan" style={{ y: pan }}>
+                <motion.div
+                  className="hx-board-pan"
+                  animate={{ y: walkthroughPanTargets[activeFocus] }}
+                  transition={{ duration: 0.85, ease: EASE }}
+                >
                   <HermesBoardArt focus={activeFocus} />
                 </motion.div>
               </div>
