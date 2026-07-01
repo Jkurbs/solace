@@ -6540,7 +6540,7 @@ h2 {
     width: calc(100% / var(--hxm-scale));
     margin-inline: auto;
     transform: scale(var(--hxm-scale));
-    transform-origin: top center;
+    transform-origin: top left;
     will-change: transform;
   }
 
@@ -6612,14 +6612,14 @@ h2 {
 
   .hx-mobile-walk .hxm-panel-view {
     position: relative;
-    height: clamp(14rem, 33svh, 16.5rem);
+    height: clamp(19rem, 44svh, 24rem);
     overflow: hidden;
     -webkit-mask: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%);
     mask: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%);
   }
 
   .hx-mobile-walk .hxm-board-track {
-    --hxm-scale: 0.78;
+    --hxm-scale: 0.86;
   }
 
   .hx-mobile-walk .hxm-region {
@@ -6977,7 +6977,11 @@ h2 {
     }
 
     .hx-mobile-walk .hxm-panel-view {
-      height: clamp(13.25rem, 32svh, 15.5rem);
+      height: clamp(18.5rem, 43svh, 22.5rem);
+    }
+
+    .hx-mobile-walk .hxm-board-track {
+      --hxm-scale: 0.84;
     }
 
     .hx-mobile-walk .hx-walk-step {
@@ -7007,11 +7011,11 @@ h2 {
     }
 
     .hx-mobile-walk .hxm-panel-view {
-      height: 12.75rem;
+      height: clamp(17.5rem, 42svh, 21rem);
     }
 
     .hx-mobile-walk .hxm-board-track {
-      --hxm-scale: 0.74;
+      --hxm-scale: 0.8;
     }
   }
 
