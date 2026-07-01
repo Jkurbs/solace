@@ -6744,13 +6744,19 @@ h2 {
     padding: clamp(2rem, 8vw, 3.5rem) 0 clamp(3rem, 14vw, 5.5rem);
   }
 
+  .hx-mobile-stage {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+  }
+
   .hx-mobile-sticky {
     position: sticky;
-    top: 3.95rem;
+    top: clamp(4.75rem, 12svh, 6rem);
     z-index: 2;
     display: grid;
     justify-items: center;
-    padding: 0 clamp(1rem, 4.5vw, 1.4rem) 1.25rem;
+    padding: 0 clamp(1rem, 4.5vw, 1.4rem) 1.35rem;
     background:
       linear-gradient(180deg, rgba(10, 10, 10, 0.98) 0%, rgba(10, 10, 10, 0.96) 74%, rgba(10, 10, 10, 0) 100%);
   }

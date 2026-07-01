@@ -406,10 +406,12 @@ function DashboardReveal() {
     return (
       <section ref={ref} id="walkthrough" className="hx-mobile-walk">
         <div className="hx-pin-glow" aria-hidden="true" />
-        <div className="hx-mobile-sticky">
-          <DashboardWindow compact focus={activeFocus} panTarget={mobileWalkthroughPanTargets[activeFocus]} />
+        <div className="hx-mobile-stage">
+          <div className="hx-mobile-sticky">
+            <DashboardWindow compact focus={activeFocus} panTarget={mobileWalkthroughPanTargets[activeFocus]} />
+          </div>
+          <WalkthroughCopy activeStep={step} />
         </div>
-        <WalkthroughCopy activeStep={step} />
       </section>
     );
   }
