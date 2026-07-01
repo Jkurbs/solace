@@ -33,9 +33,9 @@ const summary = [
 
 export type HermesBoardFocus = 'overview' | 'posture' | 'outlook' | 'execution';
 
-export function HermesBoardMobileArt() {
+export function HermesBoardMobileArt({ focus }: { focus?: HermesBoardFocus }) {
   return (
-    <div className="hxm-board" aria-hidden="true">
+    <div className="hxm-board" data-focus={focus} aria-hidden="true">
       <div className="hxm-topbar">
         <span className="hxm-brand">
           <Mark size={16} />
@@ -47,7 +47,7 @@ export function HermesBoardMobileArt() {
         </span>
       </div>
 
-      <section className="hxm-card hxm-portfolio">
+      <section className="hxm-card hxm-portfolio hxm-region is-overview">
         <div className="hxm-card-head">
           <span>
             <span className="hxm-label">Portfolio Value</span>
@@ -80,7 +80,7 @@ export function HermesBoardMobileArt() {
         </div>
       </section>
 
-      <section className="hxm-card">
+      <section className="hxm-card hxm-region is-posture">
         <span className="hxm-label">Hermes Status</span>
         <strong className="hxm-title">Operating posture</strong>
         <div className="hxm-status-grid">
@@ -98,13 +98,13 @@ export function HermesBoardMobileArt() {
         </div>
       </section>
 
-      <section className="hxm-card">
+      <section className="hxm-card hxm-region is-outlook">
         <span className="hxm-label">Hermes Outlook</span>
         <strong className="hxm-title">Moderate</strong>
         <p>Selective deployment while Hermes preserves cash for clearer deployment.</p>
       </section>
 
-      <section className="hxm-card">
+      <section className="hxm-card hxm-region is-execution">
         <div className="hxm-allocation-head">
           <span>
             <span className="hxm-label">Current Allocation</span>
@@ -123,7 +123,7 @@ export function HermesBoardMobileArt() {
         </div>
       </section>
 
-      <section className="hxm-card">
+      <section className="hxm-card hxm-region is-execution">
         <span className="hxm-label">Recent Activity</span>
         <strong className="hxm-title">Latest decisions</strong>
         <div className="hxm-activity">

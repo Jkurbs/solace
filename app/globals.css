@@ -6708,6 +6708,10 @@ h2 {
     will-change: transform;
   }
 
+  .hxm-mobile-pan {
+    will-change: transform;
+  }
+
   .hxm-board-track.is-animated {
     animation: hxm-board-pan 14s cubic-bezier(0.16, 1, 0.3, 1) infinite alternate;
   }
@@ -6735,6 +6739,62 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .hx-mobile-walk {
+    position: relative;
+    padding: clamp(2rem, 8vw, 3.5rem) 0 clamp(3rem, 14vw, 5.5rem);
+  }
+
+  .hx-mobile-sticky {
+    position: sticky;
+    top: 3.95rem;
+    z-index: 2;
+    display: grid;
+    justify-items: center;
+    padding: 0 clamp(1rem, 4.5vw, 1.4rem) 1.25rem;
+    background:
+      linear-gradient(180deg, rgba(10, 10, 10, 0.98) 0%, rgba(10, 10, 10, 0.96) 74%, rgba(10, 10, 10, 0) 100%);
+  }
+
+  .hx-mobile-walk .hx-window-mobile {
+    width: min(100%, 22.5rem);
+    box-shadow:
+      0 1.8rem 5rem rgba(0, 0, 0, 0.72),
+      0 0.5rem 1.2rem rgba(255, 255, 255, 0.035);
+  }
+
+  .hx-mobile-walk .hx-window-view.is-mobile {
+    height: clamp(14rem, 33svh, 16.5rem);
+    -webkit-mask: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%);
+    mask: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%);
+  }
+
+  .hx-mobile-walk .hxm-board-track {
+    --hxm-scale: 0.78;
+  }
+
+  .hx-mobile-walk .hx-walk-copy {
+    width: min(100%, 24rem);
+    margin: 0 auto;
+    padding: clamp(2rem, 8vw, 3.25rem) clamp(1.05rem, 5vw, 1.45rem) 0;
+  }
+
+  .hx-mobile-walk .hx-walk-step {
+    min-height: 66svh;
+    padding: clamp(2.5rem, 12vw, 4.5rem) 0;
+    padding-left: 1rem;
+  }
+
+  .hx-mobile-walk .hx-walk-step strong {
+    max-width: 11ch;
+    font-size: clamp(2.05rem, 10vw, 3.15rem);
+    line-height: 1;
+  }
+
+  .hx-mobile-walk .hx-walk-step p {
+    max-width: 19rem;
+    font-size: clamp(0.96rem, 4.2vw, 1.08rem);
+  }
+
   .hxm-board {
     width: 100%;
     padding: 0.85rem;
@@ -6743,6 +6803,35 @@ h2 {
       #0a0a0a;
     color: rgba(250, 250, 250, 0.92);
     font-family: var(--font-grotesk);
+  }
+
+  .hxm-region {
+    transition:
+      opacity 0.45s ease,
+      border-color 0.45s ease,
+      filter 0.45s ease,
+      transform 0.45s ease,
+      box-shadow 0.45s ease;
+  }
+
+  .hxm-board[data-focus="overview"] .hxm-region:not(.is-overview),
+  .hxm-board[data-focus="posture"] .hxm-region:not(.is-posture),
+  .hxm-board[data-focus="outlook"] .hxm-region:not(.is-outlook),
+  .hxm-board[data-focus="execution"] .hxm-region:not(.is-execution) {
+    opacity: 0.34;
+    filter: saturate(0.78);
+  }
+
+  .hxm-board[data-focus="overview"] .hxm-region.is-overview,
+  .hxm-board[data-focus="posture"] .hxm-region.is-posture,
+  .hxm-board[data-focus="outlook"] .hxm-region.is-outlook,
+  .hxm-board[data-focus="execution"] .hxm-region.is-execution {
+    border-color: rgba(255, 255, 255, 0.22);
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow:
+      0 1rem 2.8rem rgba(0, 0, 0, 0.34),
+      0 0 2.6rem rgba(255, 255, 255, 0.045);
   }
 
   .hxm-topbar,
@@ -6985,6 +7074,14 @@ h2 {
       --hxm-scale: 0.84;
     }
 
+    .hx-mobile-walk .hx-window-view.is-mobile {
+      height: clamp(13.25rem, 32svh, 15.5rem);
+    }
+
+    .hx-mobile-walk .hx-walk-step {
+      min-height: 64svh;
+    }
+
     .hxm-board {
       padding: 0.72rem;
     }
@@ -7005,6 +7102,14 @@ h2 {
 
     .hxm-board-track {
       --hxm-scale: 0.8;
+    }
+
+    .hx-mobile-walk .hx-window-view.is-mobile {
+      height: 12.75rem;
+    }
+
+    .hx-mobile-walk .hxm-board-track {
+      --hxm-scale: 0.74;
     }
   }
 

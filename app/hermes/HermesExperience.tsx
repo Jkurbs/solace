@@ -58,6 +58,13 @@ const walkthroughPanTargets: Record<HermesBoardFocus, string> = {
   execution: '-50%',
 };
 
+const mobileWalkthroughPanTargets: Record<HermesBoardFocus, string> = {
+  overview: '0%',
+  posture: '-21%',
+  outlook: '-38%',
+  execution: '-53%',
+};
+
 const impactItems = [
   'Users understand what Hermes is doing without parsing technical systems or raw operational detail.',
   'Posture, capital state, risk level, current action, and decision rationale are visible in one read.',
@@ -322,9 +329,19 @@ function DashboardWindow({
         <span className="hx-window-spacer" />
       </div>
       <div className={`hx-window-view${panTarget ? '' : ' is-static'}${compact ? ' is-mobile' : ''}`}>
-        {compact ? (
+        {compact && panTarget ? (
+          <motion.div
+            className="hxm-mobile-pan"
+            animate={{ y: panTarget }}
+            transition={{ duration: 0.75, ease: EASE }}
+          >
+            <div className="hxm-board-track">
+              <HermesBoardMobileArt focus={focus} />
+            </div>
+          </motion.div>
+        ) : compact ? (
           <div className={`hxm-board-track${animateCompact ? ' is-animated' : ''}`}>
-            <HermesBoardMobileArt />
+            <HermesBoardMobileArt focus={focus} />
           </div>
         ) : panTarget ? (
           <motion.div
@@ -356,16 +373,28 @@ function DashboardReveal() {
   const scale = useTransform(scrollYProgress, [0, 0.16], [0.94, 1]);
   const rotateX = useTransform(scrollYProgress, [0, 0.16], [7, 0]);
   const lift = useTransform(scrollYProgress, [0, 0.16], [34, 0]);
-  const step = useWalkthroughStep(ref, !isCompact && !reduce);
+  const step = useWalkthroughStep(ref, !reduce);
   const activeFocus = sceneSteps[step]?.focus ?? sceneSteps[0].focus;
 
-  if (isCompact) {
+  if (isCompact && reduce) {
     return (
       <section className="hx-shell hx-reveal-static">
         <StepRow activeStep="all" />
         <div className="hx-pin-static-frame">
-          <DashboardWindow compact animateCompact={!reduce} />
+          <DashboardWindow compact />
         </div>
+      </section>
+    );
+  }
+
+  if (isCompact) {
+    return (
+      <section ref={ref} id="walkthrough" className="hx-mobile-walk">
+        <div className="hx-pin-glow" aria-hidden="true" />
+        <div className="hx-mobile-sticky">
+          <DashboardWindow compact focus={activeFocus} panTarget={mobileWalkthroughPanTargets[activeFocus]} />
+        </div>
+        <WalkthroughCopy activeStep={step} />
       </section>
     );
   }
