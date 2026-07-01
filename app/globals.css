@@ -6537,6 +6537,8 @@ h2 {
 
   .hxm-board-track {
     --hxm-scale: 0.88;
+    width: calc(100% / var(--hxm-scale));
+    margin-inline: auto;
     transform: scale(var(--hxm-scale));
     transform-origin: top center;
     will-change: transform;
@@ -6593,14 +6595,14 @@ h2 {
     z-index: 2;
     display: grid;
     justify-items: center;
-    padding: 0 clamp(0.55rem, 2.8vw, 0.9rem) 1.35rem;
+    padding: 0 clamp(0.25rem, 1.5vw, 0.5rem) 1.35rem;
     background:
       linear-gradient(180deg, rgba(10, 10, 10, 0.98) 0%, rgba(10, 10, 10, 0.96) 74%, rgba(10, 10, 10, 0) 100%);
     transform: translateZ(0);
   }
 
   .hx-mobile-walk .hxm-panel {
-    width: min(94vw, 24rem);
+    width: min(calc(100vw - 0.5rem), 32rem);
     overflow: hidden;
     border-radius: 0.95rem;
     box-shadow: 0 1.8rem 5rem rgba(0, 0, 0, 0.68);
