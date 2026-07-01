@@ -291,19 +291,29 @@ function DashboardReveal() {
 function AppleMomentVisual({ visual }: { visual: string }) {
   if (visual === 'read') {
     return (
-      <div className="hx-apple-device hx-apple-field" aria-hidden="true">
-        <span className="hx-apple-glowline" />
-        <div className="hx-apple-readout">
-          <span>LIQUIDITY</span>
-          <strong>active structure</strong>
+      <div className="hx-product-frame hx-product-read" aria-hidden="true">
+        <div className="hx-product-bar">
+          <span>Hermes</span>
+          <em>Current read</em>
         </div>
-        <div className="hx-apple-readout">
-          <span>TIMING</span>
-          <strong>confirmation pending</strong>
+        <div className="hx-product-main">
+          <span>Opportunity environment</span>
+          <strong>Moderate</strong>
+          <p>Opportunity is present, but Hermes is preserving cash for clearer deployment.</p>
         </div>
-        <div className="hx-apple-readout">
-          <span>REGIME</span>
-          <strong>mixed volatility</strong>
+        <div className="hx-product-metrics">
+          <span>
+            <em>Liquidity</em>
+            <strong>Active</strong>
+          </span>
+          <span>
+            <em>Timing</em>
+            <strong>Pending</strong>
+          </span>
+          <span>
+            <em>Regime</em>
+            <strong>Mixed</strong>
+          </span>
         </div>
       </div>
     );
@@ -311,45 +321,89 @@ function AppleMomentVisual({ visual }: { visual: string }) {
 
   if (visual === 'wait') {
     return (
-      <div className="hx-apple-device hx-apple-posture" aria-hidden="true">
-        <span>POSTURE</span>
-        <strong>SELECTIVE</strong>
-        <em>waiting for confirmation</em>
-        <i />
+      <div className="hx-product-frame hx-product-posture" aria-hidden="true">
+        <div className="hx-product-bar">
+          <span>Hermes Status</span>
+          <em>Live 5s</em>
+        </div>
+        <div className="hx-product-main">
+          <span>Operating posture</span>
+          <strong>SELECTIVE</strong>
+          <p>waiting for confirmation</p>
+        </div>
+        <div className="hx-product-status-grid">
+          {[
+            ['Status', 'ACTIVE'],
+            ['Risk Profile', 'Balanced'],
+            ['Capital Deployed', '99.04%'],
+            ['Conviction', 'High'],
+          ].map(([label, value]) => (
+            <span key={label}>
+              <em>{label}</em>
+              <strong>{value}</strong>
+            </span>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (visual === 'capital') {
     return (
-      <div className="hx-apple-device hx-apple-capital" aria-hidden="true">
-        <div>
-          <span>CAPITAL STATE</span>
-          <strong>preserve until earned</strong>
+      <div className="hx-product-frame hx-product-capital" aria-hidden="true">
+        <div className="hx-product-bar">
+          <span>Current Allocation</span>
+          <em>Capital mix</em>
         </div>
-        <div className="hx-apple-capital-bar">
-          <i />
+        <div className="hx-product-allocation">
+          <div className="hx-product-donut" />
+          <div className="hx-product-allocation-list">
+            {[
+              ['SOL Long', '87.47%'],
+              ['BEAT Long', '10.43%'],
+              ['ZEC Long', '1.14%'],
+              ['Cash', '0.96%'],
+            ].map(([label, value]) => (
+              <span key={label}>
+                <em>{label}</em>
+                <strong>{value}</strong>
+              </span>
+            ))}
+          </div>
         </div>
-        <div className="hx-apple-capital-labels">
-          <span>Preserve</span>
-          <span>Deploy</span>
+        <div className="hx-product-metrics">
+          <span>
+            <em>Deployed</em>
+            <strong>99.04%</strong>
+          </span>
+          <span>
+            <em>Reserve</em>
+            <strong>0.96%</strong>
+          </span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="hx-apple-device hx-apple-reason" aria-hidden="true">
-      {[
-        ['current action', 'monitoring'],
-        ['next condition', 'clean confirmation'],
-        ['public surface', 'no entries or targets'],
-      ].map(([label, value]) => (
-        <span key={label}>
-          <em>{label}</em>
-          <strong>{value}</strong>
-        </span>
-      ))}
+    <div className="hx-product-frame hx-product-reason" aria-hidden="true">
+      <div className="hx-product-bar">
+        <span>Recent Activity</span>
+        <em>Latest decisions</em>
+      </div>
+      <div className="hx-product-log">
+        {[
+          ['Jun 24', 'Hermes allocation updated after posture review'],
+          ['Jun 23', 'Capital event recorded in simulation mode'],
+          ['Jun 23', 'Treasury simulation completed and reconciled'],
+        ].map(([date, copy]) => (
+          <span key={copy}>
+            <em>{date}</em>
+            <strong>{copy}</strong>
+          </span>
+        ))}
+      </div>
+      <div className="hx-product-disclosure">No entries, targets, leverage, or liquidation levels on the public page.</div>
     </div>
   );
 }
