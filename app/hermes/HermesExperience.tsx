@@ -16,7 +16,7 @@ import {
 import type { HermesBriefPosture, HermesBriefSnapshot } from '@/features/hermes-brief-snapshot/types';
 
 import Mark from '../Mark';
-import HermesBoardArt, { HermesBoardMobileArt } from './HermesBoardArt';
+import HermesBoardArt, { HermesBoardMobileArt, type HermesBoardFocus } from './HermesBoardArt';
 import RequestAccessForm from './RequestAccessForm';
 
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
@@ -24,51 +24,34 @@ const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const sceneSteps = [
   {
     kicker: 'Reads',
-    title: 'The opportunity environment.',
-    text: 'Hermes turns live market conditions into a single outlook and posture.',
-  },
-  {
-    kicker: 'Decides',
-    title: 'A posture, with capital behind it.',
-    text: 'Status, risk profile, conviction, and exactly how much capital is deployed.',
-  },
-  {
-    kicker: 'Shows',
-    title: 'Every allocation and decision.',
-    text: 'The capital mix and the latest decisions, refreshed live and in the open.',
-  },
-];
-
-const appleMoments = [
-  {
-    kicker: 'Reads',
-    title: 'Reads the market before it reacts.',
-    text:
-      'Liquidity, timing, and regime are compressed into one operating picture before capital is allowed to move.',
-    visual: 'read',
+    title: 'The current read.',
+    text: 'Outlook, regime, and next condition stay compressed into one view.',
+    focus: 'outlook',
   },
   {
     kicker: 'Waits',
-    title: 'Waiting is an active state.',
-    text:
-      'Hermes can stand down, preserve, or hold a selective posture until the signal earns action.',
-    visual: 'wait',
+    title: 'Waiting is a position.',
+    text: 'Posture, risk, and conviction make restraint visible before capital moves.',
+    focus: 'posture',
   },
   {
     kicker: 'Allocates',
-    title: 'Preserve or deploy. Nothing in between.',
-    text:
-      'The dashboard makes capital state visible without turning the public page into a trade-signal surface.',
-    visual: 'capital',
+    title: 'Capital state, visible.',
+    text: 'The account shows what is preserved, what is deployed, and why.',
+    focus: 'capital',
   },
   {
     kicker: 'Explains',
-    title: 'The reasoning stays visible.',
-    text:
-      'Every public read shows what Hermes is doing now and what condition it is still waiting for.',
-    visual: 'reason',
+    title: 'Every decision leaves a trail.',
+    text: 'Recent activity keeps the system legible without exposing trade signals.',
+    focus: 'decisions',
   },
-];
+] satisfies Array<{
+  kicker: string;
+  title: string;
+  text: string;
+  focus: HermesBoardFocus;
+}>;
 
 const impactItems = [
   'Users understand what Hermes is doing without parsing technical systems or raw operational detail.',
@@ -158,6 +141,68 @@ function ScrollProgress() {
   return <motion.div className="hx-progress" style={{ scaleX }} aria-hidden="true" />;
 }
 
+function LiveReadoutBand({
+  capitalVisual,
+  dashboardPreview,
+  dataAsOfLabel,
+  pulseTone,
+  updatedLabel,
+}: {
+  capitalVisual: CapitalVisual;
+  dashboardPreview: HermesBriefSnapshot;
+  dataAsOfLabel: string;
+  pulseTone?: string;
+  updatedLabel: string;
+}) {
+  const readout = [
+    {
+      label: 'Paths',
+      subtext: 'under review',
+      value: dashboardPreview.paths.under_review.toString(),
+    },
+    {
+      label: 'Posture',
+      subtext: dashboardPreview.posture_reason,
+      value: dashboardPreview.posture,
+    },
+    {
+      label: 'Pulse',
+      subtext: updatedLabel,
+      value: dashboardPreview.pulse,
+    },
+    {
+      label: 'Capital',
+      subtext: dashboardPreview.risk.reason,
+      value: capitalVisual.label,
+    },
+  ];
+
+  return (
+    <section className="hx-shell hx-live-shell" aria-label="Hermes live readout">
+      <Reveal className="hx-live-panel">
+        <div className="hx-live-head">
+          <span className={`hx-live-dot ${pulseTone ?? ''}`} aria-hidden="true" />
+          <div>
+            <p className="section-kicker">Live readout</p>
+            <strong>{dashboardPreview.summary}</strong>
+          </div>
+          <span className="hx-live-asof">{dataAsOfLabel}</span>
+        </div>
+        <div className="hx-live-grid">
+          {readout.map((item) => (
+            <div key={item.label} className="hx-live-card">
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+              <p>{item.subtext}</p>
+            </div>
+          ))}
+        </div>
+        <p className="hx-live-disclosure">{dashboardPreview.disclosure}</p>
+      </Reveal>
+    </section>
+  );
+}
+
 function StepRow({ activeStep }: { activeStep: number | 'all' }) {
   return (
     <div className="hx-reveal-steps">
@@ -178,10 +223,12 @@ function StepRow({ activeStep }: { activeStep: number | 'all' }) {
 function DashboardWindow({
   animateCompact = false,
   compact = false,
+  focus,
   pan,
 }: {
   animateCompact?: boolean;
   compact?: boolean;
+  focus?: HermesBoardFocus;
   pan?: MotionValue<string>;
 }) {
   return (
@@ -202,11 +249,11 @@ function DashboardWindow({
           </div>
         ) : pan ? (
           <motion.div className="hx-board-pan" style={{ y: pan }}>
-            <HermesBoardArt />
+            <HermesBoardArt focus={focus} />
           </motion.div>
         ) : (
           <div className="hx-board-pan">
-            <HermesBoardArt />
+            <HermesBoardArt focus={focus} />
           </div>
         )}
       </div>
@@ -222,16 +269,17 @@ function DashboardReveal() {
 
   // Cinematic entry: the dashboard fades, scales, and tilts up into place,
   // then slowly pans through its sections as the captions advance.
-  const opacity = useTransform(scrollYProgress, [0, 0.14], [0, 1]);
-  const scale = useTransform(scrollYProgress, [0, 0.22], [0.9, 1]);
-  const rotateX = useTransform(scrollYProgress, [0, 0.22], [12, 0]);
-  const lift = useTransform(scrollYProgress, [0, 0.22], [90, 0]);
-  const pan = useTransform(scrollYProgress, [0.24, 1], ['0%', '-48%']);
+  const opacity = useTransform(scrollYProgress, [0, 0.08], [0.72, 1]);
+  const scale = useTransform(scrollYProgress, [0, 0.16], [0.94, 1]);
+  const rotateX = useTransform(scrollYProgress, [0, 0.16], [7, 0]);
+  const lift = useTransform(scrollYProgress, [0, 0.16], [34, 0]);
+  const pan = useTransform(scrollYProgress, [0.16, 0.4, 0.68, 1], ['0%', '-14%', '-32%', '-50%']);
 
   const [step, setStep] = useState(0);
   useMotionValueEvent(scrollYProgress, 'change', (value) => {
-    setStep(value < 0.45 ? 0 : value < 0.72 ? 1 : 2);
+    setStep(value < 0.32 ? 0 : value < 0.56 ? 1 : value < 0.78 ? 2 : 3);
   });
+  const activeFocus = sceneSteps[step]?.focus ?? sceneSteps[0].focus;
 
   if (isCompact) {
     return (
@@ -277,7 +325,7 @@ function DashboardReveal() {
               </div>
               <div className="hx-window-view">
                 <motion.div className="hx-board-pan" style={{ y: pan }}>
-                  <HermesBoardArt />
+                  <HermesBoardArt focus={activeFocus} />
                 </motion.div>
               </div>
             </motion.div>
@@ -288,127 +336,13 @@ function DashboardReveal() {
   );
 }
 
-function AppleMomentVisual({ visual }: { visual: string }) {
-  if (visual === 'read') {
-    return (
-      <div className="hx-product-frame hx-product-read" aria-hidden="true">
-        <div className="hx-product-bar">
-          <span>Hermes</span>
-          <em>Current read</em>
-        </div>
-        <div className="hx-product-main">
-          <span>Opportunity environment</span>
-          <strong>Moderate</strong>
-          <p>Opportunity is present, but Hermes is preserving cash for clearer deployment.</p>
-        </div>
-        <div className="hx-product-metrics">
-          <span>
-            <em>Liquidity</em>
-            <strong>Active</strong>
-          </span>
-          <span>
-            <em>Timing</em>
-            <strong>Pending</strong>
-          </span>
-          <span>
-            <em>Regime</em>
-            <strong>Mixed</strong>
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  if (visual === 'wait') {
-    return (
-      <div className="hx-product-frame hx-product-posture" aria-hidden="true">
-        <div className="hx-product-bar">
-          <span>Hermes Status</span>
-          <em>Live 5s</em>
-        </div>
-        <div className="hx-product-main">
-          <span>Operating posture</span>
-          <strong>SELECTIVE</strong>
-          <p>waiting for confirmation</p>
-        </div>
-        <div className="hx-product-status-grid">
-          {[
-            ['Status', 'ACTIVE'],
-            ['Risk Profile', 'Balanced'],
-            ['Capital Deployed', '99.04%'],
-            ['Conviction', 'High'],
-          ].map(([label, value]) => (
-            <span key={label}>
-              <em>{label}</em>
-              <strong>{value}</strong>
-            </span>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (visual === 'capital') {
-    return (
-      <div className="hx-product-frame hx-product-capital" aria-hidden="true">
-        <div className="hx-product-bar">
-          <span>Current Allocation</span>
-          <em>Capital mix</em>
-        </div>
-        <div className="hx-product-allocation">
-          <div className="hx-product-donut" />
-          <div className="hx-product-allocation-list">
-            {[
-              ['SOL Long', '87.47%'],
-              ['BEAT Long', '10.43%'],
-              ['ZEC Long', '1.14%'],
-              ['Cash', '0.96%'],
-            ].map(([label, value]) => (
-              <span key={label}>
-                <em>{label}</em>
-                <strong>{value}</strong>
-              </span>
-            ))}
-          </div>
-        </div>
-        <div className="hx-product-metrics">
-          <span>
-            <em>Deployed</em>
-            <strong>99.04%</strong>
-          </span>
-          <span>
-            <em>Reserve</em>
-            <strong>0.96%</strong>
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="hx-product-frame hx-product-reason" aria-hidden="true">
-      <div className="hx-product-bar">
-        <span>Recent Activity</span>
-        <em>Latest decisions</em>
-      </div>
-      <div className="hx-product-log">
-        {[
-          ['Jun 24', 'Hermes allocation updated after posture review'],
-          ['Jun 23', 'Capital event recorded in simulation mode'],
-          ['Jun 23', 'Treasury simulation completed and reconciled'],
-        ].map(([date, copy]) => (
-          <span key={copy}>
-            <em>{date}</em>
-            <strong>{copy}</strong>
-          </span>
-        ))}
-      </div>
-      <div className="hx-product-disclosure">No entries, targets, leverage, or liquidation levels on the public page.</div>
-    </div>
-  );
-}
-
-export default function HermesExperience(_props: HermesExperienceProps) {
+export default function HermesExperience({
+  capitalVisual,
+  dashboardPreview,
+  dataAsOfLabel,
+  pulseTone,
+  updatedLabel,
+}: HermesExperienceProps) {
   return (
     <main className="hx-page">
       <ScrollProgress />
@@ -457,6 +391,14 @@ export default function HermesExperience(_props: HermesExperienceProps) {
         </Reveal>
       </section>
 
+      <LiveReadoutBand
+        capitalVisual={capitalVisual}
+        dashboardPreview={dashboardPreview}
+        dataAsOfLabel={dataAsOfLabel}
+        pulseTone={pulseTone}
+        updatedLabel={updatedLabel}
+      />
+
       <DashboardReveal />
 
       <section className="hx-shell">
@@ -474,21 +416,6 @@ export default function HermesExperience(_props: HermesExperienceProps) {
             </p>
           </Reveal>
         </div>
-      </section>
-
-      <section className="hx-apple-story">
-        {appleMoments.map((section, index) => (
-          <div key={section.kicker} className="hx-shell hx-apple-moment">
-            <Reveal className="hx-apple-copy">
-              <p className="section-kicker">{section.kicker}</p>
-              <h2>{section.title}</h2>
-              <p>{section.text}</p>
-            </Reveal>
-            <Reveal className="hx-apple-visual" delay={0.1 + index * 0.03}>
-              <AppleMomentVisual visual={section.visual} />
-            </Reveal>
-          </div>
-        ))}
       </section>
 
       <section className="hx-shell">

@@ -31,6 +31,8 @@ const summary = [
   { label: 'Withdrawable', value: '$491' },
 ];
 
+export type HermesBoardFocus = 'outlook' | 'posture' | 'capital' | 'decisions';
+
 export function HermesBoardMobileArt() {
   return (
     <div className="hxm-board" aria-hidden="true">
@@ -137,9 +139,9 @@ export function HermesBoardMobileArt() {
   );
 }
 
-export default function HermesBoardArt() {
+export default function HermesBoardArt({ focus }: { focus?: HermesBoardFocus }) {
   return (
-    <div className="mx-auto w-[74rem] text-neutral-50" aria-hidden="true">
+    <div className="hxb-board mx-auto w-[74rem] text-neutral-50" data-focus={focus} aria-hidden="true">
       {/* Top nav */}
       <div className="border-b border-white/10 bg-[#10100e]/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -166,7 +168,7 @@ export default function HermesBoardArt() {
 
       <div className="mx-auto grid max-w-6xl gap-5 px-6 py-7">
         {/* Portfolio Value */}
-        <div className={card}>
+        <div className={`${card} hxb-region is-outlook`}>
           <div className="grid grid-cols-[1fr_auto] items-end gap-6">
             <div>
               <span className="inline-flex items-center gap-2">
@@ -207,7 +209,7 @@ export default function HermesBoardArt() {
         </div>
 
         {/* Hermes Status */}
-        <div className={card}>
+        <div className={`${card} hxb-region is-posture`}>
           <span className={label}>Hermes Status</span>
           <span className={title}>Operating posture</span>
           <div className="mt-5 grid grid-cols-4 gap-4 border-t border-white/10 pt-5">
@@ -233,7 +235,7 @@ export default function HermesBoardArt() {
         </div>
 
         {/* Hermes Outlook */}
-        <div className={card}>
+        <div className={`${card} hxb-region is-outlook`}>
           <span className={label}>Hermes Outlook</span>
           <span className={title}>Opportunity environment</span>
           <div className="mt-5 grid grid-cols-[13rem_1fr] items-center gap-7 border-t border-white/10 pt-5">
@@ -252,7 +254,7 @@ export default function HermesBoardArt() {
 
         {/* Allocation + Activity */}
         <div className="grid grid-cols-[1.1fr_0.9fr] gap-5">
-          <div className={card}>
+          <div className={`${card} hxb-region is-capital`}>
             <span className={label}>Current Allocation</span>
             <span className={title}>Capital mix</span>
             <div className="mt-4 grid grid-cols-2 gap-3">
@@ -292,7 +294,7 @@ export default function HermesBoardArt() {
             </div>
           </div>
 
-          <div className={card}>
+          <div className={`${card} hxb-region is-decisions`}>
             <span className={label}>Recent Activity</span>
             <span className={title}>Latest decisions</span>
             <div className="mt-4 grid gap-0">
@@ -310,7 +312,7 @@ export default function HermesBoardArt() {
         </div>
 
         {/* Commentary */}
-        <div className={card}>
+        <div className={`${card} hxb-region is-decisions`}>
           <span className={label}>Hermes Commentary</span>
           <span className={title}>Current read</span>
           <p className="mt-4 max-w-3xl text-lg leading-8 text-neutral-200">
@@ -320,7 +322,7 @@ export default function HermesBoardArt() {
         </div>
 
         {/* Account Summary */}
-        <div className={card}>
+        <div className={`${card} hxb-region is-capital`}>
           <span className={label}>Account</span>
           <span className={title}>Summary</span>
           <div className="mt-6 grid grid-cols-4 gap-4 border-t border-white/10 pt-5">

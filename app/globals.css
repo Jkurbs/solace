@@ -5031,7 +5031,7 @@ h2 {
     display: grid;
     align-content: start;
     justify-items: center;
-    padding: clamp(8rem, 17vh, 11rem) clamp(1.1rem, 3vw, 2.5rem) clamp(2rem, 5vh, 3.5rem);
+    padding: clamp(7rem, 14vh, 9.5rem) clamp(1.1rem, 3vw, 2.5rem) clamp(1.5rem, 4vh, 2.75rem);
     overflow: hidden;
     text-align: center;
   }
@@ -5041,9 +5041,9 @@ h2 {
     inset: -22% -10% auto;
     height: 82%;
     background:
-      radial-gradient(46% 60% at 50% 30%, rgba(216, 168, 91, 0.16), transparent 70%),
+      radial-gradient(46% 60% at 50% 30%, rgba(255, 255, 255, 0.08), transparent 70%),
       radial-gradient(40% 50% at 20% 14%, rgba(184, 190, 199, 0.1), transparent 72%),
-      radial-gradient(40% 50% at 82% 20%, rgba(242, 234, 219, 0.09), transparent 72%);
+      radial-gradient(40% 50% at 82% 20%, rgba(242, 234, 219, 0.07), transparent 72%);
     pointer-events: none;
   }
 
@@ -5115,6 +5115,129 @@ h2 {
     }
   }
 
+  /* --- LIVE READOUT --- */
+  .hx-live-shell {
+    padding-bottom: clamp(2.5rem, 5vw, 4.5rem);
+  }
+
+  .hx-live-panel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.2rem;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(255, 255, 255, 0.045), transparent 28%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)),
+      rgba(13, 13, 12, 0.9);
+    box-shadow:
+      0 1.8rem 5rem rgba(0, 0, 0, 0.38),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.025);
+    padding: clamp(1rem, 2vw, 1.35rem);
+  }
+
+  .hx-live-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.9rem;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: clamp(1rem, 2vw, 1.25rem);
+  }
+
+  .hx-live-head .section-kicker {
+    margin-bottom: 0.35rem;
+  }
+
+  .hx-live-head strong {
+    display: block;
+    color: rgba(250, 250, 250, 0.88);
+    font-size: clamp(1rem, 1.8vw, 1.35rem);
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .hx-live-dot {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 999px;
+    background: rgba(250, 250, 250, 0.62);
+    box-shadow: 0 0 1.4rem rgba(250, 250, 250, 0.28);
+  }
+
+  .hx-live-dot.is-positive {
+    background: #87dbc0;
+    box-shadow: 0 0 1.4rem rgba(135, 219, 192, 0.42);
+  }
+
+  .hx-live-dot.is-watch {
+    background: rgba(250, 250, 250, 0.72);
+  }
+
+  .hx-live-asof {
+    color: rgba(250, 250, 250, 0.42);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-align: right;
+    text-transform: uppercase;
+  }
+
+  .hx-live-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    margin-top: 1px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .hx-live-card {
+    display: grid;
+    align-content: start;
+    gap: 0.45rem;
+    min-height: 8.6rem;
+    background: #10100f;
+    padding: clamp(1rem, 2vw, 1.35rem);
+  }
+
+  .hx-live-card span {
+    color: rgba(250, 250, 250, 0.42);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .hx-live-card strong {
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(1.65rem, 2.65vw, 2.65rem);
+    font-weight: 500;
+    line-height: 0.96;
+    overflow-wrap: anywhere;
+  }
+
+  .hx-live-card p {
+    display: -webkit-box;
+    max-width: 22rem;
+    margin: 0;
+    overflow: hidden;
+    color: rgba(250, 250, 250, 0.54);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .hx-live-disclosure {
+    margin: clamp(1rem, 2vw, 1.25rem) 0 0;
+    color: rgba(250, 250, 250, 0.46);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    line-height: 1.6;
+    text-transform: uppercase;
+  }
+
   /* --- APPLE-STYLE STORY --- */
   .hx-apple-intro {
     display: grid;
@@ -5146,7 +5269,7 @@ h2 {
   /* --- PINNED DASHBOARD SCENE --- */
   .hx-pin {
     position: relative;
-    height: 280vh;
+    height: 360vh;
   }
 
   .hx-pin-sticky {
@@ -5161,7 +5284,7 @@ h2 {
   .hx-pin-glow {
     position: absolute;
     inset: 0;
-    background: radial-gradient(50% 42% at 50% 46%, rgba(216, 168, 91, 0.12), transparent 70%);
+    background: radial-gradient(50% 42% at 64% 46%, rgba(255, 255, 255, 0.085), transparent 70%);
     pointer-events: none;
   }
 
@@ -5636,6 +5759,50 @@ h2 {
   }
 
   @media (max-width: 860px) {
+    .hx-hero {
+      padding-top: clamp(6rem, 16vh, 8rem);
+    }
+
+    .hx-live-shell {
+      padding-bottom: clamp(1.5rem, 6vw, 2.5rem);
+    }
+
+    .hx-live-panel {
+      border-radius: 1rem;
+      padding: 0.85rem;
+    }
+
+    .hx-live-head {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .hx-live-asof {
+      grid-column: 2;
+      text-align: left;
+    }
+
+    .hx-live-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hx-live-card {
+      min-height: 7.2rem;
+      padding: 0.95rem;
+    }
+
+    .hx-live-card strong {
+      font-size: clamp(1.35rem, 6.4vw, 2rem);
+    }
+
+    .hx-live-card p {
+      font-size: 0.82rem;
+      -webkit-line-clamp: 3;
+    }
+
+    .hx-live-disclosure {
+      font-size: 0.58rem;
+    }
+
     .hx-apple-intro {
       padding-top: clamp(3.5rem, 12vw, 5rem);
       padding-bottom: clamp(2.5rem, 9vw, 4rem);
@@ -6296,8 +6463,9 @@ h2 {
   .hx-reveal-inner {
     position: relative;
     display: grid;
-    gap: clamp(1.4rem, 3vw, 2.4rem);
-    align-content: center;
+    grid-template-columns: minmax(14rem, 0.34fr) minmax(0, 1fr);
+    gap: clamp(1.6rem, 4vw, 4rem);
+    align-items: center;
     width: min(100%, 80rem);
     margin: 0 auto;
     padding: 4.5rem clamp(1.1rem, 3vw, 2.5rem);
@@ -6305,12 +6473,20 @@ h2 {
 
   .hx-reveal-steps {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(1rem, 2.5vw, 2rem);
+    gap: clamp(1rem, 2.2vw, 1.5rem);
+  }
+
+  .hx-reveal-steps .hx-pin-step {
+    padding-left: 1.15rem;
+    border-color: rgba(250, 250, 250, 0.1);
   }
 
   .hx-reveal-steps .hx-pin-step strong {
-    font-size: clamp(1.05rem, 1.6vw, 1.5rem);
+    font-size: clamp(1.3rem, 2.5vw, 2.4rem);
+  }
+
+  .hx-reveal-steps .hx-pin-step p {
+    font-size: clamp(0.9rem, 1.12vw, 1rem);
   }
 
   .hx-window {
@@ -6321,7 +6497,7 @@ h2 {
     background: #0b0b0c;
     box-shadow:
       0 3rem 9rem rgba(0, 0, 0, 0.62),
-      0 0.5rem 1.6rem rgba(216, 168, 91, 0.05);
+      0 0.5rem 1.6rem rgba(255, 255, 255, 0.04);
     overflow: hidden;
   }
 
@@ -6411,6 +6587,35 @@ h2 {
 
   .hx-board-pan {
     will-change: transform;
+  }
+
+  .hxb-region {
+    position: relative;
+    transition:
+      opacity 0.55s ease,
+      filter 0.55s ease,
+      box-shadow 0.55s ease,
+      transform 0.55s ease;
+  }
+
+  .hxb-board[data-focus="outlook"] .hxb-region:not(.is-outlook),
+  .hxb-board[data-focus="posture"] .hxb-region:not(.is-posture),
+  .hxb-board[data-focus="capital"] .hxb-region:not(.is-capital),
+  .hxb-board[data-focus="decisions"] .hxb-region:not(.is-decisions) {
+    opacity: 0.22;
+    filter: saturate(0.8);
+  }
+
+  .hxb-board[data-focus="outlook"] .hxb-region.is-outlook,
+  .hxb-board[data-focus="posture"] .hxb-region.is-posture,
+  .hxb-board[data-focus="capital"] .hxb-region.is-capital,
+  .hxb-board[data-focus="decisions"] .hxb-region.is-decisions {
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.16),
+      0 1.4rem 4rem rgba(0, 0, 0, 0.45),
+      0 0 3rem rgba(255, 255, 255, 0.045);
   }
 
   .hxm-board-track {
@@ -6648,28 +6853,22 @@ h2 {
     }
 
     .hx-reveal-static .hx-reveal-steps {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       width: min(100%, 25rem);
       margin-inline: auto;
       gap: 0.65rem;
-      overflow-x: auto;
       padding-bottom: 0.2rem;
-      scrollbar-width: none;
-    }
-
-    .hx-reveal-static .hx-reveal-steps::-webkit-scrollbar {
-      display: none;
     }
 
     .hx-reveal-static .hx-pin-step {
-      min-width: 11.5rem;
       gap: 0.28rem;
       padding-left: 0.75rem;
     }
 
     .hx-reveal-static .hx-pin-step strong {
       font-family: var(--font-grotesk);
-      font-size: 0.98rem;
+      font-size: 0.92rem;
       font-weight: 700;
       line-height: 1.1;
     }
