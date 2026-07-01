@@ -6590,13 +6590,13 @@ h2 {
     z-index: 2;
     display: grid;
     justify-items: center;
-    padding: 0 clamp(1rem, 4.5vw, 1.4rem) 1.35rem;
+    padding: 0 clamp(0.55rem, 2.8vw, 0.9rem) 1.35rem;
     background:
       linear-gradient(180deg, rgba(10, 10, 10, 0.98) 0%, rgba(10, 10, 10, 0.96) 74%, rgba(10, 10, 10, 0) 100%);
   }
 
   .hx-mobile-walk .hxm-panel {
-    width: min(100%, 22.5rem);
+    width: min(94vw, 24rem);
     overflow: hidden;
     border-radius: 0.95rem;
     box-shadow: 0 1.8rem 5rem rgba(0, 0, 0, 0.68);
