@@ -21,24 +21,6 @@ import RequestAccessForm from './RequestAccessForm';
 
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
-const proofItems = [
-  {
-    kicker: 'Reads',
-    value: 'Structure',
-    text: 'Liquidity, timing, and regime become a single operating read.',
-  },
-  {
-    kicker: 'Decides',
-    value: 'Posture',
-    text: 'Hermes compresses noisy market state into preserve, wait, reduce, or deploy.',
-  },
-  {
-    kicker: 'Shows',
-    value: 'Reason',
-    text: 'Every public read includes the current action and the condition Hermes is waiting for.',
-  },
-];
-
 const sceneSteps = [
   {
     kicker: 'Reads',
@@ -57,20 +39,34 @@ const sceneSteps = [
   },
 ];
 
-const featureSections = [
+const appleMoments = [
   {
-    kicker: 'Built for uncertainty',
-    title: 'The product is the instrument.',
+    kicker: 'Reads',
+    title: 'Reads the market before it reacts.',
     text:
-      'Hermes is designed around oversight instead of manual control. You see what the system is reading, the posture it has chosen, and why capital is moving or staying preserved.',
-    items: ['continuous evaluation', 'risk calibration', 'allocation decisions', 'emotional discipline'],
+      'Liquidity, timing, and regime are compressed into one operating picture before capital is allowed to move.',
+    visual: 'read',
   },
   {
-    kicker: 'Public-safe by design',
-    title: 'Signals stay inside the engine.',
+    kicker: 'Waits',
+    title: 'Waiting is an active state.',
     text:
-      'The page previews the Hermes experience without becoming a trade-signal surface. It exposes posture, paths, freshness, capital state, and reasoning while keeping raw execution private.',
-    items: ['no entries', 'no targets', 'no balances', 'no pnl'],
+      'Hermes can stand down, preserve, or hold a selective posture until the signal earns action.',
+    visual: 'wait',
+  },
+  {
+    kicker: 'Allocates',
+    title: 'Preserve or deploy. Nothing in between.',
+    text:
+      'The dashboard makes capital state visible without turning the public page into a trade-signal surface.',
+    visual: 'capital',
+  },
+  {
+    kicker: 'Explains',
+    title: 'The reasoning stays visible.',
+    text:
+      'Every public read shows what Hermes is doing now and what condition it is still waiting for.',
+    visual: 'reason',
   },
 ];
 
@@ -292,6 +288,72 @@ function DashboardReveal() {
   );
 }
 
+function AppleMomentVisual({ visual }: { visual: string }) {
+  if (visual === 'read') {
+    return (
+      <div className="hx-apple-device hx-apple-field" aria-hidden="true">
+        <span className="hx-apple-glowline" />
+        <div className="hx-apple-readout">
+          <span>LIQUIDITY</span>
+          <strong>active structure</strong>
+        </div>
+        <div className="hx-apple-readout">
+          <span>TIMING</span>
+          <strong>confirmation pending</strong>
+        </div>
+        <div className="hx-apple-readout">
+          <span>REGIME</span>
+          <strong>mixed volatility</strong>
+        </div>
+      </div>
+    );
+  }
+
+  if (visual === 'wait') {
+    return (
+      <div className="hx-apple-device hx-apple-posture" aria-hidden="true">
+        <span>POSTURE</span>
+        <strong>SELECTIVE</strong>
+        <em>waiting for confirmation</em>
+        <i />
+      </div>
+    );
+  }
+
+  if (visual === 'capital') {
+    return (
+      <div className="hx-apple-device hx-apple-capital" aria-hidden="true">
+        <div>
+          <span>CAPITAL STATE</span>
+          <strong>preserve until earned</strong>
+        </div>
+        <div className="hx-apple-capital-bar">
+          <i />
+        </div>
+        <div className="hx-apple-capital-labels">
+          <span>Preserve</span>
+          <span>Deploy</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="hx-apple-device hx-apple-reason" aria-hidden="true">
+      {[
+        ['current action', 'monitoring'],
+        ['next condition', 'clean confirmation'],
+        ['public surface', 'no entries or targets'],
+      ].map(([label, value]) => (
+        <span key={label}>
+          <em>{label}</em>
+          <strong>{value}</strong>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function HermesExperience(_props: HermesExperienceProps) {
   return (
     <main className="hx-page">
@@ -344,34 +406,32 @@ export default function HermesExperience(_props: HermesExperienceProps) {
       <DashboardReveal />
 
       <section className="hx-shell">
-        <div className="hx-proof">
-          {proofItems.map((item, index) => (
-            <Reveal key={item.kicker} className="hx-proof-card" delay={index * 0.08}>
-              <span className="hx-proof-kicker">{item.kicker}</span>
-              <strong className="hx-proof-value">{item.value}</strong>
-              <p className="hx-proof-text">{item.text}</p>
-            </Reveal>
-          ))}
+        <div className="hx-apple-intro">
+          <Reveal>
+            <p className="section-kicker">Designed as an instrument</p>
+          </Reveal>
+          <Reveal delay={0.08}>
+            <h2>Capital moves only when the signal earns it.</h2>
+          </Reveal>
+          <Reveal delay={0.14}>
+            <p>
+              Hermes is not a trading bot interface. It is a live oversight experience for reading uncertainty,
+              preserving capital, and showing why the system is waiting or acting.
+            </p>
+          </Reveal>
         </div>
       </section>
 
-      <section className="hx-shell">
-        {featureSections.map((section, index) => (
-          <div key={section.kicker} className={`hx-feature${index % 2 === 1 ? ' hx-feature-right' : ''}`}>
-            <Reveal className="hx-feature-copy">
+      <section className="hx-apple-story">
+        {appleMoments.map((section, index) => (
+          <div key={section.kicker} className="hx-shell hx-apple-moment">
+            <Reveal className="hx-apple-copy">
               <p className="section-kicker">{section.kicker}</p>
               <h2>{section.title}</h2>
               <p>{section.text}</p>
             </Reveal>
-            <Reveal className="hx-feature-visual" delay={0.1}>
-              <div className="hx-chip-grid">
-                {section.items.map((item) => (
-                  <span key={item} className="hx-chip">
-                    <i aria-hidden="true" />
-                    {item}
-                  </span>
-                ))}
-              </div>
+            <Reveal className="hx-apple-visual" delay={0.1 + index * 0.03}>
+              <AppleMomentVisual visual={section.visual} />
             </Reveal>
           </div>
         ))}
