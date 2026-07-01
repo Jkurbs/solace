@@ -6779,8 +6779,8 @@ h2 {
   }
 
   .hx-mobile-walk .hx-walk-step {
-    min-height: 66svh;
-    padding: clamp(2.5rem, 12vw, 4.5rem) 0;
+    min-height: 78svh;
+    padding: clamp(3rem, 13vw, 4.75rem) 0;
     padding-left: 1rem;
   }
 
@@ -7079,7 +7079,7 @@ h2 {
     }
 
     .hx-mobile-walk .hx-walk-step {
-      min-height: 64svh;
+      min-height: 76svh;
     }
 
     .hxm-board {

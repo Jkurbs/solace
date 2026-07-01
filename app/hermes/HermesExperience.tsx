@@ -153,7 +153,12 @@ function ScrollProgress() {
   return <motion.div className="hx-progress" style={{ scaleX }} aria-hidden="true" />;
 }
 
-function useWalkthroughStep(ref: RefObject<HTMLElement | null>, enabled: boolean) {
+function useWalkthroughStep(
+  ref: RefObject<HTMLElement | null>,
+  enabled: boolean,
+  viewportAnchorRatio = 0.5,
+  itemAnchorRatio = 0.5,
+) {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
@@ -173,12 +178,12 @@ function useWalkthroughStep(ref: RefObject<HTMLElement | null>, enabled: boolean
       }
 
       const steps = Array.from(element.querySelectorAll<HTMLElement>('.hx-walk-step'));
-      const viewportAnchor = window.innerHeight * 0.5;
+      const viewportAnchor = window.innerHeight * viewportAnchorRatio;
       const nextStep = steps.reduce(
         (best, item, index) => {
           const rect = item.getBoundingClientRect();
-          const center = rect.top + rect.height / 2;
-          const distance = Math.abs(center - viewportAnchor);
+          const itemAnchor = rect.top + rect.height * itemAnchorRatio;
+          const distance = Math.abs(itemAnchor - viewportAnchor);
 
           return distance < best.distance ? { distance, index } : best;
         },
@@ -208,7 +213,7 @@ function useWalkthroughStep(ref: RefObject<HTMLElement | null>, enabled: boolean
       window.removeEventListener('scroll', requestUpdate);
       window.removeEventListener('resize', requestUpdate);
     };
-  }, [enabled, ref]);
+  }, [enabled, itemAnchorRatio, ref, viewportAnchorRatio]);
 
   return step;
 }
@@ -373,7 +378,7 @@ function DashboardReveal() {
   const scale = useTransform(scrollYProgress, [0, 0.16], [0.94, 1]);
   const rotateX = useTransform(scrollYProgress, [0, 0.16], [7, 0]);
   const lift = useTransform(scrollYProgress, [0, 0.16], [34, 0]);
-  const step = useWalkthroughStep(ref, !reduce);
+  const step = useWalkthroughStep(ref, !reduce, isCompact ? 0.48 : 0.5, isCompact ? 0 : 0.5);
   const activeFocus = sceneSteps[step]?.focus ?? sceneSteps[0].focus;
 
   if (isCompact && reduce) {
