@@ -6782,8 +6782,13 @@ h2 {
 
   .hx-mobile-walk .hx-walk-step {
     min-height: 78svh;
+    opacity: 0;
     padding: clamp(3rem, 13vw, 4.75rem) 0;
     padding-left: 1rem;
+  }
+
+  .hx-mobile-walk .hx-walk-step.is-active {
+    opacity: 1;
   }
 
   .hx-mobile-walk .hx-walk-step strong {
