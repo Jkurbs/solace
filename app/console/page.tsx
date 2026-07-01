@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import { Bug, MessageSquareText, ShieldCheck } from 'lucide-react';
 
 import { listAccessRequests } from '@/features/access-review/store';
 import type { HermesAccessRequest } from '@/features/access-review/types';
@@ -26,6 +28,27 @@ function countPendingReviews(requests: HermesAccessRequest[]) {
   return requests.filter((request) => request.status === 'review' || request.status === 'new').length;
 }
 
+const operatorLanes = [
+  {
+    description: 'Safe-to-paste drafts, disclosure classes, redaction blocks, and approval-gated social copy.',
+    href: '/console/social-observatory',
+    icon: MessageSquareText,
+    label: 'Social Observatory',
+  },
+  {
+    description: 'Issue intake, severity, reproduction status, and release verification.',
+    href: '/console/bugops',
+    icon: Bug,
+    label: 'BugOps',
+  },
+  {
+    description: 'Access requests, approval state, invites, and account activation.',
+    href: '/console/access',
+    icon: ShieldCheck,
+    label: 'Approvals',
+  },
+];
+
 export default async function ConsolePage({ searchParams }: ConsolePageProps) {
   const accessGranted = await hasConsoleAccess();
   const params = await searchParams;
@@ -51,6 +74,28 @@ export default async function ConsolePage({ searchParams }: ConsolePageProps) {
       <ConsoleHeader pendingAccessCount={pendingAccessCount} />
 
       <div className="mx-auto grid max-w-7xl gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+        <section className="grid gap-3 md:grid-cols-3">
+          {operatorLanes.map((lane) => {
+            const Icon = lane.icon;
+
+            return (
+              <Link
+                key={lane.href}
+                href={lane.href}
+                className="group rounded-lg border border-neutral-800 bg-[#181715] p-4 transition-colors hover:border-neutral-600 hover:bg-[#1f1d1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-neutral-700 bg-neutral-950/40 text-neutral-300 group-hover:text-neutral-50">
+                    <Icon size={18} aria-hidden="true" />
+                  </span>
+                  <strong className="text-sm font-semibold text-neutral-50">{lane.label}</strong>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-neutral-500">{lane.description}</p>
+              </Link>
+            );
+          })}
+        </section>
+
         <ConsoleLivePanels initialData={consoleLiveData} />
       </div>
     </main>
