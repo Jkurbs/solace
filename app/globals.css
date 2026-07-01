@@ -6650,14 +6650,16 @@ h2 {
   }
 
   .hx-mobile-walk .hx-walk-step {
+    border-left: 0;
     min-height: 78svh;
     opacity: 0;
     padding: clamp(3rem, 13vw, 4.75rem) 0;
-    padding-left: 1rem;
   }
 
   .hx-mobile-walk .hx-walk-step.is-active {
+    border-color: transparent;
     opacity: 1;
+    transform: none;
   }
 
   .hx-mobile-walk .hx-walk-step strong {
