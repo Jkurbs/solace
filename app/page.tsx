@@ -2,18 +2,13 @@
 
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Shield } from 'lucide-react';
 
 import SkyBackground from './SkyBackground';
 import Mark from './Mark';
 import { calibration } from './calibration';
 import { hermesBetaVersionLabel } from '@/features/hermes-version';
-import {
-  fallbackHermesPublicReading,
-  type HermesPublicReading,
-} from '@/features/hermes-public-reading/types';
 
 const HermesLiquidityFieldRender = dynamic(() => import('./HermesLiquidityFieldRender'), {
   ssr: false,
@@ -112,87 +107,6 @@ function Header() {
   );
 }
 
-function HermesPublicReadingPanel() {
-  const [reading, setReading] = useState<HermesPublicReading>(fallbackHermesPublicReading);
-
-  useEffect(() => {
-    let active = true;
-
-    fetch('/api/hermes/public-reading', {
-      cache: 'no-store',
-      headers: {
-        Accept: 'application/json',
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Hermes public reading is unavailable.');
-        }
-
-        return response.json() as Promise<HermesPublicReading>;
-      })
-      .then((payload) => {
-        if (active) {
-          setReading(payload);
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setReading(fallbackHermesPublicReading);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const pulseClass = reading.pulse.label.toLowerCase().replace('_', '-');
-  const disclosureParts = reading.disclosure
-    .split('·')
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  return (
-    <div className={`hermes-public-reading is-${pulseClass}`} aria-label="Hermes public reading">
-      <div className="hermes-public-reading-grid">
-        <div className="hermes-public-reading-cell">
-          <span>Paths</span>
-          <strong className="hermes-public-reading-count">{reading.paths.count}</strong>
-          <small>{reading.paths.label}</small>
-        </div>
-        <div className="hermes-public-reading-cell">
-          <span>Posture</span>
-          <strong>{reading.posture.label.replace('_', ' ')}</strong>
-          <small>{reading.posture.subtext}</small>
-        </div>
-        <div className="hermes-public-reading-cell">
-          <span>Pulse</span>
-          <strong className="hermes-public-pulse-value">
-            <i aria-hidden="true" />
-            {reading.pulse.label}
-          </strong>
-          <small>{reading.pulse.subtext}</small>
-        </div>
-      </div>
-
-      <p className="hermes-public-reading-summary">{reading.summary}</p>
-
-      <div className="hermes-public-reading-disclosure">
-        <Shield size={22} strokeWidth={1.8} aria-hidden="true" />
-        <p>
-          {disclosureParts.map((part, index) => (
-            <span key={part}>
-              {index > 0 ? <b aria-hidden="true">·</b> : null}
-              {part}
-            </span>
-          ))}
-        </p>
-      </div>
-    </div>
-  );
-}
-
 export default function Home() {
   return (
     <main className="home-shell relative min-h-screen overflow-x-hidden text-foreground">
@@ -265,8 +179,6 @@ export default function Home() {
                 View brief
               </Link>
             </div>
-
-            <HermesPublicReadingPanel />
           </div>
         </div>
       </section>
