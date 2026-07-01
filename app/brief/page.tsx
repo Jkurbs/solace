@@ -138,7 +138,7 @@ export default function BriefPage() {
                 GitHub
               </a>
               {' · '}
-              <a href="mailto:jkurbs18@gmail.com" className="brief-author-link">
+              <a href="mailto:kerby@solace.fyi" className="brief-author-link">
                 Email
               </a>
               {' · Miami, FL'}
