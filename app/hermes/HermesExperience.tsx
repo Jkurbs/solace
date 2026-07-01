@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { ReactNode, RefObject } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import {
+  type MotionValue,
   motion,
   useReducedMotion,
   useScroll,
@@ -56,12 +57,8 @@ const walkthroughPanTargets: Record<HermesBoardFocus, string> = {
   execution: '-50%',
 };
 
-const mobileWalkthroughPanTargets: Record<HermesBoardFocus, string> = {
-  overview: '0%',
-  posture: '-21%',
-  outlook: '-38%',
-  execution: '-53%',
-};
+const mobileWalkthroughPanStops = [0, 0.3, 0.58, 0.84, 1];
+const mobileWalkthroughPanValues = [0, -21, -38, -53, -53];
 
 const impactItems = [
   'Users understand what Hermes is doing through a clear operating read across posture, capital state, and rationale.',
@@ -235,22 +232,27 @@ function DashboardWindow({
   animateCompact = false,
   compact = false,
   focus,
+  panY,
   panTarget,
 }: {
   animateCompact?: boolean;
   compact?: boolean;
   focus?: HermesBoardFocus;
+  panY?: MotionValue<string>;
   panTarget?: string;
 }) {
   if (compact) {
+    const hasPan = Boolean(panTarget ?? panY);
+
     return (
       <div className="hxm-panel">
-        <div className={`hxm-panel-view${panTarget ? '' : ' is-static'}`}>
-          {panTarget ? (
+        <div className={`hxm-panel-view${hasPan ? '' : ' is-static'}`}>
+          {hasPan ? (
             <motion.div
               className="hxm-mobile-pan"
-              animate={{ y: panTarget }}
-              transition={{ duration: 0.75, ease: EASE }}
+              animate={panY ? undefined : { y: panTarget }}
+              style={panY ? { y: panY } : undefined}
+              transition={panY ? undefined : { duration: 0.75, ease: EASE }}
             >
               <div className="hxm-board-track">
                 <HermesBoardMobileArt focus={focus} />
@@ -308,6 +310,9 @@ function DashboardReveal() {
   const scale = useTransform(scrollYProgress, [0, 0.16], [0.94, 1]);
   const rotateX = useTransform(scrollYProgress, [0, 0.16], [7, 0]);
   const lift = useTransform(scrollYProgress, [0, 0.16], [34, 0]);
+  const mobilePanProgress = useTransform(scrollYProgress, mobileWalkthroughPanStops, mobileWalkthroughPanValues);
+  const mobilePanSpring = useSpring(mobilePanProgress, { stiffness: 105, damping: 34, mass: 0.38 });
+  const mobilePanY = useTransform(mobilePanSpring, (value) => `${value}%`);
   const step = useWalkthroughStep(ref, !reduce, isCompact ? 0.48 : 0.5, isCompact ? 0 : 0.5);
   const activeFocus = sceneSteps[step]?.focus ?? sceneSteps[0].focus;
 
@@ -328,7 +333,7 @@ function DashboardReveal() {
         <div className="hx-pin-glow" aria-hidden="true" />
         <div className="hx-mobile-stage">
           <div className="hx-mobile-sticky">
-            <DashboardWindow compact focus={activeFocus} panTarget={mobileWalkthroughPanTargets[activeFocus]} />
+            <DashboardWindow compact focus={activeFocus} panY={mobilePanY} />
           </div>
           <WalkthroughCopy activeStep={step} />
         </div>

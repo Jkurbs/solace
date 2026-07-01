@@ -6544,6 +6544,9 @@ h2 {
 
   .hxm-mobile-pan {
     will-change: transform;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
+    contain: paint;
   }
 
   .hxm-board-track.is-animated {
@@ -6593,6 +6596,7 @@ h2 {
     padding: 0 clamp(0.55rem, 2.8vw, 0.9rem) 1.35rem;
     background:
       linear-gradient(180deg, rgba(10, 10, 10, 0.98) 0%, rgba(10, 10, 10, 0.96) 74%, rgba(10, 10, 10, 0) 100%);
+    transform: translateZ(0);
   }
 
   .hx-mobile-walk .hxm-panel {
@@ -6600,6 +6604,8 @@ h2 {
     overflow: hidden;
     border-radius: 0.95rem;
     box-shadow: 0 1.8rem 5rem rgba(0, 0, 0, 0.68);
+    contain: layout paint;
+    transform: translateZ(0);
   }
 
   .hx-mobile-walk .hxm-panel-view {
@@ -6612,6 +6618,27 @@ h2 {
 
   .hx-mobile-walk .hxm-board-track {
     --hxm-scale: 0.78;
+  }
+
+  .hx-mobile-walk .hxm-region {
+    transition:
+      opacity 0.32s ease,
+      border-color 0.32s ease,
+      transform 0.32s ease;
+  }
+
+  .hx-mobile-walk .hxm-board[data-focus="overview"] .hxm-region:not(.is-overview),
+  .hx-mobile-walk .hxm-board[data-focus="posture"] .hxm-region:not(.is-posture),
+  .hx-mobile-walk .hxm-board[data-focus="outlook"] .hxm-region:not(.is-outlook),
+  .hx-mobile-walk .hxm-board[data-focus="execution"] .hxm-region:not(.is-execution) {
+    filter: none;
+  }
+
+  .hx-mobile-walk .hxm-board[data-focus="overview"] .hxm-region.is-overview,
+  .hx-mobile-walk .hxm-board[data-focus="posture"] .hxm-region.is-posture,
+  .hx-mobile-walk .hxm-board[data-focus="outlook"] .hxm-region.is-outlook,
+  .hx-mobile-walk .hxm-board[data-focus="execution"] .hxm-region.is-execution {
+    box-shadow: 0 0.9rem 2rem rgba(0, 0, 0, 0.3);
   }
 
   .hx-mobile-walk .hx-walk-copy {
