@@ -25,6 +25,9 @@ export default function ConsoleHeader({ pendingAccessCount = 0 }: { pendingAcces
             <Link href="/console/bugops" className="transition-colors hover:text-neutral-50">
               BugOps
             </Link>
+            <Link href="/console/social-observatory" className="hidden transition-colors hover:text-neutral-50 sm:inline">
+              Social
+            </Link>
             <Link href="/console/access" className="inline-flex items-center gap-2 transition-colors hover:text-neutral-50">
               Approvals
               {pendingAccessCount > 0 ? (

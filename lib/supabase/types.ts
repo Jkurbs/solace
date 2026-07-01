@@ -1218,6 +1218,285 @@ export type Database = {
         };
         Relationships: [];
       };
+      social_observatory_signals: {
+        Row: {
+          id: string;
+          source:
+            | 'git_commit'
+            | 'git_worktree_change'
+            | 'hermes_current_reading'
+            | 'oracle_calibration'
+            | 'production_deploy'
+            | 'release_note'
+            | 'solace_product_update'
+            | 'founder_note'
+            | 'media_asset'
+            | 'x_timeline'
+            | 'x_mention'
+            | 'website_event'
+            | 'operator';
+          source_ref: string | null;
+          title: string;
+          summary: string;
+          tags: Json;
+          platform_fit: Json;
+          content_value: number;
+          risk_flags: Json;
+          status: 'NEW' | 'TRIAGED' | 'DRAFTED' | 'ARCHIVED';
+          raw_context: Json;
+          happened_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          source:
+            | 'git_commit'
+            | 'git_worktree_change'
+            | 'hermes_current_reading'
+            | 'oracle_calibration'
+            | 'production_deploy'
+            | 'release_note'
+            | 'solace_product_update'
+            | 'founder_note'
+            | 'media_asset'
+            | 'x_timeline'
+            | 'x_mention'
+            | 'website_event'
+            | 'operator';
+          source_ref?: string | null;
+          title: string;
+          summary: string;
+          tags?: Json;
+          platform_fit?: Json;
+          content_value?: number;
+          risk_flags?: Json;
+          status?: 'NEW' | 'TRIAGED' | 'DRAFTED' | 'ARCHIVED';
+          raw_context?: Json;
+          happened_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          source?:
+            | 'git_commit'
+            | 'git_worktree_change'
+            | 'hermes_current_reading'
+            | 'oracle_calibration'
+            | 'production_deploy'
+            | 'release_note'
+            | 'solace_product_update'
+            | 'founder_note'
+            | 'media_asset'
+            | 'x_timeline'
+            | 'x_mention'
+            | 'website_event'
+            | 'operator';
+          source_ref?: string | null;
+          title?: string;
+          summary?: string;
+          tags?: Json;
+          platform_fit?: Json;
+          content_value?: number;
+          risk_flags?: Json;
+          status?: 'NEW' | 'TRIAGED' | 'DRAFTED' | 'ARCHIVED';
+          raw_context?: Json;
+          happened_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      social_observatory_drafts: {
+        Row: {
+          id: string;
+          signal_id: string | null;
+          platform: 'x' | 'linkedin' | 'instagram' | 'newsletter' | 'homepage';
+          account:
+            | 'kerby_personal_x'
+            | 'solace_x'
+            | 'solace_linkedin'
+            | 'solace_instagram'
+            | 'solace_newsletter'
+            | 'solace_homepage';
+          format: string;
+          body: string;
+          signal_intent: string;
+          recommendation: string;
+          scores: Json;
+          review_notes: Json;
+          revision_request: string | null;
+          status:
+            | 'DRAFT'
+            | 'NEEDS_REVIEW'
+            | 'NEEDS_REVISION'
+            | 'APPROVED'
+            | 'PUBLISH_REQUESTED'
+            | 'PUBLISHED'
+            | 'REJECTED'
+            | 'SAVED_FOR_LATER'
+            | 'FAILED';
+          approved_at: string | null;
+          publish_requested_at: string | null;
+          published_at: string | null;
+          external_post_id: string | null;
+          external_url: string | null;
+          failure_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          signal_id?: string | null;
+          platform: 'x' | 'linkedin' | 'instagram' | 'newsletter' | 'homepage';
+          account:
+            | 'kerby_personal_x'
+            | 'solace_x'
+            | 'solace_linkedin'
+            | 'solace_instagram'
+            | 'solace_newsletter'
+            | 'solace_homepage';
+          format: string;
+          body: string;
+          signal_intent: string;
+          recommendation: string;
+          scores?: Json;
+          review_notes?: Json;
+          revision_request?: string | null;
+          status?:
+            | 'DRAFT'
+            | 'NEEDS_REVIEW'
+            | 'NEEDS_REVISION'
+            | 'APPROVED'
+            | 'PUBLISH_REQUESTED'
+            | 'PUBLISHED'
+            | 'REJECTED'
+            | 'SAVED_FOR_LATER'
+            | 'FAILED';
+          approved_at?: string | null;
+          publish_requested_at?: string | null;
+          published_at?: string | null;
+          external_post_id?: string | null;
+          external_url?: string | null;
+          failure_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          signal_id?: string | null;
+          platform?: 'x' | 'linkedin' | 'instagram' | 'newsletter' | 'homepage';
+          account?:
+            | 'kerby_personal_x'
+            | 'solace_x'
+            | 'solace_linkedin'
+            | 'solace_instagram'
+            | 'solace_newsletter'
+            | 'solace_homepage';
+          format?: string;
+          body?: string;
+          signal_intent?: string;
+          recommendation?: string;
+          scores?: Json;
+          review_notes?: Json;
+          revision_request?: string | null;
+          status?:
+            | 'DRAFT'
+            | 'NEEDS_REVIEW'
+            | 'NEEDS_REVISION'
+            | 'APPROVED'
+            | 'PUBLISH_REQUESTED'
+            | 'PUBLISHED'
+            | 'REJECTED'
+            | 'SAVED_FOR_LATER'
+            | 'FAILED';
+          approved_at?: string | null;
+          publish_requested_at?: string | null;
+          published_at?: string | null;
+          external_post_id?: string | null;
+          external_url?: string | null;
+          failure_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      social_observatory_performance: {
+        Row: {
+          id: string;
+          draft_id: string;
+          impressions: number;
+          replies: number;
+          bookmarks: number;
+          profile_visits: number;
+          clicks: number;
+          follows: number;
+          requests: number;
+          audience_quality: number;
+          captured_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          draft_id: string;
+          impressions?: number;
+          replies?: number;
+          bookmarks?: number;
+          profile_visits?: number;
+          clicks?: number;
+          follows?: number;
+          requests?: number;
+          audience_quality?: number;
+          captured_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          draft_id?: string;
+          impressions?: number;
+          replies?: number;
+          bookmarks?: number;
+          profile_visits?: number;
+          clicks?: number;
+          follows?: number;
+          requests?: number;
+          audience_quality?: number;
+          captured_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      social_observatory_watchlist: {
+        Row: {
+          id: string;
+          source: 'x_account' | 'x_search' | 'internal_event' | 'website';
+          label: string;
+          query: string;
+          tags: Json;
+          active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          source: 'x_account' | 'x_search' | 'internal_event' | 'website';
+          label: string;
+          query: string;
+          tags?: Json;
+          active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          source?: 'x_account' | 'x_search' | 'internal_event' | 'website';
+          label?: string;
+          query?: string;
+          tags?: Json;
+          active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
