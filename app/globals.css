@@ -5037,14 +5037,7 @@ h2 {
   }
 
   .hx-hero-glow {
-    position: absolute;
-    inset: -22% -10% auto;
-    height: 82%;
-    background:
-      radial-gradient(46% 60% at 50% 30%, rgba(255, 255, 255, 0.08), transparent 70%),
-      radial-gradient(40% 50% at 20% 14%, rgba(184, 190, 199, 0.1), transparent 72%),
-      radial-gradient(40% 50% at 82% 20%, rgba(242, 234, 219, 0.07), transparent 72%);
-    pointer-events: none;
+    display: none;
   }
 
   .hx-hero > * {
@@ -5155,10 +5148,7 @@ h2 {
   }
 
   .hx-pin-glow {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(50% 42% at 64% 46%, rgba(255, 255, 255, 0.085), transparent 70%);
-    pointer-events: none;
+    display: none;
   }
 
   .hx-walk-shell {
@@ -6612,10 +6602,10 @@ h2 {
 
   .hx-mobile-walk .hxm-panel-view {
     position: relative;
-    height: clamp(19rem, 44svh, 24rem);
+    height: clamp(21rem, 52svh, 30rem);
     overflow: hidden;
-    -webkit-mask: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%);
-    mask: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%);
+    -webkit-mask: linear-gradient(180deg, #000 0%, #000 88%, transparent 100%);
+    mask: linear-gradient(180deg, #000 0%, #000 88%, transparent 100%);
   }
 
   .hx-mobile-walk .hxm-board-track {
@@ -6979,7 +6969,7 @@ h2 {
     }
 
     .hx-mobile-walk .hxm-panel-view {
-      height: clamp(18.5rem, 43svh, 22.5rem);
+      height: clamp(20rem, 50svh, 28rem);
     }
 
     .hx-mobile-walk .hxm-board-track {
@@ -7013,7 +7003,7 @@ h2 {
     }
 
     .hx-mobile-walk .hxm-panel-view {
-      height: clamp(17.5rem, 42svh, 21rem);
+      height: clamp(19rem, 48svh, 25rem);
     }
 
     .hx-mobile-walk .hxm-board-track {
