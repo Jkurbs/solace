@@ -6,7 +6,7 @@ import Mark from '../Mark';
 export const metadata: Metadata = {
   title: 'Solace — Technical Brief',
   description:
-    'What Solace builds, how it is disciplined, and how it can be checked. V0.1, June 2026. No performance claims.',
+    'What Solace builds, how it is disciplined, and how it can be checked. V0.2, July 2026. No performance claims.',
 };
 
 const gate = [
@@ -54,8 +54,8 @@ const sections = [
     number: '05',
     title: 'Risk discipline',
     body: [
-      'Hermes operates through exchange-native accounts using trade-only API keys. Funds remain on the owner’s exchange; withdrawal by Hermes is impossible by construction, not by policy.',
-      'Risk is governed in layers: posture (how boldly capital is routed, from preservation to velocity), sizing that scales with field depth, hard drawdown guards, and kill switches that halt the system entirely. Standing down is treated as a position, and the system takes it often.',
+      'Approved users fund Hermes by depositing capital directly into Solace through the account dashboard. Deposits are recorded to the user’s Solace account, pass through settlement and treasury controls, and become eligible for Hermes allocation only after onboarding, identity, and risk checks are complete.',
+      'Risk is governed in layers: posture (how boldly capital is routed, from preservation to velocity), sizing that scales with field depth, hard drawdown guards, and kill switches that halt the system entirely. Money movement stays separate from signal generation: deposits, withdrawals, account value, and available balance remain visible through Solace account rails. Standing down is treated as a position, and the system takes it often.',
     ],
   },
   {
@@ -111,7 +111,7 @@ export default function BriefPage() {
           What we build, and how to check it.
         </h1>
         <p className="mt-6 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-[#6b6354]">
-          V0.1 · June 2026 · Supersedes none · No performance claims
+          V0.2 · July 2026 · Supersedes V0.1 · No performance claims
         </p>
 
         <div id="author" className="mt-10 flex items-center gap-5 border-t border-black/10 pt-8">
@@ -182,7 +182,7 @@ export default function BriefPage() {
 
         <div className="mt-20 flex flex-col gap-3 border-t border-black/10 pt-6 md:flex-row md:items-center md:justify-between">
           <p className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-[#6b6354]">
-            © 2026 Solace · Technical Brief V0.1
+            © 2026 Solace · Technical Brief V0.2
           </p>
           <Link
             href="/"

@@ -39,7 +39,7 @@ const sceneSteps = [
   {
     kicker: 'Shows',
     title: 'Capital and decisions.',
-    text: 'Allocation and recent activity stay visible without exposing entries, targets, or leverage.',
+    text: 'Allocation and recent activity stay visible while sensitive execution detail remains on protected account surfaces.',
     focus: 'execution',
   },
 ] satisfies Array<{
@@ -64,10 +64,10 @@ const mobileWalkthroughPanTargets: Record<HermesBoardFocus, string> = {
 };
 
 const impactItems = [
-  'Users understand what Hermes is doing without parsing technical systems or raw operational detail.',
+  'Users understand what Hermes is doing through a clear operating read across posture, capital state, and rationale.',
   'Posture, capital state, risk level, current action, and decision rationale are visible in one read.',
   'The public preview uses the same sanitized brief contract that powers public Hermes updates.',
-  'Sensitive signals, exact trades, prices, balances, PnL, and user-specific data stay private.',
+  'Sensitive signals, exact trades, prices, balances, PnL, and user-specific data stay on protected account surfaces.',
 ];
 
 const fees = [
@@ -84,7 +84,7 @@ const fees = [
   {
     label: 'Hermes access',
     value: 'Disclosed first',
-    note: 'Access terms are provided before onboarding. No hidden spreads or interface upsells.',
+    note: 'Access terms are provided before onboarding, with account movement visible in the dashboard.',
   },
 ];
 
@@ -447,8 +447,8 @@ export default function HermesExperience() {
           </Reveal>
           <Reveal delay={0.14}>
             <p>
-              Hermes is not a trading bot interface. It is a live oversight experience for reading uncertainty,
-              preserving capital, and showing why the system is waiting or acting.
+              Hermes is a live oversight experience for reading uncertainty, preserving capital, and showing why
+              the system is waiting or acting.
             </p>
           </Reveal>
         </div>
@@ -461,8 +461,7 @@ export default function HermesExperience() {
           </Reveal>
           <Reveal delay={0.08}>
             <blockquote>
-              The product should feel like checking on a professional allocator, not managing the account
-              yourself.
+              The product should feel like checking on a professional allocator with a clear account record.
             </blockquote>
           </Reveal>
         </div>
@@ -472,7 +471,7 @@ export default function HermesExperience() {
         <div className="hx-impact">
           <Reveal className="hx-feature-copy">
             <p className="section-kicker">Impact</p>
-            <h2>A dashboard for oversight, not intervention.</h2>
+            <h2>A dashboard for live oversight.</h2>
           </Reveal>
           <Reveal delay={0.08}>
             <ol className="hx-impact-list">
@@ -490,9 +489,9 @@ export default function HermesExperience() {
             <p className="section-kicker">Access model</p>
             <h2>Simple terms before capital moves.</h2>
             <p>
-              Hermes is not designed around spreads, gimmicks, or hidden complexity. Access terms are disclosed
-              before onboarding, users deposit directly into Solace, and account movement stays visible in the
-              dashboard.
+              Hermes presents access terms before onboarding. Users deposit directly into Solace, account movement
+              stays visible in the dashboard, and capital becomes eligible for allocation through the selected
+              profile.
             </p>
           </Reveal>
           <div className="hx-fees">
