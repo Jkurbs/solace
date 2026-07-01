@@ -69,21 +69,26 @@ const impactItems = [
   'Sensitive signals, exact trades, prices, balances, PnL, and user-specific data stay on protected account surfaces.',
 ];
 
-const fees = [
+const accessSteps = [
   {
-    label: 'Deposits',
-    value: 'Direct',
-    note: 'Users deposit capital directly into Solace before Hermes allocates according to the selected profile.',
+    label: '01',
+    value: 'Review',
+    note: 'Access is granted in stages after account review.',
   },
   {
-    label: 'Money movement',
-    value: 'Visible',
-    note: 'Deposits, withdrawals, current value, and available balance remain visible in the Solace dashboard.',
+    label: '02',
+    value: 'Profile',
+    note: 'Users select the risk profile Hermes must respect.',
   },
   {
-    label: 'Hermes access',
-    value: 'Disclosed first',
-    note: 'Access terms are provided before onboarding, with account movement visible in the dashboard.',
+    label: '03',
+    value: 'Deposit',
+    note: 'Capital is deposited directly into Solace and recorded to the user account.',
+  },
+  {
+    label: '04',
+    value: 'Allocation',
+    note: 'Hermes can allocate only after settlement, treasury, and risk checks clear.',
   },
 ];
 
@@ -524,22 +529,22 @@ export default function HermesExperience() {
       <section className="hx-shell">
         <div className="hx-access">
           <Reveal className="hx-feature-copy">
-            <p className="section-kicker">Access model</p>
-            <h2>Simple terms before capital moves.</h2>
+            <p className="section-kicker">Before capital moves</p>
+            <h2>Access begins with review.</h2>
             <p>
-              Hermes presents access terms before onboarding. Users deposit directly into Solace, account movement
-              stays visible in the dashboard, and capital becomes eligible for allocation through the selected
-              profile.
+              Once approved, users complete onboarding, select a risk profile, and deposit directly into Solace.
+              Capital becomes eligible for Hermes only after account, identity, settlement, treasury, and risk
+              checks are complete.
             </p>
           </Reveal>
-          <div className="hx-fees">
-            {fees.map((fee, index) => (
-              <Reveal key={fee.label} className="hx-fee" delay={index * 0.07}>
-                <div className="hx-fee-row">
-                  <span>{fee.label}</span>
-                  <strong>{fee.value}</strong>
+          <div className="hx-access-steps">
+            {accessSteps.map((step, index) => (
+              <Reveal key={step.label} className="hx-access-step" delay={index * 0.07}>
+                <div className="hx-access-step-row">
+                  <span>{step.label}</span>
+                  <strong>{step.value}</strong>
                 </div>
-                <p>{fee.note}</p>
+                <p>{step.note}</p>
               </Reveal>
             ))}
           </div>

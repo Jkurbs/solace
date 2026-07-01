@@ -5619,7 +5619,7 @@ h2 {
     letter-spacing: 0.1em;
   }
 
-  /* --- ACCESS / FEES --- */
+  /* --- ACCESS MODEL --- */
   .hx-access {
     display: grid;
     grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
@@ -5628,12 +5628,12 @@ h2 {
     border-top: 1px solid rgba(250, 250, 250, 0.08);
   }
 
-  .hx-fees {
+  .hx-access-steps {
     display: grid;
     gap: 0.9rem;
   }
 
-  .hx-fee {
+  .hx-access-step {
     display: grid;
     gap: 0.45rem;
     border: 1px solid rgba(250, 250, 250, 0.09);
@@ -5642,14 +5642,14 @@ h2 {
     padding: 1.4rem 1.5rem;
   }
 
-  .hx-fee-row {
+  .hx-access-step-row {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 1rem;
   }
 
-  .hx-fee-row span {
+  .hx-access-step-row span {
     color: var(--accent);
     font-family: var(--font-plex), monospace;
     font-size: 0.66rem;
@@ -5657,14 +5657,14 @@ h2 {
     text-transform: uppercase;
   }
 
-  .hx-fee-row strong {
+  .hx-access-step-row strong {
     color: var(--foreground);
     font-family: var(--font-display), Georgia, serif;
     font-weight: 500;
     font-size: 1.15rem;
   }
 
-  .hx-fee p {
+  .hx-access-step p {
     margin: 0;
     color: rgba(250, 250, 250, 0.58);
     font-size: 0.95rem;
