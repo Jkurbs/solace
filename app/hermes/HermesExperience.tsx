@@ -179,7 +179,15 @@ function StepRow({ activeStep }: { activeStep: number | 'all' }) {
   );
 }
 
-function DashboardWindow({ compact = false, pan }: { compact?: boolean; pan?: MotionValue<string> }) {
+function DashboardWindow({
+  animateCompact = false,
+  compact = false,
+  pan,
+}: {
+  animateCompact?: boolean;
+  compact?: boolean;
+  pan?: MotionValue<string>;
+}) {
   return (
     <div className={`hx-window${compact ? ' hx-window-mobile' : ''}`}>
       <div className="hx-window-bar">
@@ -193,7 +201,9 @@ function DashboardWindow({ compact = false, pan }: { compact?: boolean; pan?: Mo
       </div>
       <div className={`hx-window-view${pan ? '' : ' is-static'}${compact ? ' is-mobile' : ''}`}>
         {compact ? (
-          <HermesBoardMobileArt />
+          <div className={`hxm-board-track${animateCompact ? ' is-animated' : ''}`}>
+            <HermesBoardMobileArt />
+          </div>
         ) : pan ? (
           <motion.div className="hx-board-pan" style={{ y: pan }}>
             <HermesBoardArt />
@@ -232,7 +242,7 @@ function DashboardReveal() {
       <section className="hx-shell hx-reveal-static">
         <StepRow activeStep="all" />
         <div className="hx-pin-static-frame">
-          <DashboardWindow compact />
+          <DashboardWindow compact animateCompact={!reduce} />
         </div>
       </section>
     );
