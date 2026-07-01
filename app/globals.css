@@ -6641,7 +6641,7 @@ h2 {
 
   .hx-mobile-walk .hx-walk-step {
     border-left: 0;
-    min-height: 78svh;
+    min-height: 92svh;
     opacity: 0;
     padding: clamp(3rem, 13vw, 4.75rem) 0;
   }
@@ -6977,7 +6977,7 @@ h2 {
     }
 
     .hx-mobile-walk .hx-walk-step {
-      min-height: 76svh;
+      min-height: 88svh;
     }
 
     .hxm-board {

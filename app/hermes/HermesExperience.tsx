@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   type MotionValue,
   motion,
+  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useSpring,
@@ -59,6 +60,7 @@ const walkthroughPanTargets: Record<HermesBoardFocus, string> = {
 
 const mobileWalkthroughPanStops = [0, 0.3, 0.58, 0.84, 1];
 const mobileWalkthroughPanValues = [0, -21, -38, -53, -53];
+const mobileWalkthroughFocusCuts = [-10.5, -29.5, -45.5];
 
 const impactItems = [
   'Users understand what Hermes is doing through a clear operating read across posture, capital state, and rationale.',
@@ -197,6 +199,35 @@ function useWalkthroughStep(
   return step;
 }
 
+function useMobileWalkthroughStep(panValue: MotionValue<number>, enabled: boolean) {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) {
+      setStep(0);
+    }
+  }, [enabled]);
+
+  useMotionValueEvent(panValue, 'change', (value) => {
+    if (!enabled) {
+      return;
+    }
+
+    const nextStep =
+      value <= mobileWalkthroughFocusCuts[2]
+        ? 3
+        : value <= mobileWalkthroughFocusCuts[1]
+          ? 2
+          : value <= mobileWalkthroughFocusCuts[0]
+            ? 1
+            : 0;
+
+    setStep((current) => (current === nextStep ? current : nextStep));
+  });
+
+  return step;
+}
+
 function StepRow({ activeStep }: { activeStep: number | 'all' }) {
   return (
     <div className="hx-reveal-steps">
@@ -311,9 +342,11 @@ function DashboardReveal() {
   const rotateX = useTransform(scrollYProgress, [0, 0.16], [7, 0]);
   const lift = useTransform(scrollYProgress, [0, 0.16], [34, 0]);
   const mobilePanProgress = useTransform(scrollYProgress, mobileWalkthroughPanStops, mobileWalkthroughPanValues);
-  const mobilePanSpring = useSpring(mobilePanProgress, { stiffness: 105, damping: 34, mass: 0.38 });
+  const mobilePanSpring = useSpring(mobilePanProgress, { stiffness: 150, damping: 34, mass: 0.3 });
   const mobilePanY = useTransform(mobilePanSpring, (value) => `${value}%`);
-  const step = useWalkthroughStep(ref, !reduce, isCompact ? 0.48 : 0.5, isCompact ? 0 : 0.5);
+  const desktopStep = useWalkthroughStep(ref, !reduce && !isCompact);
+  const mobileStep = useMobileWalkthroughStep(mobilePanSpring, !reduce && isCompact);
+  const step = isCompact ? mobileStep : desktopStep;
   const activeFocus = sceneSteps[step]?.focus ?? sceneSteps[0].focus;
 
   if (isCompact && reduce) {
