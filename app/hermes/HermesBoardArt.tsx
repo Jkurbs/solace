@@ -48,13 +48,11 @@ export function HermesBoardMobileArt({ focus }: { focus?: HermesBoardFocus }) {
       </div>
 
       <section className="hxm-card hxm-portfolio hxm-region is-overview">
-        <div className="hxm-card-head">
-          <span>
-            <span className="hxm-label">Portfolio Value</span>
-            <strong className="hxm-value">$50,897.01</strong>
-          </span>
+        <div className="hxm-card-head hxm-portfolio-head">
+          <span className="hxm-label">Portfolio Value</span>
           <span className="hxm-pill">Simulation</span>
         </div>
+        <strong className="hxm-value">$50,897.01</strong>
         <div className="hxm-metrics hxm-metrics-two">
           <span>
             <span className="hxm-label">Today&apos;s Change</span>

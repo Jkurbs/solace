@@ -6755,15 +6755,17 @@ h2 {
       linear-gradient(180deg, rgba(10, 10, 10, 0.98) 0%, rgba(10, 10, 10, 0.96) 74%, rgba(10, 10, 10, 0) 100%);
   }
 
-  .hx-mobile-walk .hx-window-mobile {
+  .hx-mobile-walk .hxm-panel {
     width: min(100%, 22.5rem);
-    box-shadow:
-      0 1.8rem 5rem rgba(0, 0, 0, 0.72),
-      0 0.5rem 1.2rem rgba(255, 255, 255, 0.035);
+    overflow: hidden;
+    border-radius: 0.95rem;
+    box-shadow: 0 1.8rem 5rem rgba(0, 0, 0, 0.68);
   }
 
-  .hx-mobile-walk .hx-window-view.is-mobile {
+  .hx-mobile-walk .hxm-panel-view {
+    position: relative;
     height: clamp(14rem, 33svh, 16.5rem);
+    overflow: hidden;
     -webkit-mask: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%);
     mask: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%);
   }
@@ -6796,13 +6798,21 @@ h2 {
   }
 
   .hxm-board {
+    box-sizing: border-box;
     width: 100%;
+    overflow: hidden;
     padding: 0.85rem;
     background:
       radial-gradient(circle at 22% 0%, rgba(216, 168, 91, 0.08), transparent 34%),
       #0a0a0a;
     color: rgba(250, 250, 250, 0.92);
     font-family: var(--font-grotesk);
+  }
+
+  .hxm-board *,
+  .hxm-board *::before,
+  .hxm-board *::after {
+    box-sizing: border-box;
   }
 
   .hxm-region {
@@ -6844,8 +6854,21 @@ h2 {
     min-width: 0;
   }
 
+  .hxm-card-head > span:first-child,
+  .hxm-allocation-head > span:first-child {
+    min-width: 0;
+  }
+
   .hxm-topbar {
     margin-bottom: 0.8rem;
+  }
+
+  .hxm-portfolio-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 0.32rem;
   }
 
   .hxm-brand,
@@ -6866,6 +6889,7 @@ h2 {
 
   .hxm-live,
   .hxm-pill {
+    flex: 0 0 auto;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 999px;
     color: rgba(250, 250, 250, 0.66);
@@ -6883,6 +6907,7 @@ h2 {
   }
 
   .hxm-card {
+    overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0.75rem;
     background: rgba(24, 23, 21, 0.94);
@@ -6917,7 +6942,9 @@ h2 {
   .hxm-value {
     display: block;
     margin-top: 0.32rem;
-    font-size: clamp(2.25rem, 10vw, 3rem);
+    max-width: 100%;
+    font-size: clamp(2.08rem, 9.2vw, 2.72rem);
+    line-height: 0.98;
     letter-spacing: 0;
     white-space: nowrap;
   }
@@ -6945,6 +6972,7 @@ h2 {
     display: block;
     margin-top: 0.22rem;
     font-size: 0.98rem;
+    line-height: 1.12;
     overflow-wrap: anywhere;
   }
 
@@ -7074,7 +7102,7 @@ h2 {
       --hxm-scale: 0.84;
     }
 
-    .hx-mobile-walk .hx-window-view.is-mobile {
+    .hx-mobile-walk .hxm-panel-view {
       height: clamp(13.25rem, 32svh, 15.5rem);
     }
 
@@ -7104,7 +7132,7 @@ h2 {
       --hxm-scale: 0.8;
     }
 
-    .hx-mobile-walk .hx-window-view.is-mobile {
+    .hx-mobile-walk .hxm-panel-view {
       height: 12.75rem;
     }
 

@@ -322,8 +322,32 @@ function DashboardWindow({
   focus?: HermesBoardFocus;
   panTarget?: string;
 }) {
+  if (compact) {
+    return (
+      <div className="hxm-panel">
+        <div className={`hxm-panel-view${panTarget ? '' : ' is-static'}`}>
+          {panTarget ? (
+            <motion.div
+              className="hxm-mobile-pan"
+              animate={{ y: panTarget }}
+              transition={{ duration: 0.75, ease: EASE }}
+            >
+              <div className="hxm-board-track">
+                <HermesBoardMobileArt focus={focus} />
+              </div>
+            </motion.div>
+          ) : (
+            <div className={`hxm-board-track${animateCompact ? ' is-animated' : ''}`}>
+              <HermesBoardMobileArt focus={focus} />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`hx-window${compact ? ' hx-window-mobile' : ''}`}>
+    <div className="hx-window">
       <div className="hx-window-bar">
         <span className="hx-window-dots">
           <i />
@@ -333,22 +357,8 @@ function DashboardWindow({
         <span className="hx-window-url">app.solace.fyi/dashboard · Live</span>
         <span className="hx-window-spacer" />
       </div>
-      <div className={`hx-window-view${panTarget ? '' : ' is-static'}${compact ? ' is-mobile' : ''}`}>
-        {compact && panTarget ? (
-          <motion.div
-            className="hxm-mobile-pan"
-            animate={{ y: panTarget }}
-            transition={{ duration: 0.75, ease: EASE }}
-          >
-            <div className="hxm-board-track">
-              <HermesBoardMobileArt focus={focus} />
-            </div>
-          </motion.div>
-        ) : compact ? (
-          <div className={`hxm-board-track${animateCompact ? ' is-animated' : ''}`}>
-            <HermesBoardMobileArt focus={focus} />
-          </div>
-        ) : panTarget ? (
+      <div className={`hx-window-view${panTarget ? '' : ' is-static'}`}>
+        {panTarget ? (
           <motion.div
             className="hx-board-pan"
             animate={{ y: panTarget }}
