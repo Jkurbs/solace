@@ -63,6 +63,7 @@ const footerSystems = [
   { name: 'Autonomy', status: 'Gated' },
 ];
 
+const footerSocials = [{ name: 'X @solacefyi', href: 'https://x.com/solacefyi' }];
 const footerEmails = ['hello@solace.fyi', 'support@solace.fyi', 'security@solace.fyi'];
 
 function Header() {
@@ -411,7 +412,7 @@ export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
 
       <footer className="site-footer px-5 pb-10 pt-14 md:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="grid gap-12 border-t border-white/10 pt-12 md:grid-cols-[1.3fr_1fr_1fr_1.1fr]">
+          <div className="grid gap-12 border-t border-white/10 pt-12 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_0.8fr_1.1fr]">
             <div>
               <p className="flex items-center gap-3 font-serif text-3xl font-medium text-foreground">
                 <Mark size={36} className="site-mark" />
@@ -468,13 +469,21 @@ export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
             </div>
 
             <div className="footer-col">
+              <p className="footer-heading">Socials</p>
+              <ul>
+                {footerSocials.map((social) => (
+                  <li key={social.name}>
+                    <a href={social.href} target="_blank" rel="noreferrer">
+                      {social.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="footer-col">
               <p className="footer-heading">Contact</p>
               <ul>
-                <li>
-                  <a href="https://x.com/solacefyi" target="_blank" rel="noreferrer">
-                    X @solacefyi
-                  </a>
-                </li>
                 {footerEmails.map((email) => (
                   <li key={email}>
                     <a href={`mailto:${email}`}>{email}</a>
