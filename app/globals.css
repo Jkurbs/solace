@@ -4081,6 +4081,11 @@ h2 {
       display: none;
     }
 
+    /* One action in the compact bar; Login moves into the menu panel. */
+    .site-action-login {
+      display: none;
+    }
+
     .site-action-link {
       font-size: 0.72rem;
     }

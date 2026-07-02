@@ -86,7 +86,7 @@ function Header() {
         </nav>
 
         <div className="site-actions">
-          <Link href="/dashboard" className="site-action-link">
+          <Link href="/dashboard" className="site-action-link site-action-login">
             Login
           </Link>
           <span className="site-action-separator" aria-hidden="true" />
@@ -118,6 +118,9 @@ function Header() {
         </Link>
         <Link href="/oracle" onClick={() => setMenuOpen(false)}>
           Oracle
+        </Link>
+        <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
+          Login
         </Link>
       </div>
     </header>
