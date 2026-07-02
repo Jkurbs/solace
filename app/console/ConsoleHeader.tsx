@@ -19,9 +19,12 @@ export default function ConsoleHeader({ pendingAccessCount = 0 }: { pendingAcces
           </Link>
           <ConsoleLiveRefresh />
         </div>
-        <nav className="grid grid-cols-4 items-center gap-2 text-center text-xs font-bold text-neutral-400 sm:flex sm:gap-4 sm:text-left sm:text-sm">
+        <nav className="grid grid-cols-5 items-center gap-2 text-center text-xs font-bold text-neutral-400 sm:flex sm:gap-4 sm:text-left sm:text-sm">
           <Link href="/console" className="rounded-md border border-neutral-800 bg-neutral-950/30 px-2 py-2 transition-colors hover:text-neutral-50 sm:border-0 sm:bg-transparent sm:p-0">
             Console
+          </Link>
+          <Link href="/console/articles" className="rounded-md border border-neutral-800 bg-neutral-950/30 px-2 py-2 transition-colors hover:text-neutral-50 sm:border-0 sm:bg-transparent sm:p-0">
+            Articles
           </Link>
           <Link href="/console/bugops" className="rounded-md border border-neutral-800 bg-neutral-950/30 px-2 py-2 transition-colors hover:text-neutral-50 sm:border-0 sm:bg-transparent sm:p-0">
             BugOps

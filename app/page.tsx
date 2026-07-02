@@ -67,6 +67,9 @@ function Header() {
           <Link href="/brief">
             Brief
           </Link>
+          <Link href="/research">
+            Research
+          </Link>
           <Link href="/hermes">
             Hermes
           </Link>
@@ -95,6 +98,9 @@ function Header() {
       <div className={`site-menu-panel${menuOpen ? ' is-open' : ''}`}>
         <Link href="/brief" onClick={() => setMenuOpen(false)}>
           Brief
+        </Link>
+        <Link href="/research" onClick={() => setMenuOpen(false)}>
+          Research
         </Link>
         <Link href="/hermes" onClick={() => setMenuOpen(false)}>
           Hermes
@@ -259,6 +265,9 @@ export default function Home() {
               <ul>
                 <li>
                   <Link href="/brief">Technical brief</Link>
+                </li>
+                <li>
+                  <Link href="/research">Research</Link>
                 </li>
                 <li>
                   <Link href="/dashboard">Request access</Link>

@@ -231,6 +231,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      solace_articles: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          dek: string;
+          body: string;
+          author: string;
+          handle: string;
+          label: string;
+          cover_direction: string;
+          status: 'draft' | 'published';
+          published_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          slug: string;
+          title: string;
+          dek?: string;
+          body?: string;
+          author?: string;
+          handle?: string;
+          label?: string;
+          cover_direction?: string;
+          status?: 'draft' | 'published';
+          published_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          slug?: string;
+          title?: string;
+          dek?: string;
+          body?: string;
+          author?: string;
+          handle?: string;
+          label?: string;
+          cover_direction?: string;
+          status?: 'draft' | 'published';
+          published_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       bugops_reports: {
         Row: {
           id: string;

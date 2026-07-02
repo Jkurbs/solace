@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import type { ReactNode, RefObject } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import {
   type MotionValue,
@@ -16,8 +15,12 @@ import {
 import Mark from '../Mark';
 import HermesBoardArt, { HermesBoardMobileArt, type HermesBoardFocus } from './HermesBoardArt';
 import RequestAccessForm from './RequestAccessForm';
-
-const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
+import { EASE, Reveal, useMediaQuery, useWalkthroughStep } from './shared';
+import ProblemSection from './ProblemSection';
+import DecisionGates from './DecisionGates';
+import ScenarioSection from './ScenarioSection';
+import FourDecisions from './FourDecisions';
+import StandDownSection from './StandDownSection';
 
 const sceneSteps = [
   {
@@ -92,116 +95,11 @@ const accessSteps = [
   },
 ];
 
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    const update = () => setMatches(media.matches);
-    update();
-    media.addEventListener('change', update);
-    return () => media.removeEventListener('change', update);
-  }, [query]);
-
-  return matches;
-}
-
-function Reveal({
-  children,
-  className,
-  delay = 0,
-  y = 26,
-}: {
-  children: ReactNode;
-  className?: string;
-  delay?: number;
-  y?: number;
-}) {
-  const reduce = useReducedMotion();
-
-  return (
-    <motion.div
-      className={className}
-      initial={reduce ? false : { opacity: 0, y }}
-      whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-12% 0px -12% 0px' }}
-      transition={{ duration: 0.8, delay, ease: EASE }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
 function ScrollProgress() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 130, damping: 30, mass: 0.3 });
 
   return <motion.div className="hx-progress" style={{ scaleX }} aria-hidden="true" />;
-}
-
-function useWalkthroughStep(
-  ref: RefObject<HTMLElement | null>,
-  enabled: boolean,
-  viewportAnchorRatio = 0.5,
-  itemAnchorRatio = 0.5,
-) {
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    if (!enabled) {
-      setStep(0);
-      return;
-    }
-
-    let frame = 0;
-
-    const update = () => {
-      frame = 0;
-      const element = ref.current;
-
-      if (!element) {
-        return;
-      }
-
-      const steps = Array.from(element.querySelectorAll<HTMLElement>('.hx-walk-step'));
-      const viewportAnchor = window.innerHeight * viewportAnchorRatio;
-      const nextStep = steps.reduce(
-        (best, item, index) => {
-          const rect = item.getBoundingClientRect();
-          const itemAnchor = rect.top + rect.height * itemAnchorRatio;
-          const distance = Math.abs(itemAnchor - viewportAnchor);
-
-          return distance < best.distance ? { distance, index } : best;
-        },
-        { distance: Number.POSITIVE_INFINITY, index: 0 },
-      ).index;
-
-      setStep((current) => (current === nextStep ? current : nextStep));
-    };
-
-    const requestUpdate = () => {
-      if (frame) {
-        return;
-      }
-
-      frame = window.requestAnimationFrame(update);
-    };
-
-    update();
-    window.addEventListener('scroll', requestUpdate, { passive: true });
-    window.addEventListener('resize', requestUpdate);
-
-    return () => {
-      if (frame) {
-        window.cancelAnimationFrame(frame);
-      }
-
-      window.removeEventListener('scroll', requestUpdate);
-      window.removeEventListener('resize', requestUpdate);
-    };
-  }, [enabled, itemAnchorRatio, ref, viewportAnchorRatio]);
-
-  return step;
 }
 
 function useMobileWalkthroughStep(panValue: MotionValue<number>, enabled: boolean) {
@@ -429,25 +327,17 @@ function DashboardReveal() {
   );
 }
 
-export default function HermesExperience() {
+function Hero() {
+  const reduce = useReducedMotion();
+  const ref = useRef<HTMLElement | null>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
+  const opacity = useTransform(scrollYProgress, [0, 0.85], [1, 0.12]);
+  const y = useTransform(scrollYProgress, [0, 1], [0, 60]);
+
   return (
-    <main className="hx-page">
-      <ScrollProgress />
-
-      <header className="hx-header">
-        <div className="hx-header-inner">
-          <Link href="/" className="hx-brand">
-            <Mark size={20} />
-            Solace
-          </Link>
-          <a href="#request-access" className="hx-btn hx-btn-primary hx-btn-sm">
-            Request Hermes
-          </a>
-        </div>
-      </header>
-
-      <section className="hx-hero">
-        <div className="hx-hero-glow" aria-hidden="true" />
+    <section ref={ref} className="hx-hero">
+      <div className="hx-hero-glow" aria-hidden="true" />
+      <motion.div className="hx-hero-inner" style={reduce ? undefined : { opacity, y }}>
         <Reveal>
           <p className="section-kicker">Hermes by Solace</p>
         </Reveal>
@@ -476,9 +366,50 @@ export default function HermesExperience() {
             <span className="hx-scrollcue-rail" aria-hidden="true" />
           </div>
         </Reveal>
-      </section>
+      </motion.div>
+    </section>
+  );
+}
 
-      <DashboardReveal />
+const briefHighlights = [
+  {
+    title: 'Thesis',
+    text: 'Individual events resist prediction, but the structure around them — liquidity, timing, regime, probability — can be read, modeled, and acted on with discipline.',
+  },
+  {
+    title: 'Risk discipline',
+    text: 'Risk is governed in layers: posture, sizing that scales with field depth, hard drawdown guards, and kill switches. Money movement stays separate from signal generation.',
+  },
+  {
+    title: 'Verification',
+    text: 'Claims that can be checked, published when they can be checked. Decision trails are recorded at decision time; anything not yet checkable is labeled with its honest status.',
+  },
+];
+
+export default function HermesExperience() {
+  return (
+    <main className="hx-page">
+      <ScrollProgress />
+
+      <header className="hx-header">
+        <div className="hx-header-inner">
+          <Link href="/" className="hx-brand">
+            <Mark size={20} />
+            Solace
+          </Link>
+          <a href="#request-access" className="hx-btn hx-btn-primary hx-btn-sm">
+            Request Hermes
+          </a>
+        </div>
+      </header>
+
+      <Hero />
+
+      <ProblemSection />
+
+      <DecisionGates />
+
+      <ScenarioSection />
 
       <section className="hx-shell">
         <div className="hx-apple-intro">
@@ -496,6 +427,8 @@ export default function HermesExperience() {
           </Reveal>
         </div>
       </section>
+
+      <DashboardReveal />
 
       <section className="hx-shell">
         <div className="hx-quote">
@@ -526,6 +459,10 @@ export default function HermesExperience() {
         </div>
       </section>
 
+      <FourDecisions />
+
+      <StandDownSection />
+
       <section className="hx-shell">
         <div className="hx-access">
           <Reveal className="hx-feature-copy">
@@ -537,17 +474,51 @@ export default function HermesExperience() {
               checks are complete.
             </p>
           </Reveal>
-          <div className="hx-access-steps">
+          <ol className="hx-access-timeline">
             {accessSteps.map((step, index) => (
-              <Reveal key={step.label} className="hx-access-step" delay={index * 0.07}>
-                <div className="hx-access-step-row">
-                  <span>{step.label}</span>
-                  <strong>{step.value}</strong>
+              <Reveal key={step.label} className="hx-access-tstep" delay={index * 0.09}>
+                <span className="hx-access-tmark" aria-hidden="true" />
+                <div className="hx-access-tbody">
+                  <div className="hx-access-step-row">
+                    <span>{step.label}</span>
+                    <strong>{step.value}</strong>
+                  </div>
+                  <p>{step.note}</p>
                 </div>
-                <p>{step.note}</p>
+              </Reveal>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section className="hx-shell">
+        <div className="hx-briefcard">
+          <Reveal className="hx-feature-copy">
+            <p className="section-kicker">Go deeper</p>
+            <h2>The brief says how to check us.</h2>
+            <p>
+              Architecture, risk discipline, and the verification commitments Hermes is held to — written to be
+              checked, not believed.
+            </p>
+          </Reveal>
+          <div className="hx-briefcard-grid">
+            {briefHighlights.map((highlight, index) => (
+              <Reveal key={highlight.title} className="hx-briefcard-item" delay={index * 0.08}>
+                <strong>{highlight.title}</strong>
+                <p>{highlight.text}</p>
               </Reveal>
             ))}
           </div>
+          <Reveal delay={0.12}>
+            <div className="hx-briefcard-actions">
+              <Link href="/brief" className="hx-btn hx-btn-secondary">
+                Read the full brief
+              </Link>
+              <Link href="/research" className="text-link">
+                Or start with the research
+              </Link>
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -557,6 +528,12 @@ export default function HermesExperience() {
           <Link href="/brief" className="text-link">
             Read the technical brief
           </Link>
+        </Reveal>
+        <Reveal delay={0.06}>
+          <p className="hx-form-expect">
+            Hermes is introduced in stages. Every request is reviewed; if selected, Solace reaches out directly
+            to begin account review.
+          </p>
         </Reveal>
         <RequestAccessForm />
       </section>

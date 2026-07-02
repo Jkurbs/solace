@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Bug, MessageSquareText, ShieldCheck } from 'lucide-react';
+import { Bug, FileText, MessageSquareText, ShieldCheck } from 'lucide-react';
 
 import { listAccessRequests } from '@/features/access-review/store';
 import type { HermesAccessRequest } from '@/features/access-review/types';
@@ -29,6 +29,12 @@ function countPendingReviews(requests: HermesAccessRequest[]) {
 }
 
 const operatorLanes = [
+  {
+    description: 'Draft research notes, preview article layouts, and export clean Markdown or JSON.',
+    href: '/console/articles',
+    icon: FileText,
+    label: 'Article Creator',
+  },
   {
     description: 'Safe-to-paste drafts, disclosure classes, redaction blocks, and approval-gated social copy.',
     href: '/console/social-observatory',
