@@ -184,13 +184,13 @@ h2 {
     text-transform: uppercase;
   }
 
-  /* Matches .hx-brand on the Hermes page: one wordmark treatment sitewide. */
+  /* Matches .hx-brand on the Hermes page, but white on the homepage. */
   .site-wordmark {
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
     justify-self: start;
-    color: var(--muted);
+    color: var(--foreground);
     font-family: var(--font-plex), monospace;
     font-size: 0.72rem;
     font-weight: 700;
@@ -778,7 +778,8 @@ h2 {
 
   /* --- INSTRUMENT CARD GRID (cards layout: renders live inside cards) --- */
   .inst-wrap {
-    padding: clamp(1.5rem, 4vw, 3rem) 0 clamp(2.5rem, 6vw, 4.5rem);
+    padding-top: clamp(1.5rem, 4vw, 3rem);
+    padding-bottom: clamp(2.5rem, 6vw, 4.5rem);
   }
 
   .inst-grid {
@@ -1087,7 +1088,8 @@ h2 {
 
   /* --- HOMEPAGE NEWS STRIP --- */
   .news-strip {
-    padding: clamp(1.5rem, 4vw, 2.5rem) 0 clamp(4.5rem, 10vw, 8rem);
+    padding-top: clamp(1.5rem, 4vw, 2.5rem);
+    padding-bottom: clamp(4.5rem, 10vw, 8rem);
   }
 
   .news-strip-inner {
@@ -1162,8 +1164,10 @@ h2 {
   }
 
   /* --- LATEST RESEARCH STRIP --- */
+  /* Vertical padding only — longhand so the section's px-5/md:px-8 survives. */
   .research-strip {
-    padding: clamp(4rem, 9vw, 7rem) 0 clamp(3rem, 7vw, 5rem);
+    padding-top: clamp(4rem, 9vw, 7rem);
+    padding-bottom: clamp(3rem, 7vw, 5rem);
   }
 
   .research-strip-inner {
