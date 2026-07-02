@@ -948,6 +948,9 @@ h2 {
     z-index: 0;
     display: block;
     overflow: hidden;
+    /* The futures render runs brighter than the Hermes liquidity field;
+       dim it here so the two instrument sections sit in the same night. */
+    opacity: 0.72;
     mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 84%, transparent 100%);
     -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 84%, transparent 100%);
   }
