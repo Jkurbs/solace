@@ -1039,6 +1039,87 @@ h2 {
     white-space: nowrap;
   }
 
+  /* --- NOTE PLATE (signature research cover: "The Reading") --- */
+  .note-plate {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+    border: 1px solid rgba(250, 250, 250, 0.1);
+    border-radius: 0.9rem;
+    background: #0d0d0b;
+  }
+
+  .note-plate canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .note-plate-label {
+    position: absolute;
+    left: 0.85rem;
+    bottom: 0.7rem;
+    color: rgba(250, 250, 250, 0.55);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.56rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .note-plate-mark {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.8rem;
+    color: rgba(250, 250, 250, 0.4);
+    font-size: 0.75rem;
+    line-height: 1;
+  }
+
+  /* --- NEWS INDEX --- */
+  .news-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    gap: clamp(1rem, 2vw, 1.5rem);
+  }
+
+  .news-item {
+    display: grid;
+    align-content: start;
+    gap: 0.55rem;
+  }
+
+  .news-item .note-plate {
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+
+  .news-item:hover .note-plate {
+    border-color: rgba(250, 250, 250, 0.26);
+    transform: translateY(-3px);
+  }
+
+  .news-item-date {
+    margin-top: 0.3rem;
+    color: rgba(250, 250, 250, 0.42);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .news-item-title {
+    color: var(--foreground);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .news-item-dek {
+    color: rgba(250, 250, 250, 0.55);
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
   /* --- LATEST RESEARCH STRIP --- */
   .research-strip {
     padding: clamp(3rem, 7vw, 5.5rem) 0;
@@ -1046,11 +1127,21 @@ h2 {
 
   .research-strip-inner {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 1.5rem 3rem;
+    grid-template-columns: minmax(11rem, 16rem) minmax(0, 1fr) auto;
+    gap: 1.5rem 2.4rem;
     align-items: end;
     border-top: 1px solid rgba(250, 250, 250, 0.1);
     padding-top: clamp(1.8rem, 4vw, 2.6rem);
+  }
+
+  .research-strip-plate {
+    display: block;
+    align-self: center;
+    transition: transform 0.25s ease;
+  }
+
+  .research-strip-plate:hover {
+    transform: translateY(-3px);
   }
 
   .research-strip-copy {
@@ -1096,6 +1187,10 @@ h2 {
     .research-strip-inner {
       grid-template-columns: 1fr;
       align-items: start;
+    }
+
+    .research-strip-plate {
+      width: min(100%, 22rem);
     }
   }
 

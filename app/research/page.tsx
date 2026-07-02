@@ -5,8 +5,10 @@ import remarkGfm from 'remark-gfm';
 
 import { getLatestPublishedArticle } from '@/features/articles/store';
 import type { ArticleRecord } from '@/features/articles/types';
+import { plateTint } from '@/lib/note-plate';
 
 import Mark from '../Mark';
+import NotePlate from '../NotePlate';
 
 export const metadata: Metadata = {
   title: 'Solace — Research',
@@ -115,6 +117,13 @@ export default async function ResearchPage() {
         </section>
 
         <section className="mt-12 border-b border-black/10 pb-12">
+          <div className="mb-10 max-w-2xl">
+            <NotePlate
+              seed={article.slug}
+              tint={plateTint(article.coverDirection)}
+              label={article.label.split('·')[0].trim()}
+            />
+          </div>
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-[#7c7468]">

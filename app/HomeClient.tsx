@@ -7,8 +7,10 @@ import { MotionConfig, motion } from 'framer-motion';
 
 import SkyBackground from './SkyBackground';
 import Mark from './Mark';
+import NotePlate from './NotePlate';
 import { calibration } from './calibration';
 import { hermesBetaVersionLabel } from '@/features/hermes-version';
+import type { PlateTint } from '@/lib/note-plate';
 
 const HermesLiquidityFieldRender = dynamic(() => import('./HermesLiquidityFieldRender'), {
   ssr: false,
@@ -84,6 +86,9 @@ function Header() {
           <Link href="/research">
             Research
           </Link>
+          <Link href="/news">
+            News
+          </Link>
           <Link href="/hermes">
             Hermes
           </Link>
@@ -120,6 +125,9 @@ function Header() {
         <Link href="/research" onClick={() => setMenuOpen(false)}>
           Research
         </Link>
+        <Link href="/news" onClick={() => setMenuOpen(false)}>
+          News
+        </Link>
         <Link href="/hermes" onClick={() => setMenuOpen(false)}>
           Hermes
         </Link>
@@ -138,6 +146,14 @@ export type LatestNote = {
   title: string;
   dek: string;
   label: string;
+  slug: string;
+  tint: PlateTint;
+};
+
+export type HeroPill = {
+  tag: string;
+  title: string;
+  href: string;
 };
 
 // 'quiet' = xAI-style centered hero, no atmosphere render — type on night sky.
@@ -149,7 +165,7 @@ const HERO_VARIANT: 'observatory' | 'quiet' = 'quiet';
 // star-plate sky.
 const HOME_LAYOUT: 'sections' | 'cards' = 'cards';
 
-export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
+export default function HomeClient({ latestNote, pill }: { latestNote: LatestNote; pill: HeroPill }) {
   return (
     <main className="home-shell relative min-h-screen overflow-x-hidden text-foreground">
       <MotionConfig reducedMotion="user">
@@ -165,9 +181,9 @@ export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
             className="hero-quiet-inner relative z-10 mx-auto max-w-5xl"
           >
             <motion.div variants={fade}>
-              <Link href="/research" className="hero-note-pill">
-                <span className="hero-note-pill-tag">Latest research</span>
-                <span className="hero-note-pill-title">{latestNote.title}</span>
+              <Link href={pill.href} className="hero-note-pill">
+                <span className="hero-note-pill-tag">{pill.tag}</span>
+                <span className="hero-note-pill-title">{pill.title}</span>
                 <span aria-hidden="true">→</span>
               </Link>
             </motion.div>
@@ -206,9 +222,9 @@ export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
         >
           <div className="hero-copy max-w-3xl">
             <motion.div variants={fade}>
-              <Link href="/research" className="hero-note-pill">
-                <span className="hero-note-pill-tag">Latest research</span>
-                <span className="hero-note-pill-title">{latestNote.title}</span>
+              <Link href={pill.href} className="hero-note-pill">
+                <span className="hero-note-pill-tag">{pill.tag}</span>
+                <span className="hero-note-pill-title">{pill.title}</span>
                 <span aria-hidden="true">→</span>
               </Link>
             </motion.div>
@@ -396,6 +412,13 @@ export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
 
       <section className="research-strip px-5 md:px-8">
         <motion.div className="research-strip-inner mx-auto max-w-7xl" {...sectionReveal}>
+          <Link href="/research" aria-label={latestNote.title} className="research-strip-plate">
+            <NotePlate
+              seed={latestNote.slug}
+              tint={latestNote.tint}
+              label={latestNote.label.split('·')[0].trim()}
+            />
+          </Link>
           <div className="research-strip-copy">
             <p className="section-kicker">Latest from the observatory</p>
             <h3>{latestNote.title}</h3>
@@ -455,6 +478,9 @@ export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
                 </li>
                 <li>
                   <Link href="/research">Research</Link>
+                </li>
+                <li>
+                  <Link href="/news">News</Link>
                 </li>
                 <li>
                   <Link href="/hermes#request-access">Request access</Link>
