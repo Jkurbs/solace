@@ -239,11 +239,13 @@ function DashboardReveal() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] });
 
   // Cinematic entry: the dashboard fades, scales, and tilts up into place,
-  // then slowly pans through its sections as the captions advance.
-  const opacity = useTransform(scrollYProgress, [0, 0.08], [0.72, 1]);
-  const scale = useTransform(scrollYProgress, [0, 0.16], [0.94, 1]);
-  const rotateX = useTransform(scrollYProgress, [0, 0.16], [7, 0]);
-  const lift = useTransform(scrollYProgress, [0, 0.16], [34, 0]);
+  // then slowly pans through its sections as the captions advance. Springs
+  // smooth the raw scroll deltas so trackpad/wheel steps don't stutter.
+  const entrySpring = { stiffness: 160, damping: 30, mass: 0.4 };
+  const opacity = useSpring(useTransform(scrollYProgress, [0, 0.08], [0.72, 1]), entrySpring);
+  const scale = useSpring(useTransform(scrollYProgress, [0, 0.16], [0.94, 1]), entrySpring);
+  const rotateX = useSpring(useTransform(scrollYProgress, [0, 0.16], [7, 0]), entrySpring);
+  const lift = useSpring(useTransform(scrollYProgress, [0, 0.16], [34, 0]), entrySpring);
   const mobilePanProgress = useTransform(scrollYProgress, mobileWalkthroughPanStops, mobileWalkthroughPanValues);
   const mobilePanSpring = useSpring(mobilePanProgress, { stiffness: 150, damping: 34, mass: 0.3 });
   const mobilePanY = useTransform(mobilePanSpring, (value) => `${value}%`);
@@ -313,7 +315,7 @@ function DashboardReveal() {
                   <motion.div
                     className="hx-board-pan"
                     animate={{ y: walkthroughPanTargets[activeFocus] }}
-                    transition={{ duration: 0.85, ease: EASE }}
+                    transition={{ type: 'spring', stiffness: 110, damping: 26, mass: 0.9 }}
                   >
                     <HermesBoardArt focus={activeFocus} />
                   </motion.div>
