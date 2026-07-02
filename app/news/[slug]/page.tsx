@@ -24,6 +24,12 @@ export async function generateMetadata({
   return {
     title: `Solace — ${post.title}`,
     description: post.dek,
+    openGraph: {
+      title: post.title,
+      description: post.dek,
+      type: 'article',
+      publishedTime: post.date,
+    },
   };
 }
 
@@ -115,12 +121,22 @@ export default async function NewsPostPage({
           <p className="max-w-xl text-sm leading-6 text-[rgba(250,250,250,0.45)]">
             No performance claims. Status labels reflect what is live and checkable today.
           </p>
-          <Link
-            href="/brief"
-            className="font-mono text-xs uppercase tracking-[0.18em] text-[rgba(250,250,250,0.55)] transition-colors hover:text-[#fafafa]"
-          >
-            Read the technical brief
-          </Link>
+          <div className="flex flex-wrap items-center gap-6">
+            <a
+              href={`https://x.com/intent/post?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(`https://solace.fyi/news/${post.slug}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-xs uppercase tracking-[0.18em] text-[rgba(250,250,250,0.55)] transition-colors hover:text-[#fafafa]"
+            >
+              Share on X
+            </a>
+            <Link
+              href="/brief"
+              className="font-mono text-xs uppercase tracking-[0.18em] text-[rgba(250,250,250,0.55)] transition-colors hover:text-[#fafafa]"
+            >
+              Read the technical brief
+            </Link>
+          </div>
         </div>
       </article>
     </main>

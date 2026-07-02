@@ -12,6 +12,11 @@ export const metadata: Metadata = {
   title: 'Solace — Research',
   description:
     'Public Solace research notes on capital allocation, uncertainty, market structure, and disciplined system design.',
+  openGraph: {
+    title: 'Solace — Research',
+    description:
+      'Public Solace research notes on capital allocation, uncertainty, market structure, and disciplined system design.',
+  },
 };
 
 export const dynamic = 'force-dynamic';
