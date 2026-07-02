@@ -155,7 +155,7 @@ export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
           <div className="hero-copy max-w-3xl">
             <motion.div variants={fade}>
               <Link href="/research" className="hero-note-pill">
-                <span className="hero-note-pill-tag">Latest</span>
+                <span className="hero-note-pill-tag">Latest research</span>
                 <span className="hero-note-pill-title">{latestNote.title}</span>
                 <span aria-hidden="true">→</span>
               </Link>
@@ -204,7 +204,7 @@ export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
         <div className="hermes-product-shell relative z-10 mx-auto flex max-w-7xl flex-col justify-center px-5 py-24 md:px-8 md:py-28">
           <motion.div className="hermes-product-copy" {...sectionReveal}>
             <p className="section-kicker">The first instrument</p>
-            <h2>Hermes decides when capital moves — and when it doesn&apos;t.</h2>
+            <h2>Hermes decides when capital moves, and when it doesn&apos;t.</h2>
             <p>
               A live capital allocation engine for markets under uncertainty. Hermes reads liquidity, timing,
               and regime, and commits capital only when all three agree.
