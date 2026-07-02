@@ -383,6 +383,11 @@ export default function OracleFuturesRender() {
       animate();
     }
 
+    // First frame is painted at opacity 0; the class swap runs the CSS fade-in.
+    window.requestAnimationFrame(() => {
+      renderer.domElement.classList.add('is-ready');
+    });
+
     return () => {
       if (frameId !== null) {
         window.cancelAnimationFrame(frameId);

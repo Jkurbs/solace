@@ -750,7 +750,10 @@ h2 {
   .hero-caption {
     position: absolute;
     z-index: 10;
-    right: clamp(1.25rem, 4vw, 3rem);
+    right: auto;
+    /* Sit on the content column's left rail so the eye path runs
+       CTAs → trajectory → next section's kicker down one edge. */
+    left: max(clamp(1.25rem, 4vw, 3rem), calc((100vw - 80rem) / 2 + 2rem));
     bottom: 1.3rem;
     display: flex;
     max-width: min(42rem, calc(100vw - 2.5rem));
@@ -767,7 +770,7 @@ h2 {
   .hermes-section {
     position: relative;
     overflow: hidden;
-    min-height: 98svh;
+    min-height: 92svh;
     margin-top: 0;
     padding-top: 0;
     background: transparent;
@@ -796,13 +799,14 @@ h2 {
     z-index: 0;
     display: block;
     overflow: hidden;
-    /* Fade the render into the continuous sky at the section seams (eased). */
+    /* Fade the render into the continuous sky at the section seams (eased).
+       The top ramp is stretched so the hero boundary reads as one sky. */
     mask-image: linear-gradient(
       180deg,
       transparent 0%,
-      rgba(0, 0, 0, 0.18) 7%,
-      rgba(0, 0, 0, 0.55) 14%,
-      #000 24%,
+      rgba(0, 0, 0, 0.14) 9%,
+      rgba(0, 0, 0, 0.5) 19%,
+      #000 32%,
       #000 80%,
       rgba(0, 0, 0, 0.5) 91%,
       transparent 100%
@@ -810,9 +814,9 @@ h2 {
     -webkit-mask-image: linear-gradient(
       180deg,
       transparent 0%,
-      rgba(0, 0, 0, 0.18) 7%,
-      rgba(0, 0, 0, 0.55) 14%,
-      #000 24%,
+      rgba(0, 0, 0, 0.14) 9%,
+      rgba(0, 0, 0, 0.5) 19%,
+      #000 32%,
       #000 80%,
       rgba(0, 0, 0, 0.5) 91%,
       transparent 100%
@@ -825,7 +829,7 @@ h2 {
   .oracle-section {
     position: relative;
     overflow: hidden;
-    min-height: 98svh;
+    min-height: 92svh;
     background: transparent;
     isolation: isolate;
   }
@@ -3292,6 +3296,28 @@ h2 {
     display: block;
   }
 
+  /* WebGL canvases mount after hydration; they bloom in slowly enough to read
+     as the environment emerging, not a UI event — so their nondeterministic
+     load timing can't clash with the copy's entrance. Same curve as all
+     Framer motion on the site. */
+  .hero-render-canvas,
+  .hermes-render-canvas {
+    opacity: 0;
+    transition: opacity 2.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .hero-render-canvas.is-ready,
+  .hermes-render-canvas.is-ready {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-render-canvas,
+    .hermes-render-canvas {
+      transition: none;
+    }
+  }
+
   .hermes-product-bg::before {
     content: "";
     position: absolute;
@@ -3573,7 +3599,7 @@ h2 {
   .hermes-crisp-field span:nth-child(26) { --x: 94%; --y: 31%; --spark-size: 1px; --spark-alpha: 0.52; --spark-duration: 12s; --spark-delay: -7s; --spark-color: rgba(250, 250, 250, 0.74); --spark-glow: rgba(250, 250, 250, 0.36); }
 
   .hermes-product-shell {
-    min-height: clamp(44rem, 90svh, 62rem);
+    min-height: clamp(40rem, 84svh, 56rem);
     border-top: 0;
   }
 
@@ -3586,7 +3612,8 @@ h2 {
     margin-top: 1.7rem;
     color: var(--foreground);
     font-family: var(--font-display), Georgia, serif;
-    font-size: clamp(3.8rem, 7.8vw, 7.6rem);
+    /* One step below the hero title so the page has a single loudest voice. */
+    font-size: clamp(3.4rem, 6.6vw, 6.4rem);
     font-weight: 500;
     letter-spacing: -0.028em;
     line-height: 0.92;

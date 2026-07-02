@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { MotionConfig, motion } from 'framer-motion';
 
 import SkyBackground from './SkyBackground';
 import Mark from './Mark';
@@ -31,6 +31,13 @@ const fade = {
     y: 0,
     transition: { duration: 1, ease },
   },
+};
+
+const sectionReveal = {
+  initial: { opacity: 0, y: 26 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '-14% 0px -14% 0px' },
+  transition: { duration: 0.9, ease },
 };
 
 const stagger = {
@@ -79,8 +86,12 @@ function Header() {
         </nav>
 
         <div className="site-actions">
-          <Link href="/dashboard" className="site-action-link site-action-primary">
+          <Link href="/dashboard" className="site-action-link">
             Login
+          </Link>
+          <span className="site-action-separator" aria-hidden="true" />
+          <Link href="/hermes#request-access" className="site-action-link site-action-primary">
+            Request access
           </Link>
           <button
             type="button"
@@ -116,24 +127,25 @@ function Header() {
 export default function Home() {
   return (
     <main className="home-shell relative min-h-screen overflow-x-hidden text-foreground">
+      <MotionConfig reducedMotion="user">
       <SkyBackground />
       <Header />
 
-      <section className="hero-luxury relative min-h-[92vh] overflow-hidden px-5 pb-24 pt-32 md:px-8 md:pb-28 md:pt-36">
+      <section className="hero-luxury relative min-h-[86vh] overflow-hidden px-5 pb-20 pt-32 md:px-8 md:pb-24 md:pt-36">
         <div className="hero-render" aria-hidden="true">
           <HeroObservatoryRender />
         </div>
         <div className="hero-vignette" />
 
         <motion.div
-          initial={false}
+          initial="hidden"
           animate="show"
           variants={stagger}
           className="hero-content relative z-10 mx-auto grid max-w-7xl items-center"
         >
           <div className="hero-copy max-w-3xl">
             <motion.p variants={fade} className="section-kicker">
-              Private intelligence observatory
+              Independent research observatory
             </motion.p>
             <motion.h1
               variants={fade}
@@ -142,25 +154,31 @@ export default function Home() {
               Systems for reading complexity.
             </motion.h1>
             <motion.p variants={fade} className="hero-body mt-7 max-w-2xl text-lg leading-8 text-muted md:text-xl">
-              Solace builds instruments for uncertainty: systems that observe, model, deploy, and keep only what
-              survives contact with the world.
+              Solace builds instruments for decision-making under uncertainty — beginning in markets, where
+              feedback arrives in days instead of years. Every system observes, models, deploys, and keeps only
+              what survives contact with the world.
             </motion.p>
             <motion.div variants={fade} className="hero-actions mt-9 flex flex-wrap items-center gap-x-7 gap-y-3">
               <Link href="/brief" className="primary-link">
                 Read the brief
               </Link>
               <Link href="/hermes" className="hermes-product-button hermes-product-button-dark min-h-[2.75rem]">
-                Enter Hermes
+                Explore Hermes
               </Link>
             </motion.div>
           </div>
         </motion.div>
 
-        <div className="hero-caption">
-          <span>Hermes</span>
-          <span>Live system</span>
-          <span>Market structure</span>
-        </div>
+        <motion.div
+          className="hero-caption"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.1, delay: 0.9, ease }}
+        >
+          <span>Markets · Live</span>
+          <span>Simulation · Building</span>
+          <span>Autonomy · Gated</span>
+        </motion.div>
       </section>
 
       <section id="hermes" className="hermes-section scroll-mt-24">
@@ -168,12 +186,12 @@ export default function Home() {
           <HermesLiquidityFieldRender />
         </div>
         <div className="hermes-product-shell relative z-10 mx-auto flex max-w-7xl flex-col justify-center px-5 py-24 md:px-8 md:py-28">
-          <div className="hermes-product-copy">
+          <motion.div className="hermes-product-copy" {...sectionReveal}>
             <p className="section-kicker">The first instrument</p>
-            <h2>Hermes is the first instrument.</h2>
+            <h2>Hermes decides when capital moves — and when it doesn&apos;t.</h2>
             <p>
               A live capital allocation engine for markets under uncertainty. Hermes reads liquidity, timing,
-              and regime to decide when capital should move, wait, or be preserved.
+              and regime, and commits capital only when all three agree.
             </p>
             <span className="hermes-beta-version">{hermesBetaVersionLabel}</span>
 
@@ -185,7 +203,7 @@ export default function Home() {
                 View brief
               </Link>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -194,7 +212,7 @@ export default function Home() {
           <OracleFuturesRender />
         </div>
         <div className="hermes-product-shell relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-center px-5 py-24 md:px-8 md:py-28">
-          <div className="hermes-product-copy lg:ml-auto">
+          <motion.div className="hermes-product-copy lg:ml-auto" {...sectionReveal}>
             <p className="section-kicker">The second instrument</p>
             <h2>The Oracle weighs the futures.</h2>
             <p>Live probability over real events — every prediction scored against what actually happened.</p>
@@ -213,13 +231,16 @@ export default function Home() {
                 <strong>Overconfident</strong>
               </div>
             </div>
+            <p className="mt-3 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-white/40">
+              Calibration labels are published as measured
+            </p>
 
             <div className="hermes-product-actions">
               <Link href="/oracle" className="hermes-product-button hermes-product-button-light">
                 See the live record
               </Link>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -270,7 +291,7 @@ export default function Home() {
                   <Link href="/research">Research</Link>
                 </li>
                 <li>
-                  <Link href="/dashboard">Request access</Link>
+                  <Link href="/hermes#request-access">Request access</Link>
                 </li>
                 <li>
                   <Link href="/terms">Terms of service</Link>
@@ -304,6 +325,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      </MotionConfig>
     </main>
   );
 }
