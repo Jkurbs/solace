@@ -153,7 +153,14 @@ export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
           className="hero-content relative z-10 mx-auto grid max-w-7xl items-center"
         >
           <div className="hero-copy max-w-3xl">
-            <motion.p variants={fade} className="section-kicker">
+            <motion.div variants={fade}>
+              <Link href="/research" className="hero-note-pill">
+                <span className="hero-note-pill-tag">Latest</span>
+                <span className="hero-note-pill-title">{latestNote.title}</span>
+                <span aria-hidden="true">→</span>
+              </Link>
+            </motion.div>
+            <motion.p variants={fade} className="section-kicker mt-6">
               Independent research observatory
             </motion.p>
             <motion.h1
