@@ -127,6 +127,11 @@ const fragmentShader = `
     vec2 w = uv;
     w.x = mix(w.x, 0.30 + w.x * 0.70, mobile);
 
+    // Slow camera drift + breathe: minutes-long, so the framing is never
+    // quite the same twice. Film, not wallpaper.
+    w += vec2(sin(uTime * 0.011), cos(uTime * 0.0083)) * 0.012;
+    w = (w - 0.5) * (1.0 + 0.008 * sin(uTime * 0.007)) + 0.5;
+
     // Gentle lensing pull toward the dominant liquidity well — mass bends the view.
     vec2 toWell = w - uWell;
     float wr = length(toWell * vec2(1.3, 1.0));
@@ -137,6 +142,10 @@ const fragmentShader = `
     float prd = length(toPtr * vec2(1.2, 1.0));
     float probe = exp(-prd * prd / 0.02) * uPointerGlow;
     wWarp -= (toPtr / max(prd, 0.001)) * 0.008 * probe;
+
+    // Holographic parallax: depth layers slide against the pointer, so the
+    // scene reads as a projection you can lean around, not a flat image.
+    vec2 ptrPar = (vec2(0.5) - uPointer) * 0.016 * uPointerGlow;
 
     vec3 color = vec3(0.003, 0.0045, 0.0075);
 
@@ -167,7 +176,7 @@ const fragmentShader = `
     color += vec3(1.0, 0.92, 0.72) * shaft * 0.11;
 
     // === LIQUIDITY HAZE (the field itself as glowing terrain) ===
-    float f = fieldAt(wWarp);
+    float f = fieldAt(wWarp + ptrPar * 0.2);
     vec3 ember = vec3(0.45, 0.20, 0.08);
     vec3 amber = vec3(1.0, 0.62, 0.28);
     vec3 pale = vec3(1.0, 0.87, 0.64);
@@ -183,12 +192,12 @@ const fragmentShader = `
 
     // === LIQUIDITY DUST (three depths, clumped into clouds, lit by the shaft) ===
     float dustBoost = (0.2 + 1.3 * clump) * (1.0 + shaft * 2.0) * cloudLight;
-    color += dustLayer(wWarp, 30.0, 0.0028, 0.4, 0.0, 1.0) * dustBoost;
-    color += dustLayer(wWarp, 58.0, 0.0046, 0.62, 17.0, 1.4) * dustBoost;
-    color += dustLayer(wWarp, 104.0, 0.0072, 0.9, 41.0, 2.2) * dustBoost;
+    color += dustLayer(wWarp + ptrPar * 0.5, 30.0, 0.0028, 0.4, 0.0, 1.0) * dustBoost;
+    color += dustLayer(wWarp + ptrPar * 1.0, 58.0, 0.0046, 0.62, 17.0, 1.4) * dustBoost;
+    color += dustLayer(wWarp + ptrPar * 1.7, 104.0, 0.0072, 0.9, 41.0, 2.2) * dustBoost;
 
     // Micro-glitter that gives the cloud masses their billowing body.
-    color += dustLayer(wWarp, 175.0, 0.0095, 0.75, 71.0, 3.6) * clump * clump * (1.5 + shaft * 2.0);
+    color += dustLayer(wWarp + ptrPar * 2.2, 175.0, 0.0095, 0.75, 71.0, 3.6) * clump * clump * (1.5 + shaft * 2.0);
 
     // === CANDIDATE PRICE PATHS ===
     // Accumulated separately so re-evaluation epochs can fade the whole
@@ -203,20 +212,36 @@ const fragmentShader = `
       float py = pd.r;
       float alive = pd.g;
       float bright = pd.b;
+      float fray = pd.a;
 
       float dxs = 4.0 / 512.0;
       float py2 = texture2D(uPaths, vec2(min(w.x + dxs, 1.0), row)).r;
       float slope = (py2 - py) / dxs;
       float corr = inversesqrt(1.0 + slope * slope * (uResolution.y * uResolution.y) / (uResolution.x * uResolution.x));
-      // CSS-pixel distance so line weights stay constant across display densities.
-      float dPix = abs(uv.y - py) * uResolution.y * corr / uPixelRatio;
+      // Signed CSS-pixel distance from the path spine, so filaments can wind
+      // around it; weights stay constant across display densities.
+      float sPix = (uv.y - py) * uResolution.y * corr / uPixelRatio;
+      float dPix = abs(sPix);
 
       bool isSurvivor = abs(float(i) - uSurvivor) < 0.5;
 
       if (isSurvivor) {
-        float core = exp(-dPix * dPix / (1.4 * 1.4));
         float halo = exp(-dPix * dPix / (14.0 * 14.0));
         float wide = exp(-dPix * dPix / (52.0 * 52.0));
+
+        // Prime-Radiant stroke: hairline filaments braided tight around the
+        // spine. Crossings glitter where strands overlap.
+        float fil = 0.0;
+        for (int k = 0; k < 4; k++) {
+          float fk = float(k);
+          float fph = hash(vec2(fk * 2.3 + 1.0, float(i))) * 6.2831;
+          float amp = 1.1 + fk * 0.85;
+          float off = sin(w.x * (7.0 + fk * 3.1) + fph + uTime * (0.22 + fk * 0.07)) * amp
+                    + sin(w.x * (17.0 + fk * 5.3) - fph * 1.7 + uTime * 0.13) * amp * 0.35;
+          float d = sPix - off;
+          float shimmer = 0.75 + 0.25 * sin(w.x * 40.0 + fph * 3.0 + uTime * 0.6);
+          fil += exp(-d * d / (0.85 * 0.85)) * shimmer;
+        }
 
         // Energy pulse traveling along the surviving path.
         float ph = fract(uTime * 0.042);
@@ -227,23 +252,37 @@ const fragmentShader = `
         float head = exp(-headD * headD / (26.0 * 26.0));
 
         float energize = 1.0 + 1.4 * pulse;
-        pathCol += vec3(1.0, 0.87, 0.6) * core * 1.05 * energize;
+        pathCol += vec3(1.0, 0.89, 0.64) * fil * 0.44 * energize;
         pathCol += vec3(1.0, 0.68, 0.32) * halo * 0.2 * energize;
         pathCol += vec3(1.0, 0.64, 0.3) * wide * 0.08;
         pathCol += vec3(1.0, 0.88, 0.68) * head * 0.55;
         survivorGlow = max(survivorGlow, halo);
       } else {
-        float core = exp(-dPix * dPix / (1.3 * 1.3));
         float halo = exp(-dPix * dPix / (10.0 * 10.0));
+
+        // Candidates are looser bundles; as one nears rejection its strands
+        // splay apart — the reading unravels before its light goes out.
+        float splay = 1.0 + fray * fray * 6.5;
+        float fil = 0.0;
+        for (int k = 0; k < 4; k++) {
+          float fk = float(k);
+          float fph = hash(vec2(float(i) * 3.1 + fk, fk * 1.7 + 2.0)) * 6.2831;
+          float amp = (1.5 + fk * 1.0) * splay;
+          float off = sin(w.x * (8.0 + fk * 3.3) + fph + uTime * (0.2 + fk * 0.06)) * amp
+                    + sin(w.x * (19.0 + fk * 4.7) - fph * 1.7 + uTime * 0.12) * amp * 0.35;
+          float d = sPix - off;
+          fil += exp(-d * d / (0.8 * 0.8));
+        }
+
         vec3 cCol = mix(vec3(0.9, 0.42, 0.16), vec3(1.0, 0.68, 0.34), bright);
-        pathCol += cCol * (core * 0.85 + halo * 0.17) * (0.5 + 0.4 * bright) * alive;
+        pathCol += cCol * (fil * 0.36 + halo * 0.15) * (0.5 + 0.4 * bright) * alive * (1.0 - fray * 0.25);
       }
     }
     color += pathCol * uPathFade;
 
     // === FOREGROUND BOKEH (out-of-focus dust drifting past the lens) ===
-    color += bokeh(w, 5.5, 0.006, 3.0);
-    color += bokeh(w, 3.2, 0.0095, 23.0);
+    color += bokeh(w + ptrPar * 2.8, 5.5, 0.006, 3.0);
+    color += bokeh(w + ptrPar * 2.8, 3.2, 0.0095, 23.0);
 
     // Bid/ask thermal split: warm below the survivor's altitude, cool above.
     float side = smoothstep(-0.16, 0.16, w.y - 0.52);
@@ -455,11 +494,16 @@ function buildPaths(field: Float32Array, rand: () => number) {
       if (x > fadeStart) {
         alive = Math.max(0, 1 - (x - fadeStart) / 0.06);
       }
+      // Fray ramps in ahead of death: the bundle unravels, then its light fades.
+      let fray = 0;
+      if (deathX[p] < 1.1) {
+        fray = Math.min(Math.max((x - (deathX[p] - 0.2)) / 0.2, 0), 1);
+      }
       const base = (p * PATH_STEPS + s) * 4;
       texture[base] = ys[p][s];
       texture[base + 1] = alive;
       texture[base + 2] = brightness;
-      texture[base + 3] = 1;
+      texture[base + 3] = fray;
     }
   }
 
