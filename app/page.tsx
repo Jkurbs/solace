@@ -1,8 +1,8 @@
 import { getLatestPublishedArticle } from '@/features/articles/store';
-import { getLatestNewsPost } from '@/features/news/posts';
+import { getLatestNewsPost, newsPosts } from '@/features/news/posts';
 import { plateTint } from '@/lib/note-plate';
 
-import HomeClient, { type HeroPill, type LatestNote } from './HomeClient';
+import HomeClient, { type HeroPill, type LatestNote, type NewsItem } from './HomeClient';
 
 // Refresh the latest-note strip every 5 minutes without making the page dynamic.
 export const revalidate = 300;
@@ -37,5 +37,15 @@ export default async function Home() {
       ? { tag: 'News', title: news.title, href: `/news/${news.slug}` }
       : { tag: 'Latest research', title: latestNote.title, href: '/research' };
 
-  return <HomeClient latestNote={latestNote} pill={pill} />;
+  // Body text stays on the server; the strip needs only card metadata.
+  const newsItems: NewsItem[] = newsPosts.slice(0, 4).map((post) => ({
+    slug: post.slug,
+    title: post.title,
+    dek: post.dek,
+    label: post.label,
+    date: post.date,
+    tint: post.tint,
+  }));
+
+  return <HomeClient latestNote={latestNote} newsItems={newsItems} pill={pill} />;
 }

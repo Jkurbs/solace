@@ -156,6 +156,22 @@ export type HeroPill = {
   href: string;
 };
 
+export type NewsItem = {
+  slug: string;
+  title: string;
+  dek: string;
+  label: string;
+  date: string;
+  tint: PlateTint;
+};
+
+const newsDateFormat = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
 // 'quiet' = xAI-style centered hero, no atmosphere render — type on night sky.
 // 'observatory' = the original left-aligned hero with the instrument render.
 const HERO_VARIANT: 'observatory' | 'quiet' = 'quiet';
@@ -165,7 +181,15 @@ const HERO_VARIANT: 'observatory' | 'quiet' = 'quiet';
 // star-plate sky.
 const HOME_LAYOUT: 'sections' | 'cards' = 'cards';
 
-export default function HomeClient({ latestNote, pill }: { latestNote: LatestNote; pill: HeroPill }) {
+export default function HomeClient({
+  latestNote,
+  newsItems,
+  pill,
+}: {
+  latestNote: LatestNote;
+  newsItems: NewsItem[];
+  pill: HeroPill;
+}) {
   return (
     <main className="home-shell relative min-h-screen overflow-x-hidden text-foreground">
       <MotionConfig reducedMotion="user">
@@ -429,6 +453,27 @@ export default function HomeClient({ latestNote, pill }: { latestNote: LatestNot
             <Link href="/research" className="primary-link">
               Read the note
             </Link>
+          </div>
+        </motion.div>
+      </section>
+
+      <section className="news-strip px-5 md:px-8">
+        <motion.div className="news-strip-inner mx-auto max-w-7xl" {...sectionReveal}>
+          <div className="news-strip-head">
+            <h2>News</h2>
+            <Link href="/news" className="text-link">
+              All news
+            </Link>
+          </div>
+          <div className="news-grid">
+            {newsItems.map((item) => (
+              <Link key={item.slug} href={`/news/${item.slug}`} className="news-item">
+                <NotePlate seed={item.slug} tint={item.tint} label={item.label} />
+                <span className="news-item-date">{newsDateFormat.format(new Date(item.date))}</span>
+                <span className="news-item-title">{item.title}</span>
+                <span className="news-item-dek">{item.dek}</span>
+              </Link>
+            ))}
           </div>
         </motion.div>
       </section>
