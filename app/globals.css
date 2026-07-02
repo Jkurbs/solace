@@ -964,10 +964,13 @@ h2 {
     }
   }
 
-  /* --- QUIET HERO (xAI-style variant: type on the night sky, no render) --- */
+  /* --- QUIET HERO (xAI-style variant: type on pitch black) --- */
   .hero-quiet {
     padding-top: clamp(9.5rem, 21vh, 13.5rem);
     padding-bottom: clamp(3.5rem, 8vw, 6.5rem);
+    /* Pure black, easing into the page floor so the card grid below sits on
+       the site background without a visible seam. */
+    background: linear-gradient(180deg, #000000 0%, #000000 70%, rgba(0, 0, 0, 0) 100%);
   }
 
   .hero-quiet-inner {
@@ -1002,19 +1005,6 @@ h2 {
     justify-content: center;
     gap: 0.8rem;
     margin-top: 2.3rem;
-  }
-
-  .hero-quiet-caption {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.6rem 1.7rem;
-    margin-top: clamp(2.6rem, 6vw, 4.2rem);
-    color: rgba(250, 250, 250, 0.45);
-    font-family: var(--font-plex), monospace;
-    font-size: 11px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
   }
 
   /* --- HERO NOTE PILL (latest research, first thing the stagger reveals) --- */

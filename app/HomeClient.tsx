@@ -188,11 +188,6 @@ export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
                 Read the brief
               </Link>
             </motion.div>
-            <motion.div variants={fade} className="hero-quiet-caption">
-              <span>Markets · Live</span>
-              <span>Simulation · Building</span>
-              <span>Autonomy · Gated</span>
-            </motion.div>
           </motion.div>
         </section>
       ) : (
