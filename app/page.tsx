@@ -1,6 +1,5 @@
 import { getLatestPublishedArticle } from '@/features/articles/store';
 import { getLatestNewsPost, newsPosts } from '@/features/news/posts';
-import { plateTint } from '@/lib/note-plate';
 
 import HomeClient, { type HeroPill, type LatestNote, type NewsItem } from './HomeClient';
 
@@ -12,20 +11,12 @@ const fallbackNote: LatestNote = {
   title: 'The Four Decisions That Govern Capital',
   dek: 'Every allocation lives inside four decisions. Most market systems only optimize one.',
   label: 'Research note 001 · V0.1 · July 2026',
-  slug: 'the-four-decisions-that-govern-capital',
-  tint: 'cream',
 };
 
 export default async function Home() {
   const article = await getLatestPublishedArticle().catch(() => null);
   const latestNote: LatestNote = article
-    ? {
-        title: article.title,
-        dek: article.dek,
-        label: article.label,
-        slug: article.slug,
-        tint: plateTint(article.coverDirection),
-      }
+    ? { title: article.title, dek: article.dek, label: article.label }
     : fallbackNote;
 
   // The hero pill announces whichever is fresher: the latest news post or

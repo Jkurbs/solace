@@ -43,7 +43,7 @@ export default function NewsPage() {
         </p>
       </section>
 
-      <section className="hx-shell pb-24 pt-12">
+      <section className="hx-shell pb-28 pt-16">
         <div className="news-grid">
           {newsPosts.map((post) => (
             <Link key={post.slug} href={`/news/${post.slug}`} className="news-item">

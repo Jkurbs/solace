@@ -75,7 +75,7 @@ function Header() {
     <header className="site-header">
       <div className="site-header-inner">
         <Link href="/" className="site-wordmark" aria-label="Solace home">
-          <Mark size={26} className="site-mark" />
+          <Mark size={20} className="site-mark" />
           Solace
         </Link>
 
@@ -146,8 +146,6 @@ export type LatestNote = {
   title: string;
   dek: string;
   label: string;
-  slug: string;
-  tint: PlateTint;
 };
 
 export type HeroPill = {
@@ -436,13 +434,6 @@ export default function HomeClient({
 
       <section className="research-strip px-5 md:px-8">
         <motion.div className="research-strip-inner mx-auto max-w-7xl" {...sectionReveal}>
-          <Link href="/research" aria-label={latestNote.title} className="research-strip-plate">
-            <NotePlate
-              seed={latestNote.slug}
-              tint={latestNote.tint}
-              label={latestNote.label.split('·')[0].trim()}
-            />
-          </Link>
           <div className="research-strip-copy">
             <p className="section-kicker">Latest from the observatory</p>
             <h3>{latestNote.title}</h3>

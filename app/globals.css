@@ -184,15 +184,24 @@ h2 {
     text-transform: uppercase;
   }
 
+  /* Matches .hx-brand on the Hermes page: one wordmark treatment sitewide. */
   .site-wordmark {
     display: inline-flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.55rem;
     justify-self: start;
-    color: var(--foreground);
-    font-size: 1.24rem;
-    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
     line-height: 1;
+    text-transform: uppercase;
+    transition: color 0.2s ease;
+  }
+
+  .site-wordmark:hover {
+    color: var(--foreground);
   }
 
   .site-mark {
@@ -1078,14 +1087,14 @@ h2 {
 
   /* --- HOMEPAGE NEWS STRIP --- */
   .news-strip {
-    padding: 0 0 clamp(3.5rem, 8vw, 6rem);
+    padding: clamp(1.5rem, 4vw, 2.5rem) 0 clamp(4.5rem, 10vw, 8rem);
   }
 
   .news-strip-inner {
     display: grid;
-    gap: 1.5rem;
+    gap: 2.2rem;
     border-top: 1px solid rgba(250, 250, 250, 0.1);
-    padding-top: clamp(1.8rem, 4vw, 2.6rem);
+    padding-top: clamp(2.4rem, 5vw, 3.4rem);
   }
 
   .news-strip-head {
@@ -1108,13 +1117,17 @@ h2 {
   .news-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-    gap: clamp(1rem, 2vw, 1.5rem);
+    gap: clamp(2rem, 3.5vw, 2.8rem) clamp(1.1rem, 2.2vw, 1.6rem);
   }
 
   .news-item {
     display: grid;
     align-content: start;
-    gap: 0.55rem;
+    gap: 0.6rem;
+  }
+
+  .news-item .note-plate {
+    margin-bottom: 0.35rem;
   }
 
   .news-item .note-plate {
@@ -1150,26 +1163,16 @@ h2 {
 
   /* --- LATEST RESEARCH STRIP --- */
   .research-strip {
-    padding: clamp(3rem, 7vw, 5.5rem) 0;
+    padding: clamp(4rem, 9vw, 7rem) 0 clamp(3rem, 7vw, 5rem);
   }
 
   .research-strip-inner {
     display: grid;
-    grid-template-columns: minmax(11rem, 16rem) minmax(0, 1fr) auto;
-    gap: 1.5rem 2.4rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.8rem 3rem;
     align-items: end;
     border-top: 1px solid rgba(250, 250, 250, 0.1);
-    padding-top: clamp(1.8rem, 4vw, 2.6rem);
-  }
-
-  .research-strip-plate {
-    display: block;
-    align-self: center;
-    transition: transform 0.25s ease;
-  }
-
-  .research-strip-plate:hover {
-    transform: translateY(-3px);
+    padding-top: clamp(2.4rem, 5vw, 3.4rem);
   }
 
   .research-strip-copy {
@@ -1215,10 +1218,6 @@ h2 {
     .research-strip-inner {
       grid-template-columns: 1fr;
       align-items: start;
-    }
-
-    .research-strip-plate {
-      width: min(100%, 22rem);
     }
   }
 
@@ -4526,10 +4525,6 @@ h2 {
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 1rem;
       padding: 0 1rem;
-    }
-
-    .site-wordmark {
-      font-size: 0.95rem;
     }
 
     .site-nav {
