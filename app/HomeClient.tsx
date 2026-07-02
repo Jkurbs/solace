@@ -40,6 +40,12 @@ const sectionReveal = {
   transition: { duration: 0.9, ease },
 };
 
+const cardReveal = (index: number) => ({
+  ...sectionReveal,
+  viewport: { once: true, margin: '-8% 0px -8% 0px' },
+  transition: { ...sectionReveal.transition, delay: index * 0.08 },
+});
+
 const stagger = {
   hidden: {},
   show: {
@@ -133,13 +139,63 @@ export type LatestNote = {
   label: string;
 };
 
+// 'quiet' = xAI-style centered hero, no atmosphere render — type on night sky.
+// 'observatory' = the original left-aligned hero with the instrument render.
+const HERO_VARIANT: 'observatory' | 'quiet' = 'quiet';
+
+// 'cards' = instrument card grid on a plain dark background (renders live
+// inside the cards). 'sections' = the original full-bleed sections over the
+// star-plate sky.
+const HOME_LAYOUT: 'sections' | 'cards' = 'cards';
+
 export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
   return (
     <main className="home-shell relative min-h-screen overflow-x-hidden text-foreground">
       <MotionConfig reducedMotion="user">
-      <SkyBackground />
+      {HOME_LAYOUT === 'sections' && <SkyBackground />}
       <Header />
 
+      {HERO_VARIANT === 'quiet' ? (
+        <section className="hero-quiet relative overflow-hidden px-5 md:px-8">
+          <motion.div
+            initial="hidden"
+            animate="show"
+            variants={stagger}
+            className="hero-quiet-inner relative z-10 mx-auto max-w-5xl"
+          >
+            <motion.div variants={fade}>
+              <Link href="/research" className="hero-note-pill">
+                <span className="hero-note-pill-tag">Latest research</span>
+                <span className="hero-note-pill-title">{latestNote.title}</span>
+                <span aria-hidden="true">→</span>
+              </Link>
+            </motion.div>
+            <motion.p variants={fade} className="section-kicker mt-7">
+              Independent research observatory
+            </motion.p>
+            <motion.h1 variants={fade} className="hero-quiet-title">
+              Systems for reading complexity.
+            </motion.h1>
+            <motion.p variants={fade} className="hero-quiet-body">
+              Solace builds instruments for decision-making under uncertainty — beginning in markets,
+              where feedback arrives in days instead of years.
+            </motion.p>
+            <motion.div variants={fade} className="hero-quiet-actions">
+              <Link href="/hermes" className="hermes-product-button hermes-product-button-light">
+                Explore Hermes
+              </Link>
+              <Link href="/brief" className="hermes-product-button hermes-product-button-dark">
+                Read the brief
+              </Link>
+            </motion.div>
+            <motion.div variants={fade} className="hero-quiet-caption">
+              <span>Markets · Live</span>
+              <span>Simulation · Building</span>
+              <span>Autonomy · Gated</span>
+            </motion.div>
+          </motion.div>
+        </section>
+      ) : (
       <section className="hero-luxury relative min-h-[86vh] overflow-hidden px-5 pb-20 pt-32 md:px-8 md:pb-24 md:pt-36">
         <div className="hero-render" aria-hidden="true">
           <HeroObservatoryRender />
@@ -196,7 +252,87 @@ export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
           <span>Autonomy · Gated</span>
         </motion.div>
       </section>
+      )}
 
+      {HOME_LAYOUT === 'cards' ? (
+      <section id="instruments" className="inst-wrap px-5 md:px-8">
+        <div className="inst-grid mx-auto max-w-7xl">
+          <motion.div id="hermes" className="inst-cell inst-cell-hermes scroll-mt-24" {...cardReveal(0)}>
+            <Link href="/hermes" className="inst-card">
+              <div className="inst-card-render" aria-hidden="true">
+                <HermesLiquidityFieldRender />
+              </div>
+              <div className="inst-card-scrim" aria-hidden="true" />
+              <span className="inst-chip is-live">Live · {hermesBetaVersionLabel.replace(/^Hermes\s+/, '')}</span>
+              <div className="inst-card-foot">
+                <div className="inst-card-name">
+                  <strong>Hermes</strong>
+                  <p>Decides when capital moves, and when it doesn&apos;t.</p>
+                </div>
+                <span className="inst-card-cta">Explore →</span>
+              </div>
+            </Link>
+          </motion.div>
+
+          <motion.div id="oracle" className="inst-cell inst-cell-oracle scroll-mt-24" {...cardReveal(1)}>
+            <Link href="/oracle" className="inst-card">
+              <div className="inst-card-render" aria-hidden="true">
+                <OracleFuturesRender />
+              </div>
+              <div className="inst-card-scrim" aria-hidden="true" />
+              <span className="inst-chip is-cal">Calibrating</span>
+              <div className="inst-card-metrics">
+                <span>
+                  <em>Resolved</em>
+                  <strong>{calibration.resolved}</strong>
+                </span>
+                <span>
+                  <em>Brier</em>
+                  <strong>{calibration.brier.toFixed(2)}</strong>
+                </span>
+                <span>
+                  <em>As of</em>
+                  <strong>{calibration.asOf}</strong>
+                </span>
+              </div>
+              <div className="inst-card-foot">
+                <div className="inst-card-name">
+                  <strong>Oracle</strong>
+                  <p>Live probability over real events, scored against what happened.</p>
+                </div>
+                <span className="inst-card-cta">Live record →</span>
+              </div>
+            </Link>
+          </motion.div>
+
+          <motion.div className="inst-cell inst-cell-sim" {...cardReveal(2)}>
+            <div className="inst-card inst-card-quiet">
+              <span className="inst-chip is-idle">Building</span>
+              <div className="inst-card-foot">
+                <div className="inst-card-name">
+                  <strong>Simulation</strong>
+                  <p>Synthetic environments where hypotheses fail quietly before deployment.</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div className="inst-cell inst-cell-auto" {...cardReveal(3)}>
+            <Link href="/brief#section-07" className="inst-card inst-card-quiet">
+              <span className="inst-chip is-idle">Gated · 0 of 4 conditions met</span>
+              <div className="inst-card-foot">
+                <div className="inst-card-name">
+                  <strong>Autonomy</strong>
+                  <p>Domains are earned, not declared.</p>
+                </div>
+                <span className="inst-card-cta">Gate conditions →</span>
+              </div>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+      ) : (
+      <>
       <section id="hermes" className="hermes-section scroll-mt-24">
         <div className="hermes-product-bg" aria-hidden="true">
           <HermesLiquidityFieldRender />
@@ -259,6 +395,8 @@ export default function HomeClient({ latestNote }: { latestNote: LatestNote }) {
           </motion.div>
         </div>
       </section>
+      </>
+      )}
 
       <section className="research-strip px-5 md:px-8">
         <motion.div className="research-strip-inner mx-auto max-w-7xl" {...sectionReveal}>

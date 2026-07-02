@@ -23,6 +23,9 @@ const fragmentShader = `
   uniform float uNumPaths;
   uniform float uSurvivor;
   uniform vec2 uWell;
+  uniform vec2 uPointer;
+  uniform float uPointerGlow;
+  uniform float uPathFade;
 
   const int MAX_PATHS = 6;
 
@@ -129,6 +132,12 @@ const fragmentShader = `
     float wr = length(toWell * vec2(1.3, 1.0));
     vec2 wWarp = w - (toWell / max(wr, 0.001)) * 0.014 * exp(-wr * wr / 0.045);
 
+    // Pointer probe: attention gently bends and lights the field under it.
+    vec2 toPtr = uv - uPointer;
+    float prd = length(toPtr * vec2(1.2, 1.0));
+    float probe = exp(-prd * prd / 0.02) * uPointerGlow;
+    wWarp -= (toPtr / max(prd, 0.001)) * 0.008 * probe;
+
     vec3 color = vec3(0.003, 0.0045, 0.0075);
 
     // Cold nebula floor — the void leans deep teal-blue, never dead black.
@@ -182,6 +191,9 @@ const fragmentShader = `
     color += dustLayer(wWarp, 175.0, 0.0095, 0.75, 71.0, 3.6) * clump * clump * (1.5 + shaft * 2.0);
 
     // === CANDIDATE PRICE PATHS ===
+    // Accumulated separately so re-evaluation epochs can fade the whole
+    // reading down to the bare field and redraw it.
+    vec3 pathCol = vec3(0.0);
     float survivorGlow = 0.0;
     for (int i = 0; i < MAX_PATHS; i++) {
       if (float(i) >= uNumPaths) break;
@@ -215,18 +227,19 @@ const fragmentShader = `
         float head = exp(-headD * headD / (26.0 * 26.0));
 
         float energize = 1.0 + 1.4 * pulse;
-        color += vec3(1.0, 0.87, 0.6) * core * 1.05 * energize;
-        color += vec3(1.0, 0.68, 0.32) * halo * 0.2 * energize;
-        color += vec3(1.0, 0.64, 0.3) * wide * 0.08;
-        color += vec3(1.0, 0.88, 0.68) * head * 0.55;
+        pathCol += vec3(1.0, 0.87, 0.6) * core * 1.05 * energize;
+        pathCol += vec3(1.0, 0.68, 0.32) * halo * 0.2 * energize;
+        pathCol += vec3(1.0, 0.64, 0.3) * wide * 0.08;
+        pathCol += vec3(1.0, 0.88, 0.68) * head * 0.55;
         survivorGlow = max(survivorGlow, halo);
       } else {
         float core = exp(-dPix * dPix / (1.3 * 1.3));
         float halo = exp(-dPix * dPix / (10.0 * 10.0));
         vec3 cCol = mix(vec3(0.9, 0.42, 0.16), vec3(1.0, 0.68, 0.34), bright);
-        color += cCol * (core * 0.85 + halo * 0.17) * (0.5 + 0.4 * bright) * alive;
+        pathCol += cCol * (core * 0.85 + halo * 0.17) * (0.5 + 0.4 * bright) * alive;
       }
     }
+    color += pathCol * uPathFade;
 
     // === FOREGROUND BOKEH (out-of-focus dust drifting past the lens) ===
     color += bokeh(w, 5.5, 0.006, 3.0);
@@ -235,6 +248,10 @@ const fragmentShader = `
     // Bid/ask thermal split: warm below the survivor's altitude, cool above.
     float side = smoothstep(-0.16, 0.16, w.y - 0.52);
     color *= mix(vec3(1.03, 0.995, 0.95), vec3(0.965, 1.0, 1.05), side);
+
+    // The field brightens where it is being read.
+    color *= 1.0 + probe * 0.32;
+    color += vec3(1.0, 0.88, 0.62) * probe * pow(f, 1.5) * 0.18;
 
     // === GRADE (prestige filmic: teal shadows, cream highlights) ===
     float leftFade = smoothstep(0.0, 0.30, uv.x);
@@ -480,6 +497,9 @@ export default function HermesLiquidityFieldRender() {
     const rand = mulberry32(20260611);
     const fieldData = buildField(rand);
     const { texture: pathData, survivor } = buildPaths(fieldData, rand);
+    // Separate stream for re-evaluation epochs so the opening composition
+    // stays identical to the original seed.
+    const epochRand = mulberry32(477001);
 
     const fieldTexture = new THREE.DataTexture(
       fieldData,
@@ -519,6 +539,9 @@ export default function HermesLiquidityFieldRender() {
       uNumPaths: { value: NUM_PATHS },
       uSurvivor: { value: survivor },
       uWell: { value: new THREE.Vector2(WELLS[0].x, WELLS[0].y) },
+      uPointer: { value: new THREE.Vector2(0.5, 0.5) },
+      uPointerGlow: { value: 0 },
+      uPathFade: { value: 1 },
     };
     const material = new THREE.ShaderMaterial({
       uniforms,
@@ -554,8 +577,63 @@ export default function HermesLiquidityFieldRender() {
       uniforms.uPixelRatio.value = dpr;
     };
 
+    // Pointer probe: eased toward the cursor while it is over the card.
+    const pointerState = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5, glow: 0, glowTarget: 0 };
+    const card = mount.closest('.inst-card');
+
+    const onPointerMove = (event: PointerEvent) => {
+      const rect = mount.getBoundingClientRect();
+      if (rect.width < 1 || rect.height < 1) return;
+      pointerState.tx = (event.clientX - rect.left) / rect.width;
+      pointerState.ty = 1 - (event.clientY - rect.top) / rect.height;
+      pointerState.glowTarget = 1;
+    };
+    const onPointerLeave = () => {
+      pointerState.glowTarget = 0;
+    };
+
+    if (card && !reducedMotion) {
+      card.addEventListener('pointermove', onPointerMove as EventListener);
+      card.addEventListener('pointerleave', onPointerLeave);
+    }
+
+    // Re-evaluation epochs: the candidate paths fade down to the bare field,
+    // the engine redraws them (new candidates, new survivor), and the new
+    // reading fades back in. The world persists; the judgment refreshes.
+    const EPOCH = 36;
+    const EPOCH_FADE = 1.15;
+    let swappedEpoch = -1;
+
     const render = () => {
-      uniforms.uTime.value = (performance.now() - startedAt) / 1000;
+      const elapsed = (performance.now() - startedAt) / 1000;
+      uniforms.uTime.value = elapsed;
+
+      pointerState.x += (pointerState.tx - pointerState.x) * 0.09;
+      pointerState.y += (pointerState.ty - pointerState.y) * 0.09;
+      pointerState.glow += (pointerState.glowTarget - pointerState.glow) * 0.055;
+      uniforms.uPointer.value.set(pointerState.x, pointerState.y);
+      uniforms.uPointerGlow.value = pointerState.glow;
+
+      if (!reducedMotion) {
+        const phase = elapsed % EPOCH;
+        const epochIndex = Math.floor(elapsed / EPOCH);
+        let fade = 1;
+        if (phase > EPOCH - EPOCH_FADE * 2) {
+          fade =
+            phase < EPOCH - EPOCH_FADE
+              ? 1 - (phase - (EPOCH - EPOCH_FADE * 2)) / EPOCH_FADE
+              : (phase - (EPOCH - EPOCH_FADE)) / EPOCH_FADE;
+        }
+        if (phase >= EPOCH - EPOCH_FADE && swappedEpoch !== epochIndex) {
+          swappedEpoch = epochIndex;
+          const next = buildPaths(fieldData, epochRand);
+          pathData.set(next.texture);
+          pathTexture.needsUpdate = true;
+          uniforms.uSurvivor.value = next.survivor;
+        }
+        uniforms.uPathFade.value = fade * fade * (3 - 2 * fade);
+      }
+
       renderer.render(scene, camera);
     };
 
@@ -604,6 +682,11 @@ export default function HermesLiquidityFieldRender() {
     return () => {
       if (frameId !== null) {
         window.cancelAnimationFrame(frameId);
+      }
+
+      if (card) {
+        card.removeEventListener('pointermove', onPointerMove as EventListener);
+        card.removeEventListener('pointerleave', onPointerLeave);
       }
 
       resizeObserver.disconnect();

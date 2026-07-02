@@ -21,6 +21,9 @@ const fragmentShader = `
   uniform sampler2D uPaths;
   uniform float uNumPaths;
   uniform vec2 uResolved;
+  uniform vec2 uPointer;
+  uniform float uPointerGlow;
+  uniform float uFanFade;
 
   const int MAX_PATHS = 7;
 
@@ -87,6 +90,11 @@ const fragmentShader = `
     vec2 w = uv;
     w.x = uv.x * mix(1.0, 0.74, mobile);
 
+    // Pointer probe: attention lights the futures under it.
+    vec2 toPtr = uv - uPointer;
+    float prd = length(toPtr * vec2(1.2, 1.0));
+    float probe = exp(-prd * prd / 0.02) * uPointerGlow;
+
     vec3 color = vec3(0.0028, 0.0038, 0.0058);
 
     float neb = noise(w * 2.3 + vec2(uTime * 0.01, 0.0)) * 0.6 + noise(w * 4.9) * 0.4;
@@ -100,6 +108,9 @@ const fragmentShader = `
     color += dustLayer(w, 100.0, 0.006, 0.9, 47.0, clump);
 
     // === THE FUTURES (one present, seven weighted branches) ===
+    // Accumulated separately so the fan can fade and redraw when a new
+    // reading opens; the present point persists through the refresh.
+    vec3 fanCol = vec3(0.0);
     float bundleGlow = 0.0;
     for (int i = 0; i < MAX_PATHS; i++) {
       if (float(i) >= uNumPaths) break;
@@ -122,11 +133,12 @@ const fragmentShader = `
 
       // Likelihood is luminance: probable futures burn clearer.
       float lum = (0.1 + 1.05 * weight * weight) * defined;
-      color += vec3(0.9, 0.97, 0.94) * core * 0.62 * lum;
-      color += vec3(0.53, 0.86, 0.75) * halo * 0.1 * lum;
-      color += vec3(0.5, 0.8, 0.74) * wide * 0.025 * weight;
+      fanCol += vec3(0.9, 0.97, 0.94) * core * 0.62 * lum;
+      fanCol += vec3(0.53, 0.86, 0.75) * halo * 0.1 * lum;
+      fanCol += vec3(0.5, 0.8, 0.74) * wide * 0.025 * weight;
       bundleGlow = max(bundleGlow, halo * weight);
     }
+    color += fanCol * uFanFade;
 
     // The present: a single bright point where all futures begin.
     vec2 origin = vec2(4.0 / 512.0, 0.5);
@@ -136,10 +148,15 @@ const fragmentShader = `
     color += vec3(0.53, 0.86, 0.75) * exp(-od * od / (70.0 * 70.0)) * 0.07;
 
     // The one answered question: a warm point on the strongest branch.
+    // It belongs to the current fan, so it fades and returns with it.
     float rd = length(vec2((w.x - uResolved.x) * uResolution.x, (uv.y - uResolved.y) * uResolution.y)) / uPixelRatio;
     float resolvePulse = 0.8 + 0.2 * sin(uTime * 0.35 + 1.7);
-    color += vec3(1.0, 0.84, 0.58) * exp(-rd * rd / 5.0) * 1.05 * resolvePulse;
-    color += vec3(1.0, 0.7, 0.36) * exp(-rd * rd / (48.0 * 48.0)) * 0.09;
+    color += vec3(1.0, 0.84, 0.58) * exp(-rd * rd / 5.0) * 1.05 * resolvePulse * uFanFade;
+    color += vec3(1.0, 0.7, 0.36) * exp(-rd * rd / (48.0 * 48.0)) * 0.09 * uFanFade;
+
+    // The futures brighten where they are being read.
+    color *= 1.0 + probe * 0.3;
+    color += vec3(0.6, 0.85, 0.78) * probe * 0.07;
 
     // === GRADE (same contract as Hermes, mirrored fade) ===
     float rightFade = smoothstep(1.0, 0.7, uv.x);
@@ -286,6 +303,8 @@ export default function OracleFuturesRender() {
 
     const rand = mulberry32(20260612);
     const { texture: pathData, resolved } = buildFutures(rand);
+    // Separate stream for fan-refresh epochs; the opening fan stays identical.
+    const epochRand = mulberry32(881003);
 
     const pathTexture = new THREE.DataTexture(
       pathData,
@@ -310,6 +329,9 @@ export default function OracleFuturesRender() {
       uPaths: { value: pathTexture },
       uNumPaths: { value: NUM_PATHS },
       uResolved: { value: new THREE.Vector2(resolved[0], resolved[1]) },
+      uPointer: { value: new THREE.Vector2(0.5, 0.5) },
+      uPointerGlow: { value: 0 },
+      uFanFade: { value: 1 },
     };
     const material = new THREE.ShaderMaterial({
       uniforms,
@@ -342,8 +364,63 @@ export default function OracleFuturesRender() {
       uniforms.uPixelRatio.value = dpr;
     };
 
+    // Pointer probe: eased toward the cursor while it is over the card.
+    const pointerState = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5, glow: 0, glowTarget: 0 };
+    const card = mount.closest('.inst-card');
+
+    const onPointerMove = (event: PointerEvent) => {
+      const rect = mount.getBoundingClientRect();
+      if (rect.width < 1 || rect.height < 1) return;
+      pointerState.tx = (event.clientX - rect.left) / rect.width;
+      pointerState.ty = 1 - (event.clientY - rect.top) / rect.height;
+      pointerState.glowTarget = 1;
+    };
+    const onPointerLeave = () => {
+      pointerState.glowTarget = 0;
+    };
+
+    if (card && !reducedMotion) {
+      card.addEventListener('pointermove', onPointerMove as EventListener);
+      card.addEventListener('pointerleave', onPointerLeave);
+    }
+
+    // Fan-refresh epochs: the futures fade, a new fan opens from the same
+    // present, the resolved point moves with it. Offset from the Hermes
+    // card's cadence so the two never breathe in sync.
+    const EPOCH = 29;
+    const EPOCH_FADE = 1.05;
+    let swappedEpoch = -1;
+
     const render = () => {
-      uniforms.uTime.value = (performance.now() - startedAt) / 1000;
+      const elapsed = (performance.now() - startedAt) / 1000;
+      uniforms.uTime.value = elapsed;
+
+      pointerState.x += (pointerState.tx - pointerState.x) * 0.09;
+      pointerState.y += (pointerState.ty - pointerState.y) * 0.09;
+      pointerState.glow += (pointerState.glowTarget - pointerState.glow) * 0.055;
+      uniforms.uPointer.value.set(pointerState.x, pointerState.y);
+      uniforms.uPointerGlow.value = pointerState.glow;
+
+      if (!reducedMotion) {
+        const phase = elapsed % EPOCH;
+        const epochIndex = Math.floor(elapsed / EPOCH);
+        let fade = 1;
+        if (phase > EPOCH - EPOCH_FADE * 2) {
+          fade =
+            phase < EPOCH - EPOCH_FADE
+              ? 1 - (phase - (EPOCH - EPOCH_FADE * 2)) / EPOCH_FADE
+              : (phase - (EPOCH - EPOCH_FADE)) / EPOCH_FADE;
+        }
+        if (phase >= EPOCH - EPOCH_FADE && swappedEpoch !== epochIndex) {
+          swappedEpoch = epochIndex;
+          const next = buildFutures(epochRand);
+          pathData.set(next.texture);
+          pathTexture.needsUpdate = true;
+          uniforms.uResolved.value.set(next.resolved[0], next.resolved[1]);
+        }
+        uniforms.uFanFade.value = fade * fade * (3 - 2 * fade);
+      }
+
       renderer.render(scene, camera);
     };
 
@@ -391,6 +468,11 @@ export default function OracleFuturesRender() {
     return () => {
       if (frameId !== null) {
         window.cancelAnimationFrame(frameId);
+      }
+
+      if (card) {
+        card.removeEventListener('pointermove', onPointerMove as EventListener);
+        card.removeEventListener('pointerleave', onPointerLeave);
       }
 
       resizeObserver.disconnect();
