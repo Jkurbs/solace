@@ -26,6 +26,7 @@ import {
   isRiskProfileAvailableForBeta,
   riskProfileDescriptions,
 } from './contract';
+import { isSetupIncomplete } from './setup';
 import type { HermesDashboardSnapshot, IdentityVerificationStatus, RiskProfile } from './types';
 
 type HermesDashboardProps = {
@@ -89,6 +90,20 @@ const riskProfiles: Array<{ label: RiskProfile; icon: typeof ShieldCheck }> = [
 
 const liveRefreshIntervalMs = 5_000;
 
+// Honest-labeling chip for narrative sections still running on placeholder
+// copy — mirrors the "Illustrative" discipline on the public site.
+function IllustrativeBadge() {
+  return (
+    <Badge
+      variant="secondary"
+      className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+      title="Placeholder narrative — live Hermes reads connect later in beta. Money figures on this page are real."
+    >
+      Illustrative
+    </Badge>
+  );
+}
+
 function getAllocationColor(asset: string, index: number, theme: DashboardTheme) {
   const resolvedTheme: DashboardTheme = theme === 'light' ? 'light' : 'dark';
   const fallbackColors = fallbackAllocationColors[resolvedTheme];
@@ -126,11 +141,11 @@ function formatTodaysChange(change: HermesDashboardSnapshot['portfolio']['todays
 
 function getEquityStateBadgeClass(code: HermesDashboardSnapshot['portfolio']['equityState']['code']) {
   if (code === 'LIVE_EQUITY') {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300';
+    return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-[#5f8f6f]/50 dark:bg-[#5f8f6f]/10 dark:text-[#8db89d]';
   }
 
   if (code === 'PENDING_SETTLEMENT' || code === 'TREASURY_QUEUED' || code === 'NAV_PENDING') {
-    return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100';
+    return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-[#b8955a]/50 dark:bg-[#b8955a]/10 dark:text-[#d3b585]';
   }
 
   return 'border-neutral-200 bg-neutral-100 text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300';
@@ -187,11 +202,13 @@ function formatUpdatedAt(value: Date | string) {
 function Metric({ label, value, positive = false }: { label: string; value: string; positive?: boolean }) {
   return (
     <div>
-      <span className="block text-sm text-neutral-500 dark:text-neutral-400">{label}</span>
+      <span className="block font-mono text-[0.6rem] uppercase tracking-[0.14em] text-neutral-500 dark:text-neutral-400">
+        {label}
+      </span>
       <strong
         className={cn(
-          'mt-1 block text-lg font-semibold text-neutral-950 dark:text-neutral-50',
-          positive && 'text-emerald-700 dark:text-emerald-300',
+          'mt-1.5 block text-lg font-semibold tabular-nums text-neutral-950 dark:text-neutral-50',
+          positive && 'text-emerald-700 dark:text-[#8db89d]',
         )}
       >
         {value}
@@ -219,7 +236,7 @@ function ActivationStep({
             'grid h-8 w-8 shrink-0 place-items-center rounded-full border',
             state === 'complete'
               ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300'
-              : 'border-neutral-300 bg-white text-neutral-500 dark:border-neutral-700 dark:bg-[#181715] dark:text-neutral-400',
+              : 'border-neutral-300 bg-white text-neutral-500 dark:border-neutral-700 dark:bg-[#0d0d0b] dark:text-neutral-400',
           )}
         >
           <Icon size={16} aria-hidden="true" />
@@ -240,7 +257,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const [riskStatus, setRiskStatus] = useState('');
   const [theme, setTheme] = useState<DashboardTheme>('dark');
   const queryClient = useQueryClient();
-  const { data, isFetching } = useQuery({
+  const { data, dataUpdatedAt, isError, isFetching } = useQuery({
     queryKey: hermesDashboardQueryKey,
     queryFn: getHermesDashboardSnapshot,
     initialData: initialSnapshot,
@@ -379,7 +396,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
     ? formatCurrency(data.account.depositIntent.amount, { whole: true })
     : 'Pending';
   const accountReviewSubmitted = data.account.review?.status === 'SUBMITTED';
-  const setupIncomplete = isAwaitingDeposit && (!accountReviewSubmitted || !data.account.depositIntent?.amount);
+  const setupIncomplete = isSetupIncomplete(data);
   const identityVerificationLabel = formatIdentityStatus(data.account.identityVerification.status);
   const identityHelper =
     identityStatus ||
@@ -439,7 +456,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Activation Status</p>
+            <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400">Activation Status</p>
             <CardTitle>Pending activation</CardTitle>
           </div>
           <Badge variant="secondary">IN REVIEW</Badge>
@@ -488,10 +505,10 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       className={cn(
         theme === 'dark' && 'dark',
         'min-h-screen transition-colors',
-        theme === 'dark' ? 'bg-[#10100e] text-neutral-50' : 'bg-[#f7f5ef] text-neutral-950',
+        theme === 'dark' ? 'bg-[#0a0a0a] text-neutral-50' : 'bg-[#f7f5ef] text-neutral-950',
       )}
     >
-      <header className="sticky top-0 z-30 border-b border-neutral-200 bg-[#f7f5ef]/90 backdrop-blur dark:border-neutral-800 dark:bg-[#10100e]/90">
+      <header className="sticky top-0 z-30 border-b border-neutral-200 bg-[#f7f5ef]/90 backdrop-blur dark:border-neutral-800 dark:bg-[#0a0a0a]/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-neutral-950 dark:text-neutral-50">
             <Mark size={22} />
@@ -525,7 +542,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 )}
                 aria-hidden="true"
               />
-              {isFetching ? 'Syncing' : 'Live 5s'}
+              {isFetching ? 'Syncing' : 'Auto-refresh 5s'}
             </Badge>
             <Badge variant={isSimulationMode ? 'secondary' : 'success'}>{isSimulationMode ? 'Simulation' : 'Live'}</Badge>
             <Button
@@ -567,6 +584,17 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       </header>
 
       <div className="mx-auto grid max-w-6xl gap-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        {isError ? (
+          <div
+            role="alert"
+            className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-amber-700 dark:text-amber-300"
+          >
+            Live refresh is failing — figures below are from the last successful sync
+            {dataUpdatedAt ? ` (${formatUpdatedAt(new Date(dataUpdatedAt).toISOString())})` : ''}. Retrying
+            automatically.
+          </div>
+        ) : null}
+
         {activationStatusCard}
 
         <div>
@@ -574,13 +602,13 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
-            className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-[#181715] dark:shadow-none sm:p-8"
+            className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-[#0d0d0b] dark:shadow-none sm:p-8"
             aria-labelledby="portfolio-value"
           >
             <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
               <div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Portfolio Value</p>
+                  <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400">Portfolio Value</p>
                   {!isAwaitingDeposit ? (
                     <Badge className={getEquityStateBadgeClass(equityState.code)} variant="secondary">
                       {equityState.label}
@@ -593,7 +621,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 <h1
                   id="portfolio-value"
                   className={cn(
-                    'mt-3 font-semibold leading-none text-neutral-950 dark:text-neutral-50',
+                    'mt-3 font-medium leading-none tracking-[-0.01em] tabular-nums text-neutral-950 [font-family:var(--font-display),Georgia,serif] dark:text-neutral-50',
                     isAwaitingDeposit ? 'text-4xl sm:text-5xl' : 'text-5xl sm:text-6xl',
                   )}
                 >
@@ -638,7 +666,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Funding Status</p>
+                  <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400">Funding Status</p>
                   <CardTitle>{equityState.label}</CardTitle>
                 </div>
                 <Badge variant="secondary">PENDING</Badge>
@@ -689,7 +717,10 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
 
         <Card>
           <CardHeader className="pb-4">
-            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Hermes Status</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400">Hermes Status</p>
+              {data.illustrative?.status ? <IllustrativeBadge /> : null}
+            </div>
             <CardTitle>Operating posture</CardTitle>
           </CardHeader>
           <CardContent>
@@ -766,7 +797,10 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
 
         <Card>
           <CardHeader className="pb-4">
-            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Hermes Outlook</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400">Hermes Outlook</p>
+              {data.illustrative?.outlook ? <IllustrativeBadge /> : null}
+            </div>
             <CardTitle>Opportunity environment</CardTitle>
           </CardHeader>
           <CardContent>
@@ -790,7 +824,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
         <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
           <Card>
             <CardHeader className="pb-4">
-              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Current Allocation</p>
+              <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400">Current Allocation</p>
               <CardTitle>Capital mix</CardTitle>
             </CardHeader>
             <CardContent>
@@ -814,7 +848,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                   style={{ background: allocationGradient }}
                   aria-hidden="true"
                 >
-                  <div className="grid h-[64%] w-[64%] place-items-center rounded-full bg-white text-center shadow-inner dark:bg-[#181715]">
+                  <div className="grid h-[64%] w-[64%] place-items-center rounded-full bg-white text-center shadow-inner dark:bg-[#0d0d0b]">
                     <div>
                       <span className="block text-sm text-neutral-500 dark:text-neutral-400">Allocated</span>
                       <strong className="mt-1 block text-2xl font-semibold text-neutral-950 dark:text-neutral-50">
@@ -844,10 +878,15 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
 
           <Card>
             <CardHeader className="pb-4">
-              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Recent Activity</p>
+              <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400">Recent Activity</p>
               <CardTitle>Latest decisions</CardTitle>
             </CardHeader>
             <CardContent>
+              {data.activity.length === 0 ? (
+                <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
+                  No activity yet. Decisions appear here once the account is funded and Hermes activates.
+                </p>
+              ) : null}
               <ol className="grid gap-0">
                 {data.activity.map((item) => {
                   const timestamp = coerceDate(item.timestamp);
@@ -871,7 +910,10 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
 
         <Card>
           <CardHeader className="pb-4">
-            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Hermes Commentary</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400">Hermes Commentary</p>
+              {data.illustrative?.commentary ? <IllustrativeBadge /> : null}
+            </div>
             <CardTitle>Current read</CardTitle>
           </CardHeader>
           <CardContent>
@@ -881,7 +923,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
 
         <Card>
           <CardHeader className="pb-4">
-            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Account</p>
+            <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400">Account</p>
             <CardTitle>Summary</CardTitle>
           </CardHeader>
           <CardContent>
@@ -896,7 +938,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-500 dark:text-neutral-400">
           <span>{hermesBetaVersionLabel}</span>
           <span aria-hidden="true">·</span>
-          <span>Live refresh every 5s</span>
+          <span>Auto-refresh every 5s</span>
           <span aria-hidden="true">·</span>
           <span>Last updated {formatUpdatedAt(equityState.updatedAt ?? data.updatedAt)}</span>
         </p>

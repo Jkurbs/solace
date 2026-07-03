@@ -136,8 +136,8 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
   }
 
   return (
-    <main className="min-h-screen bg-[#10100e] text-neutral-50">
-      <header className="border-b border-neutral-800 bg-[#10100e]/90">
+    <main className="min-h-screen bg-[#0a0a0a] text-neutral-50">
+      <header className="border-b border-neutral-800 bg-[#0a0a0a]/90">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
           <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-neutral-50">
             <Mark size={22} />
@@ -161,7 +161,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
               : 'Confirm the profile from your access request, complete the remaining fields, and record capital intent before entering the dashboard.'}
           </p>
           {approvedProfile ? (
-            <div className="mt-8 rounded-lg border border-neutral-800 bg-[#181715] p-4 text-sm">
+            <div className="mt-8 rounded-lg border border-neutral-800 bg-[#0d0d0b] p-4 text-sm">
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">Profile on file</p>
               <dl className="mt-4 grid gap-3 text-neutral-300">
                 <div>
@@ -217,7 +217,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
         <form
           action="/api/dashboard/onboarding"
           method="post"
-          className="rounded-lg border border-neutral-800 bg-[#181715] p-5 shadow-2xl shadow-black/20 sm:p-6"
+          className="rounded-lg border border-neutral-800 bg-[#0d0d0b] p-5 shadow-2xl shadow-black/20 sm:p-6"
         >
           <div>
             <p className="text-sm font-medium text-neutral-400">Risk Profile</p>
@@ -244,7 +244,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                   autoComplete="name"
                   required
                   defaultValue={reviewValues.legalName}
-                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
+                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#0a0a0a] px-3 text-base text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
                 />
               </div>
               <div>
@@ -256,7 +256,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                   name="accountType"
                   required
                   defaultValue={reviewValues.accountType}
-                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors focus:border-neutral-400"
+                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#0a0a0a] px-3 text-base text-neutral-50 outline-none transition-colors focus:border-neutral-400"
                 >
                   {accountTypeValues.map((accountType) => (
                     <option key={accountType} value={accountType}>
@@ -276,7 +276,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                   autoComplete="country-name"
                   required
                   defaultValue={reviewValues.country}
-                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
+                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#0a0a0a] px-3 text-base text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
                 />
               </div>
               <div>
@@ -290,7 +290,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                   autoComplete="address-level1"
                   required
                   defaultValue={reviewValues.region}
-                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
+                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#0a0a0a] px-3 text-base text-neutral-50 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
                 />
               </div>
               <div>
@@ -302,7 +302,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                   name="intendedDepositRange"
                   required
                   defaultValue={reviewValues.intendedRange}
-                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors focus:border-neutral-400"
+                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#0a0a0a] px-3 text-base text-neutral-50 outline-none transition-colors focus:border-neutral-400"
                 >
                   {intendedDepositRangeValues.map((range) => (
                     <option key={range} value={range}>
@@ -320,7 +320,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
                   name="sourceOfFunds"
                   required
                   defaultValue={reviewValues.sourceOfFunds}
-                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#10100e] px-3 text-base text-neutral-50 outline-none transition-colors focus:border-neutral-400"
+                  className="mt-2 h-11 w-full rounded-md border border-neutral-700 bg-[#0a0a0a] px-3 text-base text-neutral-50 outline-none transition-colors focus:border-neutral-400"
                 >
                   {sourceOfFundsValues.map((source) => (
                     <option key={source} value={source}>
@@ -354,7 +354,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             <label htmlFor="deposit-intent-amount" className="mt-5 block text-sm font-medium text-neutral-300">
               Amount
             </label>
-            <div className="mt-2 grid grid-cols-[auto_1fr] overflow-hidden rounded-md border border-neutral-700 bg-[#10100e] focus-within:border-neutral-400">
+            <div className="mt-2 grid grid-cols-[auto_1fr] overflow-hidden rounded-md border border-neutral-700 bg-[#0a0a0a] focus-within:border-neutral-400">
               <span className="grid h-12 place-items-center border-r border-neutral-800 px-4 text-neutral-500">$</span>
               <input
                 id="deposit-intent-amount"

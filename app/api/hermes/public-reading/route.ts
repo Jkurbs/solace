@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { safeSecretEquals } from '@/lib/secret-compare';
+
 import { getStoredHermesPublicReading, saveHermesPublicReading } from '@/features/hermes-public-reading/store';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +25,7 @@ function hasHermesIngestAccess(request: Request) {
 
   const provided = request.headers.get('x-hermes-ingest-secret') ?? getBearerToken(request);
 
-  return provided === expected;
+  return typeof provided === 'string' && provided.length > 0 ? safeSecretEquals(provided, expected) : false;
 }
 
 export async function GET() {

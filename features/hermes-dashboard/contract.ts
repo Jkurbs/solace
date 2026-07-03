@@ -178,7 +178,7 @@ export const dashboardFieldSources: DashboardFieldSource[] = [
     owner: 'decision_journal',
     ownerLabel: 'Decision Journal',
     requirement: 'Records Hermes actions, reasons, and timestamps.',
-    status: 'mock',
+    status: 'live',
   },
   {
     field: 'commentary',

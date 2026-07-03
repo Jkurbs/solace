@@ -161,6 +161,41 @@ export async function postHermesRealizedTradeEvent(input: HermesRealizedTradeEve
   }
 }
 
+export async function getRecentHermesRealizedTradeEvents({
+  limit = 5,
+  poolId,
+}: {
+  limit?: number;
+  poolId: string;
+}): Promise<HermesRealizedTradeEvent[]> {
+  if (!isSupabaseDataClientConfigured() || !poolId.trim()) {
+    return [];
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    const { data, error } = await supabase
+      .from('hermes_realized_trade_events')
+      .select('*')
+      .eq('pool_id', poolId)
+      .order('closed_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      if (!isMissingRealizedTradeObject(error.message)) {
+        console.warn('[hermes-realized-trades] Recent events lookup failed.', error.message);
+      }
+
+      return [];
+    }
+
+    return (data ?? []).map(fromHermesRealizedTradeEventRow);
+  } catch (error) {
+    console.warn('[hermes-realized-trades] Recent events lookup failed.', error);
+    return [];
+  }
+}
+
 export async function getHermesRealizedTradePerformance({
   after,
   at,

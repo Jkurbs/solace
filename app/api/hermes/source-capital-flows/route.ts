@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { safeSecretEquals } from '@/lib/secret-compare';
+
 import { recordHermesSourceCapitalFlow } from '@/features/ledger/pool-marking';
 import type { HermesSourceCapitalFlowDirection } from '@/features/ledger/types';
 
@@ -24,7 +26,7 @@ function hasHermesIngestAccess(request: Request) {
 
   const provided = request.headers.get('x-hermes-ingest-secret') ?? getBearerToken(request);
 
-  return provided === expected;
+  return typeof provided === 'string' && provided.length > 0 ? safeSecretEquals(provided, expected) : false;
 }
 
 function getNumber(value: unknown) {

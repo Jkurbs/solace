@@ -18,6 +18,7 @@ import {
   logoutUser,
   startMoneyMovement,
 } from './queries';
+import { isSetupIncomplete } from './setup';
 import type { HermesDashboardSnapshot, MoneyMovementType } from './types';
 
 type MoneyMovementPageProps = {
@@ -63,12 +64,14 @@ function MoneyMetric({
   value: string;
 }) {
   return (
-    <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/60">
-      <span className="block text-sm text-neutral-500 dark:text-neutral-400">{label}</span>
+    <div className="rounded-md border border-neutral-200 bg-neutral-50 p-4 dark:border-white/10 dark:bg-neutral-900/60">
+      <span className="block font-mono text-[0.6rem] uppercase tracking-[0.14em] text-neutral-500 dark:text-neutral-400">
+        {label}
+      </span>
       <strong
         className={cn(
-          'mt-2 block text-2xl font-semibold text-neutral-950 dark:text-neutral-50',
-          tone === 'green' && 'text-emerald-700 dark:text-emerald-300',
+          'mt-2 block text-2xl font-semibold tabular-nums text-neutral-950 dark:text-neutral-50',
+          tone === 'green' && 'text-emerald-700 dark:text-[#8db89d]',
           tone === 'muted' && 'text-neutral-600 dark:text-neutral-300',
         )}
       >
@@ -132,7 +135,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
   const [logoutStatus, setLogoutStatus] = useState('');
   const [theme, setTheme] = useState<DashboardTheme>('dark');
   const queryClient = useQueryClient();
-  const { data, isFetching } = useQuery({
+  const { data, isError, isFetching } = useQuery({
     queryKey: hermesDashboardQueryKey,
     queryFn: getHermesDashboardSnapshot,
     initialData: initialSnapshot,
@@ -203,8 +206,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
     (equityState.code === 'PENDING_SETTLEMENT' ||
       equityState.code === 'TREASURY_QUEUED' ||
       equityState.code === 'NAV_PENDING');
-  const accountReviewSubmitted = data.account.review?.status === 'SUBMITTED';
-  const setupIncomplete = isAwaitingDeposit && (!accountReviewSubmitted || !data.account.depositIntent?.amount);
+  const setupIncomplete = isSetupIncomplete(data);
   const availableBalance = data.portfolio.availableBalance ?? data.portfolio.availableToWithdraw;
   const withdrawable = data.portfolio.withdrawable ?? data.portfolio.availableToWithdraw;
   const allocatedCapital = data.portfolio.allocatedCapital ?? 0;
@@ -217,10 +219,10 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
       className={cn(
         theme === 'dark' && 'dark',
         'min-h-screen transition-colors',
-        theme === 'dark' ? 'bg-[#10100e] text-neutral-50' : 'bg-[#f7f5ef] text-neutral-950',
+        theme === 'dark' ? 'bg-[#0a0a0a] text-neutral-50' : 'bg-[#f7f5ef] text-neutral-950',
       )}
     >
-      <header className="sticky top-0 z-30 border-b border-neutral-200 bg-[#f7f5ef]/90 backdrop-blur dark:border-neutral-800 dark:bg-[#10100e]/90">
+      <header className="sticky top-0 z-30 border-b border-neutral-200 bg-[#f7f5ef]/90 backdrop-blur dark:border-neutral-800 dark:bg-[#0a0a0a]/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-neutral-950 dark:text-neutral-50">
             <Mark size={22} />
@@ -274,6 +276,14 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
       </header>
 
       <div className="mx-auto grid max-w-6xl gap-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        {isError ? (
+          <div
+            role="alert"
+            className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-amber-700 dark:text-amber-300"
+          >
+            Live refresh is failing — balances below are from the last successful sync. Retrying automatically.
+          </div>
+        ) : null}
         <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
             <Button asChild variant="ghost" className="-ml-3">
@@ -314,7 +324,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Deposit</p>
+                  <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400">Deposit</p>
                   <CardTitle>{isSimulationMode ? 'Add simulation capital' : 'Add capital'}</CardTitle>
                 </div>
                 <Badge variant={isSimulationMode ? 'secondary' : 'success'}>{isSimulationMode ? 'Sandbox' : 'Live rail'}</Badge>
@@ -364,7 +374,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Withdraw</p>
+                  <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400">Withdraw</p>
                   <CardTitle>Request withdrawal</CardTitle>
                 </div>
                 <Wallet size={20} className="text-neutral-500 dark:text-neutral-400" aria-hidden="true" />

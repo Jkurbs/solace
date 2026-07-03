@@ -1,10 +1,12 @@
 import 'server-only';
 
+import { getRecentHermesRealizedTradeEvents } from '@/features/ledger/hermes-realized-trades';
 import { listMoneyMovementRecords } from '@/features/ledger/money-movement';
 import { getRecentPoolAllocationSnapshots } from '@/features/ledger/pool-allocations';
 import { getPoolAccountProjection } from '@/features/ledger/pool-units';
 import { getLedgerReadModel } from '@/features/ledger/read-model';
 import type {
+  HermesRealizedTradeEvent,
   LedgerReadModel,
   PoolAllocationSnapshot,
   PoolAccountProjection,
@@ -304,6 +306,21 @@ function getAllocationActivity(
   }, []);
 }
 
+const tradePnlFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  signDisplay: 'always',
+  style: 'currency',
+});
+
+// Real fills from the Hermes stream, rendered in the activity feed. This is a
+// protected account surface, so per-trade detail is in-contract here.
+function getTradeEventActivity(events: HermesRealizedTradeEvent[]) {
+  return events.map((event) => ({
+    timestamp: event.closedAt,
+    summary: `Closed ${event.symbol} ${event.side === 'LONG' ? 'long' : 'short'} · ${tradePnlFormatter.format(event.netPnl)} net`,
+  }));
+}
+
 async function getAccountMoneyState(accountId: string): Promise<AccountMoneyState> {
   const moneyMovement = await listMoneyMovementRecords().catch((error) => {
     console.warn('[hermes-dashboard] Money movement state unavailable.', {
@@ -408,10 +425,12 @@ function getActiveSnapshotFromLedger(
   riskProfile: RiskProfile,
   poolAllocations: PoolAllocationSnapshot[],
   poolProjection: PoolAccountProjection | null,
+  tradeEvents: HermesRealizedTradeEvent[] = [],
 ): HermesDashboardSnapshot {
   const hermesActivity = ledger.activities.filter((activity) => activity.type === 'hermes_decision');
   const allocationActivity = getAllocationActivity(poolAllocations, poolProjection);
   const visibleActivity = [
+    ...getTradeEventActivity(tradeEvents),
     ...allocationActivity,
     ...(hermesActivity.length ? hermesActivity : ledger.activities).map((activity) => ({
       timestamp: activity.createdAt,
@@ -499,10 +518,18 @@ function getActiveSnapshotFromLedger(
         }
       : baseSnapshot.outlook,
     allocation,
-    activity: visibleActivity.slice(0, 3),
+    activity: visibleActivity.slice(0, 5),
     commentary: fundingPending
       ? equityState.detail
       : baseSnapshot.commentary,
+    // When funding is pending, status/outlook/commentary are derived from the
+    // real equity state; otherwise they still come from the placeholder base
+    // snapshot until the owning Hermes services connect. Label them honestly.
+    illustrative: {
+      status: !fundingPending,
+      outlook: !fundingPending,
+      commentary: !fundingPending,
+    },
   };
 }
 
@@ -559,9 +586,22 @@ export async function getHermesDashboardSnapshot({
         getAccountMoneyState(ledger.account.id),
         getPoolAccountProjection(ledger.account.id),
       ]);
-      const poolAllocations = poolProjection ? await getRecentPoolAllocationSnapshots(poolProjection.pool.id, 8) : [];
+      const [poolAllocations, tradeEvents] = poolProjection
+        ? await Promise.all([
+            getRecentPoolAllocationSnapshots(poolProjection.pool.id, 8),
+            getRecentHermesRealizedTradeEvents({ poolId: poolProjection.pool.id, limit: 5 }),
+          ])
+        : [[], []];
 
-      return getActiveSnapshotFromLedger(baseSnapshot, ledger, moneyState, selectedRiskProfile, poolAllocations, poolProjection);
+      return getActiveSnapshotFromLedger(
+        baseSnapshot,
+        ledger,
+        moneyState,
+        selectedRiskProfile,
+        poolAllocations,
+        poolProjection,
+        tradeEvents,
+      );
     }
 
     return {
@@ -580,7 +620,20 @@ export async function getHermesDashboardSnapshot({
     getAccountMoneyState(ledger.account.id),
     getPoolAccountProjection(ledger.account.id),
   ]);
-  const poolAllocations = poolProjection ? await getRecentPoolAllocationSnapshots(poolProjection.pool.id, 8) : [];
+  const [poolAllocations, tradeEvents] = poolProjection
+    ? await Promise.all([
+        getRecentPoolAllocationSnapshots(poolProjection.pool.id, 8),
+        getRecentHermesRealizedTradeEvents({ poolId: poolProjection.pool.id, limit: 5 }),
+      ])
+    : [[], []];
 
-  return getActiveSnapshotFromLedger(baseSnapshot, ledger, moneyState, selectedRiskProfile, poolAllocations, poolProjection);
+  return getActiveSnapshotFromLedger(
+    baseSnapshot,
+    ledger,
+    moneyState,
+    selectedRiskProfile,
+    poolAllocations,
+    poolProjection,
+    tradeEvents,
+  );
 }

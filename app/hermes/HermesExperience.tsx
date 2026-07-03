@@ -348,8 +348,8 @@ function Hero() {
         </Reveal>
         <Reveal delay={0.12}>
           <p className="hx-hero-lede">
-            A live capital allocation instrument for markets under uncertainty. Hermes reads liquidity, timing,
-            and regime to decide when capital should move, wait, or be preserved.
+            A live instrument for capital allocation under uncertainty. Hermes reads liquidity, timing, and
+            regime — standing down until signal earns deployment.
           </p>
         </Reveal>
         <Reveal delay={0.18}>

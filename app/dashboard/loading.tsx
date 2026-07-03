@@ -2,8 +2,8 @@ import Mark from '@/app/Mark';
 
 export default function DashboardLoading() {
   return (
-    <main className="min-h-screen bg-[#10100e] text-neutral-50">
-      <header className="sticky top-0 z-30 border-b border-neutral-800 bg-[#10100e]/90 backdrop-blur">
+    <main className="min-h-screen bg-[#0a0a0a] text-neutral-50">
+      <header className="sticky top-0 z-30 border-b border-neutral-800 bg-[#0a0a0a]/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="inline-flex items-center gap-2 text-sm font-bold">
             <Mark size={22} />
@@ -14,7 +14,7 @@ export default function DashboardLoading() {
       </header>
 
       <div className="mx-auto grid max-w-6xl gap-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <section className="rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8">
+        <section className="rounded-lg border border-neutral-800 bg-[#0d0d0b] p-6 sm:p-8">
           <div className="h-4 w-32 animate-pulse rounded bg-neutral-800" />
           <div className="mt-4 h-14 w-64 animate-pulse rounded bg-neutral-800 sm:h-16 sm:w-96" />
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -28,8 +28,8 @@ export default function DashboardLoading() {
         </section>
 
         <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="h-72 rounded-lg border border-neutral-800 bg-[#181715]" />
-          <div className="h-72 rounded-lg border border-neutral-800 bg-[#181715]" />
+          <div className="h-72 rounded-lg border border-neutral-800 bg-[#0d0d0b]" />
+          <div className="h-72 rounded-lg border border-neutral-800 bg-[#0d0d0b]" />
         </div>
       </div>
     </main>

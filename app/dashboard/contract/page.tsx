@@ -197,8 +197,8 @@ export default async function DashboardContractPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[#10100e] text-neutral-50">
-      <header className="sticky top-0 z-30 border-b border-neutral-800 bg-[#10100e]/90 backdrop-blur">
+    <main className="min-h-screen bg-[#0a0a0a] text-neutral-50">
+      <header className="sticky top-0 z-30 border-b border-neutral-800 bg-[#0a0a0a]/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-neutral-50">
             <Mark size={22} />
@@ -216,7 +216,7 @@ export default async function DashboardContractPage() {
       </header>
 
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <section className="grid gap-6 rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8">
+        <section className="grid gap-6 rounded-lg border border-neutral-800 bg-[#0d0d0b] p-6 sm:p-8">
           <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
               <p className="text-sm font-medium text-neutral-400">Internal</p>
@@ -253,7 +253,7 @@ export default async function DashboardContractPage() {
         </section>
 
         <section className="grid gap-5 lg:grid-cols-[18rem_1fr]">
-          <aside className="grid content-start gap-3 rounded-lg border border-neutral-800 bg-[#181715] p-5">
+          <aside className="grid content-start gap-3 rounded-lg border border-neutral-800 bg-[#0d0d0b] p-5">
             <div>
               <p className="text-sm font-medium text-neutral-400">Owner Services</p>
               <h2 className="mt-1 text-base font-semibold text-neutral-50">Backend map</h2>
@@ -285,7 +285,7 @@ export default async function DashboardContractPage() {
             {snapshot.fieldSources.map((source) => (
               <article
                 key={source.field}
-                className="grid gap-4 rounded-lg border border-neutral-800 bg-[#181715] p-4 lg:grid-cols-[0.9fr_1fr_0.75fr_0.45fr_1.35fr] lg:items-start"
+                className="grid gap-4 rounded-lg border border-neutral-800 bg-[#0d0d0b] p-4 lg:grid-cols-[0.9fr_1fr_0.75fr_0.45fr_1.35fr] lg:items-start"
               >
                 <div>
                   <span className="block text-xs font-medium uppercase tracking-[0.14em] text-neutral-500 lg:hidden">

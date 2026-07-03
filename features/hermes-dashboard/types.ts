@@ -187,4 +187,14 @@ export type HermesDashboardSnapshot = {
   allocation: Allocation[];
   activity: Activity[];
   commentary: string;
+  /**
+   * Marks narrative sections whose copy is placeholder rather than a live
+   * Hermes read, so the UI can label them honestly ("Illustrative") until the
+   * owning services connect.
+   */
+  illustrative?: {
+    status: boolean;
+    outlook: boolean;
+    commentary: boolean;
+  };
 };

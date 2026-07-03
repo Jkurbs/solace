@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer';
 
 import { createAccessRequest } from '@/features/access-review/store';
 import type { HermesAccessRequestInput } from '@/features/access-review/types';
+import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -122,6 +123,21 @@ function requestReceivedResponse(request: Request) {
 }
 
 export async function POST(request: Request) {
+  // Abuse speed bump: this endpoint is anonymous, writes to the database, and
+  // sends email — it must not accept unlimited requests.
+  const { allowed, retryAfterSeconds } = rateLimit({
+    key: `request-access:${getClientIp(request)}`,
+    limit: 5,
+    windowMs: 10 * 60_000,
+  });
+
+  if (!allowed) {
+    return NextResponse.json(
+      { message: 'Too many requests. Please try again later.' },
+      { headers: { 'Retry-After': String(retryAfterSeconds) }, status: 429 },
+    );
+  }
+
   const formData = await request.formData().catch(() => null);
 
   if (!formData) {
