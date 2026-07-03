@@ -473,8 +473,8 @@ export default function HomeClient({
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-12 border-t border-white/10 pt-12 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_0.8fr_1.1fr]">
             <div>
-              <p className="flex items-center gap-3 font-serif text-3xl font-medium text-foreground">
-                <Mark size={36} className="site-mark" />
+              <p className="flex items-center gap-2.5 font-serif text-2xl font-medium text-foreground">
+                <Mark size={28} className="site-mark" />
                 Solace
               </p>
               <p className="mt-3 max-w-xs text-sm leading-7 text-muted">
