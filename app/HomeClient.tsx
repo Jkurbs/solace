@@ -269,8 +269,7 @@ export default function HomeClient({
               Systems for reading complexity.
             </motion.h1>
             <motion.p variants={fade} className="hero-quiet-body">
-              Solace builds instruments for decision-making under uncertainty — beginning in markets,
-              where feedback arrives in days instead of years.
+              Solace builds instruments for disciplined capital allocation under uncertainty.
             </motion.p>
             <motion.div variants={fade} className="hero-quiet-actions">
               <Link href="/hermes" className="hermes-product-button hermes-product-button-light">
@@ -313,9 +312,7 @@ export default function HomeClient({
               Systems for reading complexity.
             </motion.h1>
             <motion.p variants={fade} className="hero-body mt-7 max-w-2xl text-lg leading-8 text-muted md:text-xl">
-              Solace builds instruments for decision-making under uncertainty — beginning in markets, where
-              feedback arrives in days instead of years. Every system observes, models, deploys, and keeps only
-              what survives contact with the world.
+              Solace builds instruments for disciplined capital allocation under uncertainty.
             </motion.p>
             <motion.div variants={fade} className="hero-actions mt-9 flex flex-wrap items-center gap-x-7 gap-y-3">
               <Link href="/brief" className="primary-link">
