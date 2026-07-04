@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { getPersistedAccountBundle } from '@/features/accounts/store';
 import { updateLedgerAccountMode } from '@/features/ledger/money-movement';
 import type { LedgerAccountMode } from '@/features/ledger/types';
 import { hasConsoleAccess } from '@/features/solace-console/access';
@@ -23,6 +24,21 @@ export async function POST(request: Request) {
   if (typeof accountId !== 'string' || !isAccountMode(accountMode)) {
     redirectUrl.searchParams.set('mode', 'invalid');
     return NextResponse.redirect(redirectUrl, 303);
+  }
+
+  // Guard: LIVE means real money can move. Refuse promotion unless every
+  // account record is fully active — an account promoted early would accept
+  // live deposits into an uninitialized system.
+  if (accountMode === 'LIVE') {
+    const bundle = await getPersistedAccountBundle(accountId).catch(() => null);
+    const userActive = bundle?.user?.status === 'ACTIVE';
+    const hermesActive = bundle?.hermesAccount?.status === 'ACTIVE';
+    const ledgerActive = bundle?.ledgerAccount?.status === 'ACTIVE';
+
+    if (!userActive || !hermesActive || !ledgerActive) {
+      redirectUrl.searchParams.set('mode', 'blocked');
+      return NextResponse.redirect(redirectUrl, 303);
+    }
   }
 
   const updated = await updateLedgerAccountMode({

@@ -180,7 +180,7 @@ function Panel({
   className?: string;
 } & HTMLAttributes<HTMLElement>) {
   return (
-    <section className={`rounded-lg border border-neutral-800 bg-[#181715] p-5 sm:p-6 ${className}`} {...props}>
+    <section className={`rounded-lg border border-neutral-800 bg-[#0d0d0b] p-5 sm:p-6 ${className}`} {...props}>
       {children}
     </section>
   );
@@ -256,6 +256,26 @@ async function postPoolNavMarkRequest(formData: FormData): Promise<{ message: st
   return {
     message: payload.message ?? 'Pool NAV mark posted.',
     status: payload.status ?? 'posted',
+  };
+}
+
+async function postTreasuryTaskRequest(formData: FormData): Promise<{ message: string; status: string }> {
+  const response = await fetch('/api/console/treasury-tasks', {
+    body: formData,
+    headers: {
+      Accept: 'application/json',
+    },
+    method: 'POST',
+  });
+  const payload = (await response.json()) as { message?: string; status?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.message ?? 'Treasury task could not be updated.');
+  }
+
+  return {
+    message: payload.message ?? 'Treasury task updated.',
+    status: payload.status ?? 'updated',
   };
 }
 
@@ -372,6 +392,88 @@ function NumberField({
         type="number"
       />
     </label>
+  );
+}
+
+// Mirrors canTransitionTreasuryTask in features/ledger/money-movement.ts so
+// the operator only sees moves the server will accept.
+const treasuryNextStatuses: Record<string, string[]> = {
+  APPROVED: ['SUBMITTED', 'CANCELED'],
+  CANCELED: [],
+  COMPLETED: [],
+  FAILED: [],
+  FUNDABLE: ['APPROVED', 'REVIEWING', 'CANCELED'],
+  QUEUED: ['REVIEWING', 'CANCELED'],
+  REVIEWING: ['FUNDABLE', 'APPROVED', 'FAILED', 'CANCELED'],
+  SUBMITTED: ['COMPLETED', 'FAILED'],
+  WAITING_SETTLEMENT: ['REVIEWING', 'CANCELED'],
+};
+
+function TreasuryTaskActions({ amount, status, taskId }: { amount: number; status: string; taskId: string }) {
+  const queryClient = useQueryClient();
+  const [message, setMessage] = useState('');
+  const nextStatuses = treasuryNextStatuses[status] ?? [];
+  const mutation = useMutation({
+    mutationFn: postTreasuryTaskRequest,
+    onError(error) {
+      setMessage(error.message);
+    },
+    onMutate() {
+      setMessage('');
+    },
+    onSuccess(payload) {
+      setMessage(payload.message);
+      queryClient.invalidateQueries({ queryKey: consoleLiveQueryKey });
+    },
+  });
+
+  if (!nextStatuses.length) {
+    return null;
+  }
+
+  return (
+    <form
+      className="flex flex-wrap items-center gap-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const nextStatus = String(formData.get('status') ?? '');
+
+        if (
+          !window.confirm(
+            `Move this ${formatCurrency(amount)} treasury task from ${formatConstant(status)} to ${formatConstant(nextStatus)}?${
+              nextStatus === 'COMPLETED' ? '\n\nCompletion mints pool units for the deposit.' : ''
+            }`,
+          )
+        ) {
+          return;
+        }
+
+        mutation.mutate(formData);
+      }}
+    >
+      <input type="hidden" name="taskId" value={taskId} />
+      <select
+        className="h-8 rounded-md border border-neutral-800 bg-neutral-950/40 px-2 text-xs text-neutral-50 outline-none transition-colors focus:border-neutral-600"
+        name="status"
+        defaultValue={nextStatuses[0]}
+        aria-label="Next treasury status"
+      >
+        {nextStatuses.map((option) => (
+          <option key={option} value={option}>
+            {formatConstant(option)}
+          </option>
+        ))}
+      </select>
+      <button
+        className="inline-flex h-8 items-center justify-center rounded-md border border-neutral-700 px-3 text-xs font-medium text-neutral-100 transition-colors hover:border-neutral-500 disabled:opacity-50"
+        disabled={mutation.isPending}
+        type="submit"
+      >
+        {mutation.isPending ? 'Moving' : 'Move'}
+      </button>
+      {message ? <span className="w-full text-xs leading-5 text-neutral-500">{message}</span> : null}
+    </form>
   );
 }
 
@@ -555,7 +657,36 @@ function PoolNavMarkCard({ poolMark }: { poolMark: PoolMarkingPool }) {
           className="grid gap-4 border-t border-neutral-900 p-4"
           onSubmit={(event) => {
             event.preventDefault();
-            mutation.mutate(new FormData(event.currentTarget));
+            const formData = new FormData(event.currentTarget);
+            const nextEquity = Number(formData.get('grossEquity'));
+            const nextCash = Number(formData.get('cashBalance'));
+            const changeRatio =
+              grossEquity > 0 && Number.isFinite(nextEquity) ? Math.abs(nextEquity - grossEquity) / grossEquity : 0;
+            const lines = [
+              `Post NAV override for ${poolMark.pool.name}?`,
+              '',
+              `Total equity: ${formatCurrency(grossEquity)} → ${formatCurrency(nextEquity)}${
+                grossEquity > 0 ? ` (${(changeRatio * 100).toFixed(1)}% change)` : ''
+              }`,
+              `Cash: ${formatCurrency(cashBalance)} → ${formatCurrency(nextCash)}`,
+              '',
+              'This reprices every position in the pool immediately.',
+            ];
+
+            if (changeRatio > 0.25) {
+              lines.unshift('⚠ LARGE CHANGE — more than 25% from the last mark.', '');
+            }
+
+            if (!window.confirm(lines.join('\n'))) {
+              return;
+            }
+
+            if (changeRatio > 0.25) {
+              formData.set('confirmLargeChange', 'true');
+            }
+
+            formData.set('clientRequestId', crypto.randomUUID());
+            mutation.mutate(formData);
           }}
         >
           <input type="hidden" name="poolId" value={poolMark.pool.id} />
@@ -1049,7 +1180,7 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
                   </div>
                 ))
               ) : (
-                <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
+                <p className="rounded-md border border-neutral-800 bg-[#0d0d0b] p-4 text-sm text-neutral-500">
                   No Stripe sessions recorded yet.
                 </p>
               )}
@@ -1085,7 +1216,7 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
                   </div>
                 ))
               ) : (
-                <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
+                <p className="rounded-md border border-neutral-800 bg-[#0d0d0b] p-4 text-sm text-neutral-500">
                   No Stripe settlement records yet.
                 </p>
               )}
@@ -1116,7 +1247,7 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
                   </div>
                 ))
               ) : (
-                <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
+                <p className="rounded-md border border-neutral-800 bg-[#0d0d0b] p-4 text-sm text-neutral-500">
                   No posted deposits yet.
                 </p>
               )}
@@ -1147,7 +1278,7 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
                   </div>
                 ))
               ) : (
-                <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
+                <p className="rounded-md border border-neutral-800 bg-[#0d0d0b] p-4 text-sm text-neutral-500">
                   No ledger entries posted yet.
                 </p>
               )}
@@ -1187,11 +1318,12 @@ function ConsoleLivePanelsContent({ initialData }: ConsoleLivePanelsProps) {
                       <time className="text-xs text-neutral-500" dateTime={task.updatedAt}>
                         {formatDate(task.updatedAt)}
                       </time>
+                      <TreasuryTaskActions amount={task.amount} status={task.status} taskId={task.id} />
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-500">
+                <p className="rounded-md border border-neutral-800 bg-[#0d0d0b] p-4 text-sm text-neutral-500">
                   No treasury tasks queued yet.
                 </p>
               )}

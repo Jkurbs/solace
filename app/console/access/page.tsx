@@ -158,7 +158,7 @@ function AccountActivationPanel({
   total: number;
 }) {
   return (
-    <section className="rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8" aria-labelledby="account-activation-heading">
+    <section className="rounded-lg border border-neutral-800 bg-[#0d0d0b] p-6 sm:p-8" aria-labelledby="account-activation-heading">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-neutral-400">Account Activation</p>
@@ -190,7 +190,7 @@ function AccountActivationPanel({
             defaultValue={query}
             placeholder="Search users by name, email, or account"
             aria-label="Search users"
-            className="h-10 w-full rounded-md border border-neutral-700 bg-[#10100e] pl-9 pr-3 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
+            className="h-10 w-full rounded-md border border-neutral-700 bg-[#0a0a0a] pl-9 pr-3 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
           />
         </div>
       </form>
@@ -286,7 +286,7 @@ function ResendApprovalEmailButton({ requestId }: { requestId: string }) {
 
 function AccessEmailForm({ email, requestId }: { email: string; requestId: string }) {
   return (
-    <form action="/api/console/access-requests/email" method="post" className="grid gap-2 rounded-md border border-neutral-800 bg-[#181715] p-3">
+    <form action="/api/console/access-requests/email" method="post" className="grid gap-2 rounded-md border border-neutral-800 bg-[#0d0d0b] p-3">
       <input type="hidden" name="requestId" value={requestId} />
       <label htmlFor={`access-email-${requestId}`} className="text-xs uppercase tracking-[0.14em] text-neutral-500">
         Access email
@@ -297,7 +297,7 @@ function AccessEmailForm({ email, requestId }: { email: string; requestId: strin
         type="email"
         required
         defaultValue={email}
-        className="h-9 rounded-md border border-neutral-700 bg-[#10100e] px-3 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
+        className="h-9 rounded-md border border-neutral-700 bg-[#0a0a0a] px-3 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-neutral-400"
       />
       <button
         type="submit"
@@ -372,7 +372,7 @@ export default async function AccessApprovalsPage({ searchParams }: AccessApprov
     : moneyMovement.accountStatuses;
 
   return (
-    <main className="min-h-screen bg-[#10100e] text-neutral-50">
+    <main className="min-h-screen bg-[#0a0a0a] text-neutral-50">
       <ConsoleHeader pendingAccessCount={pendingAccessCount} />
 
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -383,7 +383,7 @@ export default async function AccessApprovalsPage({ searchParams }: AccessApprov
           total={moneyMovement.accountStatuses.length}
         />
 
-        <section className="grid gap-5 rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+        <section className="grid gap-5 rounded-lg border border-neutral-800 bg-[#0d0d0b] p-6 sm:p-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
           <div>
             <p className="text-sm font-medium text-neutral-400">Access Review</p>
             <h1 className="mt-2 text-4xl font-semibold tracking-normal text-neutral-50 sm:text-5xl">
@@ -411,6 +411,11 @@ export default async function AccessApprovalsPage({ searchParams }: AccessApprov
             {modeStatus === 'updated' ? <StatusMessage tone="green">Account mode updated.</StatusMessage> : null}
             {modeStatus === 'failed' || modeStatus === 'invalid' ? (
               <StatusMessage tone="red">Account mode could not be updated.</StatusMessage>
+            ) : null}
+            {modeStatus === 'blocked' ? (
+              <StatusMessage tone="amber">
+                LIVE promotion blocked: the Solace user, Hermes account, and ledger account must all be ACTIVE first.
+              </StatusMessage>
             ) : null}
           </div>
 
@@ -523,7 +528,7 @@ export default async function AccessApprovalsPage({ searchParams }: AccessApprov
                   <div className="grid content-start gap-2">
                     {decisionRecorded ? (
                       <>
-                        <div className="rounded-md border border-neutral-800 bg-[#181715] p-3 text-sm text-neutral-300">
+                        <div className="rounded-md border border-neutral-800 bg-[#0d0d0b] p-3 text-sm text-neutral-300">
                           Decision: {formatConstant(request.humanDecision ?? request.status)}
                         </div>
                         {request.status === 'approved' ? (
@@ -531,6 +536,16 @@ export default async function AccessApprovalsPage({ searchParams }: AccessApprov
                             <AccessEmailForm email={request.email} requestId={request.id} />
                             <ResendApprovalEmailButton requestId={request.id} />
                           </>
+                        ) : null}
+                        {request.status === 'more_info' ? (
+                          <a
+                            className="inline-flex h-10 items-center justify-center rounded-md border border-neutral-700 px-4 text-sm font-medium text-neutral-100 transition-colors hover:border-neutral-500"
+                            href={`mailto:${request.email}?subject=${encodeURIComponent('Your Hermes access request — one more thing')}&body=${encodeURIComponent(
+                              `Hi ${request.firstName},\n\nThanks for requesting access to Hermes. Before we can complete the review, could you tell us a bit more about:\n\n- \n\nReply to this email and we'll pick the review back up.\n\n— Solace`,
+                            )}`}
+                          >
+                            Email requester
+                          </a>
                         ) : null}
                       </>
                     ) : (

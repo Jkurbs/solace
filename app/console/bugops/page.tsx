@@ -152,7 +152,7 @@ function Metric({ label, value, tone = 'neutral' }: { label: string; value: stri
 
 function StatusUpdateForm({ report }: { report: BugReport }) {
   return (
-    <form action="/api/console/bugops/status" method="post" className="grid gap-2 rounded-md border border-neutral-800 bg-[#181715] p-3">
+    <form action="/api/console/bugops/status" method="post" className="grid gap-2 rounded-md border border-neutral-800 bg-[#0d0d0b] p-3">
       <input type="hidden" name="reportId" value={report.id} />
       <label htmlFor={`bug-status-${report.id}`} className="text-xs uppercase tracking-[0.14em] text-neutral-500">
         Lifecycle
@@ -161,7 +161,7 @@ function StatusUpdateForm({ report }: { report: BugReport }) {
         id={`bug-status-${report.id}`}
         name="status"
         defaultValue={report.status}
-        className="h-9 rounded-md border border-neutral-700 bg-[#10100e] px-3 text-sm text-neutral-100 outline-none transition-colors focus:border-neutral-400"
+        className="h-9 rounded-md border border-neutral-700 bg-[#0a0a0a] px-3 text-sm text-neutral-100 outline-none transition-colors focus:border-neutral-400"
       >
         {bugStatuses.map((status) => (
           <option key={status} value={status}>
@@ -208,11 +208,11 @@ export default async function BugOpsPage({ searchParams }: BugOpsPageProps) {
   const status = Array.isArray(params?.status) ? params.status[0] : params?.status;
 
   return (
-    <main className="min-h-screen bg-[#10100e] text-neutral-50">
+    <main className="min-h-screen bg-[#0a0a0a] text-neutral-50">
       <ConsoleHeader pendingAccessCount={pendingAccessCount} />
 
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <section className="grid gap-5 rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+        <section className="grid gap-5 rounded-lg border border-neutral-800 bg-[#0d0d0b] p-6 sm:p-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
           <div>
             <p className="text-sm font-medium text-neutral-400">Solace BugOps Loop</p>
             <h1 className="mt-2 text-4xl font-semibold tracking-normal text-neutral-50 sm:text-5xl">
@@ -234,7 +234,7 @@ export default async function BugOpsPage({ searchParams }: BugOpsPageProps) {
         </section>
 
         <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-lg border border-neutral-800 bg-[#181715] p-6">
+          <div className="rounded-lg border border-neutral-800 bg-[#0d0d0b] p-6">
             <p className="text-sm font-medium text-neutral-400">Top affected areas</p>
             <div className="mt-4 grid gap-3">
               {summary.affectedAreas.length ? (
@@ -252,7 +252,7 @@ export default async function BugOpsPage({ searchParams }: BugOpsPageProps) {
             </div>
           </div>
 
-          <div className="rounded-lg border border-neutral-800 bg-[#181715] p-6">
+          <div className="rounded-lg border border-neutral-800 bg-[#0d0d0b] p-6">
             <p className="text-sm font-medium text-neutral-400">Suggested priority</p>
             <div className="mt-4 grid gap-3">
               {summary.suggestedPriorities.length ? (
@@ -345,12 +345,12 @@ export default async function BugOpsPage({ searchParams }: BugOpsPageProps) {
                     </div>
                   </div>
 
-                  <div className="rounded-md border border-neutral-800 bg-[#181715] p-4">
+                  <div className="rounded-md border border-neutral-800 bg-[#0d0d0b] p-4">
                     <span className="text-xs uppercase tracking-[0.14em] text-neutral-500">Likely cause</span>
                     <p className="mt-2 text-sm leading-6 text-neutral-300">{report.likelyCause}</p>
                   </div>
 
-                  <div className="grid gap-3 rounded-md border border-neutral-800 bg-[#181715] p-4 text-sm text-neutral-300 md:grid-cols-2">
+                  <div className="grid gap-3 rounded-md border border-neutral-800 bg-[#0d0d0b] p-4 text-sm text-neutral-300 md:grid-cols-2">
                     <span>Expected: {report.expectedBehavior || 'Not provided'}</span>
                     <span>Can reproduce: {formatConstant(report.canReproduce ?? 'unknown')}</span>
                     <span>Browser: {report.browser || 'Not captured'}</span>
@@ -375,7 +375,7 @@ export default async function BugOpsPage({ searchParams }: BugOpsPageProps) {
 
                 <div className="grid content-start gap-3">
                   <StatusUpdateForm report={report} />
-                  <div className="rounded-md border border-neutral-800 bg-[#181715] p-3 text-sm leading-6 text-neutral-300">
+                  <div className="rounded-md border border-neutral-800 bg-[#0d0d0b] p-3 text-sm leading-6 text-neutral-300">
                     {report.reporterReply}
                   </div>
                 </div>

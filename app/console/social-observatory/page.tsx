@@ -233,7 +233,7 @@ function DraftCard({ draft, signal }: { draft: SocialDraft; signal?: SocialSigna
   const policy = getCommsPolicy(signal);
 
   return (
-    <article className="rounded-lg border border-neutral-800 bg-[#181715] p-5">
+    <article className="rounded-lg border border-neutral-800 bg-[#0d0d0b] p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -363,11 +363,11 @@ export default async function SocialObservatoryPage({ searchParams }: SocialObse
   const pasteSafeCount = records.drafts.filter((draft) => getCopySafety(draft, draft.signalId ? signalById.get(draft.signalId) : undefined).level === 'SAFE_TO_PASTE').length;
 
   return (
-    <main className="min-h-screen bg-[#10100e] text-neutral-50">
+    <main className="min-h-screen bg-[#0a0a0a] text-neutral-50">
       <ConsoleHeader pendingAccessCount={pendingAccessCount} />
 
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <section className="grid gap-5 rounded-lg border border-neutral-800 bg-[#181715] p-6 sm:p-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+        <section className="grid gap-5 rounded-lg border border-neutral-800 bg-[#0d0d0b] p-6 sm:p-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-neutral-700 bg-neutral-950/40 px-3 py-1 text-xs font-medium text-neutral-300">
               <Radio size={14} aria-hidden="true" />
@@ -411,12 +411,12 @@ export default async function SocialObservatoryPage({ searchParams }: SocialObse
                 <DraftCard key={draft.id} draft={draft} signal={draft.signalId ? signalById.get(draft.signalId) : undefined} />
               ))
             ) : (
-              <p className="rounded-lg border border-neutral-800 bg-[#181715] p-5 text-sm text-neutral-500">No social drafts are queued.</p>
+              <p className="rounded-lg border border-neutral-800 bg-[#0d0d0b] p-5 text-sm text-neutral-500">No social drafts are queued.</p>
             )}
           </div>
 
           <aside className="grid content-start gap-5">
-            <section className="rounded-lg border border-neutral-800 bg-[#181715] p-5">
+            <section className="rounded-lg border border-neutral-800 bg-[#0d0d0b] p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-neutral-400">Signal Inbox</p>
@@ -431,7 +431,7 @@ export default async function SocialObservatoryPage({ searchParams }: SocialObse
               </div>
             </section>
 
-            <section className="rounded-lg border border-neutral-800 bg-[#181715] p-5">
+            <section className="rounded-lg border border-neutral-800 bg-[#0d0d0b] p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-neutral-400">Risk Gate</p>
@@ -449,7 +449,7 @@ export default async function SocialObservatoryPage({ searchParams }: SocialObse
               </div>
             </section>
 
-            <section className="rounded-lg border border-neutral-800 bg-[#181715] p-5">
+            <section className="rounded-lg border border-neutral-800 bg-[#0d0d0b] p-5">
               <p className="text-sm font-medium text-neutral-400">Watchlist</p>
               <div className="mt-4 grid gap-3">
                 {records.watchlist.map((item) => (
