@@ -22,6 +22,7 @@ async function getHermesTelemetry(): Promise<HermesTelemetry | null> {
   if (brief) {
     candidates.push({
       posture: brief.posture,
+      reason: brief.posture_reason,
       pathsCount: brief.paths.under_review,
       pathsLabel: 'under review',
       updatedAt: brief.data_as_of || brief.generated_at,
@@ -31,6 +32,7 @@ async function getHermesTelemetry(): Promise<HermesTelemetry | null> {
   if (reading) {
     candidates.push({
       posture: reading.posture.label,
+      reason: reading.posture.subtext,
       pathsCount: reading.paths.count,
       pathsLabel: reading.paths.label,
       updatedAt: reading.updated_at,

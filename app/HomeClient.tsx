@@ -166,18 +166,26 @@ export type NewsItem = {
 
 export type HermesTelemetry = {
   posture: HermesPublicPosture;
+  reason?: string;
   pathsCount: number;
   pathsLabel: string;
   updatedAt: string;
 };
 
-const postureDisplay: Record<HermesPublicPosture, { label: string; tone: string }> = {
-  DEPLOYED: { label: 'Deployed', tone: '#8db89d' },
-  SELECTIVE: { label: 'Selective', tone: '#d6d0c4' },
-  DEFENSIVE: { label: 'Defensive', tone: '#d3b585' },
-  STANDING_DOWN: { label: 'Standing down', tone: '#a3a3a3' },
-  RISK_OFF: { label: 'Risk off', tone: '#a3a3a3' },
+const postureDisplay: Record<HermesPublicPosture, { label: string; tone: string; meaning: string }> = {
+  DEPLOYED: { label: 'Deployed', tone: '#8db89d', meaning: 'managing active exposure under calm conditions' },
+  SELECTIVE: { label: 'Selective', tone: '#d6d0c4', meaning: 'reviewing paths, waiting for high-quality conditions' },
+  DEFENSIVE: { label: 'Defensive', tone: '#d3b585', meaning: 'exposure exists and protection comes first' },
+  STANDING_DOWN: { label: 'Standing down', tone: '#a3a3a3', meaning: 'no fresh public-safe market read' },
+  RISK_OFF: { label: 'Risk off', tone: '#a3a3a3', meaning: 'risk controls have halted deployment' },
 };
+
+// Hover legend: the five postures, plus the one secret worth telling.
+const postureLegend = [
+  'Hermes posture — recalculated live from market structure.',
+  ...Object.values(postureDisplay).map((entry) => `${entry.label}: ${entry.meaning}.`),
+  "The card's artwork burns at the system's actual energy — dimmer when defensive.",
+].join('\n');
 
 // Relative age computed client-side so ISR caching can't freeze "2h ago".
 function ReadingAge({ updatedAt }: { updatedAt: string }) {
@@ -345,7 +353,7 @@ export default function HomeClient({
                 Live · {hermesBetaVersionLabel.replace(/^Hermes\s+/, '')}
               </span>
               {hermesTelemetry ? (
-                <div className="inst-card-metrics">
+                <div className="inst-card-metrics" title={postureLegend}>
                   <span>
                     <em>Posture</em>
                     <strong style={{ color: postureDisplay[hermesTelemetry.posture].tone }}>
@@ -369,7 +377,9 @@ export default function HomeClient({
               <div className="inst-card-foot">
                 <div className="inst-card-name">
                   <strong>Hermes</strong>
-                  <p>Decides when capital moves, and when it doesn&apos;t.</p>
+                  {/* The card speaks its live state; the static line is the
+                      quiet fallback when telemetry is hidden. */}
+                  <p>{hermesTelemetry?.reason || 'Decides when capital moves, and when it doesn’t.'}</p>
                 </div>
                 <span className="inst-card-cta">Explore →</span>
               </div>
