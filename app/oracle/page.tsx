@@ -4,6 +4,8 @@ import Link from 'next/link';
 import ReliabilityDiagram from '../ReliabilityDiagram';
 import Mark from '../Mark';
 import { calibration } from '../calibration';
+import QuestionPlate from './QuestionPlate';
+import { getQuestionRead, resolvedQuestions } from './resolved-questions';
 
 export const metadata: Metadata = {
   title: 'Solace — Oracle · Calibration Record',
@@ -63,6 +65,49 @@ export default function OraclePage() {
         <p className="mt-4 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-muted">
           Source: live Kalshi event markets · Updated {calibration.asOf} · No performance claims
         </p>
+
+        {resolvedQuestions.length > 0
+          ? (() => {
+              const featured = resolvedQuestions[0];
+              const read = getQuestionRead(featured);
+
+              return (
+                <article className="oracle-qhero" aria-label="Most recently resolved question">
+                  <QuestionPlate seed={featured.id} />
+                  <div className="oracle-qhero-scrim" aria-hidden="true" />
+                  <div className="oracle-qhero-content">
+                    <div className="oracle-qhero-chips">
+                      <span className="inst-chip">{featured.category}</span>
+                      <span className={`inst-chip ${featured.outcome === 'YES' ? 'is-live' : 'is-idle'}`}>
+                        Resolved · {featured.outcome === 'YES' ? 'Yes' : 'No'}
+                      </span>
+                      <span className={`inst-chip ${read === 'Humbling' ? 'is-cal' : read === 'Sharp call' ? 'is-teal' : ''}`}>
+                        {read}
+                      </span>
+                      {featured.illustrative ? (
+                        <span
+                          className="inst-chip is-cal"
+                          title="Sample card — real resolved questions connect when the Oracle feed ships."
+                        >
+                          Illustrative
+                        </span>
+                      ) : null}
+                    </div>
+                    <h2 className="oracle-qhero-question">{featured.question}</h2>
+                    <div className="oracle-qhero-foot">
+                      <div className="oracle-qhero-prob">
+                        <em>Oracle said</em>
+                        <strong>{Math.round(featured.probability * 100)}%</strong>
+                      </div>
+                      <span className="oracle-qhero-dates">
+                        Recorded {featured.recordedAt} · Resolved {featured.resolvedAt}
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              );
+            })()
+          : null}
 
         <div className="oracle-statband">
           <div>
