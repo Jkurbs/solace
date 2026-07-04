@@ -1006,14 +1006,17 @@ h2 {
   }
 
   @media (max-width: 640px) {
-    /* The corner cells collide with the chip at phone width; drop them to a
-       full-width row beneath it instead. */
+    /* The corner cells collide with the chip at phone width. Four cells
+       won't sit on one row either, so they become a 2x2 grid beneath the
+       chip — the sentence reads as two clean lines:
+       condition / posture, then capital / freshness. */
     .inst-card-metrics {
       top: 3.2rem;
       right: 1.1rem;
       left: 1.1rem;
-      justify-content: space-between;
-      gap: 0.5rem;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.6rem 1rem;
     }
 
     .inst-card-metrics span {
@@ -1026,6 +1029,9 @@ h2 {
 
     .inst-card-metrics strong {
       font-size: 0.7rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 
