@@ -1593,6 +1593,12 @@ h2 {
     gap: 0.5rem;
   }
 
+  /* .inst-chip is absolutely positioned for the homepage cards; in this row
+     the chips flow normally. */
+  .oracle-qhero-chips .inst-chip {
+    position: static;
+  }
+
   .inst-chip.is-teal {
     border-color: rgba(88, 201, 172, 0.45);
     color: #8fd8c3;
