@@ -1005,6 +1005,30 @@ h2 {
     }
   }
 
+  @media (max-width: 640px) {
+    /* The corner cells collide with the chip at phone width; drop them to a
+       full-width row beneath it instead. */
+    .inst-card-metrics {
+      top: 3.2rem;
+      right: 1.1rem;
+      left: 1.1rem;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .inst-card-metrics span {
+      text-align: left;
+    }
+
+    .inst-card-metrics em {
+      font-size: 0.52rem;
+    }
+
+    .inst-card-metrics strong {
+      font-size: 0.7rem;
+    }
+  }
+
   /* --- QUIET HERO (xAI-style variant: type on pitch black) --- */
   .hero-quiet {
     padding-top: clamp(9.5rem, 21vh, 13.5rem);
