@@ -231,6 +231,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      solace_runtime_snapshots: {
+        Row: {
+          key: string;
+          payload: Json;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          payload?: Json;
+          updated_at?: string;
+        };
+        Update: {
+          key?: string;
+          payload?: Json;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       solace_articles: {
         Row: {
           id: string;

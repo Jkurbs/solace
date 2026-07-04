@@ -3,12 +3,17 @@ import 'server-only';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
+import { getRuntimeSnapshot, saveRuntimeSnapshot } from '@/features/runtime-snapshots/store';
+import type { Json } from '@/lib/supabase/types';
+
 import {
   fallbackHermesPublicReading,
   normalizeHermesPublicReading,
   type HermesPublicReading,
   withFreshHermesPulse,
 } from './types';
+
+const RUNTIME_SNAPSHOT_KEY = 'hermes_public_reading';
 
 type HermesPublicReadingGlobal = typeof globalThis & {
   __solaceHermesPublicReading?: HermesPublicReading;
@@ -29,6 +34,15 @@ function setMemoryReading(reading: HermesPublicReading) {
 }
 
 export async function getStoredHermesPublicReading(now = new Date()) {
+  // Durable layer first: survives serverless instances and deploys.
+  const stored = await getRuntimeSnapshot(RUNTIME_SNAPSHOT_KEY);
+  const durable = stored ? normalizeHermesPublicReading(stored, now) : null;
+
+  if (durable) {
+    setMemoryReading(durable);
+    return durable;
+  }
+
   try {
     const raw = await readFile(getPublicReadingPath(), 'utf8');
     const reading = normalizeHermesPublicReading(JSON.parse(raw), now);
@@ -58,6 +72,7 @@ export async function saveHermesPublicReading(value: unknown, now = new Date()) 
   }
 
   setMemoryReading(reading);
+  await saveRuntimeSnapshot(RUNTIME_SNAPSHOT_KEY, reading as unknown as Json);
 
   try {
     const targetPath = getPublicReadingPath();

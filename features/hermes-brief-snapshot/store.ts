@@ -3,11 +3,16 @@ import 'server-only';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
+import { getRuntimeSnapshot, saveRuntimeSnapshot } from '@/features/runtime-snapshots/store';
+import type { Json } from '@/lib/supabase/types';
+
 import {
   fallbackHermesBriefSnapshot,
   normalizeHermesBriefSnapshot,
   type HermesBriefSnapshot,
 } from './types';
+
+const RUNTIME_SNAPSHOT_KEY = 'hermes_brief_snapshot';
 
 type HermesBriefSnapshotGlobal = typeof globalThis & {
   __solaceHermesBriefSnapshot?: HermesBriefSnapshot;
@@ -28,6 +33,15 @@ function setMemorySnapshot(snapshot: HermesBriefSnapshot) {
 }
 
 export async function getStoredHermesBriefSnapshot() {
+  // Durable layer first: survives serverless instances and deploys.
+  const stored = await getRuntimeSnapshot(RUNTIME_SNAPSHOT_KEY);
+  const durable = stored ? normalizeHermesBriefSnapshot(stored) : null;
+
+  if (durable) {
+    setMemorySnapshot(durable);
+    return durable;
+  }
+
   try {
     const raw = await readFile(getBriefSnapshotPath(), 'utf8');
     const snapshot = normalizeHermesBriefSnapshot(JSON.parse(raw));
@@ -51,6 +65,7 @@ export async function saveHermesBriefSnapshot(value: unknown) {
   }
 
   setMemorySnapshot(snapshot);
+  await saveRuntimeSnapshot(RUNTIME_SNAPSHOT_KEY, snapshot as unknown as Json);
 
   try {
     const targetPath = getBriefSnapshotPath();
