@@ -1550,7 +1550,21 @@ h2 {
   }
 
   .oracle-page {
-    background: transparent;
+    background: var(--background);
+  }
+
+  /* Freshness-gated fallback for the live badge: quiet, dated, no pulse. */
+  .record-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid rgba(250, 250, 250, 0.16);
+    border-radius: 999px;
+    color: rgba(250, 250, 250, 0.55);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
   }
 
   .live-badge {
@@ -1588,17 +1602,21 @@ h2 {
     }
   }
 
+  /* Panelized to echo the instrument cards on the homepage. */
   .oracle-statband {
     margin-top: 2.6rem;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0;
-    border-block: 1px solid rgba(250, 250, 250, 0.12);
+    overflow: hidden;
+    border: 1px solid rgba(250, 250, 250, 0.1);
+    border-radius: 1.1rem;
+    background: #0d0d0b;
   }
 
   .oracle-statband div {
-    padding: 1.2rem 1rem 1.25rem 0;
-    border-right: 1px solid rgba(250, 250, 250, 0.1);
+    padding: 1.2rem 1.2rem 1.25rem;
+    border-right: 1px solid rgba(250, 250, 250, 0.08);
   }
 
   .oracle-statband div:last-child {

@@ -2,32 +2,38 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import ReliabilityDiagram from '../ReliabilityDiagram';
-import SkyBackground from '../SkyBackground';
 import Mark from '../Mark';
 import { calibration } from '../calibration';
 
 export const metadata: Metadata = {
-  title: 'Solace — Oracle · Live Calibration',
+  title: 'Solace — Oracle · Calibration Record',
   description:
-    'The Oracle weighs the futures and keeps score. Live calibration record: every probability scored against what actually happened. No performance claims.',
+    'The Oracle weighs the futures and keeps score. Calibration record: every probability scored against what actually happened. No performance claims.',
 };
+
+// Re-evaluate the freshness gate hourly instead of freezing it at build time.
+export const revalidate = 3600;
+
+const FRESH_RECORD_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 const pct = (n: number) => `${Math.round(n * 100)}%`;
 
 export default function OraclePage() {
   const overconfidence = calibration.averageProbability - calibration.actualWinRate;
+  // Freshness contract, same as the homepage telemetry: the pulsing badge
+  // only renders while the record is recent — never a fake pulse.
+  const recordAge = Date.now() - new Date(calibration.asOf).getTime();
+  const isFresh = Number.isFinite(recordAge) && recordAge >= 0 && recordAge <= FRESH_RECORD_MAX_AGE_MS;
 
   return (
-    <main className="oracle-page relative min-h-screen overflow-x-hidden text-foreground">
-      <SkyBackground />
-
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-[rgba(4,4,3,0.58)] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 md:px-8">
-          <Link href="/" className="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.2em] text-muted transition-colors hover:text-foreground">
+    <main className="hx-page oracle-page relative min-h-screen overflow-x-hidden text-foreground">
+      <header className="hx-header">
+        <div className="hx-header-inner">
+          <Link href="/" className="hx-brand">
             <Mark size={20} />
             Solace
           </Link>
-          <Link href="/" className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-muted transition-colors hover:text-foreground">
+          <Link href="/" className="hx-btn hx-btn-secondary hx-btn-sm">
             Home
           </Link>
         </div>
@@ -36,10 +42,14 @@ export default function OraclePage() {
       <article className="mx-auto max-w-5xl px-5 pb-24 pt-36 md:px-8">
         <div className="flex flex-wrap items-center gap-4">
           <p className="section-kicker">The second instrument</p>
-          <span className="live-badge">
-            <span className="live-dot" aria-hidden="true" />
-            Live record
-          </span>
+          {isFresh ? (
+            <span className="live-badge">
+              <span className="live-dot" aria-hidden="true" />
+              Live record
+            </span>
+          ) : (
+            <span className="record-badge">Record · as of {calibration.asOf}</span>
+          )}
         </div>
 
         <h1 className="mt-5 max-w-3xl font-serif text-5xl font-medium leading-tight md:text-7xl">
