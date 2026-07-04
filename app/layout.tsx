@@ -22,6 +22,28 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Solace',
+  url: 'https://solace.fyi',
+  logo: 'https://solace.fyi/icon.svg',
+  description:
+    'Independent research company building instruments for decision-making under uncertainty, beginning in markets.',
+  founder: {
+    '@type': 'Person',
+    name: 'Kerby Jean',
+    url: 'https://solace.fyi/brief#author',
+  },
+  foundingDate: '2026',
+  sameAs: ['https://x.com/solacefyi', 'https://github.com/Jkurbs'],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer support',
+    email: 'hello@solace.fyi',
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,7 +51,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
