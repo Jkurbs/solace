@@ -23,6 +23,8 @@ async function getHermesTelemetry(): Promise<HermesTelemetry | null> {
     candidates.push({
       posture: brief.posture,
       reason: brief.posture_reason,
+      condition: brief.market_regime.label,
+      deployedCount: brief.paths.deployed,
       pathsCount: brief.paths.under_review,
       pathsLabel: 'under review',
       updatedAt: brief.data_as_of || brief.generated_at,

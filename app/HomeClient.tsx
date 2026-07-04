@@ -167,6 +167,8 @@ export type NewsItem = {
 export type HermesTelemetry = {
   posture: HermesPublicPosture;
   reason?: string;
+  condition?: string;
+  deployedCount?: number;
   pathsCount: number;
   pathsLabel: string;
   updatedAt: string;
@@ -354,6 +356,14 @@ export default function HomeClient({
               </span>
               {hermesTelemetry ? (
                 <div className="inst-card-metrics" title={postureLegend}>
+                  {/* Read left to right, the row is a plain sentence:
+                      condition -> stance -> commitment -> freshness. */}
+                  {hermesTelemetry.condition ? (
+                    <span>
+                      <em>Condition</em>
+                      <strong>{hermesTelemetry.condition}</strong>
+                    </span>
+                  ) : null}
                   <span>
                     <em>Posture</em>
                     <strong style={{ color: postureDisplay[hermesTelemetry.posture].tone }}>
@@ -361,15 +371,17 @@ export default function HomeClient({
                     </strong>
                   </span>
                   <span>
-                    <em>Last reading</em>
+                    <em>Capital deployed</em>
                     <strong>
-                      <ReadingAge updatedAt={hermesTelemetry.updatedAt} />
+                      {typeof hermesTelemetry.deployedCount === 'number'
+                        ? `${hermesTelemetry.deployedCount} of ${hermesTelemetry.pathsCount} markets`
+                        : `${hermesTelemetry.pathsCount} markets watched`}
                     </strong>
                   </span>
                   <span>
-                    <em>Paths</em>
+                    <em>Last reading</em>
                     <strong>
-                      {hermesTelemetry.pathsCount} {hermesTelemetry.pathsLabel}
+                      <ReadingAge updatedAt={hermesTelemetry.updatedAt} />
                     </strong>
                   </span>
                 </div>
