@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MotionConfig, motion } from 'framer-motion';
 
 import SkyBackground from './SkyBackground';
 import Mark from './Mark';
 import NotePlate from './NotePlate';
 import { calibration } from './calibration';
+import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
 import { hermesBetaVersionLabel } from '@/features/hermes-version';
 import type { PlateTint } from '@/lib/note-plate';
 
@@ -163,6 +164,46 @@ export type NewsItem = {
   tint: PlateTint;
 };
 
+export type HermesTelemetry = {
+  posture: HermesPublicPosture;
+  pathsCount: number;
+  pathsLabel: string;
+  updatedAt: string;
+};
+
+const postureDisplay: Record<HermesPublicPosture, { label: string; tone: string }> = {
+  DEPLOYED: { label: 'Deployed', tone: '#8db89d' },
+  SELECTIVE: { label: 'Selective', tone: '#d6d0c4' },
+  DEFENSIVE: { label: 'Defensive', tone: '#d3b585' },
+  STANDING_DOWN: { label: 'Standing down', tone: '#a3a3a3' },
+  RISK_OFF: { label: 'Risk off', tone: '#a3a3a3' },
+};
+
+// Relative age computed client-side so ISR caching can't freeze "2h ago".
+function ReadingAge({ updatedAt }: { updatedAt: string }) {
+  const [label, setLabel] = useState('—');
+
+  useEffect(() => {
+    const update = () => {
+      const ageMs = Date.now() - new Date(updatedAt).getTime();
+
+      if (!Number.isFinite(ageMs) || ageMs < 0) {
+        setLabel('—');
+        return;
+      }
+
+      const minutes = Math.floor(ageMs / 60_000);
+      setLabel(minutes < 1 ? 'just now' : minutes < 60 ? `${minutes}m ago` : `${Math.floor(minutes / 60)}h ago`);
+    };
+
+    update();
+    const interval = window.setInterval(update, 60_000);
+    return () => window.clearInterval(interval);
+  }, [updatedAt]);
+
+  return <>{label}</>;
+}
+
 const newsDateFormat = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   day: 'numeric',
@@ -180,10 +221,12 @@ const HERO_VARIANT: 'observatory' | 'quiet' = 'quiet';
 const HOME_LAYOUT: 'sections' | 'cards' = 'cards';
 
 export default function HomeClient({
+  hermesTelemetry,
   latestNote,
   newsItems,
   pill,
 }: {
+  hermesTelemetry: HermesTelemetry | null;
   latestNote: LatestNote;
   newsItems: NewsItem[];
   pill: HeroPill;
@@ -294,10 +337,35 @@ export default function HomeClient({
           <motion.div id="hermes" className="inst-cell inst-cell-hermes scroll-mt-24" {...cardReveal(0)}>
             <Link href="/hermes" className="inst-card">
               <div className="inst-card-render" aria-hidden="true">
-                <HermesLiquidityFieldRender />
+                <HermesLiquidityFieldRender posture={hermesTelemetry?.posture} />
               </div>
               <div className="inst-card-scrim" aria-hidden="true" />
-              <span className="inst-chip is-live">Live · {hermesBetaVersionLabel.replace(/^Hermes\s+/, '')}</span>
+              <span className="inst-chip is-live">
+                {hermesTelemetry ? <span className="inst-chip-dot" aria-hidden="true" /> : null}
+                Live · {hermesBetaVersionLabel.replace(/^Hermes\s+/, '')}
+              </span>
+              {hermesTelemetry ? (
+                <div className="inst-card-metrics">
+                  <span>
+                    <em>Posture</em>
+                    <strong style={{ color: postureDisplay[hermesTelemetry.posture].tone }}>
+                      {postureDisplay[hermesTelemetry.posture].label}
+                    </strong>
+                  </span>
+                  <span>
+                    <em>Last reading</em>
+                    <strong>
+                      <ReadingAge updatedAt={hermesTelemetry.updatedAt} />
+                    </strong>
+                  </span>
+                  <span>
+                    <em>Paths</em>
+                    <strong>
+                      {hermesTelemetry.pathsCount} {hermesTelemetry.pathsLabel}
+                    </strong>
+                  </span>
+                </div>
+              ) : null}
               <div className="inst-card-foot">
                 <div className="inst-card-name">
                   <strong>Hermes</strong>

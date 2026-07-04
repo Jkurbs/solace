@@ -882,6 +882,32 @@ h2 {
     color: rgba(250, 250, 250, 0.45);
   }
 
+  .inst-chip-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    margin-right: 0.45rem;
+    border-radius: 999px;
+    background: var(--success);
+    animation: inst-breathe 2.8s ease-in-out infinite;
+  }
+
+  @keyframes inst-breathe {
+    0%,
+    100% {
+      opacity: 0.45;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .inst-chip-dot {
+      animation: none;
+    }
+  }
+
   .inst-card-metrics {
     position: absolute;
     top: 1.05rem;

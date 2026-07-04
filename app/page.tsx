@@ -1,7 +1,33 @@
 import { getLatestPublishedArticle } from '@/features/articles/store';
+import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { getLatestNewsPost, newsPosts } from '@/features/news/posts';
 
-import HomeClient, { type HeroPill, type LatestNote, type NewsItem } from './HomeClient';
+import HomeClient, { type HeroPill, type HermesTelemetry, type LatestNote, type NewsItem } from './HomeClient';
+
+const TELEMETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+// The freshness contract: telemetry renders only while the reading is fresh.
+// A stale or missing feed hides the cells entirely — never a fake pulse.
+async function getHermesTelemetry(): Promise<HermesTelemetry | null> {
+  const reading = await getStoredHermesPublicReading().catch(() => null);
+
+  if (!reading) {
+    return null;
+  }
+
+  const age = Date.now() - new Date(reading.updated_at).getTime();
+
+  if (!Number.isFinite(age) || age < 0 || age > TELEMETRY_MAX_AGE_MS) {
+    return null;
+  }
+
+  return {
+    posture: reading.posture.label,
+    pathsCount: reading.paths.count,
+    pathsLabel: reading.paths.label,
+    updatedAt: reading.updated_at,
+  };
+}
 
 // Refresh the latest-note strip every 5 minutes without making the page dynamic.
 export const revalidate = 300;
@@ -14,7 +40,10 @@ const fallbackNote: LatestNote = {
 };
 
 export default async function Home() {
-  const article = await getLatestPublishedArticle().catch(() => null);
+  const [article, hermesTelemetry] = await Promise.all([
+    getLatestPublishedArticle().catch(() => null),
+    getHermesTelemetry(),
+  ]);
   const latestNote: LatestNote = article
     ? { title: article.title, dek: article.dek, label: article.label }
     : fallbackNote;
@@ -38,5 +67,5 @@ export default async function Home() {
     tint: post.tint,
   }));
 
-  return <HomeClient latestNote={latestNote} newsItems={newsItems} pill={pill} />;
+  return <HomeClient hermesTelemetry={hermesTelemetry} latestNote={latestNote} newsItems={newsItems} pill={pill} />;
 }

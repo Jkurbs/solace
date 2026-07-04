@@ -3,6 +3,20 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
+import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
+
+// Variant D of the telemetry design: real posture drives the art's energy.
+// Deployed burns at full brightness; standing down dims to embers. The field
+// itself (terrain, haze) persists at every level — the world stays, the
+// judgment quiets.
+const postureEnergy: Record<HermesPublicPosture, number> = {
+  DEPLOYED: 1,
+  SELECTIVE: 0.78,
+  DEFENSIVE: 0.55,
+  STANDING_DOWN: 0.34,
+  RISK_OFF: 0.28,
+};
+
 const vertexShader = `
   varying vec2 vUv;
 
@@ -26,6 +40,7 @@ const fragmentShader = `
   uniform vec2 uPointer;
   uniform float uPointerGlow;
   uniform float uPathFade;
+  uniform float uEnergy;
 
   const int MAX_PATHS = 6;
 
@@ -173,7 +188,7 @@ const fragmentShader = `
     float across = abs(rel.x * rayDir.y - rel.y * rayDir.x);
     float shaft = exp(-across * across / (0.014 + along * 0.07)) * exp(-along * 1.05);
     shaft *= 0.7 + 0.3 * fbm(vec2(along * 3.0 - uTime * 0.018, across * 9.0));
-    color += vec3(1.0, 0.92, 0.72) * shaft * 0.11;
+    color += vec3(1.0, 0.92, 0.72) * shaft * 0.11 * (0.5 + 0.5 * uEnergy);
 
     // === LIQUIDITY HAZE (the field itself as glowing terrain) ===
     float f = fieldAt(wWarp + ptrPar * 0.2);
@@ -191,7 +206,7 @@ const fragmentShader = `
     color += vec3(0.05, 0.13, 0.19) * (1.0 - smoothstep(0.05, 0.4, f)) * (0.3 + 0.7 * clump) * 0.5;
 
     // === LIQUIDITY DUST (three depths, clumped into clouds, lit by the shaft) ===
-    float dustBoost = (0.2 + 1.3 * clump) * (1.0 + shaft * 2.0) * cloudLight;
+    float dustBoost = (0.2 + 1.3 * clump) * (1.0 + shaft * 2.0) * cloudLight * (0.6 + 0.4 * uEnergy);
     color += dustLayer(wWarp + ptrPar * 0.5, 30.0, 0.0028, 0.4, 0.0, 1.0) * dustBoost;
     color += dustLayer(wWarp + ptrPar * 1.0, 58.0, 0.0046, 0.62, 17.0, 1.4) * dustBoost;
     color += dustLayer(wWarp + ptrPar * 1.7, 104.0, 0.0072, 0.9, 41.0, 2.2) * dustBoost;
@@ -278,7 +293,7 @@ const fragmentShader = `
         pathCol += cCol * (fil * 0.36 + halo * 0.15) * (0.5 + 0.4 * bright) * alive * (1.0 - fray * 0.25);
       }
     }
-    color += pathCol * uPathFade;
+    color += pathCol * uPathFade * uEnergy;
 
     // === FOREGROUND BOKEH (out-of-focus dust drifting past the lens) ===
     color += bokeh(w + ptrPar * 2.8, 5.5, 0.006, 3.0);
@@ -510,7 +525,7 @@ function buildPaths(field: Float32Array, rand: () => number) {
   return { texture, survivor };
 }
 
-export default function HermesLiquidityFieldRender() {
+export default function HermesLiquidityFieldRender({ posture }: { posture?: HermesPublicPosture } = {}) {
   const mountRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -586,6 +601,7 @@ export default function HermesLiquidityFieldRender() {
       uPointer: { value: new THREE.Vector2(0.5, 0.5) },
       uPointerGlow: { value: 0 },
       uPathFade: { value: 1 },
+      uEnergy: { value: posture ? postureEnergy[posture] : 1 },
     };
     const material = new THREE.ShaderMaterial({
       uniforms,
@@ -752,7 +768,7 @@ export default function HermesLiquidityFieldRender() {
         // swallow disposal errors during rapid HMR
       }
     };
-  }, []);
+  }, [posture]);
 
   return <div ref={mountRef} className="hermes-render-host" />;
 }
