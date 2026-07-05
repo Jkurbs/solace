@@ -28,7 +28,7 @@ const OracleFuturesRender = dynamic(() => import('./OracleFuturesRender'), {
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
 const fade = {
-  hidden: { opacity: 0, y: 14 },
+  hidden: { opacity: 1, y: 0 },
   show: {
     opacity: 1,
     y: 0,
@@ -37,7 +37,7 @@ const fade = {
 };
 
 const sectionReveal = {
-  initial: { opacity: 0, y: 26 },
+  initial: { opacity: 1, y: 0 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, margin: '-14% 0px -14% 0px' },
   transition: { duration: 0.9, ease },
@@ -327,7 +327,7 @@ export default function HomeClient({
                 Explore Hermes
               </Link>
               <Link href="/brief" className="hermes-product-button hermes-product-button-dark">
-                Read the brief
+                Read Brief
               </Link>
             </motion.div>
           </motion.div>

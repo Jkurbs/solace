@@ -1120,8 +1120,15 @@ h2 {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 0.8rem;
+    gap: 0.9rem;
     margin-top: 2.3rem;
+  }
+
+  .hero-quiet-actions .hermes-product-button {
+    min-width: 10.75rem;
+    min-height: 3.15rem;
+    padding: 0 1.55rem;
+    font-size: 1rem;
   }
 
   /* --- HERO NOTE PILL (latest research, first thing the stagger reveals) --- */
@@ -5165,6 +5172,13 @@ h2 {
       min-height: 2.45rem;
       padding: 0 0.95rem;
       font-size: 0.7rem;
+    }
+
+    .hero-quiet-actions .hermes-product-button {
+      min-width: min(10rem, calc(50vw - 1.45rem));
+      min-height: 2.85rem;
+      padding: 0 1.05rem;
+      font-size: 0.86rem;
     }
 
     .hermes-product-metrics {
