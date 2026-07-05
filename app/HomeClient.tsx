@@ -585,7 +585,7 @@ export default function HomeClient({
         <motion.div className="faq-strip-inner mx-auto max-w-7xl" {...sectionReveal}>
           <div className="faq-strip-head">
             <p className="section-kicker">FAQ</p>
-            <h2>Questions before access.</h2>
+            <h2>What to know first.</h2>
           </div>
           <div className="faq-list">
             {homepageQuestions.map((item) => (
