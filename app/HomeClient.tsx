@@ -587,14 +587,14 @@ export default function HomeClient({
             <p className="section-kicker">FAQ</p>
             <h2>Questions before access.</h2>
           </div>
-          <dl className="faq-list">
+          <div className="faq-list">
             {homepageQuestions.map((item) => (
-              <div key={item.question} className="faq-item">
-                <dt>{item.question}</dt>
-                <dd>{item.answer}</dd>
-              </div>
+              <details key={item.question} className="faq-item">
+                <summary>{item.question}</summary>
+                <p>{item.answer}</p>
+              </details>
             ))}
-          </dl>
+          </div>
         </motion.div>
       </section>
 
