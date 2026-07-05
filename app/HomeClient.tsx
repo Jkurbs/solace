@@ -194,16 +194,7 @@ function getHermesPathPhrase(telemetry: HermesTelemetry) {
   return `${telemetry.pathsCount} ${marketNoun} ${label}`;
 }
 
-function HermesLiveBriefing({ telemetry }: { telemetry: HermesTelemetry | null }) {
-  if (!telemetry) {
-    return (
-      <>
-        Hermes is a live capital allocation engine that reads market structure to decide when capital should move,
-        wait, or be preserved.
-      </>
-    );
-  }
-
+function HermesLiveBriefing({ telemetry }: { telemetry: HermesTelemetry }) {
   const voice = hermesLiveVoice[telemetry.posture];
   const condition = telemetry.condition?.trim();
   const conditionPhrase = condition ? ` in ${lowerFirst(condition)} conditions` : ' as the market changes';
@@ -385,11 +376,17 @@ export default function HomeClient({
                 {hermesTelemetry ? <span className="inst-chip-dot" aria-hidden="true" /> : null}
                 Live · {hermesBetaVersionLabel.replace(/^Hermes\s+/, '')}
               </span>
+              {hermesTelemetry ? (
+                <p className="inst-card-live-brief">
+                  <HermesLiveBriefing telemetry={hermesTelemetry} />
+                </p>
+              ) : null}
               <div className="inst-card-foot">
                 <div className="inst-card-name">
                   <strong>Hermes - The first instrument</strong>
-                  <p className="inst-card-live-brief">
-                    <HermesLiveBriefing telemetry={hermesTelemetry} />
+                  <p>
+                    Hermes is a live capital allocation engine that reads market structure to decide when capital
+                    should move, wait, or be preserved.
                   </p>
                 </div>
                 <span className="inst-card-cta">Explore →</span>
