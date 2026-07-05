@@ -66,6 +66,32 @@ const footerSystems = [
   { name: 'Autonomy', status: 'Gated' },
 ];
 
+const homepageQuestions = [
+  {
+    question: 'What is Solace?',
+    answer: 'Solace builds instruments for disciplined capital allocation under uncertainty.',
+  },
+  {
+    question: 'What is Hermes?',
+    answer:
+      'Hermes is the first instrument: a live capital allocation engine that reads market structure to decide when capital should move, wait, or be preserved.',
+  },
+  {
+    question: 'Does Hermes manage customer funds?',
+    answer:
+      'Not yet. Hermes is in controlled access, with public readings and beta systems separated from customer capital.',
+  },
+  {
+    question: 'What does live mean?',
+    answer:
+      'Hermes updates from fresh market readings and only shows public-safe posture, timing, and capital-state summaries.',
+  },
+  {
+    question: 'What is Oracle?',
+    answer: 'Oracle is the calibration layer: it scores probability calls against what actually happened.',
+  },
+];
+
 const footerSocials = [{ name: 'X @solacefyi', href: 'https://x.com/solacefyi' }];
 const footerEmails = ['hello@solace.fyi', 'support@solace.fyi', 'security@solace.fyi'];
 
@@ -552,6 +578,23 @@ export default function HomeClient({
               </Link>
             ))}
           </div>
+        </motion.div>
+      </section>
+
+      <section className="faq-strip px-5 md:px-8">
+        <motion.div className="faq-strip-inner mx-auto max-w-7xl" {...sectionReveal}>
+          <div className="faq-strip-head">
+            <p className="section-kicker">FAQ</p>
+            <h2>Questions before access.</h2>
+          </div>
+          <dl className="faq-list">
+            {homepageQuestions.map((item) => (
+              <div key={item.question} className="faq-item">
+                <dt>{item.question}</dt>
+                <dd>{item.answer}</dd>
+              </div>
+            ))}
+          </dl>
         </motion.div>
       </section>
 
