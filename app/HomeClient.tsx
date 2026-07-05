@@ -340,14 +340,6 @@ export default function HomeClient({
 
       {HOME_LAYOUT === 'cards' ? (
       <section id="instruments" className="inst-wrap px-5 md:px-8">
-        <motion.div className="inst-section-head mx-auto max-w-7xl" {...sectionReveal}>
-          <p className="section-kicker">The first instrument</p>
-          <h2>Hermes is the first instrument.</h2>
-          <p>
-            Hermes is a live capital allocation engine that reads market structure to decide when capital should
-            move, wait, or be preserved.
-          </p>
-        </motion.div>
         <div className="inst-grid mx-auto max-w-7xl">
           <motion.div id="hermes" className="inst-cell inst-cell-hermes scroll-mt-24" {...cardReveal(0)}>
             <Link href="/hermes" className="inst-card">
@@ -393,10 +385,11 @@ export default function HomeClient({
               ) : null}
               <div className="inst-card-foot">
                 <div className="inst-card-name">
-                  <strong>Hermes</strong>
-                  {/* The card speaks its live state; the static line is the
-                      quiet fallback when telemetry is hidden. */}
-                  <p>{hermesTelemetry?.reason || 'Decides when capital moves, and when it doesn’t.'}</p>
+                  <strong>Hermes - The first instrument</strong>
+                  <p>
+                    Hermes is a live capital allocation engine that reads market structure to decide when capital
+                    should move, wait, or be preserved.
+                  </p>
                 </div>
                 <span className="inst-card-cta">Explore →</span>
               </div>

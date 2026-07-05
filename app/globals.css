@@ -787,30 +787,6 @@ h2 {
     padding-bottom: clamp(2.5rem, 6vw, 4.5rem);
   }
 
-  .inst-section-head {
-    display: grid;
-    gap: 0.9rem;
-    margin-bottom: clamp(1.6rem, 3.5vw, 2.4rem);
-  }
-
-  .inst-section-head h2 {
-    max-width: 18ch;
-    margin: 0;
-    color: var(--foreground);
-    font-family: var(--font-display), Georgia, serif;
-    font-size: clamp(2.2rem, 4.2vw, 4.2rem);
-    font-weight: 500;
-    line-height: 0.98;
-  }
-
-  .inst-section-head p:not(.section-kicker) {
-    max-width: 41rem;
-    margin: 0;
-    color: rgba(250, 250, 250, 0.62);
-    font-size: clamp(1rem, 1.3vw, 1.12rem);
-    line-height: 1.65;
-  }
-
   .inst-grid {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -997,6 +973,10 @@ h2 {
     line-height: 1.5;
   }
 
+  .inst-cell-hermes .inst-card-name p {
+    max-width: 34rem;
+  }
+
   .inst-card-cta {
     flex: 0 0 auto;
     color: rgba(250, 250, 250, 0.55);
@@ -1056,6 +1036,11 @@ h2 {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .inst-cell-hermes .inst-card-foot {
+      flex-direction: column;
+      align-items: flex-start;
     }
   }
 
