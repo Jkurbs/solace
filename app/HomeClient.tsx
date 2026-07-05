@@ -174,20 +174,54 @@ export type HermesTelemetry = {
   updatedAt: string;
 };
 
-const postureDisplay: Record<HermesPublicPosture, { label: string; tone: string; meaning: string }> = {
-  DEPLOYED: { label: 'Deployed', tone: '#8db89d', meaning: 'managing active exposure under calm conditions' },
-  SELECTIVE: { label: 'Selective', tone: '#d6d0c4', meaning: 'reviewing paths, waiting for high-quality conditions' },
-  DEFENSIVE: { label: 'Defensive', tone: '#d3b585', meaning: 'exposure exists and protection comes first' },
-  STANDING_DOWN: { label: 'Standing down', tone: '#a3a3a3', meaning: 'no fresh public-safe market read' },
-  RISK_OFF: { label: 'Risk off', tone: '#a3a3a3', meaning: 'risk controls have halted deployment' },
+const hermesLiveVoice: Record<HermesPublicPosture, { phrase: string; tone: string }> = {
+  DEPLOYED: { phrase: 'putting capital to work', tone: '#8db89d' },
+  SELECTIVE: { phrase: 'waiting for a cleaner opening', tone: '#d6d0c4' },
+  DEFENSIVE: { phrase: 'protecting capital first', tone: '#d3b585' },
+  STANDING_DOWN: { phrase: 'standing down', tone: '#a3a3a3' },
+  RISK_OFF: { phrase: 'paused by risk controls', tone: '#a3a3a3' },
 };
 
-// Hover legend: the five postures, plus the one secret worth telling.
-const postureLegend = [
-  'Hermes posture — recalculated live from market structure.',
-  ...Object.values(postureDisplay).map((entry) => `${entry.label}: ${entry.meaning}.`),
-  "The card's artwork burns at the system's actual energy — dimmer when defensive.",
-].join('\n');
+function lowerFirst(value: string) {
+  return value.charAt(0).toLowerCase() + value.slice(1);
+}
+
+function getHermesPathPhrase(telemetry: HermesTelemetry) {
+  const marketNoun = telemetry.pathsCount === 1 ? 'market' : 'markets';
+  const rawLabel = telemetry.pathsLabel.trim().toLowerCase();
+  const label = rawLabel === 'markets watched' || rawLabel === 'watched' ? 'watched' : rawLabel || 'watched';
+
+  return `${telemetry.pathsCount} ${marketNoun} ${label}`;
+}
+
+function HermesLiveBriefing({ telemetry }: { telemetry: HermesTelemetry | null }) {
+  if (!telemetry) {
+    return (
+      <>
+        Hermes is a live capital allocation engine that reads market structure to decide when capital should move,
+        wait, or be preserved.
+      </>
+    );
+  }
+
+  const voice = hermesLiveVoice[telemetry.posture];
+  const condition = telemetry.condition?.trim();
+  const conditionPhrase = condition ? ` in ${lowerFirst(condition)} conditions` : ' as the market changes';
+  const pathsPhrase = getHermesPathPhrase(telemetry);
+  const capitalPhrase =
+    typeof telemetry.deployedCount === 'number'
+      ? telemetry.deployedCount > 0
+        ? `with capital active in ${telemetry.deployedCount} of ${pathsPhrase}`
+        : `with no capital deployed across ${pathsPhrase}`
+      : `while watching ${pathsPhrase}`;
+
+  return (
+    <>
+      Live now: Hermes is currently <strong style={{ color: voice.tone }}>{voice.phrase}</strong>
+      {conditionPhrase}, {capitalPhrase}. Last reading: <ReadingAge updatedAt={telemetry.updatedAt} />.
+    </>
+  );
+}
 
 // Relative age computed client-side so ISR caching can't freeze "2h ago".
 function ReadingAge({ updatedAt }: { updatedAt: string }) {
@@ -351,44 +385,11 @@ export default function HomeClient({
                 {hermesTelemetry ? <span className="inst-chip-dot" aria-hidden="true" /> : null}
                 Live · {hermesBetaVersionLabel.replace(/^Hermes\s+/, '')}
               </span>
-              {hermesTelemetry ? (
-                <div className="inst-card-metrics" title={postureLegend}>
-                  {/* Read left to right, the row is a plain sentence:
-                      condition -> stance -> commitment -> freshness. */}
-                  {hermesTelemetry.condition ? (
-                    <span>
-                      <em>Condition</em>
-                      <strong>{hermesTelemetry.condition}</strong>
-                    </span>
-                  ) : null}
-                  <span>
-                    <em>Posture</em>
-                    <strong style={{ color: postureDisplay[hermesTelemetry.posture].tone }}>
-                      {postureDisplay[hermesTelemetry.posture].label}
-                    </strong>
-                  </span>
-                  <span>
-                    <em>Capital deployed</em>
-                    <strong>
-                      {typeof hermesTelemetry.deployedCount === 'number'
-                        ? `${hermesTelemetry.deployedCount} of ${hermesTelemetry.pathsCount} markets`
-                        : `${hermesTelemetry.pathsCount} markets watched`}
-                    </strong>
-                  </span>
-                  <span>
-                    <em>Last reading</em>
-                    <strong>
-                      <ReadingAge updatedAt={hermesTelemetry.updatedAt} />
-                    </strong>
-                  </span>
-                </div>
-              ) : null}
               <div className="inst-card-foot">
                 <div className="inst-card-name">
                   <strong>Hermes - The first instrument</strong>
-                  <p>
-                    Hermes is a live capital allocation engine that reads market structure to decide when capital
-                    should move, wait, or be preserved.
+                  <p className="inst-card-live-brief">
+                    <HermesLiveBriefing telemetry={hermesTelemetry} />
                   </p>
                 </div>
                 <span className="inst-card-cta">Explore →</span>

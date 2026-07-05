@@ -957,7 +957,7 @@ h2 {
     min-width: 0;
   }
 
-  .inst-card-name strong {
+  .inst-card-name > strong {
     color: var(--foreground);
     font-family: var(--font-display), Georgia, serif;
     font-size: clamp(1.4rem, 2vw, 1.8rem);
@@ -975,6 +975,10 @@ h2 {
 
   .inst-cell-hermes .inst-card-name p {
     max-width: 34rem;
+  }
+
+  .inst-card-live-brief strong {
+    font-weight: 650;
   }
 
   .inst-card-cta {
