@@ -340,6 +340,14 @@ export default function HomeClient({
 
       {HOME_LAYOUT === 'cards' ? (
       <section id="instruments" className="inst-wrap px-5 md:px-8">
+        <motion.div className="inst-section-head mx-auto max-w-7xl" {...sectionReveal}>
+          <p className="section-kicker">The first instrument</p>
+          <h2>Hermes is the first instrument.</h2>
+          <p>
+            Hermes is a live capital allocation engine that reads market structure to decide when capital should
+            move, wait, or be preserved.
+          </p>
+        </motion.div>
         <div className="inst-grid mx-auto max-w-7xl">
           <motion.div id="hermes" className="inst-cell inst-cell-hermes scroll-mt-24" {...cardReveal(0)}>
             <Link href="/hermes" className="inst-card">
@@ -461,10 +469,10 @@ export default function HomeClient({
         <div className="hermes-product-shell relative z-10 mx-auto flex max-w-7xl flex-col justify-center px-5 py-24 md:px-8 md:py-28">
           <motion.div className="hermes-product-copy" {...sectionReveal}>
             <p className="section-kicker">The first instrument</p>
-            <h2>Hermes decides when capital moves, and when it doesn&apos;t.</h2>
+            <h2>Hermes is the first instrument.</h2>
             <p>
-              A live capital allocation engine for markets under uncertainty. Hermes reads liquidity, timing,
-              and regime, and commits capital only when all three agree.
+              Hermes is a live capital allocation engine that reads market structure to decide when capital should
+              move, wait, or be preserved.
             </p>
             <span className="hermes-beta-version">{hermesBetaVersionLabel}</span>
 
