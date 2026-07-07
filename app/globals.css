@@ -6344,12 +6344,16 @@ h2 {
     padding-top: 2.25rem;
   }
 
+  /* A band of the sheet: aligned to the cell inset, hairline-separated from
+     the table below, no box of its own. */
   .trust-open-strip {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.6rem 0.9rem;
-    margin: 1.1rem 0;
+    gap: 0.6rem 1rem;
+    margin: 0;
+    padding: 1.1rem 0.9rem 1.15rem;
+    border-bottom: 1px solid rgba(250, 250, 250, 0.16);
   }
 
   .trust-open-live {
