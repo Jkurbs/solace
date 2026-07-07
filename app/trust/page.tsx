@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
 import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
 
 import Mark from '../Mark';
+import TrustAutoRefresh from './TrustAutoRefresh';
 
 export const metadata: Metadata = {
   title: 'Solace — Hermes Decision Ledger',
@@ -58,8 +60,17 @@ const howToRead = [
   ['Founder capital only', 'PnL shown is the founder’s own money. The ledger is a record, not a claim — the sample is young, and it is labeled that way until it isn’t.'],
 ];
 
+const percentFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 1,
+  minimumFractionDigits: 1,
+  style: 'percent',
+});
+
 export default async function TrustPage() {
-  const storedRows = await listHermesLedgerRows(200).catch(() => []);
+  const [storedRows, openExposure] = await Promise.all([
+    listHermesLedgerRows(200).catch(() => []),
+    getHermesOpenExposure().catch(() => null),
+  ]);
   const ledgerRows = storedRows.length
     ? storedRows.map((row, index) => ({
         row: String(index + 1),
@@ -85,6 +96,7 @@ export default async function TrustPage() {
 
   return (
     <main className="hx-page trust-page">
+      <TrustAutoRefresh />
       <header className="hx-header">
         <div className="hx-header-inner">
           <Link href="/" className="hx-brand">
@@ -131,6 +143,24 @@ export default async function TrustPage() {
               </div>
             ))}
           </div>
+
+          {openExposure ? (
+            <div className="trust-open-strip">
+              <span className="trust-open-live" aria-hidden="true" />
+              <p>
+                Open exposure now: <strong>{pnlFormatter.format(openExposure.unrealizedPnl)}</strong> unrealized ·{' '}
+                <strong>
+                  {openExposure.drawdownFromPeak > 0
+                    ? `−${percentFormatter.format(openExposure.drawdownFromPeak)} from peak equity`
+                    : 'at peak equity'}
+                </strong>
+              </p>
+              <span className="trust-open-label">
+                Live · as of {sealedAtFormatter.format(new Date(openExposure.asOf))} — moves with the market · not
+                part of the sealed record
+              </span>
+            </div>
+          ) : null}
 
           <div className="trust-table-wrap">
             <table className="trust-ledger-table">

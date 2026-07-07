@@ -6344,6 +6344,47 @@ h2 {
     padding-top: 2.25rem;
   }
 
+  .trust-open-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.6rem 0.9rem;
+    margin: 0.9rem 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(95, 143, 111, 0.3);
+    border-radius: 0.7rem;
+    background: rgba(95, 143, 111, 0.06);
+  }
+
+  .trust-open-live {
+    width: 0.42rem;
+    height: 0.42rem;
+    flex: 0 0 auto;
+    align-self: center;
+    border-radius: 999px;
+    background: #8db89d;
+    animation: live-pulse 2.4s ease-out infinite;
+  }
+
+  .trust-open-strip p {
+    margin: 0;
+    color: rgba(250, 250, 250, 0.75);
+    font-size: 0.88rem;
+  }
+
+  .trust-open-strip strong {
+    color: #fafafa;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .trust-open-label {
+    color: rgba(250, 250, 250, 0.4);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.56rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
   .trust-ledger-disclosure {
     margin: 0.9rem 0 0;
     color: rgba(250, 250, 250, 0.4);
