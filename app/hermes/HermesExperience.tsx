@@ -69,7 +69,7 @@ const impactItems = [
   'Users understand what Hermes is doing through a clear operating read across posture, capital state, and rationale.',
   'Posture, capital state, risk level, current action, and decision rationale are visible in one read.',
   'The public preview uses the same sanitized brief contract that powers public Hermes updates.',
-  'Sensitive signals, exact trades, prices, balances, PnL, and user-specific data stay on protected account surfaces.',
+  'Sensitive signals, exact trades, prices, balances, and user-specific data stay on protected account surfaces. Founder-capital decision outcomes are published to the public ledger.',
 ];
 
 const accessSteps = [
@@ -357,8 +357,8 @@ function Hero() {
             <a href="#request-access" className="hx-btn hx-btn-primary">
               Request Beta Access
             </a>
-            <Link href="/brief" className="hx-btn hx-btn-secondary">
-              Read brief
+            <Link href="/trust" className="hx-btn hx-btn-secondary">
+              View the decision ledger
             </Link>
           </div>
         </Reveal>
@@ -515,6 +515,9 @@ export default function HermesExperience() {
             <div className="hx-briefcard-actions">
               <Link href="/brief" className="hx-btn hx-btn-secondary">
                 Read the full brief
+              </Link>
+              <Link href="/trust" className="hx-btn hx-btn-secondary">
+                See the decision ledger
               </Link>
               <Link href="/research" className="text-link">
                 Or start with the research

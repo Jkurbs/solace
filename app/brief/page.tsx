@@ -6,17 +6,27 @@ import Mark from '../Mark';
 export const metadata: Metadata = {
   title: 'Solace — Technical Brief',
   description:
-    'What Solace builds, how it is disciplined, and how it can be checked. V0.3, July 2026. No performance claims.',
+    'What Solace builds, how it is disciplined, and how it can be checked. V0.4, July 2026. No performance claims.',
 };
 
 const gate = [
-  { label: 'Capital threshold', status: 'Holding' },
-  { label: 'Two full regime cycles', status: '0 of 2' },
+  { label: 'Regime cycles', status: '0 of 2' },
+  { label: 'Capital threshold', status: 'Holding — figure to be published' },
   { label: 'Oracle calibration proven', status: 'Calibrating' },
   { label: 'Simulation load-bearing', status: 'Not begun' },
 ];
 
-const sections = [
+type BriefSection = {
+  number: string;
+  title: string;
+  body: string[];
+  /** Bulleted commitments/definitions rendered after the body paragraphs. */
+  list?: string[];
+  /** Closing paragraphs rendered after the list (and the gate board in §07). */
+  after?: string[];
+};
+
+const sections: BriefSection[] = [
   {
     number: '01',
     title: 'Thesis',
@@ -62,16 +72,35 @@ const sections = [
     number: '06',
     title: 'Verification',
     body: [
-      'A system that manages capital should be checkable by the people who trust it. Solace commits to the following, in order of arrival: a decision trail recorded at decision time for every instrument; published Oracle calibration reports once the resolved-question sample crosses the disclosure threshold; and a regime log recording when and why Hermes stood down.',
-      'The standard is simple: claims that can be checked, published when they can be checked. Anything not yet checkable is labeled with its honest status.',
+      'A system that manages capital should be checkable by the people who trust it. Solace commits to the following, in order of arrival:',
+    ],
+    list: [
+      'A decision trail recorded at decision time for every instrument, public where it can be published without exposing the mechanism, private where it can’t — reviewable on request once outside capital is involved.',
+      'While Hermes runs founder capital only, the public decision ledger shows each decision’s outcome and PnL in full — wins, losses, and waits. The only money at risk is the founder’s own, and the sample is labeled for what it is: young. Disclosure for any future outside capital will be defined with counsel and stated here before it applies.',
+      'Published Oracle calibration reports once the resolved-question sample crosses the disclosure threshold.',
+      'A regime log recording when and why Hermes stood down.',
+      'Once a public ledger has enough resolved rows to be meaningful, an independent reviewer — named, with their own verifiable background — will be given access to the private record to confirm it matches what’s published. Who that reviewer is, and what they confirmed, will be public.',
+    ],
+    after: [
+      'The standard is simple: claims that can be checked, published when they can be checked. Anything not yet checkable is labeled with its honest status. That includes this founder’s track record, which does not yet exist in a form worth calling a track record — Hermes and the Oracle are the mechanism by which it will.',
     ],
   },
   {
     number: '07',
     title: 'Horizon',
     body: [
-      'Beyond the live instruments, the roadmap runs through simulation — synthetic environments where hypotheses fail quietly before deployment — toward physical-world autonomy. Domains are earned, not declared. Expansion into autonomy is gated on the following conditions, and the board below is the public record of their status.',
-      'One definition, so the board can be checked: a regime cycle means a complete bull-and-bear cycle in the primary markets Hermes trades. By construction, that gate is measured in years, not months.',
+      'Everything in this brief describes what Solace does now. This section describes what it’s for, stated at a distance, on purpose.',
+      'The instruments Solace builds are not specific to financial markets. Hermes reads structure, timing, and regime to decide when a system should act and when it should stand down. Markets are where that loop is tested first, because they compress feedback into days instead of years and because they fund the work. The longer aim is instruments that make the same kind of disciplined, checkable decisions in systems beyond finance — wherever timing, resource allocation, and uncertainty matter and outcomes can be verified against reality. This is a multi-year horizon, named now so the gate conditions below have a destination, not a near-term roadmap item.',
+      'Domains are earned, not declared. Expansion beyond markets is gated on the conditions below, and this board is the public record of their status. Each gate is defined so it can be checked, not just claimed:',
+    ],
+    list: [
+      'Regime cycles — a complete bull-and-bear cycle in the primary markets Hermes trades. By construction, this gate is measured in years, not months.',
+      'Capital threshold — a minimum of sustained, verified founder-and-approved-user capital under management, held through at least one full drawdown, before scale is considered. The specific figure will be published once it’s set, not held back after the fact.',
+      'Oracle calibration proven — a Brier score on a resolved-question sample large enough to be statistically meaningful, published in full, not selectively.',
+      'Simulation load-bearing — synthetic environments are trusted to catch a failure before deployment, demonstrated by at least one documented case where simulation caught something live testing would have missed.',
+    ],
+    after: [
+      'Until every gate clears, Solace is a markets company. That’s not a hedge — it’s the actual current scope.',
     ],
   },
   {
@@ -112,43 +141,65 @@ export default function BriefPage() {
           What we build, and how to check it.
         </h1>
         <p className="mt-6 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-[#6b6354]">
-          V0.3 · July 2026 · Supersedes{' '}
-          <Link href="/brief/v0-2" className="brief-author-link">
-            V0.2
+          V0.4 · July 2026 · Supersedes{' '}
+          <Link href="/brief/v0-3" className="brief-author-link">
+            V0.3
           </Link>{' '}
           · No performance claims
         </p>
 
-        <div id="author" className="mt-10 flex items-center gap-5 border-t border-black/10 pt-8">
-          <img
-            src="/assets/kerby-jean.jpg"
-            alt="Kerby Jean, founder of Solace"
-            width={64}
-            height={64}
-            className="brief-author-photo"
-          />
-          <div>
-            <p className="font-serif text-xl font-medium text-[#13110c] md:text-2xl">Kerby Jean</p>
-            <p className="mt-1 max-w-xl text-sm leading-6 text-[#4f483c]">
-              Founder. Software engineer — four years building production systems at Apple. Every
-              Solace instrument is designed, built, and operated by him, end to end.
+        <div id="author" className="mt-10 border-t border-black/10 pt-8">
+          <div className="flex items-center gap-5">
+            <img
+              src="/assets/kerby-jean.jpg"
+              alt="Kerby Jean, founder of Solace"
+              width={64}
+              height={64}
+              className="brief-author-photo"
+            />
+            <div>
+              <p className="font-serif text-xl font-medium text-[#13110c] md:text-2xl">Kerby Jean</p>
+              <p className="mt-1 max-w-xl text-sm leading-6 text-[#4f483c]">
+                Founder. Software engineer — four years building production systems at Apple. Today,
+                every Solace instrument is designed, built, and operated by him end to end.
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 max-w-2xl space-y-4 text-base leading-8 text-[#3f3a30]">
+            <p>
+              I don&rsquo;t have a background in institutional trading, asset management, or quantitative
+              finance. I&rsquo;m not going to imply otherwise.
             </p>
-            <p className="mt-2 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-[#6b6354]">
-              <a
-                href="https://github.com/Jkurbs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="brief-author-link"
-              >
-                GitHub
-              </a>
-              {' · '}
-              <a href="mailto:kerby@solace.fyi" className="brief-author-link">
-                Email
-              </a>
-              {' · Miami, FL'}
+            <p>
+              What I have is four years building production systems that had to work under real
+              conditions, and enough time and founder capital in markets to believe there is structure
+              worth testing.
+            </p>
+            <p>That belief is unproven.</p>
+            <p>
+              Founder capital, the public ledger, and the gate conditions in this brief exist because I
+              don&rsquo;t think a claim like that should be taken on trust. It should be checked.
+            </p>
+            <p>
+              Solace is currently a one-person project. There is no team beyond me. That will be true
+              until it isn&rsquo;t, and if it changes, this brief will say so.
             </p>
           </div>
+          <p className="mt-5 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-[#6b6354]">
+            <a
+              href="https://github.com/Jkurbs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="brief-author-link"
+            >
+              GitHub
+            </a>
+            {' · '}
+            <a href="mailto:kerby@solace.fyi" className="brief-author-link">
+              Email
+            </a>
+            {' · Miami, FL'}
+          </p>
         </div>
 
         <nav className="mt-12 border-t border-black/10 pt-8" aria-label="Brief contents">
@@ -181,6 +232,14 @@ export default function BriefPage() {
                     ))}
                   </div>
 
+                  {section.list ? (
+                    <ul className="mt-5 list-disc space-y-3 pl-5 text-base leading-8 text-[#3f3a30] marker:text-[#b8955a]">
+                      {section.list.map((item) => (
+                        <li key={item.slice(0, 40)}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+
                   {section.number === '07' && (
                     <div className="gate-board" aria-label="Autonomy gate conditions">
                       <p className="gate-board-title">Gate conditions — domains are earned</p>
@@ -196,6 +255,22 @@ export default function BriefPage() {
                       </ul>
                     </div>
                   )}
+
+                  {section.after ? (
+                    <div className="mt-5 space-y-4 text-base leading-8 text-[#3f3a30]">
+                      {section.after.map((paragraph) => (
+                        <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {section.number === '06' && (
+                    <p className="mt-5 font-mono text-xs uppercase tracking-[0.16em]">
+                      <Link href="/trust" className="brief-author-link">
+                        View the public decision ledger →
+                      </Link>
+                    </p>
+                  )}
                 </div>
               </div>
             </section>
@@ -204,7 +279,7 @@ export default function BriefPage() {
 
         <div className="mt-20 flex flex-col gap-3 border-t border-black/10 pt-6 md:flex-row md:items-center md:justify-between">
           <p className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-[#6b6354]">
-            © 2026 Solace · Technical Brief V0.3
+            © 2026 Solace · Technical Brief V0.4
           </p>
           <Link
             href="/"

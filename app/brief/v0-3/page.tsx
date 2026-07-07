@@ -4,12 +4,12 @@ import Link from 'next/link';
 import Mark from '../../Mark';
 
 export const metadata: Metadata = {
-  title: 'Solace — Technical Brief V0.2 (Archived)',
+  title: 'Solace — Technical Brief V0.3 (Archived)',
   description:
-    'Archived version. What Solace builds, how it is disciplined, and how it can be checked. V0.2, July 2026. Superseded by V0.3.',
+    'Archived version. What Solace builds, how it is disciplined, and how it can be checked. V0.3, July 2026. Superseded by V0.4.',
 };
 
-// Archived verbatim from Technical Brief V0.2 (July 2026). Do not edit the
+// Archived verbatim from Technical Brief V0.3 (July 2026). Do not edit the
 // section copy: the point of the archive is that superseded claims stay
 // checkable. Only the archival banner and contact details are current.
 const gate = [
@@ -57,7 +57,7 @@ const sections = [
     number: '05',
     title: 'Risk discipline',
     body: [
-      'Approved users fund Hermes by depositing capital directly into Solace through the account dashboard. Deposits are recorded to the user’s Solace account, pass through settlement and treasury controls, and become eligible for Hermes allocation only after onboarding, identity, and risk checks are complete.',
+      'Hermes currently allocates founder capital only — no outside capital is at risk while access opens in stages. As approved users come online, they fund Hermes by depositing capital directly into Solace through the account dashboard: deposits are recorded to the user’s Solace account, pass through settlement and treasury controls, and become eligible for Hermes allocation only after onboarding, identity, and risk checks are complete.',
       'Risk is governed in layers: posture (how boldly capital is routed, from preservation to velocity), sizing that scales with field depth, hard drawdown guards, and kill switches that halt the system entirely. Money movement stays separate from signal generation: deposits, withdrawals, account value, and available balance remain visible through Solace account rails. Standing down is treated as a position, and the system takes it often.',
     ],
   },
@@ -74,6 +74,7 @@ const sections = [
     title: 'Horizon',
     body: [
       'Beyond the live instruments, the roadmap runs through simulation — synthetic environments where hypotheses fail quietly before deployment — toward physical-world autonomy. Domains are earned, not declared. Expansion into autonomy is gated on the following conditions, and the board below is the public record of their status.',
+      'One definition, so the board can be checked: a regime cycle means a complete bull-and-bear cycle in the primary markets Hermes trades. By construction, that gate is measured in years, not months.',
     ],
   },
   {
@@ -85,7 +86,7 @@ const sections = [
   },
 ];
 
-export default function BriefV02Page() {
+export default function BriefV03Page() {
   return (
     <main className="brief-paper relative min-h-screen overflow-x-hidden">
       <header className="fixed inset-x-0 top-0 z-40 border-b border-black/10 bg-[rgba(247,242,232,0.86)] backdrop-blur-xl">
@@ -109,8 +110,8 @@ export default function BriefV02Page() {
       <article className="mx-auto max-w-4xl px-5 pb-24 pt-36 md:px-8">
         <p className="inline-block border border-[#b8955a]/50 bg-[#b8955a]/10 px-3 py-1.5 font-mono text-[0.62rem] uppercase tracking-[0.2em] text-[#8a6d3b]">
           Archived version — superseded by{' '}
-          <Link href="/brief/v0-3" className="underline underline-offset-2">
-            V0.3
+          <Link href="/brief" className="underline underline-offset-2">
+            V0.4
           </Link>
           . Preserved verbatim for the public version history.
         </p>
@@ -122,9 +123,9 @@ export default function BriefV02Page() {
           What we build, and how to check it.
         </h1>
         <p className="mt-6 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-[#6b6354]">
-          V0.2 · July 2026 · Supersedes{' '}
-          <Link href="/brief/v0-1" className="brief-author-link">
-            V0.1
+          V0.3 · July 2026 · Supersedes{' '}
+          <Link href="/brief/v0-2" className="brief-author-link">
+            V0.2
           </Link>{' '}
           · No performance claims
         </p>
@@ -197,7 +198,7 @@ export default function BriefV02Page() {
 
         <div className="mt-20 flex flex-col gap-3 border-t border-black/10 pt-6 md:flex-row md:items-center md:justify-between">
           <p className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-[#6b6354]">
-            © 2026 Solace · Technical Brief V0.2 · Archived
+            © 2026 Solace · Technical Brief V0.3 · Archived
           </p>
           <Link
             href="/brief"

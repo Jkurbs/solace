@@ -39,7 +39,7 @@ Risk is governed in layers: posture, sizing that scales with the depth of the fi
 
 ## What you can check
 
-Solace publishes no performance claims, and this announcement makes none. What we publish instead is what can be verified: a [technical brief](/brief) that is versioned in public, [research notes](/research) on the framework Hermes runs on, and — as they cross their disclosure thresholds — a decision trail recorded at decision time and a regime log recording when and why Hermes stood down.
+Solace publishes no performance claims, and this announcement makes none. What we publish instead is what can be verified: a [technical brief](/brief) that is versioned in public, [research notes](/research) on the framework Hermes runs on, and a [public decision ledger](/trust) where every Hermes decision is recorded before its outcome is known — wins, losses, and waits alike.
 
 The standard is the one from the brief: claims that can be checked, published when they can be checked. Anything not yet checkable is labeled with its honest status.
 

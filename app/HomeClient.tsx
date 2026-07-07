@@ -116,6 +116,9 @@ function Header() {
           <Link href="/news">
             News
           </Link>
+          <Link href="/trust">
+            Trust
+          </Link>
           <Link href="/hermes">
             Hermes
           </Link>
@@ -154,6 +157,9 @@ function Header() {
         </Link>
         <Link href="/news" onClick={() => setMenuOpen(false)}>
           News
+        </Link>
+        <Link href="/trust" onClick={() => setMenuOpen(false)}>
+          Trust
         </Link>
         <Link href="/hermes" onClick={() => setMenuOpen(false)}>
           Hermes
@@ -409,10 +415,11 @@ export default function HomeClient({
               ) : null}
               <div className="inst-card-foot">
                 <div className="inst-card-name">
-                  <strong>Hermes - The first instrument</strong>
+                  <em className="inst-card-kicker">The first instrument</em>
+                  <strong>Hermes</strong>
                   <p>
-                    Hermes is a live capital allocation engine that reads market structure to decide when capital
-                    should move, wait, or be preserved.
+                    A live capital allocation engine that reads market structure to decide when capital should
+                    move, wait, or be preserved.
                   </p>
                 </div>
                 <span className="inst-card-cta">Explore →</span>
@@ -646,6 +653,9 @@ export default function HomeClient({
                 </li>
                 <li>
                   <Link href="/news">News</Link>
+                </li>
+                <li>
+                  <Link href="/trust">Decision ledger</Link>
                 </li>
                 <li>
                   <Link href="/hermes#request-access">Request access</Link>
