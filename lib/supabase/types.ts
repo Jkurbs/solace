@@ -241,6 +241,9 @@ export type Database = {
           outcome: string | null;
           pnl: number | null;
           resolved_at: string | null;
+          prev_hash: string | null;
+          row_hash: string | null;
+          resolution_hash: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -253,6 +256,9 @@ export type Database = {
           outcome?: string | null;
           pnl?: number | null;
           resolved_at?: string | null;
+          prev_hash?: string | null;
+          row_hash?: string | null;
+          resolution_hash?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -265,6 +271,9 @@ export type Database = {
           outcome?: string | null;
           pnl?: number | null;
           resolved_at?: string | null;
+          prev_hash?: string | null;
+          row_hash?: string | null;
+          resolution_hash?: string | null;
           created_at?: string;
           updated_at?: string;
         };

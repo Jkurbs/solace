@@ -1,10 +1,31 @@
 import { NextResponse } from 'next/server';
 
-import { resolveHermesLedgerRow, sealHermesLedgerRow } from '@/features/hermes-ledger/store';
+import { LEDGER_GENESIS_PREV_HASH } from '@/features/hermes-ledger/hash';
+import { listHermesLedgerRows, resolveHermesLedgerRow, sealHermesLedgerRow } from '@/features/hermes-ledger/store';
 import { hermesPublicPostures } from '@/features/hermes-public-reading/types';
 import { safeSecretEquals } from '@/lib/secret-compare';
 
 export const runtime = 'nodejs';
+
+// Public read of the ledger — the same data /trust renders, as JSON, so the
+// chain can be verified independently (scripts/verify-ledger.mjs).
+export async function GET() {
+  const rows = await listHermesLedgerRows(1000);
+  const response = NextResponse.json({
+    chain: {
+      genesisPrevHash: LEDGER_GENESIS_PREV_HASH,
+      head: rows.at(-1)?.rowHash ?? null,
+      hashing:
+        'row_hash = sha256(json {decision, note, posture, prev_hash, record_id, sealed_at(ISO)}); resolution_hash = sha256(json {outcome, pnl(2dp string|null), resolved_at(ISO), row_hash})',
+    },
+    count: rows.length,
+    rows,
+  });
+
+  response.headers.set('Cache-Control', 'no-store');
+
+  return response;
+}
 
 function getBearerToken(request: Request) {
   const authorization = request.headers.get('authorization') ?? '';

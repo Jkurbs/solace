@@ -63,6 +63,7 @@ const placeholderRow = {
   pnl: '--',
   pnlTone: null as 'pos' | 'neg' | null,
   note: 'First row will be added after a decision is recorded.',
+  rowHash: null as string | null,
 };
 
 const MIN_VISIBLE_ROWS = 7;
@@ -72,6 +73,10 @@ const howToRead = [
   ['Everything counts', 'Waits and no-trade decisions get rows. Losses and drawdowns get rows. Nothing is deleted.'],
   ['Mechanism stays private', 'Entries, exits, position sizes, and thresholds never appear here. Open positions are named only after they close. The ledger proves discipline, not the recipe.'],
   ['Founder capital only', 'PnL shown is the founder’s own money. The ledger is a record, not a claim — the sample is young, and it is labeled that way until it isn’t.'],
+  [
+    'Verifiable by math',
+    'Every row is hashed and chained to the row before it at seal time. Editing any past row breaks the chain. Recompute it yourself from the public data with the verify script in the Solace repo.',
+  ],
 ];
 
 export default async function TrustPage() {
@@ -98,6 +103,7 @@ export default async function TrustPage() {
               ? ('pos' as const)
               : ('neg' as const),
         note: row.note || '--',
+        rowHash: row.rowHash,
       }))
     : [placeholderRow];
   const blankRows = Array.from(
@@ -197,7 +203,10 @@ export default async function TrustPage() {
                     <td className="trust-row-number">{row.row}</td>
                     <td>
                       {row.sealedAt}
-                      <span className="trust-record-id">{row.recordId}</span>
+                      <span className="trust-record-id" title={row.rowHash ?? undefined}>
+                        {row.recordId}
+                        {row.rowHash ? ` · ${row.rowHash.slice(0, 10)}` : ''}
+                      </span>
                     </td>
                     <td>{row.decision}</td>
                     <td>{row.posture}</td>
