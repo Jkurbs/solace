@@ -6360,6 +6360,16 @@ h2 {
     color: rgba(250, 250, 250, 0.82);
   }
 
+  .trust-meta-sub {
+    display: block;
+    margin-top: 0.3rem;
+    color: rgba(250, 250, 250, 0.4);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
   .trust-pnl-pos {
     color: #8db89d;
     font-variant-numeric: tabular-nums;

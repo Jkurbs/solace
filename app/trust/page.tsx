@@ -34,6 +34,16 @@ const pnlFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
 });
 
+const metaTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  day: 'numeric',
+  hour: 'numeric',
+  hour12: true,
+  minute: '2-digit',
+  month: 'short',
+  timeZone: 'America/New_York',
+  timeZoneName: 'short',
+});
+
 function formatConstant(value: string) {
   return value
     .toLowerCase()
@@ -148,6 +158,23 @@ export default async function TrustPage() {
                 <strong>{value}</strong>
               </div>
             ))}
+            <div className="trust-sheet-meta-cell">
+              <span>Live PnL</span>
+              <strong
+                className={
+                  openExposure && openExposure.unrealizedPnl > 0
+                    ? 'trust-pnl-pos'
+                    : openExposure && openExposure.unrealizedPnl < 0
+                      ? 'trust-pnl-neg'
+                      : undefined
+                }
+              >
+                {openExposure ? pnlFormatter.format(openExposure.unrealizedPnl) : '--'}
+              </strong>
+              {openExposure ? (
+                <span className="trust-meta-sub">as of {metaTimeFormatter.format(new Date(openExposure.asOf))}</span>
+              ) : null}
+            </div>
           </div>
 
           <div className="trust-table-wrap">
