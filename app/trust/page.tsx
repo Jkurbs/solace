@@ -13,9 +13,10 @@ export const metadata: Metadata = {
   description: 'Public record of Hermes decisions before outcomes are known.',
 };
 
-// The ledger is fed by the Hermes bridge; the public view refreshes every 5s
-// (matching the client auto-refresh cadence).
-export const revalidate = 5;
+// The ledger is fed by the Hermes bridge; the server render is at most 1s
+// stale and open tabs re-fetch every 3s. The real freshness floor is the
+// bridge's mark cadence.
+export const revalidate = 1;
 
 const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
