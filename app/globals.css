@@ -6485,10 +6485,12 @@ h2 {
   }
 
   .trust-record-id {
-    color: #fafafa;
+    display: block;
+    margin-top: 0.2rem;
+    color: rgba(250, 250, 250, 0.45);
     font-family: var(--font-plex), monospace;
-    font-size: 0.74rem;
-    letter-spacing: 0.04em;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
   }
 
   .trust-empty-row td:not(.trust-row-number) {
