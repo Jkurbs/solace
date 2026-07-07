@@ -6349,11 +6349,7 @@ h2 {
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0.6rem 0.9rem;
-    margin: 0.9rem 0;
-    padding: 0.75rem 1rem;
-    border: 1px solid rgba(95, 143, 111, 0.3);
-    border-radius: 0.7rem;
-    background: rgba(95, 143, 111, 0.06);
+    margin: 1.1rem 0;
   }
 
   .trust-open-live {
@@ -6383,6 +6379,16 @@ h2 {
     font-size: 0.56rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
+  }
+
+  .trust-pnl-pos {
+    color: #8db89d;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .trust-pnl-neg {
+    color: #f08f88;
+    font-variant-numeric: tabular-nums;
   }
 
   .trust-ledger-disclosure {

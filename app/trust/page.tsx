@@ -12,8 +12,9 @@ export const metadata: Metadata = {
   description: 'Public record of Hermes decisions before outcomes are known.',
 };
 
-// The ledger is fed by the Hermes bridge; refresh the public view every minute.
-export const revalidate = 60;
+// The ledger is fed by the Hermes bridge; the public view refreshes every 5s
+// (matching the client auto-refresh cadence).
+export const revalidate = 5;
 
 const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
@@ -48,6 +49,7 @@ const placeholderRow = {
   posture: '--',
   outcome: '--',
   pnl: '--',
+  pnlTone: null as 'pos' | 'neg' | null,
   note: 'First row will be added after a decision is recorded.',
 };
 
@@ -59,12 +61,6 @@ const howToRead = [
   ['Mechanism stays private', 'Entries, exits, position sizes, and thresholds never appear here. The ledger proves discipline, not the recipe.'],
   ['Founder capital only', 'PnL shown is the founder’s own money. The ledger is a record, not a claim — the sample is young, and it is labeled that way until it isn’t.'],
 ];
-
-const percentFormatter = new Intl.NumberFormat('en-US', {
-  maximumFractionDigits: 1,
-  minimumFractionDigits: 1,
-  style: 'percent',
-});
 
 export default async function TrustPage() {
   const [storedRows, openExposure] = await Promise.all([
@@ -80,6 +76,12 @@ export default async function TrustPage() {
         posture: formatConstant(row.posture),
         outcome: row.outcome ?? 'Open',
         pnl: row.outcome === null ? '--' : row.pnl === null ? '--' : pnlFormatter.format(row.pnl),
+        pnlTone:
+          row.outcome === null || row.pnl === null || row.pnl === 0
+            ? null
+            : row.pnl > 0
+              ? ('pos' as const)
+              : ('neg' as const),
         note: row.note || '--',
       }))
     : [placeholderRow];
@@ -148,12 +150,25 @@ export default async function TrustPage() {
             <div className="trust-open-strip">
               <span className="trust-open-live" aria-hidden="true" />
               <p>
-                Open exposure now: <strong>{pnlFormatter.format(openExposure.unrealizedPnl)}</strong> unrealized ·{' '}
-                <strong>
-                  {openExposure.drawdownFromPeak > 0
-                    ? `−${percentFormatter.format(openExposure.drawdownFromPeak)} from peak equity`
-                    : 'at peak equity'}
-                </strong>
+                Open exposure now:{' '}
+                <strong
+                  className={
+                    openExposure.unrealizedPnl > 0 ? 'trust-pnl-pos' : openExposure.unrealizedPnl < 0 ? 'trust-pnl-neg' : undefined
+                  }
+                >
+                  {pnlFormatter.format(openExposure.unrealizedPnl)}
+                </strong>{' '}
+                unrealized
+                {openExposure.positions.length ? (
+                  <>
+                    {' · '}
+                    <strong>
+                      {openExposure.positions
+                        .map((position) => `${position.symbol} ${position.side.toLowerCase()}`)
+                        .join(', ')}
+                    </strong>
+                  </>
+                ) : null}
               </p>
               <span className="trust-open-label">
                 Live · as of {sealedAtFormatter.format(new Date(openExposure.asOf))} — moves with the market · not
@@ -186,7 +201,7 @@ export default async function TrustPage() {
                     <td>{row.decision}</td>
                     <td>{row.posture}</td>
                     <td>{row.outcome}</td>
-                    <td>{row.pnl}</td>
+                    <td className={row.pnlTone ? `trust-pnl-${row.pnlTone}` : undefined}>{row.pnl}</td>
                     <td>{row.note}</td>
                   </tr>
                 ))}
