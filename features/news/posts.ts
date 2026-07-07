@@ -15,6 +15,39 @@ export type NewsPost = {
 // now checkable. Mechanism and status only; never performance.
 export const newsPosts: NewsPost[] = [
   {
+    slug: 'the-decision-ledger',
+    title: 'The Decision Ledger',
+    dek: 'Every Hermes decision now gets a public row before its outcome is known — sealed, chained, and checkable.',
+    label: 'News 002',
+    date: '2026-07-07',
+    tint: 'cream',
+    body: `Today we're publishing the Hermes Decision Ledger: a public record where every decision Hermes makes gets a row before its outcome is known. It is live now at [solace.fyi/trust](/trust).
+
+The problem it answers is old. Anyone can post winners after the fact — screenshots appear when trades go well and vanish when they don't. The only defense a reader has is a record that exists *before* the outcome does. So that is what the ledger is.
+
+## The rules
+
+**Sealed first.** A row is created the moment Hermes decides — a posture change, a path taken, a stand-down. The outcome column is empty because the outcome doesn't exist yet. Nothing is written after the fact.
+
+**Everything counts.** Waits and no-trade decisions get rows. Losses and drawdowns get rows. Nothing is deleted — the database itself refuses: rows physically cannot be deleted or edited once sealed.
+
+**Named at close.** While a position is open, the ledger shows that capital is committed and how the open exposure is doing — but not the instrument. Symbol and side are revealed when the path closes, printed next to the realized result. You can hold the record accountable without being able to front-run the system.
+
+**Mechanism stays private.** Entries, exits, position sizes, and thresholds never appear. The ledger proves discipline, not the recipe.
+
+## Verifiable by math, not by promise
+
+A rule that says "we don't edit history" is still a promise, and promises are what the ledger exists to replace. So the ledger's integrity is checkable:
+
+Every row carries a SHA-256 hash computed when it is sealed, chained to the hash of the row before it. Editing any historical row — a word, a timestamp, a number — changes its hash and breaks every row after it. A short public script in the Solace repository recomputes the entire chain from the public data, so "the record was never touched" is a claim you can test rather than trust.
+
+## What the ledger is not
+
+As of this writing — July 2026 — the capital at risk is the founder's own, and no customer funds are managed. If that ever changes, the ledger and the [technical brief](/brief) will say so before it does. The sample is young, and the page says so on its face: the ledger is a record, not a claim, and it contains no performance claims. It will fill at the speed Hermes decides, which — by design — is slower than you'd think. Standing down is a decision too, and it gets a row.
+
+The record is public from its first row. It starts now, at [solace.fyi/trust](/trust).`,
+  },
+  {
     slug: 'introducing-hermes',
     title: 'Introducing Hermes',
     dek: 'Our first instrument is live in beta: a capital allocation engine for markets under uncertainty.',

@@ -231,7 +231,9 @@ export default async function TrustPage() {
                               ? 'one open path'
                               : `${openExposure.positions.length} open paths`
                           }`
-                        : 'Open exposure'}
+                        : openExposure.unrealizedPnl === 0
+                          ? 'Flat — no open exposure'
+                          : 'Open exposure'}
                     </td>
                     <td>{livePosture}</td>
                     <td>Open</td>

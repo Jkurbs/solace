@@ -23,6 +23,13 @@ type LedgerRowRecord = Database['public']['Tables']['hermes_decision_ledger']['R
 type SupabaseClient = Awaited<ReturnType<typeof createSupabaseDataClient>>;
 
 function isMissingLedgerTable(message: string) {
+  // A missing COLUMN (migration not yet run) must never be treated as a
+  // missing table — that would silently drop rows. Only the table itself
+  // being absent is tolerable.
+  if (message.includes('column')) {
+    return false;
+  }
+
   return (
     message.includes('hermes_decision_ledger') &&
     (message.includes('Could not find') || message.includes('does not exist') || message.includes('schema cache'))
