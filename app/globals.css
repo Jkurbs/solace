@@ -6344,45 +6344,20 @@ h2 {
     padding-top: 2.25rem;
   }
 
-  /* A band of the sheet: aligned to the cell inset, hairline-separated from
-     the table below, no box of its own. */
-  .trust-open-strip {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.6rem 1rem;
-    margin: 0;
-    padding: 1.1rem 0.9rem 1.15rem;
-    border-bottom: 1px solid rgba(250, 250, 250, 0.16);
-  }
-
+  /* Live row: the open position rendered inside the sheet — pulsing dot in
+     the number cell, LIVE where the record id would sit. Not a sealed row. */
   .trust-open-live {
+    display: inline-block;
     width: 0.42rem;
     height: 0.42rem;
-    flex: 0 0 auto;
-    align-self: center;
     border-radius: 999px;
     background: #8db89d;
     animation: live-pulse 2.4s ease-out infinite;
+    vertical-align: middle;
   }
 
-  .trust-open-strip p {
-    margin: 0;
-    color: rgba(250, 250, 250, 0.75);
-    font-size: 0.88rem;
-  }
-
-  .trust-open-strip strong {
-    color: #fafafa;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .trust-open-label {
-    color: rgba(250, 250, 250, 0.4);
-    font-family: var(--font-plex), monospace;
-    font-size: 0.56rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+  .trust-live-row td {
+    color: rgba(250, 250, 250, 0.82);
   }
 
   .trust-pnl-pos {

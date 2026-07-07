@@ -67,16 +67,38 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
     const supabase = await createSupabaseDataClient();
     const { data, error } = await supabase
       .from('hermes_pool_source_marks')
-      .select('id,pool_id,source_equity,source_unrealized_pnl,effective_at')
+      .select('pool_id,source_equity,source_unrealized_pnl,effective_at,raw_payload')
       .order('effective_at', { ascending: false })
-      .limit(500);
+      .limit(60);
 
     if (error || !data?.length) {
       return null;
     }
 
+    // When the bridge's exchange fetch fails transiently it still publishes a
+    // mark, flagged positions_source/account_source: "error", with zeroed
+    // PnL. Prefer the newest HEALTHY mark per pool so the public number never
+    // flickers to $0.00 on a bad fetch.
+    const isDegraded = (rawPayload: unknown) => {
+      if (!rawPayload || typeof rawPayload !== 'object') {
+        return false;
+      }
+
+      const payload = rawPayload as Record<string, unknown>;
+
+      return payload.positions_source === 'error' || payload.account_source === 'error';
+    };
+
     const latestByPool = new Map<string, (typeof data)[number]>();
 
+    for (const row of data) {
+      if (!latestByPool.has(row.pool_id) && !isDegraded(row.raw_payload)) {
+        latestByPool.set(row.pool_id, row);
+      }
+    }
+
+    // A pool with only degraded marks in the window falls back to its newest
+    // row — a stale-but-real number beats none, and the as-of stamp stays honest.
     for (const row of data) {
       if (!latestByPool.has(row.pool_id)) {
         latestByPool.set(row.pool_id, row);
@@ -94,18 +116,10 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
       return null;
     }
 
-    // Position identities ride in the latest mark's raw payload per pool.
-    const latestIds = latest.map((row) => row.id);
-    const { data: payloadRows } = await supabase
-      .from('hermes_pool_source_marks')
-      .select('id,raw_payload')
-      .in('id', latestIds);
-    const positions = (payloadRows ?? []).flatMap((row) => parsePositions(row.raw_payload));
-
+    const positions = latest.flatMap((row) => parsePositions(row.raw_payload));
     const grossEquity = latest.reduce((total, row) => total + Number(row.source_equity ?? 0), 0);
     const unrealizedPnl = latest.reduce((total, row) => total + Number(row.source_unrealized_pnl ?? 0), 0);
-    // Peak equity across the mark history (single Hermes pool today; with
-    // multiple pools this is the max of per-moment sums approximated per row).
+    // Peak equity across the recent mark window (single Hermes pool today).
     const peakEquity = Math.max(grossEquity, ...data.map((row) => Number(row.source_equity ?? 0)));
     const drawdownFromPeak = peakEquity > 0 ? Math.max(0, (peakEquity - grossEquity) / peakEquity) : 0;
 

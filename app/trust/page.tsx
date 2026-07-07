@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
 import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
 import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
 
@@ -58,15 +59,18 @@ const MIN_VISIBLE_ROWS = 7;
 const howToRead = [
   ['Sealed first', 'A row is created the moment Hermes decides — before the outcome is known. Nothing is written after the fact.'],
   ['Everything counts', 'Waits and no-trade decisions get rows. Losses and drawdowns get rows. Nothing is deleted.'],
-  ['Mechanism stays private', 'Entries, exits, position sizes, and thresholds never appear here. The ledger proves discipline, not the recipe.'],
+  ['Mechanism stays private', 'Entries, exits, position sizes, and thresholds never appear here. Open positions are named only after they close. The ledger proves discipline, not the recipe.'],
   ['Founder capital only', 'PnL shown is the founder’s own money. The ledger is a record, not a claim — the sample is young, and it is labeled that way until it isn’t.'],
 ];
 
 export default async function TrustPage() {
-  const [storedRows, openExposure] = await Promise.all([
+  const [storedRows, openExposure, briefSnapshot] = await Promise.all([
     listHermesLedgerRows(200).catch(() => []),
     getHermesOpenExposure().catch(() => null),
+    getStoredHermesBriefSnapshot().catch(() => null),
   ]);
+  const livePosture =
+    briefSnapshot && briefSnapshot.brief_id !== 'fallback' ? formatConstant(briefSnapshot.posture) : '--';
   const ledgerRows = storedRows.length
     ? storedRows.map((row, index) => ({
         row: String(index + 1),
@@ -86,7 +90,7 @@ export default async function TrustPage() {
       }))
     : [placeholderRow];
   const blankRows = Array.from(
-    { length: Math.max(0, MIN_VISIBLE_ROWS - ledgerRows.length) },
+    { length: Math.max(0, MIN_VISIBLE_ROWS - ledgerRows.length - (openExposure ? 1 : 0)) },
     (_, index) => String(ledgerRows.length + index + 1),
   );
   const sheetStatus = [
@@ -146,37 +150,6 @@ export default async function TrustPage() {
             ))}
           </div>
 
-          {openExposure ? (
-            <div className="trust-open-strip">
-              <span className="trust-open-live" aria-hidden="true" />
-              <p>
-                Open exposure now:{' '}
-                <strong
-                  className={
-                    openExposure.unrealizedPnl > 0 ? 'trust-pnl-pos' : openExposure.unrealizedPnl < 0 ? 'trust-pnl-neg' : undefined
-                  }
-                >
-                  {pnlFormatter.format(openExposure.unrealizedPnl)}
-                </strong>{' '}
-                unrealized
-                {openExposure.positions.length ? (
-                  <>
-                    {' · '}
-                    <strong>
-                      {openExposure.positions
-                        .map((position) => `${position.symbol} ${position.side.toLowerCase()}`)
-                        .join(', ')}
-                    </strong>
-                  </>
-                ) : null}
-              </p>
-              <span className="trust-open-label">
-                Live · as of {sealedAtFormatter.format(new Date(openExposure.asOf))} — moves with the market · not
-                part of the sealed record
-              </span>
-            </div>
-          ) : null}
-
           <div className="trust-table-wrap">
             <table className="trust-ledger-table">
               <thead>
@@ -205,6 +178,40 @@ export default async function TrustPage() {
                     <td>{row.note}</td>
                   </tr>
                 ))}
+                {openExposure ? (
+                  <tr className="trust-live-row">
+                    <td className="trust-row-number">
+                      <span className="trust-open-live" aria-hidden="true" />
+                    </td>
+                    <td>
+                      {sealedAtFormatter.format(new Date(openExposure.asOf))}
+                      <span className="trust-record-id">LIVE</span>
+                    </td>
+                    <td>
+                      {openExposure.positions.length
+                        ? `Holding ${
+                            openExposure.positions.length === 1
+                              ? 'one open path'
+                              : `${openExposure.positions.length} open paths`
+                          }`
+                        : 'Open exposure'}
+                    </td>
+                    <td>{livePosture}</td>
+                    <td>Open</td>
+                    <td
+                      className={
+                        openExposure.unrealizedPnl > 0
+                          ? 'trust-pnl-pos'
+                          : openExposure.unrealizedPnl < 0
+                            ? 'trust-pnl-neg'
+                            : undefined
+                      }
+                    >
+                      {pnlFormatter.format(openExposure.unrealizedPnl)}
+                    </td>
+                    <td>Live unrealized — moves with the market. Instrument named when the path closes.</td>
+                  </tr>
+                ) : null}
                 {blankRows.map((row) => (
                   <tr key={row} className="trust-empty-row">
                     <td className="trust-row-number">{row}</td>
