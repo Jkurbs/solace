@@ -6370,12 +6370,18 @@ h2 {
     text-transform: uppercase;
   }
 
-  .trust-pnl-pos {
+  /* Toned with element context so they outrank the sheet's own cell colors
+     (.trust-sheet-meta-cell strong / .trust-ledger-table td). */
+  .trust-pnl-pos,
+  .trust-ledger-table td.trust-pnl-pos,
+  .trust-sheet-meta-cell strong.trust-pnl-pos {
     color: #8db89d;
     font-variant-numeric: tabular-nums;
   }
 
-  .trust-pnl-neg {
+  .trust-pnl-neg,
+  .trust-ledger-table td.trust-pnl-neg,
+  .trust-sheet-meta-cell strong.trust-pnl-neg {
     color: #f08f88;
     font-variant-numeric: tabular-nums;
   }
