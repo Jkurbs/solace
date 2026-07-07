@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 
 import { safeSecretEquals } from '@/lib/secret-compare';
 
+import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
+import { sealHermesLedgerRow } from '@/features/hermes-ledger/store';
 import { postHermesRealizedTradeEvent } from '@/features/ledger/hermes-realized-trades';
-import type { HermesRealizedTradeEventInput, HermesRealizedTradeSide } from '@/features/ledger/types';
+import type { HermesRealizedTradeEvent, HermesRealizedTradeEventInput, HermesRealizedTradeSide } from '@/features/ledger/types';
 
 const sides = new Set<HermesRealizedTradeSide>(['LONG', 'SHORT']);
 
@@ -93,6 +95,38 @@ function parseTradeEventPayload(value: unknown): HermesRealizedTradeEventInput |
   };
 }
 
+// A closed trade is a decision whose PnL is known the moment it is made, so
+// the ledger row is sealed already-resolved. The record id derives from the
+// exchange trade id, so re-posted events never create duplicate rows.
+// Best-effort: ledger unavailability never blocks trade ingestion.
+async function sealClosedTradeLedgerRow(event: HermesRealizedTradeEvent) {
+  try {
+    // Re-posted historical trades must not become backdated rows: the ledger
+    // records from its opening forward. Only fresh closes get sealed.
+    const closedAgoMs = Date.now() - new Date(event.closedAt).getTime();
+
+    if (!Number.isFinite(closedAgoMs) || closedAgoMs > 48 * 60 * 60 * 1000) {
+      return;
+    }
+
+    const snapshot = await getStoredHermesBriefSnapshot().catch(() => null);
+    const outcome = event.netPnl > 0 ? 'Advanced' : event.netPnl < 0 ? 'Gave back' : 'Flat';
+
+    await sealHermesLedgerRow({
+      decision: `Closed ${event.symbol} ${event.side.toLowerCase()} — path complete`,
+      note: 'Net of fees and funding.',
+      outcome,
+      pnl: event.netPnl,
+      posture: snapshot && snapshot.brief_id !== 'fallback' ? snapshot.posture : 'DEPLOYED',
+      recordId: `HMS-T-${event.sourceTradeId.slice(-8)}`,
+      resolvedAt: event.closedAt,
+      sealedAt: event.closedAt,
+    });
+  } catch (error) {
+    console.warn('[trade-events] Closed trade could not be sealed to the ledger.', error);
+  }
+}
+
 export async function POST(request: Request) {
   if (!process.env.HERMES_INGEST_SECRET) {
     return NextResponse.json({ message: 'Hermes ingest is not configured.' }, { status: 503 });
@@ -120,6 +154,7 @@ export async function POST(request: Request) {
     }
 
     posted.push(result);
+    await sealClosedTradeLedgerRow(result);
   }
 
   return NextResponse.json({

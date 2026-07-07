@@ -70,6 +70,14 @@ export async function sealHermesLedgerRow(input: {
   decision: string;
   posture: string;
   note?: string;
+  /**
+   * For decisions whose outcome is known the moment they are made (a closed
+   * trade's realized PnL), the row may be sealed already-resolved. This is an
+   * INSERT — the trigger still forbids any later edit.
+   */
+  outcome?: string;
+  pnl?: number | null;
+  resolvedAt?: string;
 }): Promise<HermesLedgerRow | null> {
   if (!isSupabaseDataClientConfigured()) {
     return null;
@@ -82,8 +90,11 @@ export async function sealHermesLedgerRow(input: {
       .insert({
         decision: input.decision,
         note: input.note ?? '',
+        outcome: input.outcome ?? null,
+        pnl: input.outcome ? (input.pnl ?? null) : null,
         posture: input.posture,
         record_id: input.recordId,
+        resolved_at: input.outcome ? (input.resolvedAt ?? new Date().toISOString()) : null,
         sealed_at: input.sealedAt ?? new Date().toISOString(),
       })
       .select('*')
