@@ -812,6 +812,35 @@ h2 {
     grid-column: span 7;
   }
 
+  .inst-cell-hermes {
+    position: relative;
+  }
+
+  /* Overlay link (the card itself is one big anchor — no nesting allowed):
+     chip register, top-right, mirroring the LIVE chip on the left. */
+  .inst-card-ledger {
+    position: absolute;
+    top: 3.55rem;
+    right: 1.1rem;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.32rem 0.75rem;
+    border: 1px solid rgba(250, 250, 250, 0.16);
+    border-radius: 999px;
+    color: rgba(250, 250, 250, 0.6);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .inst-card-ledger:hover {
+    border-color: rgba(141, 184, 157, 0.55);
+    color: #8db89d;
+  }
+
   .inst-card {
     position: relative;
     display: block;
@@ -1059,6 +1088,11 @@ h2 {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.6rem 1rem;
+    }
+
+    /* Metrics move down at phone width, freeing the top-right corner. */
+    .inst-card-ledger {
+      top: 1.1rem;
     }
 
     .inst-card-metrics span {

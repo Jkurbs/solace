@@ -425,6 +425,9 @@ export default function HomeClient({
                 <span className="inst-card-cta">Explore →</span>
               </div>
             </Link>
+            <Link href="/trust" className="inst-card-ledger" aria-label="Hermes public decision ledger">
+              Decision ledger →
+            </Link>
           </motion.div>
 
           <motion.div id="oracle" className="inst-cell inst-cell-oracle scroll-mt-24" {...cardReveal(1)}>
