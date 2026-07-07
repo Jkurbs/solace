@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
+
 import Mark from '../Mark';
 
 export const metadata: Metadata = {
@@ -8,27 +10,46 @@ export const metadata: Metadata = {
   description: 'Public record of Hermes decisions before outcomes are known.',
 };
 
-const sheetStatus = [
-  ['Status', 'First decision pending'],
-  ['Capital', 'Founder only · $0 customer funds'],
-  ['Public', 'Decisions, waits, outcomes, PnL'],
-  ['Private', 'Entries, exits, sizes, thresholds'],
-];
+// The ledger is fed by the Hermes bridge; refresh the public view every minute.
+export const revalidate = 60;
 
-const ledgerRows = [
-  {
-    row: '1',
-    recordId: 'HMS-000',
-    sealedAt: 'Pending',
-    decision: 'First decision pending',
-    posture: '--',
-    outcome: '--',
-    pnl: '--',
-    note: 'First row will be added after a decision is recorded.',
-  },
-];
+const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
+  day: 'numeric',
+  hour: 'numeric',
+  hour12: true,
+  minute: '2-digit',
+  month: 'short',
+  timeZone: 'America/New_York',
+  timeZoneName: 'short',
+  year: 'numeric',
+});
 
-const blankRows = ['2', '3', '4', '5', '6', '7'];
+const pnlFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  signDisplay: 'always',
+  style: 'currency',
+});
+
+function formatConstant(value: string) {
+  return value
+    .toLowerCase()
+    .split('_')
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+}
+
+const placeholderRow = {
+  row: '1',
+  recordId: 'HMS-000',
+  sealedAt: 'Pending',
+  decision: 'First decision pending',
+  posture: '--',
+  outcome: '--',
+  pnl: '--',
+  note: 'First row will be added after a decision is recorded.',
+};
+
+const MIN_VISIBLE_ROWS = 7;
 
 const howToRead = [
   ['Sealed first', 'A row is created the moment Hermes decides — before the outcome is known. Nothing is written after the fact.'],
@@ -37,7 +58,31 @@ const howToRead = [
   ['Founder capital only', 'PnL shown is the founder’s own money. The ledger is a record, not a claim — the sample is young, and it is labeled that way until it isn’t.'],
 ];
 
-export default function TrustPage() {
+export default async function TrustPage() {
+  const storedRows = await listHermesLedgerRows(200).catch(() => []);
+  const ledgerRows = storedRows.length
+    ? storedRows.map((row, index) => ({
+        row: String(index + 1),
+        recordId: row.recordId,
+        sealedAt: sealedAtFormatter.format(new Date(row.sealedAt)),
+        decision: row.decision,
+        posture: formatConstant(row.posture),
+        outcome: row.outcome ?? 'Open',
+        pnl: row.outcome === null ? '--' : row.pnl === null ? '--' : pnlFormatter.format(row.pnl),
+        note: row.note || '--',
+      }))
+    : [placeholderRow];
+  const blankRows = Array.from(
+    { length: Math.max(0, MIN_VISIBLE_ROWS - ledgerRows.length) },
+    (_, index) => String(ledgerRows.length + index + 1),
+  );
+  const sheetStatus = [
+    ['Status', storedRows.length ? `${storedRows.length} decision${storedRows.length === 1 ? '' : 's'} recorded` : 'First decision pending'],
+    ['Capital', 'Founder only · $0 customer funds'],
+    ['Public', 'Decisions, waits, outcomes, PnL'],
+    ['Private', 'Entries, exits, sizes, thresholds'],
+  ];
+
   return (
     <main className="hx-page trust-page">
       <header className="hx-header">

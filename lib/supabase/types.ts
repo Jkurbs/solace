@@ -231,6 +231,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      hermes_decision_ledger: {
+        Row: {
+          record_id: string;
+          sealed_at: string;
+          decision: string;
+          posture: string;
+          note: string;
+          outcome: string | null;
+          pnl: number | null;
+          resolved_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          record_id: string;
+          sealed_at: string;
+          decision: string;
+          posture: string;
+          note?: string;
+          outcome?: string | null;
+          pnl?: number | null;
+          resolved_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          record_id?: string;
+          sealed_at?: string;
+          decision?: string;
+          posture?: string;
+          note?: string;
+          outcome?: string | null;
+          pnl?: number | null;
+          resolved_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       solace_runtime_snapshots: {
         Row: {
           key: string;
