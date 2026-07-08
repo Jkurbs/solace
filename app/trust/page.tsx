@@ -266,7 +266,8 @@ export default async function TrustPage() {
             </table>
           </div>
           <p className="trust-ledger-disclosure">
-            Founder capital only · Young sample — a record, not a claim · Not an offer, not investment advice
+            Founder capital only · PnL net of fees and funding · Young sample — a record, not a claim · Not an
+            offer, not investment advice
           </p>
         </div>
       </section>

@@ -95,6 +95,35 @@ function parseTradeEventPayload(value: unknown): HermesRealizedTradeEventInput |
   };
 }
 
+// Per-row note: how long the path was held — actual information, unlike a
+// repeated disclaimer. (PnL being net of fees/funding is stated once on the
+// ledger page itself.)
+function formatHoldDuration(openedAt: string | undefined, closedAt: string) {
+  if (!openedAt) {
+    return '';
+  }
+
+  const ms = new Date(closedAt).getTime() - new Date(openedAt).getTime();
+
+  if (!Number.isFinite(ms) || ms <= 0) {
+    return '';
+  }
+
+  const minutes = Math.round(ms / 60_000);
+
+  if (minutes < 60) {
+    return `Held ${minutes}m.`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+
+  if (hours < 48) {
+    return `Held ${hours}h ${minutes % 60}m.`;
+  }
+
+  return `Held ${Math.floor(hours / 24)}d ${hours % 24}h.`;
+}
+
 // A closed trade is a decision whose PnL is known the moment it is made, so
 // the ledger row is sealed already-resolved. The record id derives from the
 // exchange trade id, so re-posted events never create duplicate rows.
@@ -114,7 +143,7 @@ async function sealClosedTradeLedgerRow(event: HermesRealizedTradeEvent) {
 
     await sealHermesLedgerRow({
       decision: `Closed ${event.symbol} ${event.side.toLowerCase()} — path complete`,
-      note: 'Net of fees and funding.',
+      note: formatHoldDuration(event.openedAt, event.closedAt),
       outcome,
       pnl: event.netPnl,
       posture: snapshot && snapshot.brief_id !== 'fallback' ? snapshot.posture : 'DEPLOYED',
