@@ -75,7 +75,7 @@ const howToRead = [
   ['Founder capital only', 'PnL shown is the founder’s own money. The ledger is a record, not a claim — the sample is young, and it is labeled that way until it isn’t.'],
   [
     'Verifiable by math',
-    'Every row is hashed and chained to the row before it at seal time. Editing any past row breaks the chain. Recompute it yourself from the public data with the verify script in the Solace repo.',
+    'Every row is hashed and chained to the row before it at seal time. Editing any past row breaks the chain. Recompute it yourself: the verify script lives at solace.fyi/verify-ledger.mjs and runs against the public ledger data.',
   ],
 ];
 

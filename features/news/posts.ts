@@ -39,7 +39,7 @@ The problem it answers is old. Anyone can post winners after the fact — screen
 
 A rule that says "we don't edit history" is still a promise, and promises are what the ledger exists to replace. So the ledger's integrity is checkable:
 
-Every row carries a SHA-256 hash computed when it is sealed, chained to the hash of the row before it. Editing any historical row — a word, a timestamp, a number — changes its hash and breaks every row after it. A short public script in the Solace repository recomputes the entire chain from the public data, so "the record was never touched" is a claim you can test rather than trust.
+Every row carries a SHA-256 hash computed when it is sealed, chained to the hash of the row before it. Editing any historical row — a word, a timestamp, a number — changes its hash and breaks every row after it. A short public script — published at [solace.fyi/verify-ledger.mjs](/verify-ledger.mjs) — recomputes the entire chain from the [public ledger data](/api/hermes/decision-ledger), so "the record was never touched" is a claim you can test rather than trust.
 
 ## What the ledger is not
 

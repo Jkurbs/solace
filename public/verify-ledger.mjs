@@ -3,9 +3,6 @@
 //
 //   node scripts/verify-ledger.mjs [url]
 //
-// NOTE: a copy of this script is published at public/verify-ledger.mjs
-// (served at solace.fyi/verify-ledger.mjs) — keep the two in sync.
-//
 // Defaults to the live ledger. Recomputes every row's hash from its public
 // fields and walks the chain; any edited, reordered, or removed historical
 // row makes verification fail. Compare the printed chain head against an

@@ -57,7 +57,7 @@ const sections: BriefSection[] = [
     title: 'The Oracle — the event instrument',
     body: [
       'The Oracle is a probability engine over event markets, beginning with exchange-listed target markets on crypto assets. For each open question it builds an order-book view, produces a probability estimate, and records that estimate before resolution.',
-      'Calibration is the product. Every prediction is scored against the resolved outcome — Brier scoring machinery already runs inside the system — and the score is the Oracle’s only honest résumé. The Oracle is currently calibrating: no public numbers will be shown until the resolved sample is large enough to mean something.',
+      'Calibration is the product. Every prediction is scored against the resolved outcome — Brier scoring machinery already runs inside the system — and the score is the Oracle’s only honest résumé. The Oracle is currently calibrating. The interim record — every resolved question, scored, misses included — is published as it stands on the public calibration page, labeled as a young sample; headline calibration claims wait until the resolved sample is large enough to mean something.',
     ],
   },
   {
@@ -76,7 +76,7 @@ const sections: BriefSection[] = [
     ],
     list: [
       'A decision trail recorded at decision time for every instrument, public where it can be published without exposing the mechanism, private where it can’t — reviewable on request once outside capital is involved.',
-      'While Hermes runs founder capital only, the public decision ledger shows each decision’s outcome and PnL in full — wins, losses, and waits. The only money at risk is the founder’s own, and the sample is labeled for what it is: young. Disclosure for any future outside capital will be defined with counsel and stated here before it applies.',
+      'While Hermes runs founder capital only, the public decision ledger shows each decision’s outcome and PnL in full — wins, losses, and waits. Every row is hashed and chained to the row before it when it is sealed, so any later edit to the record is mathematically detectable — integrity that can be recomputed, not taken on faith. The only money at risk is the founder’s own, and the sample is labeled for what it is: young. Disclosure for any future outside capital will be defined with counsel and stated here before it applies.',
       'Published Oracle calibration reports once the resolved-question sample crosses the disclosure threshold.',
       'A regime log recording when and why Hermes stood down.',
       'Once a public ledger has enough resolved rows to be meaningful, an independent reviewer — named, with their own verifiable background — will be given access to the private record to confirm it matches what’s published. Who that reviewer is, and what they confirmed, will be public.',
