@@ -864,8 +864,19 @@ h2 {
 
   /* Deliberately near-empty: unbuilt domains show nothing, on purpose. */
   .inst-card.inst-card-quiet {
+    display: flex;
+    flex-direction: column;
     min-height: clamp(9.5rem, 15vw, 12.5rem);
     background: #0b0b09;
+  }
+
+  /* Quiet cards grow with their copy instead of letting the bottom-pinned
+     foot climb into the chip: foot in normal flow, pinned low via auto
+     margin, top padding clearing the chip row. */
+  .inst-card.inst-card-quiet .inst-card-foot {
+    position: static;
+    margin-top: auto;
+    padding: 3.4rem 1.2rem 1.15rem;
   }
 
   .inst-card-render {

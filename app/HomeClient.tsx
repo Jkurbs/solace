@@ -59,11 +59,19 @@ const stagger = {
   },
 };
 
-const footerSystems = [
+const footerSystems: Array<{ name: string; status: string; href?: string; hint?: string }> = [
   { name: 'Hermes', status: 'Live', href: '#hermes' },
   { name: 'Oracle', status: 'Calibrating', href: '#oracle' },
-  { name: 'Simulation', status: 'Building' },
-  { name: 'Autonomy', status: 'Gated' },
+  {
+    name: 'Simulation',
+    status: 'Building',
+    hint: 'Synthetic environments where hypotheses fail quietly before deployment.',
+  },
+  {
+    name: 'Autonomy',
+    status: 'Gated',
+    hint: 'The same decision discipline extended beyond markets — gated on four public conditions.',
+  },
 ];
 
 const homepageQuestions = [
@@ -489,7 +497,10 @@ export default function HomeClient({
               <div className="inst-card-foot">
                 <div className="inst-card-name">
                   <strong>Autonomy</strong>
-                  <p>The same decision discipline, extended beyond markets. Domains are earned, not declared.</p>
+                  <p>
+                    The same discipline — read the structure, act, stand down — extended beyond markets.
+                    Domains are earned, not declared.
+                  </p>
                 </div>
                 <span className="inst-card-cta">Gate conditions →</span>
               </div>
@@ -686,7 +697,7 @@ export default function HomeClient({
               <p className="footer-heading">Instruments</p>
               <ul>
                 {footerSystems.map((system) => (
-                  <li key={system.name}>
+                  <li key={system.name} title={system.hint}>
                     {system.href ? (
                       <a href={system.href}>{system.name}</a>
                     ) : (
