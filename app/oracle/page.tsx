@@ -117,7 +117,7 @@ export default function OraclePage() {
           <div>
             <span>Brier score</span>
             <strong>{calibration.brier.toFixed(2)}</strong>
-            <em>coin-flip = 0.25</em>
+            <em>lower is better · coin-flip = 0.25</em>
           </div>
           <div>
             <span>Predicted</span>

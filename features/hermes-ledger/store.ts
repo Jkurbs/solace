@@ -59,7 +59,7 @@ async function ensureLedgerHashBackfill(supabase: SupabaseClient): Promise<strin
   const { data, error } = await supabase
     .from('hermes_decision_ledger')
     .select('*')
-    .order('sealed_at', { ascending: true });
+    .order('created_at', { ascending: true });
 
   if (error || !data?.length) {
     return LEDGER_GENESIS_PREV_HASH;
@@ -127,7 +127,7 @@ export async function listHermesLedgerRows(limit = 50): Promise<HermesLedgerRow[
     const { data, error } = await supabase
       .from('hermes_decision_ledger')
       .select('*')
-      .order('sealed_at', { ascending: true })
+      .order('created_at', { ascending: true })
       .limit(limit);
 
     if (error) {

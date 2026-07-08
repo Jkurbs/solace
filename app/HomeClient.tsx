@@ -241,7 +241,9 @@ function HermesLiveBriefing({ telemetry }: { telemetry: HermesTelemetry }) {
   return (
     <>
       Live now: Hermes is currently <strong style={{ color: voice.tone }}>{voice.phrase}</strong>
-      {conditionPhrase}, {capitalPhrase}. Last reading: <ReadingAge updatedAt={telemetry.updatedAt} />.
+      {conditionPhrase}, {capitalPhrase}.{' '}
+      <span title="A reading is Hermes's most recent assessment of market conditions.">Last reading</span>:{' '}
+      <ReadingAge updatedAt={telemetry.updatedAt} />.
     </>
   );
 }
@@ -336,6 +338,10 @@ export default function HomeClient({
                 Read Brief
               </Link>
             </motion.div>
+            <motion.p variants={fade} className="hero-gloss">
+              An instrument here is a system Solace builds and operates — not a financial product. New to
+              Solace? <a href="#faq">Start with the questions</a>.
+            </motion.p>
           </motion.div>
         </section>
       ) : (
@@ -379,6 +385,10 @@ export default function HomeClient({
                 Explore Hermes
               </Link>
             </motion.div>
+            <motion.p variants={fade} className="hero-gloss">
+              An instrument here is a system Solace builds and operates — not a financial product. New to
+              Solace? <a href="#faq">Start with the questions</a>.
+            </motion.p>
           </div>
         </motion.div>
 
@@ -442,7 +452,7 @@ export default function HomeClient({
                   <em>Resolved</em>
                   <strong>{calibration.resolved}</strong>
                 </span>
-                <span>
+                <span title="Forecast accuracy — lower is better; 0.25 is a coin flip.">
                   <em>Brier</em>
                   <strong>{calibration.brier.toFixed(2)}</strong>
                 </span>
@@ -479,7 +489,7 @@ export default function HomeClient({
               <div className="inst-card-foot">
                 <div className="inst-card-name">
                   <strong>Autonomy</strong>
-                  <p>Domains are earned, not declared.</p>
+                  <p>The same decision discipline, extended beyond markets. Domains are earned, not declared.</p>
                 </div>
                 <span className="inst-card-cta">Gate conditions →</span>
               </div>
@@ -591,7 +601,7 @@ export default function HomeClient({
         </motion.div>
       </section>
 
-      <section className="faq-strip px-5 md:px-8">
+      <section id="faq" className="faq-strip scroll-mt-24 px-5 md:px-8">
         <motion.div className="faq-strip-inner mx-auto max-w-7xl" {...sectionReveal}>
           <div className="faq-strip-head">
             <p className="section-kicker">FAQ</p>
@@ -604,6 +614,49 @@ export default function HomeClient({
                 <p>{item.answer}</p>
               </details>
             ))}
+            <details className="faq-item">
+              <summary>Terms used across this site</summary>
+              <dl className="glossary-list">
+                <div>
+                  <dt>Instrument</dt>
+                  <dd>A system Solace builds and operates — not a security or financial product.</dd>
+                </div>
+                <div>
+                  <dt>Reading</dt>
+                  <dd>Hermes&rsquo;s most recent assessment of market conditions.</dd>
+                </div>
+                <div>
+                  <dt>Posture</dt>
+                  <dd>How boldly capital is routed right now, from standing down to fully deployed.</dd>
+                </div>
+                <div>
+                  <dt>Regime</dt>
+                  <dd>The market&rsquo;s prevailing character. Hermes acts only while the regime stays in character.</dd>
+                </div>
+                <div>
+                  <dt>Liquidity path</dt>
+                  <dd>
+                    Hermes&rsquo;s core abstraction: whether the field between here and a price destination can
+                    carry price at all.
+                  </dd>
+                </div>
+                <div>
+                  <dt>Calibration · Brier score</dt>
+                  <dd>How closely stated probabilities match reality. Lower is better; 0.25 is a coin flip.</dd>
+                </div>
+                <div>
+                  <dt>Gate conditions</dt>
+                  <dd>Public, checkable requirements that must clear before Solace expands beyond markets.</dd>
+                </div>
+                <div>
+                  <dt>Sealed row</dt>
+                  <dd>
+                    A ledger entry written before its outcome is known — hashed and chained so it cannot be
+                    quietly edited.
+                  </dd>
+                </div>
+              </dl>
+            </details>
           </div>
         </motion.div>
       </section>
