@@ -1101,9 +1101,12 @@ h2 {
       gap: 0.6rem 1rem;
     }
 
-    /* Metrics move down at phone width, freeing the top-right corner. */
+    /* At phone width the LIVE chip owns the top row, so the ledger chip
+       moves to the bottom-right corner, sharing the line with the CTA. */
     .inst-card-ledger {
-      top: 1.1rem;
+      top: auto;
+      bottom: 1.15rem;
+      right: 1.1rem;
     }
 
     .inst-card-metrics span {
