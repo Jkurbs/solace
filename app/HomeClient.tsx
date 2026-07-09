@@ -61,7 +61,7 @@ const stagger = {
 
 const footerSystems: Array<{ name: string; status: string; href?: string; hint?: string }> = [
   { name: 'Hermes', status: 'Live', href: '#hermes' },
-  { name: 'Oracle', status: 'Calibrating', href: '#oracle' },
+  { name: 'Oracle', status: 'Keeping score', href: '#oracle' },
   {
     name: 'Simulation',
     status: 'Building',
@@ -250,35 +250,38 @@ function HermesLiveBriefing({ telemetry }: { telemetry: HermesTelemetry }) {
     <>
       Live now: Hermes is currently <strong style={{ color: voice.tone }}>{voice.phrase}</strong>
       {conditionPhrase}, {capitalPhrase}.{' '}
-      <span title="A reading is Hermes's most recent assessment of market conditions.">Last reading</span>:{' '}
+      <span title="When Hermes last reported its assessment of market conditions.">Last update</span>:{' '}
       <ReadingAge updatedAt={telemetry.updatedAt} />.
     </>
   );
 }
 
 // Relative age computed client-side so ISR caching can't freeze "2h ago".
+// Rendered with a real value from the first frame — a bare "—" placeholder
+// reads like a dashboard awaiting model output.
+function formatReadingAge(updatedAt: string) {
+  const ageMs = Date.now() - new Date(updatedAt).getTime();
+
+  if (!Number.isFinite(ageMs) || ageMs < 0) {
+    return 'just now';
+  }
+
+  const minutes = Math.floor(ageMs / 60_000);
+  return minutes < 1 ? 'just now' : minutes < 60 ? `${minutes}m ago` : `${Math.floor(minutes / 60)}h ago`;
+}
+
 function ReadingAge({ updatedAt }: { updatedAt: string }) {
-  const [label, setLabel] = useState('—');
+  const [label, setLabel] = useState(() => formatReadingAge(updatedAt));
 
   useEffect(() => {
-    const update = () => {
-      const ageMs = Date.now() - new Date(updatedAt).getTime();
-
-      if (!Number.isFinite(ageMs) || ageMs < 0) {
-        setLabel('—');
-        return;
-      }
-
-      const minutes = Math.floor(ageMs / 60_000);
-      setLabel(minutes < 1 ? 'just now' : minutes < 60 ? `${minutes}m ago` : `${Math.floor(minutes / 60)}h ago`);
-    };
+    const update = () => setLabel(formatReadingAge(updatedAt));
 
     update();
     const interval = window.setInterval(update, 60_000);
     return () => window.clearInterval(interval);
   }, [updatedAt]);
 
-  return <>{label}</>;
+  return <span suppressHydrationWarning>{label}</span>;
 }
 
 const newsDateFormat = new Intl.DateTimeFormat('en-US', {
@@ -454,7 +457,7 @@ export default function HomeClient({
                 <OracleFuturesRender />
               </div>
               <div className="inst-card-scrim" aria-hidden="true" />
-              <span className="inst-chip is-cal">Calibrating</span>
+              <span className="inst-chip is-cal">Keeping score</span>
               <div className="inst-card-metrics">
                 <span>
                   <em>Resolved</em>
@@ -493,7 +496,7 @@ export default function HomeClient({
 
           <motion.div className="inst-cell inst-cell-auto" {...cardReveal(3)}>
             <Link href="/brief#section-07" className="inst-card inst-card-quiet">
-              <span className="inst-chip is-idle">Gated · 0 of 4 conditions met</span>
+              <span className="inst-chip is-idle">Gated · no conditions met yet</span>
               <div className="inst-card-foot">
                 <div className="inst-card-name">
                   <strong>Autonomy</strong>

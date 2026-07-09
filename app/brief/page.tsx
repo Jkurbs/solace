@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 };
 
 const gate = [
-  { label: 'Regime cycles', status: '0 of 2' },
+  { label: 'Regime cycles', status: 'Neither of two complete' },
   { label: 'Capital threshold', status: 'Holding — figure to be published' },
-  { label: 'Oracle calibration proven', status: 'Calibrating' },
+  { label: 'Oracle calibration proven', status: 'Keeping score' },
   { label: 'Simulation load-bearing', status: 'Not begun' },
 ];
 
