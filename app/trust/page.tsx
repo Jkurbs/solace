@@ -69,10 +69,10 @@ const placeholderRow = {
 const MIN_VISIBLE_ROWS = 7;
 
 const howToRead = [
-  ['Sealed first', 'A row is created the moment Hermes decides — before the outcome is known. Nothing is written after the fact.'],
+  ['Sealed first', 'A row is created the moment Hermes decides, before the outcome is known. Nothing is written after the fact.'],
   ['Everything counts', 'Waits and no-trade decisions get rows. Losses and drawdowns get rows. Nothing is deleted.'],
   ['Mechanism stays private', 'Entries, exits, position sizes, and thresholds never appear here. Open positions are named only after they close. The ledger proves discipline, not the recipe.'],
-  ['Founder capital only', 'PnL shown is the founder’s own money. The ledger is a record, not a claim — the sample is young, and it is labeled that way until it isn’t.'],
+  ['Founder capital only', 'PnL shown is the founder’s own money. The ledger is a record, not a claim. The sample is young, and it is labeled that way until it isn’t.'],
   [
     'Verifiable by math',
     'Every row is hashed and chained to the row before it at seal time. Editing any past row breaks the chain. Recompute it yourself: the verify script lives at solace.fyi/verify-ledger.mjs and runs against the public ledger data.',
@@ -232,7 +232,7 @@ export default async function TrustPage() {
                               : `${openExposure.positions.length} open paths`
                           }`
                         : openExposure.unrealizedPnl === 0
-                          ? 'Flat — no open exposure'
+                          ? 'Flat · no open exposure'
                           : 'Open exposure'}
                     </td>
                     <td>{livePosture}</td>
@@ -248,7 +248,7 @@ export default async function TrustPage() {
                     >
                       {pnlFormatter.format(openExposure.unrealizedPnl)}
                     </td>
-                    <td>Live unrealized — moves with the market. Instrument named when the path closes.</td>
+                    <td>Live unrealized. Moves with the market; instrument named when the path closes.</td>
                   </tr>
                 ) : null}
                 {blankRows.map((row) => (
@@ -266,7 +266,7 @@ export default async function TrustPage() {
             </table>
           </div>
           <p className="trust-ledger-disclosure">
-            Founder capital only · PnL net of fees and funding · Young sample — a record, not a claim · Not an
+            Founder capital only · PnL net of fees and funding · Young sample: a record, not a claim · Not an
             offer, not investment advice
           </p>
         </div>

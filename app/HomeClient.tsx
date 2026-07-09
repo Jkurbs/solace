@@ -70,7 +70,7 @@ const footerSystems: Array<{ name: string; status: string; href?: string; hint?:
   {
     name: 'Autonomy',
     status: 'Gated',
-    hint: 'The same decision discipline extended beyond markets — gated on four public conditions.',
+    hint: 'The same decision discipline extended beyond markets, gated on four public conditions.',
   },
 ];
 
@@ -352,7 +352,7 @@ export default function HomeClient({
               </Link>
             </motion.div>
             <motion.p variants={fade} className="hero-gloss">
-              An instrument here is a system Solace builds and operates — not a financial product. New to
+              An instrument here is a system Solace builds and operates, not a financial product. New to
               Solace? <a href="#faq">Start with the questions</a>.
             </motion.p>
           </motion.div>
@@ -399,7 +399,7 @@ export default function HomeClient({
               </Link>
             </motion.div>
             <motion.p variants={fade} className="hero-gloss">
-              An instrument here is a system Solace builds and operates — not a financial product. New to
+              An instrument here is a system Solace builds and operates, not a financial product. New to
               Solace? <a href="#faq">Start with the questions</a>.
             </motion.p>
           </div>
@@ -465,7 +465,7 @@ export default function HomeClient({
                   <em>Resolved</em>
                   <strong>{calibration.resolved}</strong>
                 </span>
-                <span title="Forecast accuracy — lower is better; 0.25 is a coin flip.">
+                <span title="Forecast accuracy. Lower is better; 0.25 is a coin flip.">
                   <em>Brier</em>
                   <strong>{calibration.brier.toFixed(2)}</strong>
                 </span>
@@ -503,7 +503,7 @@ export default function HomeClient({
                 <div className="inst-card-name">
                   <strong>Autonomy</strong>
                   <p>
-                    The same discipline — read the structure, act, stand down — extended beyond markets.
+                    Read the structure, act, stand down: the same discipline, extended beyond markets.
                     Domains are earned, not declared.
                   </p>
                 </div>
@@ -549,7 +549,7 @@ export default function HomeClient({
           <motion.div className="hermes-product-copy lg:ml-auto" {...sectionReveal}>
             <p className="section-kicker">The second instrument</p>
             <h2>The Oracle weighs the futures.</h2>
-            <p>Live probability over real events — every prediction scored against what actually happened.</p>
+            <p>Live probability over real events, every prediction scored against what actually happened.</p>
 
             <div className="hermes-product-metrics">
               <div>
@@ -635,7 +635,7 @@ export default function HomeClient({
               <dl className="glossary-list">
                 <div>
                   <dt>Instrument</dt>
-                  <dd>A system Solace builds and operates — not a security or financial product.</dd>
+                  <dd>A system Solace builds and operates, not a security or financial product.</dd>
                 </div>
                 <div>
                   <dt>Reading</dt>
@@ -667,7 +667,7 @@ export default function HomeClient({
                 <div>
                   <dt>Sealed row</dt>
                   <dd>
-                    A ledger entry written before its outcome is known — hashed and chained so it cannot be
+                    A ledger entry written before its outcome is known, then hashed and chained so it cannot be
                     quietly edited.
                   </dd>
                 </div>

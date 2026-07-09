@@ -349,7 +349,7 @@ function Hero() {
         <Reveal delay={0.12}>
           <p className="hx-hero-lede">
             A live instrument for capital allocation under uncertainty. Hermes reads liquidity, timing, and
-            regime — standing down until signal earns deployment.
+            regime, standing down until signal earns deployment.
           </p>
         </Reveal>
         <Reveal delay={0.18}>
@@ -499,7 +499,7 @@ export default function HermesExperience() {
             <p className="section-kicker">Go deeper</p>
             <h2>The brief says how to check us.</h2>
             <p>
-              Architecture, risk discipline, and the verification commitments Hermes is held to — written to be
+              Architecture, risk discipline, and the verification commitments Hermes is held to, written to be
               checked, not believed.
             </p>
           </Reveal>

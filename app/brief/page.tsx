@@ -57,14 +57,14 @@ const sections: BriefSection[] = [
     title: 'The Oracle — the event instrument',
     body: [
       'The Oracle is a probability engine over event markets, beginning with exchange-listed target markets on crypto assets. For each open question it builds an order-book view, produces a probability estimate, and records that estimate before resolution.',
-      'Calibration is the product. Every prediction is scored against the resolved outcome — Brier scoring machinery already runs inside the system — and the score is the Oracle’s only honest résumé. The Oracle is currently calibrating. The interim record — every resolved question, scored, misses included — is published as it stands on the public calibration page, labeled as a young sample; headline calibration claims wait until the resolved sample is large enough to mean something.',
+      'Calibration is the product. Every prediction is scored against the resolved outcome (Brier scoring machinery already runs inside the system), and the score is the Oracle’s only honest résumé. The Oracle is currently calibrating. The interim record (every resolved question, scored, misses included) is published as it stands on the public calibration page, labeled as a young sample; headline calibration claims wait until the resolved sample is large enough to mean something.',
     ],
   },
   {
     number: '05',
     title: 'Risk discipline',
     body: [
-      'Hermes currently allocates founder capital only — no outside capital is at risk while access opens in stages. As approved users come online, they fund Hermes by depositing capital directly into Solace through the account dashboard: deposits are recorded to the user’s Solace account, pass through settlement and treasury controls, and become eligible for Hermes allocation only after onboarding, identity, and risk checks are complete.',
+      'Hermes currently allocates founder capital only: no outside capital is at risk while access opens in stages. As approved users come online, they fund Hermes by depositing capital directly into Solace through the account dashboard: deposits are recorded to the user’s Solace account, pass through settlement and treasury controls, and become eligible for Hermes allocation only after onboarding, identity, and risk checks are complete.',
       'Risk is governed in layers: posture (how boldly capital is routed, from preservation to velocity), sizing that scales with field depth, hard drawdown guards, and kill switches that halt the system entirely. Money movement stays separate from signal generation: deposits, withdrawals, account value, and available balance remain visible through Solace account rails. Standing down is treated as a position, and the system takes it often.',
     ],
   },
@@ -75,14 +75,14 @@ const sections: BriefSection[] = [
       'A system that manages capital should be checkable by the people who trust it. Solace commits to the following, in order of arrival:',
     ],
     list: [
-      'A decision trail recorded at decision time for every instrument, public where it can be published without exposing the mechanism, private where it can’t — reviewable on request once outside capital is involved.',
-      'While Hermes runs founder capital only, the public decision ledger shows each decision’s outcome and PnL in full — wins, losses, and waits. Every row is hashed and chained to the row before it when it is sealed, so any later edit to the record is mathematically detectable — integrity that can be recomputed, not taken on faith. The only money at risk is the founder’s own, and the sample is labeled for what it is: young. Disclosure for any future outside capital will be defined with counsel and stated here before it applies.',
+      'A decision trail recorded at decision time for every instrument, public where it can be published without exposing the mechanism, private where it can’t; reviewable on request once outside capital is involved.',
+      'While Hermes runs founder capital only, the public decision ledger shows each decision’s outcome and PnL in full: wins, losses, and waits. Every row is hashed and chained to the row before it when it is sealed, so any later edit to the record is mathematically detectable: integrity that can be recomputed, not taken on faith. The only money at risk is the founder’s own, and the sample is labeled for what it is: young. Disclosure for any future outside capital will be defined with counsel and stated here before it applies.',
       'Published Oracle calibration reports once the resolved-question sample crosses the disclosure threshold.',
       'A regime log recording when and why Hermes stood down.',
-      'Once a public ledger has enough resolved rows to be meaningful, an independent reviewer — named, with their own verifiable background — will be given access to the private record to confirm it matches what’s published. Who that reviewer is, and what they confirmed, will be public.',
+      'Once a public ledger has enough resolved rows to be meaningful, an independent reviewer, named and with their own verifiable background, will be given access to the private record to confirm it matches what’s published. Who that reviewer is, and what they confirmed, will be public.',
     ],
     after: [
-      'The standard is simple: claims that can be checked, published when they can be checked. Anything not yet checkable is labeled with its honest status. That includes this founder’s track record, which does not yet exist in a form worth calling a track record — Hermes and the Oracle are the mechanism by which it will.',
+      'The standard is simple: claims that can be checked, published when they can be checked. Anything not yet checkable is labeled with its honest status. That includes this founder’s track record, which does not yet exist in a form worth calling a track record; Hermes and the Oracle are the mechanism by which it will.',
     ],
   },
   {
@@ -90,7 +90,7 @@ const sections: BriefSection[] = [
     title: 'Horizon',
     body: [
       'Everything in this brief describes what Solace does now. This section describes what it’s for, stated at a distance, on purpose.',
-      'The instruments Solace builds are not specific to financial markets. Hermes reads structure, timing, and regime to decide when a system should act and when it should stand down. Markets are where that loop is tested first, because they compress feedback into days instead of years and because they fund the work. The longer aim is instruments that make the same kind of disciplined, checkable decisions in systems beyond finance — wherever timing, resource allocation, and uncertainty matter and outcomes can be verified against reality. This is a multi-year horizon, named now so the gate conditions below have a destination, not a near-term roadmap item.',
+      'The instruments Solace builds are not specific to financial markets. Hermes reads structure, timing, and regime to decide when a system should act and when it should stand down. Markets are where that loop is tested first, because they compress feedback into days instead of years and because they fund the work. The longer aim is instruments that make the same kind of disciplined, checkable decisions in systems beyond finance: wherever timing, resource allocation, and uncertainty matter and outcomes can be verified against reality. This is a multi-year horizon, named now so the gate conditions below have a destination, not a near-term roadmap item.',
       'Domains are earned, not declared. Expansion beyond markets is gated on the conditions below, and this board is the public record of their status. Each gate is defined so it can be checked, not just claimed:',
     ],
     list: [
@@ -100,7 +100,7 @@ const sections: BriefSection[] = [
       'Simulation load-bearing — synthetic environments are trusted to catch a failure before deployment, demonstrated by at least one documented case where simulation caught something live testing would have missed.',
     ],
     after: [
-      'Until every gate clears, Solace is a markets company. That’s not a hedge — it’s the actual current scope.',
+      'Until every gate clears, Solace is a markets company. That’s not a hedge; it’s the actual current scope.',
     ],
   },
   {
@@ -160,7 +160,7 @@ export default function BriefPage() {
             <div>
               <p className="font-serif text-xl font-medium text-[#13110c] md:text-2xl">Kerby Jean</p>
               <p className="mt-1 max-w-xl text-sm leading-6 text-[#4f483c]">
-                Founder. Software engineer — four years building production systems at Apple. Today,
+                Founder. Software engineer, four years building production systems at Apple. Today,
                 every Solace instrument is designed, built, and operated by him end to end.
               </p>
             </div>

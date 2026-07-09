@@ -59,7 +59,7 @@ export default function OraclePage() {
         </h1>
         <p className="mt-6 max-w-2xl text-lg leading-8 text-muted">
           The Oracle estimates the probability of real events, records each estimate before the
-          outcome is known, and scores it against what actually happened. This page is that score —
+          outcome is known, and scores it against what actually happened. This page is that score,
           shown in full, wins and misses alike.
         </p>
         <p className="mt-4 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-muted">
@@ -87,7 +87,7 @@ export default function OraclePage() {
                       {featured.illustrative ? (
                         <span
                           className="inst-chip is-cal"
-                          title="Sample card — real resolved questions connect when the Oracle feed ships."
+                          title="Sample card. Real resolved questions connect when the Oracle feed ships."
                         >
                           Illustrative
                         </span>
@@ -142,13 +142,13 @@ export default function OraclePage() {
                 (up). Dot size is the number of resolved predictions in the band.
               </p>
               <p>
-                The dashed line is perfect calibration — where a stated 70% comes true 70% of the
+                The dashed line is perfect calibration: a stated 70% comes true 70% of the
                 time. Dots <strong className="text-foreground">below</strong> the line mean we were
                 overconfident; <strong className="text-foreground">above</strong> means too cautious.
               </p>
               <p>
                 Today the Oracle runs overconfident: it predicts {pct(calibration.averageProbability)} on
-                average, and {pct(calibration.actualWinRate)} actually happens — a gap of{' '}
+                average, and {pct(calibration.actualWinRate)} actually happens, a gap of{' '}
                 {Math.round(overconfidence * 100)} points. We show it because a record you can check
                 is worth more than a number you have to trust.
               </p>
@@ -207,7 +207,7 @@ export default function OraclePage() {
             <h2 className="font-serif text-3xl font-medium md:text-4xl">What this is, and is not</h2>
             <div className="mt-5 space-y-4 text-base leading-8 text-muted">
               <p>
-                This is a young record — {calibration.resolved} resolved predictions is enough to show
+                This is a young record: {calibration.resolved} resolved predictions is enough to show
                 a tendency, not to prove a track record. The sample will grow, and these numbers will
                 move; some bands rest on a handful of events.
               </p>
