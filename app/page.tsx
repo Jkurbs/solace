@@ -3,6 +3,8 @@ import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/s
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { getLatestNewsPost, newsPosts } from '@/features/news/posts';
 
+import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
+
 import HomeClient, { type HeroPill, type HermesTelemetry, type LatestNote, type NewsItem } from './HomeClient';
 
 const TELEMETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -63,10 +65,12 @@ const fallbackNote: LatestNote = {
 };
 
 export default async function Home() {
-  const [article, hermesTelemetry] = await Promise.all([
+  const [article, hermesTelemetry, ledgerRows] = await Promise.all([
     getLatestPublishedArticle().catch(() => null),
     getHermesTelemetry(),
+    listHermesLedgerRows(500).catch(() => []),
   ]);
+  const ledgerRowCount = ledgerRows.length;
   const latestNote: LatestNote = article
     ? { title: article.title, dek: article.dek, label: article.label }
     : fallbackNote;
@@ -90,5 +94,13 @@ export default async function Home() {
     tint: post.tint,
   }));
 
-  return <HomeClient hermesTelemetry={hermesTelemetry} latestNote={latestNote} newsItems={newsItems} pill={pill} />;
+  return (
+    <HomeClient
+      hermesTelemetry={hermesTelemetry}
+      latestNote={latestNote}
+      ledgerRowCount={ledgerRowCount}
+      newsItems={newsItems}
+      pill={pill}
+    />
+  );
 }

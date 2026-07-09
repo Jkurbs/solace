@@ -303,11 +303,13 @@ const HOME_LAYOUT: 'sections' | 'cards' = 'cards';
 export default function HomeClient({
   hermesTelemetry,
   latestNote,
+  ledgerRowCount = 0,
   newsItems,
   pill,
 }: {
   hermesTelemetry: HermesTelemetry | null;
   latestNote: LatestNote;
+  ledgerRowCount?: number;
   newsItems: NewsItem[];
   pill: HeroPill;
 }) {
@@ -447,7 +449,7 @@ export default function HomeClient({
               </div>
             </Link>
             <Link href="/trust" className="inst-card-ledger" aria-label="Hermes public decision ledger">
-              Decision ledger →
+              {ledgerRowCount > 0 ? `Decision ledger · ${ledgerRowCount} rows →` : 'Decision ledger →'}
             </Link>
           </motion.div>
 
