@@ -6465,6 +6465,26 @@ h2 {
 
   /* Toned with element context so they outrank the sheet's own cell colors
      (.trust-sheet-meta-cell strong / .trust-ledger-table td). */
+  /* Backfilled rows: present, labeled, visually quieter than sealed rows. */
+  .trust-ledger-table tr.trust-row-backfill td {
+    color: rgba(250, 250, 250, 0.42);
+  }
+
+  .trust-tag {
+    display: inline-block;
+    margin-top: 0.3rem;
+    margin-left: 0.45rem;
+    padding: 0.08rem 0.4rem;
+    border: 1px solid rgba(211, 181, 133, 0.4);
+    border-radius: 3px;
+    color: #d3b585;
+    font-family: var(--font-plex), monospace;
+    font-size: 0.52rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+
   .trust-pnl-pos,
   .trust-ledger-table td.trust-pnl-pos,
   .trust-sheet-meta-cell strong.trust-pnl-pos {

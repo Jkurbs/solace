@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { safeSecretEquals } from '@/lib/secret-compare';
 
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
+import { popOpenPathRef } from '@/features/hermes-ledger/path-tracking';
 import { sealHermesLedgerRow } from '@/features/hermes-ledger/store';
 import { postHermesRealizedTradeEvent } from '@/features/ledger/hermes-realized-trades';
 import type { HermesRealizedTradeEvent, HermesRealizedTradeEventInput, HermesRealizedTradeSide } from '@/features/ledger/types';
@@ -140,14 +141,19 @@ async function sealClosedTradeLedgerRow(event: HermesRealizedTradeEvent) {
 
     const snapshot = await getStoredHermesBriefSnapshot().catch(() => null);
     const outcome = event.netPnl > 0 ? 'Advanced' : event.netPnl < 0 ? 'Gave back' : 'Flat';
+    // Pair with the sealed open row when one exists. Null for paths opened
+    // before the two-row schema: those closes are honestly unpaired.
+    const ref = await popOpenPathRef(event.symbol, event.side);
 
     await sealHermesLedgerRow({
       decision: `Closed ${event.symbol} ${event.side.toLowerCase()} — path complete`,
+      eventType: 'close',
       note: formatHoldDuration(event.openedAt, event.closedAt),
       outcome,
       pnl: event.netPnl,
       posture: snapshot && snapshot.brief_id !== 'fallback' ? snapshot.posture : 'DEPLOYED',
       recordId: `HMS-T-${event.sourceTradeId.slice(-8)}`,
+      ref: ref ?? undefined,
       resolvedAt: event.closedAt,
       sealedAt: event.closedAt,
     });

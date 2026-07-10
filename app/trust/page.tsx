@@ -64,15 +64,25 @@ const placeholderRow = {
   pnlTone: null as 'pos' | 'neg' | null,
   note: 'First row will be added after a decision is recorded.',
   rowHash: null as string | null,
+  rowClass: null as string | null,
+  ref: null as string | null,
 };
 
 const MIN_VISIBLE_ROWS = 7;
 
 const howToRead = [
   ['Sealed first', 'A row is created the moment Hermes decides, before the outcome is known. Nothing is written after the fact.'],
+  [
+    'Paths get two rows',
+    'When capital commits, an open row seals immediately with the instrument withheld. The close row names it and references its open row when available. An errored open is voided by a new row, never deleted.',
+  ],
   ['Everything counts', 'Waits and no-trade decisions get rows. Losses and drawdowns get rows. Nothing is deleted.'],
   ['Mechanism stays private', 'Entries, exits, position sizes, and thresholds never appear here. Open positions are named only after they close. The ledger proves discipline, not the recipe.'],
   ['Founder capital only', 'PnL shown is the founder’s own money. The ledger is a record, not a claim. The sample is young, and it is labeled that way until it isn’t.'],
+  [
+    'Backfill is labeled',
+    'Nine rows recorded at the ledger rebuild carry outcomes that were already known; they are tagged BACKFILL and do not claim the sealed-first guarantee. The reclassification is itself a sealed row.',
+  ],
   [
     'Verifiable by math',
     'Every row is hashed and chained to the row before it at seal time. Editing any past row breaks the chain. Recompute it yourself: the verify script lives at solace.fyi/verify-ledger.mjs and runs against the public ledger data.',
@@ -87,24 +97,30 @@ export default async function TrustPage() {
   ]);
   const livePosture =
     briefSnapshot && briefSnapshot.brief_id !== 'fallback' ? formatConstant(briefSnapshot.posture) : '--';
+  // Chain order assigns the row numbers; display is newest-first with the
+  // live view pinned on top. Verification order is untouched.
   const ledgerRows = storedRows.length
-    ? storedRows.map((row, index) => ({
-        row: String(index + 1),
-        recordId: row.recordId,
-        sealedAt: sealedAtFormatter.format(new Date(row.sealedAt)),
-        decision: row.decision,
-        posture: formatConstant(row.posture),
-        outcome: row.outcome ?? 'Open',
-        pnl: row.outcome === null ? '--' : row.pnl === null ? '--' : pnlFormatter.format(row.pnl),
-        pnlTone:
-          row.outcome === null || row.pnl === null || row.pnl === 0
-            ? null
-            : row.pnl > 0
-              ? ('pos' as const)
-              : ('neg' as const),
-        note: row.note || '--',
-        rowHash: row.rowHash,
-      }))
+    ? storedRows
+        .map((row, index) => ({
+          row: String(index + 1),
+          recordId: row.recordId,
+          sealedAt: sealedAtFormatter.format(new Date(row.sealedAt)),
+          decision: row.decision,
+          posture: formatConstant(row.posture),
+          outcome: row.rowClass === 'system' ? '--' : (row.outcome ?? 'Open'),
+          pnl: row.outcome === null ? '--' : row.pnl === null ? '--' : pnlFormatter.format(row.pnl),
+          pnlTone:
+            row.outcome === null || row.pnl === null || row.pnl === 0
+              ? null
+              : row.pnl > 0
+                ? ('pos' as const)
+                : ('neg' as const),
+          note: row.note || '--',
+          rowHash: row.rowHash,
+          rowClass: row.rowClass,
+          ref: row.ref,
+        }))
+        .reverse()
     : [placeholderRow];
   const blankRows = Array.from(
     { length: Math.max(0, MIN_VISIBLE_ROWS - ledgerRows.length - (openExposure ? 1 : 0)) },
@@ -198,23 +214,6 @@ export default async function TrustPage() {
                 </tr>
               </thead>
               <tbody>
-                {ledgerRows.map((row) => (
-                  <tr key={row.row}>
-                    <td className="trust-row-number">{row.row}</td>
-                    <td>
-                      {row.sealedAt}
-                      <span className="trust-record-id" title={row.rowHash ?? undefined}>
-                        {row.recordId}
-                        {row.rowHash ? ` · ${row.rowHash.slice(0, 10)}` : ''}
-                      </span>
-                    </td>
-                    <td>{row.decision}</td>
-                    <td>{row.posture}</td>
-                    <td>{row.outcome}</td>
-                    <td className={row.pnlTone ? `trust-pnl-${row.pnlTone}` : undefined}>{row.pnl}</td>
-                    <td>{row.note}</td>
-                  </tr>
-                ))}
                 {openExposure ? (
                   <tr className="trust-live-row">
                     <td className="trust-row-number">
@@ -251,6 +250,33 @@ export default async function TrustPage() {
                     <td>Live unrealized. Moves with the market; instrument named when the path closes.</td>
                   </tr>
                 ) : null}
+                {ledgerRows.map((row) => (
+                  <tr key={row.row} className={row.rowClass === 'backfill' ? 'trust-row-backfill' : undefined}>
+                    <td className="trust-row-number">{row.row}</td>
+                    <td>
+                      {row.sealedAt}
+                      <span className="trust-record-id" title={row.rowHash ?? undefined}>
+                        {row.recordId}
+                        {row.rowHash ? ` · ${row.rowHash.slice(0, 10)}` : ''}
+                        {row.ref ? ` · ref ${row.ref}` : ''}
+                      </span>
+                      {row.rowClass === 'backfill' ? (
+                        <span
+                          className="trust-tag"
+                          title="Recorded after the outcome was known; does not carry the sealed-first guarantee."
+                        >
+                          Backfill
+                        </span>
+                      ) : null}
+                      {row.rowClass === 'system' ? <span className="trust-tag">System</span> : null}
+                    </td>
+                    <td>{row.decision}</td>
+                    <td>{row.posture}</td>
+                    <td>{row.outcome}</td>
+                    <td className={row.pnlTone ? `trust-pnl-${row.pnlTone}` : undefined}>{row.pnl}</td>
+                    <td>{row.note}</td>
+                  </tr>
+                ))}
                 {blankRows.map((row) => (
                   <tr key={row} className="trust-empty-row">
                     <td className="trust-row-number">{row}</td>

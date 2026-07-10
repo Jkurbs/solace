@@ -671,6 +671,13 @@ export default function HomeClient({
                     quietly edited.
                   </dd>
                 </div>
+                <div>
+                  <dt>Backfill</dt>
+                  <dd>
+                    A ledger row recorded after its outcome was already known. Labeled, never hidden; backfilled
+                    rows do not claim the sealed-first guarantee.
+                  </dd>
+                </div>
               </dl>
             </details>
           </div>

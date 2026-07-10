@@ -244,6 +244,9 @@ export type Database = {
           prev_hash: string | null;
           row_hash: string | null;
           resolution_hash: string | null;
+          row_class: string | null;
+          event_type: string | null;
+          ref: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -259,6 +262,9 @@ export type Database = {
           prev_hash?: string | null;
           row_hash?: string | null;
           resolution_hash?: string | null;
+          row_class?: string | null;
+          event_type?: string | null;
+          ref?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -274,6 +280,9 @@ export type Database = {
           prev_hash?: string | null;
           row_hash?: string | null;
           resolution_hash?: string | null;
+          row_class?: string | null;
+          event_type?: string | null;
+          ref?: string | null;
           created_at?: string;
           updated_at?: string;
         };

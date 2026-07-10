@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { safeSecretEquals } from '@/lib/secret-compare';
 
+import { trackOpenPathsFromMark } from '@/features/hermes-ledger/path-tracking';
 import { postPoolAllocationSnapshot } from '@/features/ledger/pool-allocations';
 import { postTranslatedHermesPoolMark } from '@/features/ledger/pool-marking';
 import type {
@@ -363,6 +364,10 @@ export async function POST(request: Request) {
   if (!posted) {
     return NextResponse.json({ message: 'Hermes pool source mark could not be translated.' }, { status: 503 });
   }
+
+  // New positions in this mark seal open rows in the public ledger —
+  // commitment on the chain before the outcome exists. Best-effort.
+  await trackOpenPathsFromMark(payload.sourceMark.rawPayload, payload.sourceMark.effectiveAt);
 
   const allocationPosted = payload.allocationMark ? await postPoolAllocationSnapshot(payload.allocationMark) : null;
 

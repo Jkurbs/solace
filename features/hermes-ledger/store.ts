@@ -5,6 +5,9 @@ import type { Database } from '@/lib/supabase/types';
 
 import { computeLedgerResolutionHash, computeLedgerRowHash, LEDGER_GENESIS_PREV_HASH } from './hash';
 
+export type HermesLedgerRowClass = 'sealed' | 'backfill' | 'system';
+export type HermesLedgerEventType = 'open' | 'close' | 'void';
+
 export type HermesLedgerRow = {
   recordId: string;
   sealedAt: string;
@@ -17,6 +20,9 @@ export type HermesLedgerRow = {
   prevHash: string | null;
   rowHash: string | null;
   resolutionHash: string | null;
+  rowClass: HermesLedgerRowClass | null;
+  eventType: HermesLedgerEventType | null;
+  ref: string | null;
 };
 
 type LedgerRowRecord = Database['public']['Tables']['hermes_decision_ledger']['Row'];
@@ -39,14 +45,17 @@ function isMissingLedgerTable(message: string) {
 function fromRow(row: LedgerRowRecord): HermesLedgerRow {
   return {
     decision: row.decision,
+    eventType: (row.event_type as HermesLedgerEventType | null) ?? null,
     note: row.note,
     outcome: row.outcome,
     pnl: row.pnl === null ? null : Math.round(row.pnl * 100) / 100,
     posture: row.posture,
     prevHash: row.prev_hash,
     recordId: row.record_id,
+    ref: row.ref,
     resolutionHash: row.resolution_hash,
     resolvedAt: row.resolved_at,
+    rowClass: (row.row_class as HermesLedgerRowClass | null) ?? null,
     rowHash: row.row_hash,
     sealedAt: row.sealed_at,
   };
@@ -159,8 +168,23 @@ export async function sealHermesLedgerRow(input: {
   outcome?: string;
   pnl?: number | null;
   resolvedAt?: string;
+  /**
+   * 'sealed' (default) or 'system'. 'backfill' is deliberately NOT
+   * assignable: it exists only for the one-time labeling of rows recorded
+   * at the July 2026 rebuild, applied by migration. Enforced here, not by
+   * convention.
+   */
+  rowClass?: 'sealed' | 'system';
+  eventType?: HermesLedgerEventType;
+  /** For close/void rows: the record_id of the open row they resolve. */
+  ref?: string;
 }): Promise<HermesLedgerRow | null> {
   if (!isSupabaseDataClientConfigured()) {
+    return null;
+  }
+
+  if ((input.rowClass as string) === 'backfill') {
+    console.warn('[hermes-ledger] backfill rows cannot be created; refusing seal.');
     return null;
   }
 
@@ -197,9 +221,12 @@ export async function sealHermesLedgerRow(input: {
             input.outcome && resolvedAt
               ? computeLedgerResolutionHash({ outcome: input.outcome, pnl, resolvedAt, rowHash })
               : null,
+          ref: input.ref ?? null,
           resolved_at: resolvedAt,
+          row_class: input.rowClass ?? 'sealed',
           row_hash: rowHash,
           sealed_at: sealedAt,
+          event_type: input.eventType ?? null,
         })
         .select('*')
         .maybeSingle();

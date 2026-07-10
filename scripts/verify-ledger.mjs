@@ -28,8 +28,31 @@ if (!response.ok) {
 const { chain, rows } = await response.json();
 let prevHash = chain?.genesisPrevHash ?? 'GENESIS';
 let failures = 0;
+const classCounts = { backfill: 0, sealed: 0, system: 0, unclassified: 0 };
+const openRows = new Map();
+const voidedOpens = new Set();
 
 for (const row of rows) {
+  classCounts[row.rowClass ?? 'unclassified'] = (classCounts[row.rowClass ?? 'unclassified'] ?? 0) + 1;
+
+  // Open/close pairing: every close ref must resolve to an open row that
+  // precedes it; unpaired opens must be live (or voided). Closes without a
+  // ref predate the two-row schema and are reported, not failed.
+  if (row.eventType === 'open') {
+    openRows.set(row.recordId, row);
+  }
+
+  if ((row.eventType === 'close' || row.eventType === 'void') && row.ref) {
+    if (!openRows.has(row.ref)) {
+      console.error(`✗ ${row.recordId}: ref ${row.ref} does not match any earlier open row`);
+      failures += 1;
+    } else if (row.eventType === 'void') {
+      voidedOpens.add(row.ref);
+    } else {
+      openRows.delete(row.ref);
+    }
+  }
+
   const expectedRowHash = sha256(
     JSON.stringify({
       decision: row.decision,
@@ -78,8 +101,18 @@ for (const row of rows) {
   prevHash = row.rowHash;
 }
 
+const unresolvedOpens = [...openRows.keys()].filter((id) => !voidedOpens.has(id));
+
 console.log('');
-console.log(`Rows: ${rows.length} · Chain head: ${prevHash}`);
+console.log(
+  `Rows: ${rows.length} · sealed ${classCounts.sealed} · backfill ${classCounts.backfill} (labeled) · system ${classCounts.system}${classCounts.unclassified ? ` · unclassified ${classCounts.unclassified}` : ''}`,
+);
+
+if (unresolvedOpens.length) {
+  console.log(`Open paths without a close: ${unresolvedOpens.join(', ')} (live or awaiting close)`);
+}
+
+console.log(`Chain head: ${prevHash}`);
 
 if (failures > 0) {
   console.error(`FAILED: ${failures} integrity error(s).`);
