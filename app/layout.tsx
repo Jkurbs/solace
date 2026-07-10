@@ -50,8 +50,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <body className="antialiased">
+        {/* Theme boot before first paint: no flash of the wrong mode. */}
+        <script
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(localStorage.getItem('solace-theme')==='light'){document.documentElement.dataset.theme='light'}}catch(e){}",
+          }}
+        />
         <script
           type="application/ld+json"
           // eslint-disable-next-line react/no-danger

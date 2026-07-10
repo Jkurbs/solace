@@ -7,6 +7,7 @@ import { MotionConfig, motion } from 'framer-motion';
 
 import SkyBackground from './SkyBackground';
 import Mark from './Mark';
+import ThemeToggle from './ThemeToggle';
 import NotePlate from './NotePlate';
 import { calibration } from './calibration';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
@@ -136,6 +137,7 @@ function Header() {
         </nav>
 
         <div className="site-actions">
+          <ThemeToggle />
           <Link href="/dashboard" className="site-action-link site-action-login">
             Login
           </Link>

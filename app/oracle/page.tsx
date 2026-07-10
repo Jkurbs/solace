@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import ReliabilityDiagram from '../ReliabilityDiagram';
 import Mark from '../Mark';
+import ThemeToggle from '../ThemeToggle';
 import { calibration } from '../calibration';
 import QuestionPlate from './QuestionPlate';
 import { getQuestionRead, resolvedQuestions } from './resolved-questions';
@@ -35,9 +36,12 @@ export default function OraclePage() {
             <Mark size={20} />
             Solace
           </Link>
-          <Link href="/" className="hx-btn hx-btn-secondary hx-btn-sm">
-            Home
-          </Link>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem' }}>
+            <ThemeToggle />
+            <Link href="/" className="hx-btn hx-btn-secondary hx-btn-sm">
+              Home
+            </Link>
+          </span>
         </div>
       </header>
 

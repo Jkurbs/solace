@@ -6,6 +6,7 @@ import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
 import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
 
 import Mark from '../Mark';
+import ThemeToggle from '../ThemeToggle';
 import CopyCommands from './CopyCommands';
 import ScriptSource from './ScriptSource';
 import TrustAutoRefresh from './TrustAutoRefresh';
@@ -146,6 +147,7 @@ export default async function TrustPage() {
             Solace
           </Link>
           <div className="trust-header-actions">
+            <ThemeToggle />
             <Link href="/hermes" className="hx-btn hx-btn-secondary hx-btn-sm">
               Hermes
             </Link>
