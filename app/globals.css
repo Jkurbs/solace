@@ -9641,3 +9641,35 @@ h2 {
     background: var(--background);
   }
 }
+
+@layer components {
+  /* Light-mode structural fixes: the page ground itself, and re-pinning the
+     theme variables inside dark plates so their contents stay light-on-dark
+     in both themes (the plates are theme-immune by design). */
+  html[data-theme='light'] .home-shell {
+    background: var(--background);
+  }
+
+  html[data-theme='light'] .inst-card:not(.inst-card-quiet),
+  html[data-theme='light'] .oracle-qhero,
+  html[data-theme='light'] .news-item .note-plate {
+    --foreground: #fafafa;
+    --muted: #a3a29b;
+    --faint: #6f6e66;
+    --accent: #d6d0c4;
+    --accent-2: #b8bec7;
+  }
+
+  html[data-theme='light'] .inst-card:not(.inst-card-quiet) .inst-card-name > strong {
+    color: #fafafa;
+  }
+
+  html[data-theme='light'] .inst-card:not(.inst-card-quiet) .inst-card-name p {
+    color: rgba(250, 250, 250, 0.6);
+  }
+
+  html[data-theme='light'] .oracle-qhero-question,
+  html[data-theme='light'] .oracle-qhero-prob strong {
+    color: #fafafa;
+  }
+}

@@ -137,7 +137,6 @@ function Header() {
         </nav>
 
         <div className="site-actions">
-          <ThemeToggle />
           <Link href="/dashboard" className="site-action-link site-action-login">
             Login
           </Link>
@@ -777,7 +776,12 @@ export default function HomeClient({
 
           <div className="mt-12 flex flex-col gap-2 border-t border-white/10 pt-5 md:flex-row md:items-center md:justify-between">
             <p className="footer-fineprint">© 2026 Solace. All rights reserved.</p>
-            <p className="footer-fineprint">Domains are earned</p>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
+              <ThemeToggle />
+              <p className="footer-fineprint" style={{ margin: 0 }}>
+                Domains are earned
+              </p>
+            </span>
           </div>
         </div>
       </footer>

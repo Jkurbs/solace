@@ -147,7 +147,6 @@ export default async function TrustPage() {
             Solace
           </Link>
           <div className="trust-header-actions">
-            <ThemeToggle />
             <Link href="/hermes" className="hx-btn hx-btn-secondary hx-btn-sm">
               Hermes
             </Link>
@@ -347,9 +346,12 @@ node verify-ledger.mjs`}
       <section className="hx-shell">
         <div className="hx-foot">
           <p>Public ledger</p>
-          <Link href="/" className="text-link">
-            Return home
-          </Link>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
+            <ThemeToggle />
+            <Link href="/" className="text-link">
+              Return home
+            </Link>
+          </span>
         </div>
       </section>
     </main>

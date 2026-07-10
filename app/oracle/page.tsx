@@ -36,12 +36,9 @@ export default function OraclePage() {
             <Mark size={20} />
             Solace
           </Link>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem' }}>
-            <ThemeToggle />
-            <Link href="/" className="hx-btn hx-btn-secondary hx-btn-sm">
-              Home
-            </Link>
-          </span>
+          <Link href="/" className="hx-btn hx-btn-secondary hx-btn-sm">
+            Home
+          </Link>
         </div>
       </header>
 
@@ -227,9 +224,12 @@ export default function OraclePage() {
           <p className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-muted">
             Oracle · Live calibration · {calibration.asOf}
           </p>
-          <Link href="/" className="text-link">
-            Return home
-          </Link>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
+            <ThemeToggle />
+            <Link href="/" className="text-link">
+              Return home
+            </Link>
+          </span>
         </div>
       </article>
     </main>
