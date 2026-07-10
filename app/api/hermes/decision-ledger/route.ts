@@ -121,7 +121,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'sealedAt is not a valid date.' }, { status: 400 });
     }
 
-    const row = await sealHermesLedgerRow({ decision, note, posture, recordId, sealedAt });
+    const rowClass = getString(body.rowClass, 12).toLowerCase();
+    const row = await sealHermesLedgerRow({
+      decision,
+      note,
+      posture,
+      recordId,
+      rowClass: rowClass === 'system' ? 'system' : undefined,
+      sealedAt,
+    });
 
     if (!row) {
       return NextResponse.json({ message: 'Row could not be sealed.' }, { status: 500 });

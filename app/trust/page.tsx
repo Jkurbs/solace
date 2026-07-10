@@ -7,6 +7,7 @@ import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
 
 import Mark from '../Mark';
 import TrustAutoRefresh from './TrustAutoRefresh';
+import VerifyInBrowser from './VerifyInBrowser';
 
 export const metadata: Metadata = {
   title: 'Solace — Hermes Decision Ledger',
@@ -311,6 +312,30 @@ export default async function TrustPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section className="hx-shell trust-section">
+        <div className="trust-simple-sheet trust-verify">
+          <h2>Verify this ledger</h2>
+          <p>
+            Anyone with Node installed can recompute the chain from the public data. No account, no
+            permission:
+          </p>
+          <pre>
+            <code>{`curl -O https://solace.fyi/verify-ledger.mjs
+node verify-ledger.mjs`}</code>
+          </pre>
+          <p>
+            The script is ~90 lines of readable source. It recomputes every row hash from the{' '}
+            <a href="/api/hermes/decision-ledger" className="text-link">
+              public ledger data
+            </a>
+            , walks the chain, and checks that every close references its open row. Any edit to
+            history fails loudly. The printed chain head can be compared against an externally
+            anchored copy.
+          </p>
+          <VerifyInBrowser />
         </div>
       </section>
 

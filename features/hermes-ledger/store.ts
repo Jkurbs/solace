@@ -126,6 +126,44 @@ async function ensureLedgerHashBackfill(supabase: SupabaseClient): Promise<strin
   return prevHash;
 }
 
+// Lightweight change-detection read for the public pulse endpoint: two
+// cheap queries instead of the full table.
+export async function getHermesLedgerPulse(): Promise<{
+  rowCount: number;
+  latestRecordId: string | null;
+  chainHead: string | null;
+} | null> {
+  if (!isSupabaseDataClientConfigured()) {
+    return null;
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    const [countResult, latestResult] = await Promise.all([
+      supabase.from('hermes_decision_ledger').select('record_id', { count: 'exact', head: true }),
+      supabase
+        .from('hermes_decision_ledger')
+        .select('record_id,row_hash')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    if (countResult.error) {
+      return null;
+    }
+
+    return {
+      chainHead: latestResult.data?.row_hash ?? null,
+      latestRecordId: latestResult.data?.record_id ?? null,
+      rowCount: countResult.count ?? 0,
+    };
+  } catch (error) {
+    console.warn('[hermes-ledger] Pulse read failed.', error);
+    return null;
+  }
+}
+
 export async function listHermesLedgerRows(limit = 50): Promise<HermesLedgerRow[]> {
   if (!isSupabaseDataClientConfigured()) {
     return [];

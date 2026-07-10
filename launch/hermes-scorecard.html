@@ -1,0 +1,192 @@
+<title>Hermes Beta v0.1.0 — Scorecard Draft</title>
+<style>
+  :root {
+    --paper: #f7f2e8; --ink: #13110c; --muted: #6b6354; --faint: #9b9280;
+    --hairline: rgba(19,17,12,0.14); --gold: #b8955a; --red: #a04b3e;
+    --serif: Georgia, 'Times New Roman', serif;
+    --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+    --sans: system-ui, -apple-system, sans-serif;
+  }
+  html { background: #e8e2d5; }
+  body { margin: 0; font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: antialiased;
+         display: grid; place-items: start center; padding: 3rem 1rem; }
+
+  .poster {
+    width: min(46rem, 100%);
+    background: var(--paper);
+    padding: 4rem 4.2rem 3.2rem;
+    box-shadow: 0 30px 80px rgba(19,17,12,0.18);
+  }
+
+  /* masthead */
+  .kicker { display: flex; justify-content: space-between; gap: 1rem; margin: 0; }
+  .kicker span { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.24em;
+                 text-transform: uppercase; color: var(--muted); }
+  .kicker .draft { color: var(--gold); }
+  h1 { margin: 2.2rem 0 0; font-family: var(--serif); font-weight: 500; font-size: 3.1rem;
+       letter-spacing: -0.01em; line-height: 1.02; }
+  .dek { margin: 1.1rem 0 0; max-width: 30rem; color: var(--muted); font-size: 0.98rem; line-height: 1.65; }
+  .stamps { margin: 1.6rem 0 0; font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.14em;
+            text-transform: uppercase; color: var(--faint); line-height: 2; }
+
+  /* stories */
+  .story { border-top: 1px solid var(--hairline); margin-top: 2.6rem; padding-top: 1.9rem; }
+  .story-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+  .story-head h2 { margin: 0; font-family: var(--serif); font-weight: 500; font-size: 1.25rem; }
+  .story-head h2 i { font-style: normal; color: var(--faint); font-family: var(--mono);
+                     font-size: 0.66rem; margin-right: 0.9rem; letter-spacing: 0.08em; }
+  .story-head em { font-family: var(--mono); font-style: normal; font-size: 0.56rem;
+                   letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint); }
+
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.2rem; margin-top: 1.8rem; }
+  .m { display: flex; flex-direction: column; gap: 0.5rem; }
+  .m-value { font-family: var(--serif); font-weight: 500; font-size: 2.35rem; line-height: 1;
+             letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+  .m-value small { font-size: 1.05rem; color: var(--muted); font-family: var(--serif); }
+  .m-value .sib { color: var(--muted); font-size: 1.5rem; }
+  .m-label { font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.15em;
+             text-transform: uppercase; color: var(--muted); line-height: 1.7; }
+  .m-sub { font-size: 0.78rem; color: var(--faint); line-height: 1.55; }
+  .red { color: var(--red); }
+
+  .ghost .m-value { font-family: var(--serif); font-style: italic; font-size: 1.15rem;
+                    color: var(--faint); font-weight: 400; padding: 0.55rem 0; }
+
+  /* hairline bars — annual-report register, only where a comparison lives */
+  .bars { display: grid; gap: 0.4rem; margin-top: 0.2rem; }
+  .track { position: relative; height: 3px; background: rgba(19,17,12,0.1); }
+  .fill { position: absolute; top: 0; bottom: 0; left: 0; background: var(--ink); opacity: 0.72; }
+  .fill.dim { opacity: 0.34; }
+  .tick { position: absolute; top: -3px; bottom: -3px; width: 1.5px; background: var(--gold); }
+  .track.mid .fill { left: 50%; }
+  .track.mid .fill.neg { left: auto; right: 50%; background: var(--red); opacity: 0.8; }
+  .track.mid::after { content: ''; position: absolute; left: 50%; top: -2px; bottom: -2px;
+                      width: 1px; background: rgba(19,17,12,0.3); }
+
+  /* footer */
+  .foot { border-top: 1px solid var(--hairline); margin-top: 3rem; padding-top: 1.4rem;
+          display: flex; justify-content: space-between; align-items: baseline; gap: 1.4rem; flex-wrap: wrap; }
+  .foot p { margin: 0; max-width: 26rem; font-size: 0.72rem; color: var(--faint); line-height: 1.7; }
+  .foot .brand { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.24em;
+                 text-transform: uppercase; color: var(--ink); white-space: nowrap; }
+
+  @media (max-width: 640px) {
+    .poster { padding: 2.4rem 1.6rem 2rem; }
+    .metrics { grid-template-columns: 1fr; gap: 1.6rem; }
+    h1 { font-size: 2.3rem; }
+  }
+</style>
+
+<div class="poster">
+  <p class="kicker">
+    <span>Solace · Instrument Scorecard · July 2026</span>
+  </p>
+
+  <h1>Hermes <span style="color: var(--muted)">Beta v0.1.0</span></h1>
+  <p class="stamps">
+    No performance claims
+  </p>
+
+  <!-- 01 -->
+  <section class="story">
+    <div class="story-head">
+      <h2><i>01</i>Calibration</h2>
+    </div>
+    <div class="metrics">
+      <div class="m">
+        <span class="m-value">+0.7 <span class="sib">/ −11.5 / −8.1</span></span>
+        <div class="bars">
+          <div class="track mid"><span class="fill" style="width:2%"></span></div>
+          <div class="track mid"><span class="fill neg" style="width:38%"></span></div>
+          <div class="track mid"><span class="fill neg" style="width:27%"></span></div>
+        </div>
+        <span class="m-label">Touch probability vs baseline, by class</span>
+      </div>
+      <div class="m ghost">
+        <span class="m-value">Matures next cycle</span>
+        <span class="m-label">Route-belief reliability</span>
+      </div>
+      <div class="m ghost">
+        <span class="m-value">Publishes next refit</span>
+        <span class="m-label">Stated confidence vs observed rate</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section class="story">
+    <div class="story-head">
+      <h2><i>02</i>Skill</h2>
+    </div>
+    <div class="metrics">
+      <div class="m">
+        <span class="m-value">81% <span class="sib">/ 57.4%</span></span>
+        <div class="bars">
+          <div class="track"><span class="fill" style="width:81%"></span><span class="tick" style="left:50%"></span></div>
+          <div class="track"><span class="fill dim" style="width:57.4%"></span><span class="tick" style="left:50%"></span></div>
+        </div>
+        <span class="m-label">First-hit accuracy · fitted / hostile · tick = chance</span>
+      </div>
+      <div class="m">
+        <span class="m-value">+44%</span>
+        <span class="m-label">Target selection vs naive · out of sample</span>
+      </div>
+      <div class="m">
+        <span class="m-value">+74<small> min</small></span>
+        <span class="m-label">Reversal lead time · n = 51</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section class="story">
+    <div class="story-head">
+      <h2><i>03</i>Outcomes</h2>
+    </div>
+    <div class="metrics">
+      <div class="m ghost">
+        <span class="m-value">Accumulating</span>
+        <span class="m-label">Expectancy by strategy family (R)</span>
+      </div>
+      <div class="m ghost">
+        <span class="m-value">Accumulating</span>
+        <span class="m-label">Live vs backtest band</span>
+      </div>
+      <div class="m">
+        <span class="m-value red">−11.3<small> R</small></span>
+        <span class="m-label">Worst signal class · retired · stays on the card</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section class="story">
+    <div class="story-head">
+      <h2><i>04</i>Discipline</h2>
+    </div>
+    <div class="metrics">
+      <div class="m">
+        <span class="m-value">100%</span>
+        <div class="bars">
+          <div class="track"><span class="fill" style="width:100%"></span></div>
+        </div>
+        <span class="m-label">Predictions resolved · nothing dropped</span>
+      </div>
+      <div class="m">
+        <span class="m-value">1</span>
+        <span class="m-label">Rules changed · 1 class retired at 1-for-19</span>
+      </div>
+      <div class="m">
+        <span class="m-value">3</span>
+        <span class="m-label">Self-pauses · machine benched itself</span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>
+      Not shown: conditions, thresholds, symbols, live signals, small samples.
+    </p>
+    <span class="brand">✦ Solace</span>
+  </footer>
+</div>
