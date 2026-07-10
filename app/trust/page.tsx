@@ -323,7 +323,7 @@ export default async function TrustPage() {
             permission:
           </p>
           <pre>
-            <code>{`curl -O https://solace.fyi/verify-ledger.mjs
+            <code>{`curl -LO https://www.solace.fyi/verify-ledger.mjs
 node verify-ledger.mjs`}</code>
           </pre>
           <p>
