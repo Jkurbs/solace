@@ -6,6 +6,8 @@ import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
 import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
 
 import Mark from '../Mark';
+import CopyCommands from './CopyCommands';
+import ScriptSource from './ScriptSource';
 import TrustAutoRefresh from './TrustAutoRefresh';
 import VerifyInBrowser from './VerifyInBrowser';
 
@@ -322,10 +324,10 @@ export default async function TrustPage() {
             Anyone with Node installed can recompute the chain from the public data. No account, no
             permission:
           </p>
-          <pre>
-            <code>{`curl -LO https://www.solace.fyi/verify-ledger.mjs
-node verify-ledger.mjs`}</code>
-          </pre>
+          <CopyCommands
+            commands={`curl -LO https://www.solace.fyi/verify-ledger.mjs
+node verify-ledger.mjs`}
+          />
           <p>
             The script is ~90 lines of readable source. It recomputes every row hash from the{' '}
             <a href="/api/hermes/decision-ledger" className="text-link">
@@ -336,6 +338,7 @@ node verify-ledger.mjs`}</code>
             anchored copy.
           </p>
           <VerifyInBrowser />
+          <ScriptSource />
         </div>
       </section>
 
