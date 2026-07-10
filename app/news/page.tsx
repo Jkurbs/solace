@@ -5,6 +5,7 @@ import { newsPosts } from '@/features/news/posts';
 
 import Mark from '../Mark';
 import NotePlate from '../NotePlate';
+import ThemeToggle from '../ThemeToggle';
 
 export const metadata: Metadata = {
   title: 'Solace — News',
@@ -35,10 +36,8 @@ export default function NewsPage() {
 
       <section className="hx-shell pt-32 md:pt-36">
         <p className="section-kicker">Solace News</p>
-        <h1 className="mt-4 max-w-2xl font-serif text-4xl font-medium leading-tight text-[#fafafa] md:text-6xl">
-          The record, as it happens.
-        </h1>
-        <p className="mt-5 max-w-xl text-base leading-7 text-[rgba(250,250,250,0.6)]">
+        <h1 className="hx-title mt-4 max-w-2xl text-4xl md:text-6xl">The record, as it happens.</h1>
+        <p className="hx-lead mt-5 max-w-xl text-base leading-7">
           Announcements from the observatory: what shipped, what changed, what is now checkable.
         </p>
       </section>
@@ -59,9 +58,12 @@ export default function NewsPage() {
       <section className="hx-shell">
         <div className="hx-foot">
           <p>Solace · Independent research observatory</p>
-          <Link href="/" className="text-link">
-            Return home
-          </Link>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
+            <ThemeToggle />
+            <Link href="/" className="text-link">
+              Return home
+            </Link>
+          </span>
         </div>
       </section>
     </main>

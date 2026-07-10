@@ -13,6 +13,7 @@ import {
 } from 'framer-motion';
 
 import Mark from '../Mark';
+import ThemeToggle from '../ThemeToggle';
 import HermesBoardArt, { HermesBoardMobileArt, type HermesBoardFocus } from './HermesBoardArt';
 import RequestAccessForm from './RequestAccessForm';
 import { EASE, Reveal, useMediaQuery, useWalkthroughStep } from './shared';
@@ -546,9 +547,12 @@ export default function HermesExperience() {
       <section className="hx-shell">
         <div className="hx-foot">
           <p>Hermes · The first instrument · Live</p>
-          <Link href="/" className="text-link">
-            Return home
-          </Link>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
+            <ThemeToggle />
+            <Link href="/" className="text-link">
+              Return home
+            </Link>
+          </span>
         </div>
       </section>
     </main>

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Bug, Check, Clock3, LogOut, Moon, Scale, ShieldCheck, Sun, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -27,13 +27,13 @@ import {
   riskProfileDescriptions,
 } from './contract';
 import { isSetupIncomplete } from './setup';
+import type { DashboardTheme } from './theme';
+import { useDashboardTheme } from './use-dashboard-theme';
 import type { HermesDashboardSnapshot, IdentityVerificationStatus, RiskProfile } from './types';
 
 type HermesDashboardProps = {
   initialSnapshot: HermesDashboardSnapshot;
 };
-
-type DashboardTheme = 'dark' | 'light';
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
@@ -255,7 +255,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const [identityStatus, setIdentityStatus] = useState('');
   const [logoutStatus, setLogoutStatus] = useState('');
   const [riskStatus, setRiskStatus] = useState('');
-  const [theme, setTheme] = useState<DashboardTheme>('dark');
+  const { theme, toggleTheme } = useDashboardTheme();
   const queryClient = useQueryClient();
   const { data, dataUpdatedAt, isError, isFetching } = useQuery({
     queryKey: hermesDashboardQueryKey,
@@ -336,22 +336,6 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       setRiskStatus(`${riskProfile} profile selected`);
     },
   });
-
-  useEffect(() => {
-    const storedTheme = window.localStorage.getItem('hermes_dashboard_theme');
-
-    if (storedTheme === 'dark' || storedTheme === 'light') {
-      setTheme(storedTheme);
-    }
-  }, []);
-
-  function toggleTheme() {
-    setTheme((current) => {
-      const next = current === 'dark' ? 'light' : 'dark';
-      window.localStorage.setItem('hermes_dashboard_theme', next);
-      return next;
-    });
-  }
 
   const allocationGradient = useMemo(() => buildAllocationGradient(data.allocation, theme), [data.allocation, theme]);
   const isAwaitingDeposit = data.account.lifecycle === 'AWAITING_DEPOSIT';

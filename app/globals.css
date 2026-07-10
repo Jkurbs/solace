@@ -71,6 +71,106 @@ h2 {
     text-transform: uppercase;
   }
 
+  .hx-title {
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+
+  .hx-lead {
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  .theme-divide {
+    border-top: 1px solid var(--line);
+  }
+
+  .news-body {
+    color: var(--muted);
+  }
+
+  .news-body a {
+    color: var(--foreground);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .news-body blockquote {
+    margin: 1.75rem 0;
+    padding-left: 1.25rem;
+    border-left: 2px solid var(--line);
+    color: var(--muted);
+  }
+
+  .news-body h2 {
+    margin-top: 3rem;
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(1.5rem, 2.5vw, 1.875rem);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .news-body h2:first-child {
+    margin-top: 0;
+  }
+
+  .news-body p,
+  .news-body ol,
+  .news-body ul {
+    margin-top: 1.25rem;
+    font-size: 1rem;
+    line-height: 2;
+  }
+
+  .news-body p:first-child {
+    margin-top: 0;
+  }
+
+  .news-body ol,
+  .news-body ul {
+    padding-left: 1.5rem;
+  }
+
+  .news-body ol {
+    list-style: decimal;
+  }
+
+  .news-body ul {
+    list-style: disc;
+  }
+
+  .news-body li {
+    padding-left: 0.25rem;
+  }
+
+  .news-body strong {
+    color: var(--foreground);
+    font-weight: 600;
+  }
+
+  .news-footnote {
+    color: var(--faint);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .news-action-link {
+    color: var(--muted);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    transition: color 0.2s ease;
+  }
+
+  .news-action-link:hover {
+    color: var(--foreground);
+  }
+
   .hero-body {
     color: rgba(250, 250, 250, 0.82) !important;
     font-size: clamp(1.14rem, 1.55vw, 1.36rem) !important;
@@ -9354,6 +9454,7 @@ h2 {
     --faint: #9b9280;
     --accent: #5c5344;
     --accent-2: #6b6354;
+    --line: rgba(19, 17, 12, 0.12);
   }
 
   /* --- shared chrome --- */
@@ -9388,6 +9489,10 @@ h2 {
 
   html[data-theme='light'] .hero-quiet-title {
     color: #13110c;
+  }
+
+  html[data-theme='light'] .hero-quiet-body {
+    color: rgba(19, 17, 12, 0.68);
   }
 
   html[data-theme='light'] .hero-note-pill {
@@ -9639,6 +9744,42 @@ h2 {
   /* --- news pages (hx register) --- */
   html[data-theme='light'] .hx-page {
     background: var(--background);
+  }
+
+  html[data-theme='light'] .trust-page {
+    background: var(--background);
+  }
+
+  html[data-theme='light'] .hx-btn-secondary {
+    border-color: rgba(19, 17, 12, 0.25);
+  }
+
+  html[data-theme='light'] .hx-btn-secondary:hover {
+    border-color: rgba(19, 17, 12, 0.4);
+    background: rgba(19, 17, 12, 0.04);
+  }
+
+  html[data-theme='light'] .hx-apple-intro p:not(.section-kicker),
+  html[data-theme='light'] .hx-apple-copy p:not(.section-kicker),
+  html[data-theme='light'] .hx-gates-head p:not(.section-kicker),
+  html[data-theme='light'] .hx-problem-head p:not(.section-kicker),
+  html[data-theme='light'] .hx-form-expect,
+  html[data-theme='light'] .hx-briefcard-item p {
+    color: rgba(19, 17, 12, 0.65);
+  }
+
+  html[data-theme='light'] .hx-impact-list li {
+    border-top-color: rgba(19, 17, 12, 0.12);
+    color: rgba(19, 17, 12, 0.72);
+  }
+
+  html[data-theme='light'] .hx-briefcard-item {
+    border-color: rgba(19, 17, 12, 0.14);
+    background: #fbf8f1;
+  }
+
+  html[data-theme='light'] .hx-briefcard-item strong {
+    color: #13110c;
   }
 }
 

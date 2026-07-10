@@ -8,6 +8,7 @@ import { getNewsPost, newsPosts } from '@/features/news/posts';
 
 import Mark from '../../Mark';
 import NotePlate from '../../NotePlate';
+import ThemeToggle from '../../ThemeToggle';
 
 export function generateStaticParams() {
   return newsPosts.map((post) => ({ slug: post.slug }));
@@ -72,53 +73,15 @@ export default async function NewsPostPage({
         <p className="section-kicker mt-10">
           {post.label} · {dateFormat.format(new Date(post.date))}
         </p>
-        <h1 className="mt-4 font-serif text-4xl font-medium leading-tight text-[#fafafa] md:text-6xl">
-          {post.title}
-        </h1>
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-[rgba(250,250,250,0.66)]">{post.dek}</p>
+        <h1 className="hx-title mt-4 text-4xl md:text-6xl">{post.title}</h1>
+        <p className="hx-lead mt-6 max-w-2xl text-lg leading-8">{post.dek}</p>
 
-        <div className="news-body mt-10 border-t border-white/10 pt-10">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              a: ({ children, ...props }) => (
-                <a className="text-[#fafafa] underline underline-offset-4" {...props}>
-                  {children}
-                </a>
-              ),
-              blockquote: ({ children }) => (
-                <blockquote className="my-7 border-l-2 border-white/20 pl-5 text-[rgba(250,250,250,0.7)]">
-                  {children}
-                </blockquote>
-              ),
-              h2: ({ children }) => (
-                <h2 className="mt-12 font-serif text-2xl font-medium tracking-[-0.01em] text-[#fafafa] first:mt-0 md:text-3xl">
-                  {children}
-                </h2>
-              ),
-              li: ({ children }) => <li className="pl-1">{children}</li>,
-              ol: ({ children }) => (
-                <ol className="my-6 list-decimal space-y-2 pl-6 text-base leading-8 text-[rgba(250,250,250,0.66)]">
-                  {children}
-                </ol>
-              ),
-              p: ({ children }) => (
-                <p className="mt-5 text-base leading-8 text-[rgba(250,250,250,0.66)] first:mt-0">{children}</p>
-              ),
-              strong: ({ children }) => <strong className="font-semibold text-[#fafafa]">{children}</strong>,
-              ul: ({ children }) => (
-                <ul className="my-6 list-disc space-y-2 pl-6 text-base leading-8 text-[rgba(250,250,250,0.66)]">
-                  {children}
-                </ul>
-              ),
-            }}
-          >
-            {post.body}
-          </ReactMarkdown>
+        <div className="news-body theme-divide mt-10 pt-10">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.body}</ReactMarkdown>
         </div>
 
-        <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-6 md:flex-row md:items-center md:justify-between">
-          <p className="max-w-xl text-sm leading-6 text-[rgba(250,250,250,0.45)]">
+        <div className="theme-divide mt-14 flex flex-col gap-4 pt-6 md:flex-row md:items-center md:justify-between">
+          <p className="news-footnote max-w-xl">
             No performance claims. Status labels reflect what is live and checkable today.
           </p>
           <div className="flex flex-wrap items-center gap-6">
@@ -126,16 +89,14 @@ export default async function NewsPostPage({
               href={`https://x.com/intent/post?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(`https://solace.fyi/news/${post.slug}`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-mono text-xs uppercase tracking-[0.18em] text-[rgba(250,250,250,0.55)] transition-colors hover:text-[#fafafa]"
+              className="news-action-link"
             >
               Share on X
             </a>
-            <Link
-              href="/brief"
-              className="font-mono text-xs uppercase tracking-[0.18em] text-[rgba(250,250,250,0.55)] transition-colors hover:text-[#fafafa]"
-            >
+            <Link href="/brief" className="news-action-link">
               Read the technical brief
             </Link>
+            <ThemeToggle />
           </div>
         </div>
       </article>

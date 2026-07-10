@@ -132,7 +132,7 @@ export default function OraclePage() {
           </div>
         </div>
 
-        <section className="mt-20 grid gap-12 border-t border-white/10 pt-12 lg:grid-cols-[1fr_0.9fr] lg:items-start">
+        <section className="theme-divide mt-20 grid gap-12 pt-12 lg:grid-cols-[1fr_0.9fr] lg:items-start">
           <ReliabilityDiagram size="lg" />
           <div>
             <h2 className="font-serif text-3xl font-medium md:text-4xl">How to read it</h2>
@@ -157,7 +157,7 @@ export default function OraclePage() {
           </div>
         </section>
 
-        <section className="mt-20 border-t border-white/10 pt-12">
+        <section className="theme-divide mt-20 pt-12">
           <h2 className="font-serif text-3xl font-medium md:text-4xl">The record, by confidence band</h2>
           <div className="oracle-table" role="table" aria-label="Calibration by confidence band">
             <div className="oracle-table-head" role="row">
@@ -189,7 +189,7 @@ export default function OraclePage() {
           </p>
         </section>
 
-        <section className="mt-20 grid gap-12 border-t border-white/10 pt-12 md:grid-cols-2">
+        <section className="theme-divide mt-20 grid gap-12 pt-12 md:grid-cols-2">
           <div>
             <h2 className="font-serif text-3xl font-medium md:text-4xl">How the Oracle works</h2>
             <div className="mt-5 space-y-4 text-base leading-8 text-muted">
@@ -220,7 +220,7 @@ export default function OraclePage() {
           </div>
         </section>
 
-        <div className="mt-20 flex flex-col gap-3 border-t border-white/10 pt-6 md:flex-row md:items-center md:justify-between">
+        <div className="theme-divide mt-20 flex flex-col gap-3 pt-6 md:flex-row md:items-center md:justify-between">
           <p className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-muted">
             Oracle · Live calibration · {calibration.asOf}
           </p>

@@ -687,7 +687,7 @@ export default function HomeClient({
 
       <footer className="site-footer px-5 pb-10 pt-14 md:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="grid gap-12 border-t border-white/10 pt-12 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_0.8fr_1.1fr]">
+          <div className="theme-divide grid gap-12 pt-12 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_0.8fr_1.1fr]">
             <div>
               <p className="flex items-center gap-2.5 font-serif text-2xl font-medium text-foreground">
                 <Mark size={28} className="site-mark" />
@@ -774,7 +774,7 @@ export default function HomeClient({
             </div>
           </div>
 
-          <div className="mt-12 flex flex-col gap-2 border-t border-white/10 pt-5 md:flex-row md:items-center md:justify-between">
+          <div className="theme-divide mt-12 flex flex-col gap-2 pt-5 md:flex-row md:items-center md:justify-between">
             <p className="footer-fineprint">© 2026 Solace. All rights reserved.</p>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
               <ThemeToggle />

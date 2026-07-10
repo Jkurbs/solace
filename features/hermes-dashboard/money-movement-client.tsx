@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { FormEvent } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDownToLine, ArrowLeft, ArrowUpFromLine, LogOut, Moon, Sun, Wallet } from 'lucide-react';
 
@@ -19,13 +19,12 @@ import {
   startMoneyMovement,
 } from './queries';
 import { isSetupIncomplete } from './setup';
+import { useDashboardTheme } from './use-dashboard-theme';
 import type { HermesDashboardSnapshot, MoneyMovementType } from './types';
 
 type MoneyMovementPageProps = {
   initialSnapshot: HermesDashboardSnapshot;
 };
-
-type DashboardTheme = 'dark' | 'light';
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
@@ -133,7 +132,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
   const [actionStatus, setActionStatus] = useState('');
   const [depositAmount, setDepositAmount] = useState(() => String(initialSnapshot.account.depositIntent?.amount ?? 1000));
   const [logoutStatus, setLogoutStatus] = useState('');
-  const [theme, setTheme] = useState<DashboardTheme>('dark');
+  const { theme, toggleTheme } = useDashboardTheme();
   const queryClient = useQueryClient();
   const { data, isError, isFetching } = useQuery({
     queryKey: hermesDashboardQueryKey,
@@ -168,22 +167,6 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
       setLogoutStatus(error.message);
     },
   });
-
-  useEffect(() => {
-    const storedTheme = window.localStorage.getItem('hermes_dashboard_theme');
-
-    if (storedTheme === 'dark' || storedTheme === 'light') {
-      setTheme(storedTheme);
-    }
-  }, []);
-
-  function toggleTheme() {
-    setTheme((current) => {
-      const next = current === 'dark' ? 'light' : 'dark';
-      window.localStorage.setItem('hermes_dashboard_theme', next);
-      return next;
-    });
-  }
 
   function handleDeposit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

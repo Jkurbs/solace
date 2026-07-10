@@ -55,13 +55,13 @@ export default function RiskProfileSelector({ initialRiskProfile }: RiskProfileS
                 setMessage('');
               }}
               className={cn(
-                'rounded-md border p-4 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neutral-200',
+                'rounded-md border p-4 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neutral-400 dark:focus-visible:outline-neutral-200',
                 selected
-                  ? 'border-neutral-200 bg-neutral-50 text-neutral-950'
-                  : 'border-neutral-800 bg-neutral-950/30 text-neutral-50',
+                  ? 'border-neutral-950 bg-neutral-100 text-neutral-950 dark:border-neutral-200 dark:bg-neutral-50'
+                  : 'border-neutral-200 bg-white text-neutral-950 dark:border-neutral-800 dark:bg-neutral-950/30 dark:text-neutral-50',
                 available
-                  ? 'cursor-pointer hover:border-neutral-600'
-                  : 'cursor-not-allowed text-neutral-500 opacity-70 hover:border-neutral-800',
+                  ? 'cursor-pointer hover:border-neutral-400 dark:hover:border-neutral-600'
+                  : 'cursor-not-allowed text-neutral-500 opacity-70 hover:border-neutral-200 dark:hover:border-neutral-800',
               )}
             >
               <div className="flex items-center gap-3">
