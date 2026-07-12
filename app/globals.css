@@ -10169,6 +10169,172 @@ h2 {
   html[data-theme='light'] .hx-stand-verdict {
     border-top-color: rgba(19, 17, 12, 0.1);
   }
+
+  html[data-theme='light'] .hx-gates-flat .hx-gates-step,
+  html[data-theme='light'] .hx-gates-flat .hx-scn-step {
+    border-left-color: rgba(19, 17, 12, 0.22);
+  }
+
+  html[data-theme='light'] .hx-gates-flat .hx-gates-step span,
+  html[data-theme='light'] .hx-gates-flat .hx-scn-step span,
+  html[data-theme='light'] .hx-mwalk-step span {
+    color: rgba(19, 17, 12, 0.5);
+  }
+
+  html[data-theme='light'] .hx-gates-flat .hx-gates-step p,
+  html[data-theme='light'] .hx-gates-flat .hx-scn-step p,
+  html[data-theme='light'] .hx-mwalk-step p {
+    color: rgba(19, 17, 12, 0.62);
+  }
+
+  html[data-theme='light'] .hx-gate-note,
+  html[data-theme='light'] .hx-scn-disclaimer {
+    color: rgba(19, 17, 12, 0.48);
+  }
+
+  html[data-theme='light'] .hx-verdict-chip {
+    border-color: rgba(19, 17, 12, 0.16);
+    color: rgba(19, 17, 12, 0.42);
+  }
+
+  html[data-theme='light'] .hx-verdict-chip.is-active {
+    border-color: rgba(19, 17, 12, 0.45);
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .hx-verdict-chip.is-active.is-deploy {
+    border-color: rgba(78, 122, 94, 0.55);
+    background: rgba(78, 122, 94, 0.12);
+    color: #4e7a5e;
+  }
+
+  html[data-theme='light'] .hx-scn-posture {
+    border-color: rgba(19, 17, 12, 0.18);
+    color: rgba(19, 17, 12, 0.72);
+  }
+
+  html[data-theme='light'] .hx-scn-posture.is-selective {
+    border-color: rgba(92, 83, 68, 0.4);
+    color: #5c5344;
+  }
+
+  html[data-theme='light'] .hx-scn-posture.is-deployed {
+    border-color: rgba(78, 122, 94, 0.5);
+    background: rgba(78, 122, 94, 0.1);
+    color: #4e7a5e;
+  }
+
+  html[data-theme='light'] .hx-scn-posture.is-defensive {
+    border-color: rgba(107, 99, 84, 0.45);
+    background: rgba(107, 99, 84, 0.08);
+    color: #6b6354;
+  }
+
+  html[data-theme='light'] .hx-scn-posture.is-standing-down {
+    border-color: rgba(19, 17, 12, 0.16);
+    color: rgba(19, 17, 12, 0.55);
+  }
+
+  html[data-theme='light'] .hx-scn-exposure {
+    color: rgba(19, 17, 12, 0.55);
+  }
+
+  html[data-theme='light'] .hx-scn-exposure-rail {
+    background: rgba(19, 17, 12, 0.1);
+  }
+
+  html[data-theme='light'] .hx-scn-exposure-rail i {
+    background: rgba(19, 17, 12, 0.55);
+  }
+
+  html[data-theme='light'] .hx-mwalk-sticky {
+    background:
+      linear-gradient(180deg, rgba(247, 242, 232, 0.98) 0%, rgba(247, 242, 232, 0.96) 78%, rgba(247, 242, 232, 0) 100%);
+  }
+
+  html[data-theme='light'] .hx-mwalk-sticky .hx-gate-panel,
+  html[data-theme='light'] .hx-mwalk-sticky .hx-scn-panel {
+    box-shadow: 0 1.8rem 5rem rgba(19, 17, 12, 0.12);
+  }
+
+  html[data-theme='light'] .hx-window-view {
+    background: #f7f5ef;
+  }
+
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] {
+    background: #f7f5ef;
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-live,
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-pill {
+    border-color: rgba(19, 17, 12, 0.16);
+    color: rgba(19, 17, 12, 0.62);
+  }
+
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-card {
+    border-color: rgba(19, 17, 12, 0.14);
+    background: #ffffff;
+  }
+
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-label {
+    color: rgba(19, 17, 12, 0.5);
+  }
+
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-title,
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-card strong,
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-value {
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-positive {
+    color: #0f766e !important;
+  }
+
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-metrics,
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-status-grid {
+    border-top-color: rgba(19, 17, 12, 0.1);
+  }
+
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-card p {
+    color: rgba(19, 17, 12, 0.62);
+  }
+
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-donut {
+    box-shadow: inset 0 0 0 0.85rem #ffffff;
+  }
+
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-allocation-list > span {
+    color: rgba(19, 17, 12, 0.68);
+  }
+
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-activity > span {
+    border-top-color: rgba(19, 17, 12, 0.1);
+  }
+
+  html[data-theme='light'] .hxm-board[data-board-theme='light'] .hxm-activity small {
+    color: rgba(19, 17, 12, 0.45);
+  }
+
+  html[data-theme='light'] .hxb-board[data-board-theme='light'][data-focus='overview'] .hxb-region.is-overview,
+  html[data-theme='light'] .hxb-board[data-board-theme='light'][data-focus='posture'] .hxb-region.is-posture,
+  html[data-theme='light'] .hxb-board[data-board-theme='light'][data-focus='outlook'] .hxb-region.is-outlook,
+  html[data-theme='light'] .hxb-board[data-board-theme='light'][data-focus='execution'] .hxb-region.is-execution {
+    box-shadow:
+      0 0 0 1px rgba(19, 17, 12, 0.12),
+      0 1.4rem 4rem rgba(19, 17, 12, 0.1),
+      0 0 2rem rgba(19, 17, 12, 0.04);
+  }
+
+  html[data-theme='light'] .hxm-board[data-board-theme='light'][data-focus='overview'] .hxm-region.is-overview,
+  html[data-theme='light'] .hxm-board[data-board-theme='light'][data-focus='posture'] .hxm-region.is-posture,
+  html[data-theme='light'] .hxm-board[data-board-theme='light'][data-focus='outlook'] .hxm-region.is-outlook,
+  html[data-theme='light'] .hxm-board[data-board-theme='light'][data-focus='execution'] .hxm-region.is-execution {
+    border-color: rgba(19, 17, 12, 0.2);
+    box-shadow:
+      0 1rem 2.8rem rgba(19, 17, 12, 0.1),
+      0 0 2rem rgba(19, 17, 12, 0.04);
+  }
 }
 
 @layer components {
@@ -10183,8 +10349,17 @@ h2 {
   html[data-theme='light'] .oracle-qhero,
   html[data-theme='light'] .news-item .note-plate,
   html[data-theme='light'] .hermes-section,
-  html[data-theme='light'] .oracle-section,
-  html[data-theme='light'] .hx-dashboard-plate {
+  html[data-theme='light'] .oracle-section {
+    --foreground: #fafafa;
+    --muted: #a3a29b;
+    --faint: #6f6e66;
+    --accent: #d6d0c4;
+    --accent-2: #b8bec7;
+    --background: #0a0a0a;
+    --line: rgba(250, 250, 250, 0.1);
+  }
+
+  html[data-theme='light'] .hx-dashboard-plate[data-board-theme='dark'] {
     --foreground: #fafafa;
     --muted: #a3a29b;
     --faint: #6f6e66;

@@ -6,6 +6,31 @@ import { motion, useReducedMotion } from 'framer-motion';
 
 export const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
+export type SiteTheme = 'dark' | 'light';
+
+export function useSiteTheme() {
+  const [theme, setTheme] = useState<SiteTheme>(() => {
+    if (typeof document === 'undefined') {
+      return 'dark';
+    }
+
+    return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+  });
+
+  useEffect(() => {
+    const read = () => (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark') as SiteTheme;
+
+    setTheme(read());
+
+    const observer = new MutationObserver(() => setTheme(read()));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    return () => observer.disconnect();
+  }, []);
+
+  return theme;
+}
+
 export function useMediaQuery(query: string) {
   const [matches, setMatches] = useState(false);
 
