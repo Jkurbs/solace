@@ -41,9 +41,9 @@ export default function ThemeToggle() {
       title={theme === 'light' ? 'Dark mode' : 'Light mode'}
     >
       {theme === 'light' ? (
-        <Moon size={15} strokeWidth={1.75} aria-hidden="true" />
+        <Moon strokeWidth={1.75} aria-hidden="true" />
       ) : (
-        <Sun size={15} strokeWidth={1.75} aria-hidden="true" />
+        <Sun strokeWidth={1.75} aria-hidden="true" />
       )}
     </button>
   );
