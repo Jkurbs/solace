@@ -1,5 +1,6 @@
 'use client';
 
+import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 // Dark is the site's default (the observatory); light is the paper register
@@ -39,7 +40,11 @@ export default function ThemeToggle() {
       aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
       title={theme === 'light' ? 'Dark mode' : 'Light mode'}
     >
-      <span aria-hidden="true">{theme === 'light' ? '☾' : '☀'}</span>
+      {theme === 'light' ? (
+        <Moon size={15} strokeWidth={1.75} aria-hidden="true" />
+      ) : (
+        <Sun size={15} strokeWidth={1.75} aria-hidden="true" />
+      )}
     </button>
   );
 }
