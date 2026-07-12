@@ -9577,8 +9577,17 @@ h2 {
 
   html[data-theme='light'] .footer-heading,
   html[data-theme='light'] .footer-status,
-  html[data-theme='light'] .footer-fineprint {
+  html[data-theme='light'] .footer-fineprint,
+  html[data-theme='light'] .footer-stamp {
     color: rgba(19, 17, 12, 0.5);
+  }
+
+  html[data-theme='light'] .footer-stamp-link {
+    color: rgba(19, 17, 12, 0.65);
+  }
+
+  html[data-theme='light'] .footer-stamp-link:hover {
+    color: #13110c;
   }
 
   html[data-theme='light'] .site-footer a,
@@ -9781,6 +9790,185 @@ h2 {
   html[data-theme='light'] .hx-briefcard-item strong {
     color: #13110c;
   }
+
+  /* --- site chrome (header nav, menu, mark) --- */
+  html[data-theme='light'] .site-nav a,
+  html[data-theme='light'] .site-action-link {
+    color: rgba(19, 17, 12, 0.55);
+  }
+
+  html[data-theme='light'] .site-nav a:hover,
+  html[data-theme='light'] .site-action-link:hover {
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .site-action-primary {
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .site-action-separator {
+    background: rgba(19, 17, 12, 0.2);
+  }
+
+  html[data-theme='light'] .site-mark {
+    filter: none;
+  }
+
+  html[data-theme='light'] .site-menu-panel a {
+    border-bottom-color: rgba(19, 17, 12, 0.1);
+    color: rgba(19, 17, 12, 0.72);
+  }
+
+  html[data-theme='light'] .site-menu-panel a:hover {
+    background: rgba(19, 17, 12, 0.04);
+    color: #13110c;
+  }
+
+  /* --- hero (observatory variant) --- */
+  html[data-theme='light'] .hero-body {
+    color: rgba(19, 17, 12, 0.78) !important;
+    text-shadow: none;
+  }
+
+  /* --- homepage strips --- */
+  html[data-theme='light'] .research-strip-inner,
+  html[data-theme='light'] .news-strip-inner {
+    border-top-color: rgba(19, 17, 12, 0.12);
+  }
+
+  html[data-theme='light'] .research-strip-meta > span {
+    color: rgba(19, 17, 12, 0.5);
+  }
+
+  html[data-theme='light'] .site-footer .text-muted {
+    color: rgba(19, 17, 12, 0.58);
+  }
+
+  /* --- quiet hero buttons on paper --- */
+  html[data-theme='light'] .hero-quiet .hermes-product-button-dark {
+    border-color: rgba(19, 17, 12, 0.22);
+    background: rgba(19, 17, 12, 0.04);
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .hero-quiet .hermes-product-button-dark:hover {
+    border-color: rgba(19, 17, 12, 0.38);
+    background: rgba(19, 17, 12, 0.08);
+  }
+
+  html[data-theme='light'] .hero-quiet .hermes-product-button-light:hover {
+    background: #efe9db;
+  }
+
+  /* --- oracle page typography + diagram --- */
+  html[data-theme='light'] .oracle-statband strong {
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .oracle-table-head span {
+    color: rgba(19, 17, 12, 0.5);
+  }
+
+  html[data-theme='light'] .oracle-table-row span {
+    color: rgba(19, 17, 12, 0.82);
+  }
+
+  html[data-theme='light'] .read-on-line {
+    color: rgba(19, 17, 12, 0.55);
+  }
+
+  html[data-theme='light'] .rel-grid {
+    stroke: rgba(19, 17, 12, 0.08);
+  }
+
+  html[data-theme='light'] .rel-diagonal {
+    stroke: rgba(92, 83, 68, 0.55);
+  }
+
+  html[data-theme='light'] .rel-dot {
+    fill: rgba(92, 83, 68, 0.35);
+    stroke: rgba(92, 83, 68, 0.85);
+  }
+
+  html[data-theme='light'] .rel-axis {
+    fill: rgba(19, 17, 12, 0.5);
+  }
+
+  html[data-theme='light'] .rel-axis-title {
+    fill: rgba(19, 17, 12, 0.38);
+  }
+
+  html[data-theme='light'] .rel-legend {
+    color: rgba(19, 17, 12, 0.5);
+  }
+
+  html[data-theme='light'] .rel-key-line {
+    border-top-color: rgba(92, 83, 68, 0.55);
+  }
+
+  /* --- hx register (hermes, news, trust, 404) --- */
+  html[data-theme='light'] .hx-form,
+  html[data-theme='light'] .hx-foot {
+    border-top-color: rgba(19, 17, 12, 0.12);
+  }
+
+  html[data-theme='light'] .hx-progress {
+    background: linear-gradient(90deg, rgba(19, 17, 12, 0.55), rgba(19, 17, 12, 0.82));
+  }
+
+  html[data-theme='light'] .hx-btn-primary {
+    color: #f7f2e8;
+  }
+
+  html[data-theme='light'] .hx-btn-primary:hover {
+    box-shadow: 0 0.9rem 2.2rem rgba(19, 17, 12, 0.12);
+  }
+
+  /* --- hermes access form --- */
+  html[data-theme='light'] .hermes-form-field label {
+    color: rgba(19, 17, 12, 0.65);
+  }
+
+  html[data-theme='light'] .hermes-form-field input,
+  html[data-theme='light'] .hermes-form-field select,
+  html[data-theme='light'] .hermes-form-field textarea {
+    border-bottom-color: rgba(19, 17, 12, 0.35);
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .hermes-form-field textarea {
+    border-color: rgba(19, 17, 12, 0.28);
+  }
+
+  html[data-theme='light'] .hermes-form-field ::placeholder {
+    color: rgba(19, 17, 12, 0.38);
+  }
+
+  html[data-theme='light'] .hermes-form-field option {
+    background: #fbf8f1;
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .hermes-form-actions button {
+    border-color: rgba(19, 17, 12, 0.35);
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .hermes-form-actions button:hover {
+    background: #13110c;
+    border-color: #13110c;
+    color: #f7f2e8;
+  }
+
+  html[data-theme='light'] .hermes-form-actions button:disabled:hover {
+    border-color: rgba(19, 17, 12, 0.35);
+    background: transparent;
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .hermes-form-actions p {
+    color: rgba(19, 17, 12, 0.55);
+  }
 }
 
 @layer components {
@@ -9793,12 +9981,17 @@ h2 {
 
   html[data-theme='light'] .inst-card:not(.inst-card-quiet),
   html[data-theme='light'] .oracle-qhero,
-  html[data-theme='light'] .news-item .note-plate {
+  html[data-theme='light'] .news-item .note-plate,
+  html[data-theme='light'] .hermes-section,
+  html[data-theme='light'] .oracle-section,
+  html[data-theme='light'] .hx-dashboard-plate {
     --foreground: #fafafa;
     --muted: #a3a29b;
     --faint: #6f6e66;
     --accent: #d6d0c4;
     --accent-2: #b8bec7;
+    --background: #0a0a0a;
+    --line: rgba(250, 250, 250, 0.1);
   }
 
   html[data-theme='light'] .inst-card:not(.inst-card-quiet) .inst-card-name > strong {
@@ -9812,5 +10005,45 @@ h2 {
   html[data-theme='light'] .oracle-qhero-question,
   html[data-theme='light'] .oracle-qhero-prob strong {
     color: #fafafa;
+  }
+
+  html[data-theme='light'] .inst-card:not(.inst-card-quiet) .inst-card-live-brief {
+    color: rgba(250, 250, 250, 0.68);
+  }
+
+  html[data-theme='light'] .hermes-section .hermes-product-copy h2,
+  html[data-theme='light'] .oracle-section .hermes-product-copy h2,
+  html[data-theme='light'] .hermes-section .hermes-product-copy > p:last-of-type,
+  html[data-theme='light'] .oracle-section .hermes-product-copy > p:last-of-type,
+  html[data-theme='light'] .hermes-section .hermes-product-metrics span,
+  html[data-theme='light'] .oracle-section .hermes-product-metrics span,
+  html[data-theme='light'] .hermes-section .hermes-product-metrics strong,
+  html[data-theme='light'] .oracle-section .hermes-product-metrics strong {
+    color: #fafafa;
+  }
+
+  html[data-theme='light'] .hermes-section .hermes-product-copy > p:last-of-type,
+  html[data-theme='light'] .oracle-section .hermes-product-copy > p:last-of-type {
+    color: rgba(250, 250, 250, 0.78);
+  }
+
+  html[data-theme='light'] .hermes-section .hermes-product-metrics,
+  html[data-theme='light'] .oracle-section .hermes-product-metrics {
+    border-block-color: rgba(250, 250, 250, 0.1);
+  }
+
+  html[data-theme='light'] .hermes-section .hermes-product-metrics div,
+  html[data-theme='light'] .oracle-section .hermes-product-metrics div {
+    border-right-color: rgba(250, 250, 250, 0.1);
+  }
+
+  html[data-theme='light'] .hermes-section .section-kicker,
+  html[data-theme='light'] .oracle-section .section-kicker {
+    color: #a3a29b;
+  }
+
+  html[data-theme='light'] .hx-product-frame {
+    border-color: rgba(250, 250, 250, 0.1);
+    background: #10100e;
   }
 }

@@ -36,9 +36,12 @@ export default function OraclePage() {
             <Mark size={20} />
             Solace
           </Link>
-          <Link href="/" className="hx-btn hx-btn-secondary hx-btn-sm">
-            Home
-          </Link>
+          <span className="inline-flex items-center gap-3">
+            <ThemeToggle />
+            <Link href="/" className="hx-btn hx-btn-secondary hx-btn-sm">
+              Home
+            </Link>
+          </span>
         </div>
       </header>
 

@@ -11,11 +11,9 @@ import {
 } from './theme';
 
 export function useDashboardTheme() {
-  const [theme, setTheme] = useState<DashboardTheme>('dark');
+  const [theme, setTheme] = useState<DashboardTheme>(() => readDashboardTheme());
 
   useEffect(() => {
-    setTheme(readDashboardTheme());
-
     const onStorage = (event: StorageEvent) => {
       if (event.key === DASHBOARD_THEME_STORAGE_KEY && (event.newValue === 'light' || event.newValue === 'dark')) {
         setTheme(event.newValue);
