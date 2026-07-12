@@ -198,7 +198,7 @@ h2 {
     border: 1px solid transparent;
     background: var(--foreground);
     padding: 0 1.15rem;
-    color: #060604;
+    color: var(--background);
     font-weight: 600;
     transition: background 180ms ease, transform 180ms ease;
   }
@@ -215,7 +215,7 @@ h2 {
     padding: 0 1.1rem;
     border-radius: 999px;
     background: var(--foreground);
-    color: #0a0a0a;
+    color: var(--background);
     font-family: var(--font-plex);
     font-size: 0.72rem;
     font-weight: 700;
@@ -2695,7 +2695,7 @@ h2 {
   .hermes-product-primary {
     border: 1px solid var(--foreground);
     background: var(--foreground);
-    color: #060604;
+    color: var(--background);
   }
 
   .hermes-product-secondary {
@@ -3207,7 +3207,7 @@ h2 {
   .hermes-form-actions button:hover {
     background: var(--foreground);
     border-color: var(--foreground);
-    color: #080807;
+    color: var(--background);
   }
 
   .hermes-form-actions button:disabled {
@@ -4690,7 +4690,7 @@ h2 {
   .hermes-product-button-light {
     border: 1px solid transparent;
     background: var(--foreground);
-    color: #060604;
+    color: var(--background);
     font-weight: 600;
   }
 
@@ -5813,7 +5813,7 @@ h2 {
   .hx-btn-primary {
     border: 1px solid var(--foreground);
     background: var(--foreground);
-    color: #070705;
+    color: var(--background);
   }
 
   .hx-btn-primary:hover {
@@ -9856,8 +9856,13 @@ h2 {
     background: rgba(19, 17, 12, 0.08);
   }
 
-  html[data-theme='light'] .hero-quiet .hermes-product-button-light:hover {
-    background: #efe9db;
+  html[data-theme='light'] .primary-link:hover,
+  html[data-theme='light'] .header-request-button:hover,
+  html[data-theme='light'] .hermes-product-button-light:hover,
+  html[data-theme='light'] .hermes-product-primary:hover,
+  html[data-theme='light'] .hx-btn-primary:hover {
+    background: #2a261c;
+    color: #f7f2e8;
   }
 
   /* --- oracle page typography + diagram --- */
@@ -9916,10 +9921,6 @@ h2 {
     background: linear-gradient(90deg, rgba(19, 17, 12, 0.55), rgba(19, 17, 12, 0.82));
   }
 
-  html[data-theme='light'] .hx-btn-primary {
-    color: #f7f2e8;
-  }
-
   html[data-theme='light'] .hx-btn-primary:hover {
     box-shadow: 0 0.9rem 2.2rem rgba(19, 17, 12, 0.12);
   }
@@ -9955,8 +9956,8 @@ h2 {
   }
 
   html[data-theme='light'] .hermes-form-actions button:hover {
-    background: #13110c;
-    border-color: #13110c;
+    background: #2a261c;
+    border-color: #2a261c;
     color: #f7f2e8;
   }
 
