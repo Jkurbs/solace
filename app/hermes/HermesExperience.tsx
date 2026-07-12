@@ -400,12 +400,9 @@ export default function HermesExperience() {
             <Mark size={20} />
             Solace
           </Link>
-          <span className="inline-flex items-center gap-3">
-            <ThemeToggle />
-            <a href="#request-access" className="hx-btn hx-btn-primary hx-btn-sm">
-              Request Hermes
-            </a>
-          </span>
+          <a href="#request-access" className="hx-btn hx-btn-primary hx-btn-sm">
+            Request Hermes
+          </a>
         </div>
       </header>
 

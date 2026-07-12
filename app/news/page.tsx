@@ -28,12 +28,9 @@ export default function NewsPage() {
             <Mark size={20} />
             Solace
           </Link>
-          <span className="inline-flex items-center gap-3">
-            <ThemeToggle />
-            <Link href="/hermes#request-access" className="hx-btn hx-btn-primary hx-btn-sm">
-              Request access
-            </Link>
-          </span>
+          <Link href="/hermes#request-access" className="hx-btn hx-btn-primary hx-btn-sm">
+            Request access
+          </Link>
         </div>
       </header>
 

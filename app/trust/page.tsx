@@ -147,7 +147,6 @@ export default async function TrustPage() {
             Solace
           </Link>
           <div className="trust-header-actions">
-            <ThemeToggle />
             <Link href="/hermes" className="hx-btn hx-btn-secondary hx-btn-sm">
               Hermes
             </Link>

@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import Mark from '@/app/Mark';
 import DashboardAccessGate from '@/app/dashboard/DashboardAccessGate';
 import DashboardThemeShell from '@/app/dashboard/DashboardThemeShell';
-import DashboardThemeToggle from '@/app/dashboard/DashboardThemeToggle';
+
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
 import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
@@ -213,7 +213,6 @@ export default async function DashboardContractPage() {
             <Link href="/hermes" className="hidden transition-colors hover:text-neutral-950 dark:hover:text-neutral-50 sm:inline">
               Hermes
             </Link>
-            <DashboardThemeToggle />
           </nav>
         </div>
       </header>

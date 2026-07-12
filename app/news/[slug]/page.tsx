@@ -61,12 +61,9 @@ export default async function NewsPostPage({
             <Mark size={20} />
             Solace
           </Link>
-          <span className="inline-flex items-center gap-3">
-            <ThemeToggle />
-            <Link href="/news" className="hx-btn hx-btn-secondary hx-btn-sm">
-              All news
-            </Link>
-          </span>
+          <Link href="/news" className="hx-btn hx-btn-secondary hx-btn-sm">
+            All news
+          </Link>
         </div>
       </header>
 

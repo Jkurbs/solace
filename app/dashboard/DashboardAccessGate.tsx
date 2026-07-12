@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import Mark from '@/app/Mark';
 import DashboardThemeShell from '@/app/dashboard/DashboardThemeShell';
-import DashboardThemeToggle from '@/app/dashboard/DashboardThemeToggle';
+
 
 type AuthStatus = 'denied' | 'expired' | 'failed' | 'invalid' | 'sent' | undefined;
 
@@ -75,7 +75,6 @@ export default function DashboardAccessGate({
             >
               Hermes
             </Link>
-            <DashboardThemeToggle />
           </div>
         </div>
       </header>

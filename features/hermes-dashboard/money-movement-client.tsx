@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDownToLine, ArrowLeft, ArrowUpFromLine, LogOut, Moon, Sun, Wallet } from 'lucide-react';
+import { ArrowDownToLine, ArrowLeft, ArrowUpFromLine, LogOut, Wallet } from 'lucide-react';
 
 import Mark from '@/app/Mark';
 import { Badge } from '@/components/ui/badge';
@@ -132,7 +132,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
   const [actionStatus, setActionStatus] = useState('');
   const [depositAmount, setDepositAmount] = useState(() => String(initialSnapshot.account.depositIntent?.amount ?? 1000));
   const [logoutStatus, setLogoutStatus] = useState('');
-  const { theme, toggleTheme } = useDashboardTheme();
+  const { theme } = useDashboardTheme();
   const queryClient = useQueryClient();
   const { data, isError, isFetching } = useQuery({
     queryKey: hermesDashboardQueryKey,
@@ -227,18 +227,6 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
               {isFetching ? 'Syncing' : 'Live 5s'}
             </Badge>
             <Badge variant={isSimulationMode ? 'secondary' : 'success'}>{isSimulationMode ? 'Simulation' : 'Live'}</Badge>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="px-2 font-bold sm:px-3"
-              onClick={toggleTheme}
-              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              aria-pressed={theme === 'dark'}
-            >
-              {theme === 'dark' ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}
-              <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
-            </Button>
             <Button
               type="button"
               variant="ghost"

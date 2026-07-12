@@ -144,7 +144,6 @@ function Header() {
           <Link href="/hermes#request-access" className="site-action-link site-action-primary">
             Request access
           </Link>
-          <ThemeToggle />
           <button
             type="button"
             className={`site-menu-button${menuOpen ? ' is-open' : ''}`}

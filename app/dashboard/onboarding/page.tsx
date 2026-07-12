@@ -6,7 +6,7 @@ import { ArrowRight, Check } from 'lucide-react';
 
 import Mark from '@/app/Mark';
 import DashboardThemeShell from '@/app/dashboard/DashboardThemeShell';
-import DashboardThemeToggle from '@/app/dashboard/DashboardThemeToggle';
+
 import RiskProfileSelector from '@/app/dashboard/onboarding/risk-profile-selector';
 import { findApprovedAccessRequestByAccountId } from '@/features/access-review/store';
 import type { HermesAccessRequest } from '@/features/access-review/types';
@@ -152,7 +152,6 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             >
               Hermes
             </Link>
-            <DashboardThemeToggle />
           </div>
         </div>
       </header>

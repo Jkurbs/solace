@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Bug, Check, Clock3, LogOut, Moon, Scale, ShieldCheck, Sun, Zap } from 'lucide-react';
+import { ArrowRight, Bug, Check, Clock3, LogOut, Scale, ShieldCheck, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import Mark from '@/app/Mark';
@@ -255,7 +255,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const [identityStatus, setIdentityStatus] = useState('');
   const [logoutStatus, setLogoutStatus] = useState('');
   const [riskStatus, setRiskStatus] = useState('');
-  const { theme, toggleTheme } = useDashboardTheme();
+  const { theme } = useDashboardTheme();
   const queryClient = useQueryClient();
   const { data, dataUpdatedAt, isError, isFetching } = useQuery({
     queryKey: hermesDashboardQueryKey,
@@ -529,18 +529,6 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               {isFetching ? 'Syncing' : 'Auto-refresh 5s'}
             </Badge>
             <Badge variant={isSimulationMode ? 'secondary' : 'success'}>{isSimulationMode ? 'Simulation' : 'Live'}</Badge>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="px-2 font-bold sm:px-3"
-              onClick={toggleTheme}
-              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              aria-pressed={theme === 'dark'}
-            >
-              {theme === 'dark' ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}
-              <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
-            </Button>
             <Link
               href="/dashboard/report"
               className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-sm font-bold text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-50 sm:px-3"
