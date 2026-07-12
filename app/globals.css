@@ -9554,8 +9554,16 @@ h2 {
     border-top-color: rgba(19, 17, 12, 0.14);
   }
 
+  html[data-theme='light'] .faq-strip-inner {
+    border-top-color: rgba(19, 17, 12, 0.12);
+  }
+
   html[data-theme='light'] .faq-item summary {
     color: #13110c;
+  }
+
+  html[data-theme='light'] .faq-item summary::after {
+    color: rgba(19, 17, 12, 0.45);
   }
 
   html[data-theme='light'] .faq-item p,
@@ -9624,8 +9632,38 @@ h2 {
     border-color: rgba(19, 17, 12, 0.14);
   }
 
+  html[data-theme='light'] .trust-sheet-toolbar {
+    background: #f5f0e4;
+  }
+
   html[data-theme='light'] .trust-sheet-meta-cell {
     background: #f5f0e4;
+  }
+
+  html[data-theme='light'] .trust-info-table h2 {
+    background: #f5f0e4;
+  }
+
+  html[data-theme='light'] .trust-row-head,
+  html[data-theme='light'] .trust-row-number {
+    background: #efe9db;
+    color: rgba(19, 17, 12, 0.45);
+  }
+
+  html[data-theme='light'] .trust-simple-sheet th {
+    background: #f5f0e4;
+  }
+
+  html[data-theme='light'] .trust-info-table li {
+    border-bottom-color: rgba(19, 17, 12, 0.12);
+  }
+
+  html[data-theme='light'] .trust-info-table li em {
+    border-left-color: rgba(19, 17, 12, 0.12);
+  }
+
+  html[data-theme='light'] .trust-info-table li span {
+    color: rgba(19, 17, 12, 0.78);
   }
 
   html[data-theme='light'] .trust-sheet-meta-cell span,
@@ -9645,6 +9683,7 @@ h2 {
   }
 
   html[data-theme='light'] .trust-ledger-table th {
+    background: #efe9db;
     color: rgba(19, 17, 12, 0.55);
   }
 
@@ -9970,6 +10009,166 @@ h2 {
   html[data-theme='light'] .hermes-form-actions p {
     color: rgba(19, 17, 12, 0.55);
   }
+
+  /* --- hermes marketing page --- */
+  html[data-theme='light'] .hx-hero-title {
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .hx-hero-lede {
+    color: rgba(19, 17, 12, 0.65);
+  }
+
+  html[data-theme='light'] .hx-scrollcue-rail {
+    background: linear-gradient(180deg, rgba(19, 17, 12, 0.35), transparent);
+  }
+
+  html[data-theme='light'] .hx-problem-head h2 {
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .hx-problem-close,
+  html[data-theme='light'] .hx-stand-note {
+    color: rgba(19, 17, 12, 0.72);
+  }
+
+  html[data-theme='light'] .hx-walk-step {
+    border-left-color: rgba(19, 17, 12, 0.14);
+  }
+
+  html[data-theme='light'] .hx-walk-step.is-active {
+    border-left-color: rgba(19, 17, 12, 0.55);
+  }
+
+  html[data-theme='light'] .hx-walk-step span,
+  html[data-theme='light'] .hx-pin-step p {
+    color: rgba(19, 17, 12, 0.58);
+  }
+
+  html[data-theme='light'] .hx-walk-step p {
+    color: rgba(19, 17, 12, 0.62);
+  }
+
+  html[data-theme='light'] .hx-pin-step {
+    border-left-color: rgba(19, 17, 12, 0.14);
+  }
+
+  html[data-theme='light'] .hx-apple-moment {
+    border-top-color: rgba(19, 17, 12, 0.1);
+  }
+
+  html[data-theme='light'] .hx-window {
+    border-color: rgba(19, 17, 12, 0.18);
+    background: #fbf8f1;
+    box-shadow:
+      0 2rem 5rem rgba(19, 17, 12, 0.12),
+      0 0.5rem 1.2rem rgba(19, 17, 12, 0.06);
+  }
+
+  html[data-theme='light'] .hx-window-bar {
+    border-bottom-color: rgba(19, 17, 12, 0.1);
+    background: #f5f0e4;
+  }
+
+  html[data-theme='light'] .hx-window-dots i {
+    background: rgba(19, 17, 12, 0.2);
+  }
+
+  html[data-theme='light'] .hx-window-url {
+    background: rgba(19, 17, 12, 0.06);
+    color: rgba(19, 17, 12, 0.5);
+  }
+
+  html[data-theme='light'] .hx-problem-panel,
+  html[data-theme='light'] .hx-gate-panel,
+  html[data-theme='light'] .hx-scn-panel,
+  html[data-theme='light'] .hx-dec-card,
+  html[data-theme='light'] .hx-stand-card {
+    border-color: rgba(19, 17, 12, 0.16);
+    background: #fbf8f1;
+    box-shadow: 0 2rem 5rem rgba(19, 17, 12, 0.1);
+  }
+
+  html[data-theme='light'] .hx-problem-band {
+    fill: rgba(92, 83, 68, 0.12);
+  }
+
+  html[data-theme='light'] .hx-problem-line {
+    stroke: rgba(19, 17, 12, 0.72);
+  }
+
+  html[data-theme='light'] .hx-problem-question {
+    text-shadow: 0 0 1.2rem rgba(247, 242, 232, 0.9);
+  }
+
+  html[data-theme='light'] .hx-gate-panel-bar {
+    border-bottom-color: rgba(19, 17, 12, 0.1);
+    color: rgba(19, 17, 12, 0.88);
+  }
+
+  html[data-theme='light'] .hx-gate-panel-bar em,
+  html[data-theme='light'] .hx-gate-id {
+    color: rgba(19, 17, 12, 0.45);
+  }
+
+  html[data-theme='light'] .hx-gate-row {
+    border-bottom-color: rgba(19, 17, 12, 0.1);
+  }
+
+  html[data-theme='light'] .hx-gate-q p {
+    color: rgba(19, 17, 12, 0.55);
+  }
+
+  html[data-theme='light'] .hx-gate-chip {
+    border-color: rgba(19, 17, 12, 0.18);
+    color: rgba(19, 17, 12, 0.5);
+  }
+
+  html[data-theme='light'] .hx-scn-chart {
+    border-color: rgba(19, 17, 12, 0.1);
+    background: rgba(19, 17, 12, 0.04);
+  }
+
+  html[data-theme='light'] .hx-scn-band {
+    fill: rgba(92, 83, 68, 0.1);
+  }
+
+  html[data-theme='light'] .hx-scn-line {
+    stroke: rgba(19, 17, 12, 0.72);
+  }
+
+  html[data-theme='light'] .hx-scn-marker text {
+    fill: rgba(19, 17, 12, 0.55);
+  }
+
+  html[data-theme='light'] .hx-scn-status-cell em,
+  html[data-theme='light'] .hx-dec-body em,
+  html[data-theme='light'] .hx-dec-number,
+  html[data-theme='light'] .hx-stand-card > span,
+  html[data-theme='light'] .hx-stand-verdict em {
+    color: rgba(19, 17, 12, 0.45);
+  }
+
+  html[data-theme='light'] .hx-dec-body p,
+  html[data-theme='light'] .hx-stand-card p {
+    color: rgba(19, 17, 12, 0.62);
+  }
+
+  html[data-theme='light'] .hx-dec-rail i {
+    background: rgba(19, 17, 12, 0.14);
+  }
+
+  html[data-theme='light'] .hx-dec-rail i.is-active {
+    background: rgba(19, 17, 12, 0.72);
+  }
+
+  html[data-theme='light'] .hx-dec-footnote {
+    color: rgba(19, 17, 12, 0.55);
+  }
+
+  html[data-theme='light'] .hx-stand-verdict {
+    border-top-color: rgba(19, 17, 12, 0.1);
+  }
 }
 
 @layer components {
@@ -10044,7 +10243,8 @@ h2 {
   }
 
   html[data-theme='light'] .hx-product-frame {
-    border-color: rgba(250, 250, 250, 0.1);
-    background: #10100e;
+    border-color: rgba(19, 17, 12, 0.16);
+    background: #fbf8f1;
+    box-shadow: 0 2rem 5rem rgba(19, 17, 12, 0.1);
   }
 }
