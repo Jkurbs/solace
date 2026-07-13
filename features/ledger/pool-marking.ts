@@ -57,6 +57,10 @@ function normalizeAmount(value: number) {
   return roundCurrency(Number.isFinite(value) ? value : 0);
 }
 
+function normalizeSourceUnrealizedPnl(value: number) {
+  return Math.round((Number.isFinite(value) ? value : 0) * 10_000) / 10_000;
+}
+
 function normalizeUnits(value: number) {
   return roundUnits(Number.isFinite(value) ? value : 0);
 }
@@ -541,7 +545,7 @@ async function insertHermesSourceMark({
       source_realized_pnl: normalizeAmount(input.realizedPnl),
       source_reserved_margin: normalizeAmount(input.reservedMargin),
       source_return: normalizeRatio(sourceReturn),
-      source_unrealized_pnl: normalizeAmount(input.unrealizedPnl),
+      source_unrealized_pnl: normalizeSourceUnrealizedPnl(input.unrealizedPnl),
       status,
     })
     .select('*')

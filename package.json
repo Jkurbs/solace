@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "hermes:nav": "node scripts/hermes-pool-nav-bridge.mjs",
-    "hermes:nav:watch": "node scripts/hermes-pool-nav-bridge.mjs --watch",
+    "hermes:nav": "node --dns-result-order=ipv4first scripts/hermes-pool-nav-bridge.mjs",
+    "hermes:nav:watch": "node --dns-result-order=ipv4first scripts/hermes-pool-nav-bridge.mjs --watch",
     "start": "next start",
     "lint": "next lint"
   },

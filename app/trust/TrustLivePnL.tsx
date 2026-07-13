@@ -4,6 +4,8 @@ import { hasLiveExposure, useTrustLivePulse } from './TrustLivePulse';
 
 const pnlFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
+  maximumFractionDigits: 4,
+  minimumFractionDigits: 2,
   signDisplay: 'always',
   style: 'currency',
 });

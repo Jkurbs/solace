@@ -94,7 +94,7 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
       grossEquity: Math.round(grossEquity * 100) / 100,
       peakEquity: Math.round(peakEquity * 100) / 100,
       positions,
-      unrealizedPnl: Math.round(unrealizedPnl * 100) / 100,
+      unrealizedPnl: Math.round(unrealizedPnl * 10_000) / 10_000,
     };
   } catch (error) {
     console.warn('[hermes-ledger] Open exposure read failed.', error);

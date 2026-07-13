@@ -1,7 +1,91 @@
 #!/usr/bin/env node
 
+import { spawnSync } from 'node:child_process';
+import dns from 'node:dns';
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+
+// Node's fetch can time out on Vercel when IPv6 is tried first.
+dns.setDefaultResultOrder('ipv4first');
+
+const SOLACE_FETCH_TIMEOUT_MS = 60_000;
+
+function shouldRetrySolaceWithCurl(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  const causeCode = error instanceof Error && error.cause && typeof error.cause === 'object' && 'code' in error.cause
+    ? String(error.cause.code)
+    : '';
+
+  return (
+    message.includes('fetch failed')
+    || message.includes('Connect Timeout')
+    || causeCode.includes('UND_ERR_CONNECT_TIMEOUT')
+  );
+}
+
+function postSolaceJsonWithCurl(url, secret, body) {
+  const payload = JSON.stringify(body);
+  const result = spawnSync(
+    'curl',
+    [
+      '-sS',
+      '-f',
+      '-L',
+      '-X',
+      'POST',
+      String(url),
+      '-H',
+      `Authorization: Bearer ${secret}`,
+      '-H',
+      'Content-Type: application/json',
+      '-d',
+      payload,
+      '--max-time',
+      '60',
+    ],
+    { encoding: 'utf8' },
+  );
+
+  if (result.status !== 0) {
+    throw new Error(result.stderr?.trim() || `curl exited ${result.status ?? 'unknown'} (${String(url)})`);
+  }
+
+  try {
+    return JSON.parse(result.stdout);
+  } catch {
+    return { message: result.stdout.trim() };
+  }
+}
+
+async function postSolaceJson(url, secret, body) {
+  try {
+    const response = await fetch(String(url), {
+      body: JSON.stringify(body),
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${secret}`,
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      signal: AbortSignal.timeout(SOLACE_FETCH_TIMEOUT_MS),
+    });
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(`Solace ingest failed (${response.status}): ${JSON.stringify(payload)} (${String(url)})`);
+    }
+
+    return payload;
+  } catch (error) {
+    if (!shouldRetrySolaceWithCurl(error)) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`${message} (${String(url)})`);
+    }
+
+    console.warn(`Solace fetch failed for ${String(url)}; retrying with curl.`);
+    return postSolaceJsonWithCurl(url, secret, body);
+  }
+}
 
 function loadLocalEnv() {
   const envPath = resolve(process.cwd(), '.env.local');
@@ -668,7 +752,9 @@ function writePublicReadingFile(publicReading) {
 
 async function fetchHermesPortfolio(hermesApiUrl) {
   const url = getUrl(hermesApiUrl, '/api/portfolio/kucoin');
-  url.searchParams.set('refresh', process.env.HERMES_REFRESH_PORTFOLIO ?? 'true');
+  // Live public PnL needs a fresh KuCoin read every tick; cached portfolio
+  // snapshots freeze unrealized PnL on the ledger.
+  url.searchParams.set('refresh', 'true');
 
   const response = await fetch(url, {
     headers: {
@@ -770,23 +856,7 @@ async function fetchHermesSourceCapitalFlows(hermesApiUrl) {
 }
 
 async function postSolacePoolMark(solaceAppUrl, secret, poolMark) {
-  const response = await fetch(getUrl(solaceAppUrl, '/api/hermes/pool-mark'), {
-    body: JSON.stringify(poolMark),
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${secret}`,
-      'Content-Type': 'application/json',
-    },
-    method: 'POST',
-  });
-
-  const payload = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(`Solace ingest failed (${response.status}): ${JSON.stringify(payload)}`);
-  }
-
-  return payload;
+  return postSolaceJson(getUrl(solaceAppUrl, '/api/hermes/pool-mark'), secret, poolMark);
 }
 
 async function postSolaceSourceCapitalFlows(solaceAppUrl, secret, sourceFlows) {
@@ -797,23 +867,7 @@ async function postSolaceSourceCapitalFlows(solaceAppUrl, secret, sourceFlows) {
     };
   }
 
-  const response = await fetch(getUrl(solaceAppUrl, '/api/hermes/source-capital-flows'), {
-    body: JSON.stringify(sourceFlows),
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${secret}`,
-      'Content-Type': 'application/json',
-    },
-    method: 'POST',
-  });
-
-  const payload = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(`Solace source capital flow ingest failed (${response.status}): ${JSON.stringify(payload)}`);
-  }
-
-  return payload;
+  return postSolaceJson(getUrl(solaceAppUrl, '/api/hermes/source-capital-flows'), secret, sourceFlows);
 }
 
 async function postSolaceTradeEvents(solaceAppUrl, secret, tradeEvents) {
@@ -824,43 +878,11 @@ async function postSolaceTradeEvents(solaceAppUrl, secret, tradeEvents) {
     };
   }
 
-  const response = await fetch(getUrl(solaceAppUrl, '/api/hermes/trade-events'), {
-    body: JSON.stringify(tradeEvents),
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${secret}`,
-      'Content-Type': 'application/json',
-    },
-    method: 'POST',
-  });
-
-  const payload = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(`Solace trade event ingest failed (${response.status}): ${JSON.stringify(payload)}`);
-  }
-
-  return payload;
+  return postSolaceJson(getUrl(solaceAppUrl, '/api/hermes/trade-events'), secret, tradeEvents);
 }
 
 async function postSolacePublicReading(solaceAppUrl, secret, publicReading) {
-  const response = await fetch(getUrl(solaceAppUrl, '/api/hermes/public-reading'), {
-    body: JSON.stringify(publicReading),
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${secret}`,
-      'Content-Type': 'application/json',
-    },
-    method: 'POST',
-  });
-
-  const payload = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(`Solace public reading ingest failed (${response.status}): ${JSON.stringify(payload)}`);
-  }
-
-  return payload;
+  return postSolaceJson(getUrl(solaceAppUrl, '/api/hermes/public-reading'), secret, publicReading);
 }
 
 function getBridgeConfig() {
