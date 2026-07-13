@@ -235,17 +235,36 @@ function getHermesPathPhrase(telemetry: HermesTelemetry) {
   return `${telemetry.pathsCount} ${marketNoun} ${label}`;
 }
 
+function getHermesCapitalPhrase(telemetry: HermesTelemetry) {
+  const pathsPhrase = getHermesPathPhrase(telemetry);
+  const reason = telemetry.reason?.trim();
+
+  if (typeof telemetry.deployedCount === 'number') {
+    return telemetry.deployedCount > 0
+      ? `with capital active in ${telemetry.deployedCount} of ${pathsPhrase}`
+      : `with no capital deployed across ${pathsPhrase}`;
+  }
+
+  // Paths-under-review counts describe the watchlist, not live deployment.
+  switch (telemetry.posture) {
+    case 'DEPLOYED':
+      return reason ? `with ${lowerFirst(reason)}` : 'with active exposure in the field';
+    case 'DEFENSIVE':
+      return reason ? `with ${lowerFirst(reason)}` : 'while protecting open exposure';
+    case 'RISK_OFF':
+    case 'STANDING_DOWN':
+      return reason ? `with ${lowerFirst(reason)}` : 'while standing down';
+    case 'SELECTIVE':
+    default:
+      return `while watching ${pathsPhrase}`;
+  }
+}
+
 function HermesLiveBriefing({ telemetry }: { telemetry: HermesTelemetry }) {
   const voice = hermesLiveVoice[telemetry.posture];
   const condition = telemetry.condition?.trim();
   const conditionPhrase = condition ? ` in ${lowerFirst(condition)} conditions` : ' as the market changes';
-  const pathsPhrase = getHermesPathPhrase(telemetry);
-  const capitalPhrase =
-    typeof telemetry.deployedCount === 'number'
-      ? telemetry.deployedCount > 0
-        ? `with capital active in ${telemetry.deployedCount} of ${pathsPhrase}`
-        : `with no capital deployed across ${pathsPhrase}`
-      : `while watching ${pathsPhrase}`;
+  const capitalPhrase = getHermesCapitalPhrase(telemetry);
 
   return (
     <>
