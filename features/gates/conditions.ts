@@ -1,11 +1,18 @@
 export type GateStatus = 'met' | 'partial' | 'not_met';
 
+export type GateEvidence = {
+  href: string;
+  label: string;
+};
+
 export type GateCondition = {
   id: string;
   label: string;
   definition: string;
   status: GateStatus;
   note: string;
+  evidence?: GateEvidence | null;
+  dependsOn?: string;
 };
 
 export type GateDomain = {
@@ -16,6 +23,14 @@ export type GateDomain = {
   conditions: GateCondition[];
 };
 
+export type GateLadderStage = {
+  id: string;
+  name: string;
+  phase: string;
+  href: string;
+  state: 'cleared' | 'current' | 'locked';
+};
+
 export type GateRevision = {
   version: string;
   date: string;
@@ -23,13 +38,42 @@ export type GateRevision = {
 };
 
 export const gatesLastUpdated = '2026-07-13';
-export const gatesVersion = '0.1';
+export const gatesVersion = '0.2';
+
+export const gateLadder: GateLadderStage[] = [
+  {
+    id: 'markets',
+    name: 'Markets',
+    phase: 'Live',
+    href: '/hermes',
+    state: 'cleared',
+  },
+  {
+    id: 'simulation',
+    name: 'Simulation',
+    phase: 'Building',
+    href: '#simulation',
+    state: 'current',
+  },
+  {
+    id: 'autonomy',
+    name: 'Autonomy',
+    phase: 'Gated',
+    href: '#autonomy',
+    state: 'locked',
+  },
+];
 
 export const gateRevisions: GateRevision[] = [
   {
+    version: '0.2',
+    date: 'July 13, 2026',
+    note: 'Redesigned as a progression ladder and single gate sheet with evidence links.',
+  },
+  {
     version: '0.1',
     date: 'July 13, 2026',
-    note: 'Initial public gate board for Simulation and Autonomy. Statuses mirror the technical brief and live verification surfaces.',
+    note: 'Initial public gate board for Simulation and Autonomy.',
   },
 ];
 
@@ -56,12 +100,12 @@ export const gateDomains: GateDomain[] = [
           'The same gated decision engine that runs live runs in simulation without shortcut paths or hand-tuned overrides.',
         status: 'partial',
         note: 'Beta simulation treasury runs through Solace rails; full decision-engine parity is in progress.',
+        evidence: { href: '/hermes', label: 'Hermes' },
       },
       {
         id: 'sim-harness',
         label: 'Pre-deploy harness',
-        definition:
-          'Every deploy candidate passes automated simulation checks before capital moves.',
+        definition: 'Every deploy candidate passes automated simulation checks before capital moves.',
         status: 'not_met',
         note: 'No automated simulation gate on the deploy path yet.',
       },
@@ -71,7 +115,7 @@ export const gateDomains: GateDomain[] = [
         definition:
           'At least one documented, published case where simulation caught a failure live testing would have missed.',
         status: 'not_met',
-        note: 'No documented catch published yet. This condition also gates Autonomy expansion.',
+        note: 'No documented catch published yet. Autonomy waits on this condition.',
       },
     ],
   },
@@ -89,6 +133,7 @@ export const gateDomains: GateDomain[] = [
           'A complete bull-and-bear cycle in the primary markets Hermes trades. By construction, this gate is measured in years, not months.',
         status: 'not_met',
         note: 'Neither of two complete cycles recorded.',
+        evidence: { href: '/trust', label: 'Ledger' },
       },
       {
         id: 'auto-capital',
@@ -97,6 +142,7 @@ export const gateDomains: GateDomain[] = [
           'A minimum of sustained, verified founder-and-approved-user capital under management, held through at least one full drawdown, before scale is considered. The figure will be published once set.',
         status: 'partial',
         note: 'Founder capital only today. Threshold figure not yet published.',
+        evidence: { href: '/trust', label: 'Ledger' },
       },
       {
         id: 'auto-oracle',
@@ -105,6 +151,7 @@ export const gateDomains: GateDomain[] = [
           'A Brier score on a resolved-question sample large enough to be statistically meaningful, published in full — not selectively.',
         status: 'partial',
         note: 'Oracle is keeping score; resolved sample is still below the disclosure threshold.',
+        evidence: { href: '/oracle', label: 'Oracle' },
       },
       {
         id: 'auto-simulation',
@@ -112,7 +159,9 @@ export const gateDomains: GateDomain[] = [
         definition:
           'Synthetic environments are trusted to catch a failure before deployment, demonstrated by at least one documented case where simulation caught something live testing would have missed.',
         status: 'not_met',
-        note: 'Depends on Simulation load-bearing proof. Not begun.',
+        note: 'Blocked until Simulation load-bearing proof clears.',
+        dependsOn: 'sim-proof',
+        evidence: { href: '#sim-proof', label: 'Simulation #04' },
       },
     ],
   },
@@ -120,8 +169,8 @@ export const gateDomains: GateDomain[] = [
 
 export const gateStatusLabels: Record<GateStatus, string> = {
   met: 'Met',
-  partial: 'Partially met',
-  not_met: 'Not met',
+  partial: 'In progress',
+  not_met: 'Open',
 };
 
 export function summarizeGateDomain(domain: GateDomain) {
@@ -147,6 +196,20 @@ export function summarizeAllGates() {
   }));
 }
 
+export function getTotalGateProgress() {
+  return gateDomains.reduce(
+    (totals, domain) => {
+      const summary = summarizeGateDomain(domain);
+
+      return {
+        met: totals.met + summary.met,
+        total: totals.total + summary.total,
+      };
+    },
+    { met: 0, total: 0 },
+  );
+}
+
 export function getAutonomyGateHeadline() {
   const autonomy = gateDomains.find((domain) => domain.id === 'autonomy');
 
@@ -165,4 +228,10 @@ export function getAutonomyGateHeadline() {
   }
 
   return `Gated · ${met} of ${total} met`;
+}
+
+export function getGateBoardHeadline() {
+  const { met, total } = getTotalGateProgress();
+
+  return `${met} of ${total} met`;
 }

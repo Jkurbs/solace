@@ -9,7 +9,7 @@ import SkyBackground from './SkyBackground';
 import Mark from './Mark';
 import ThemeToggle from './ThemeToggle';
 import NotePlate from './NotePlate';
-import { getAutonomyGateHeadline } from '@/features/gates/conditions';
+import { getAutonomyGateHeadline, getGateBoardHeadline } from '@/features/gates/conditions';
 
 import { calibration } from './calibration';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
@@ -80,6 +80,7 @@ const footerSystems: Array<{ name: string; status: string; href?: string; hint?:
 ];
 
 const autonomyGateHeadline = getAutonomyGateHeadline();
+const gateBoardHeadline = getGateBoardHeadline();
 
 const homepageQuestions = [
   {
@@ -518,11 +519,7 @@ export default function HomeClient({
                   <strong>Simulation</strong>
                   <p>Synthetic environments where hypotheses fail quietly before deployment.</p>
                 </div>
-                <span className="inst-card-cta">Gate conditions →</span>
               </div>
-            </Link>
-            <Link href="/gates" className="inst-card-ledger" aria-label="Simulation and Autonomy gate conditions">
-              Gate conditions · public and checkable →
             </Link>
           </motion.div>
 
@@ -537,8 +534,16 @@ export default function HomeClient({
                     Domains are earned, not declared.
                   </p>
                 </div>
-                <span className="inst-card-cta">Gate conditions →</span>
               </div>
+            </Link>
+          </motion.div>
+
+          <motion.div className="inst-gates-strip" {...cardReveal(4)}>
+            <Link href="/gates" className="inst-gates-strip-link" aria-label="View public gate board">
+              <span>
+                <strong>Simulation & Autonomy</strong> — Gated. Conditions and progress are public.
+              </span>
+              <span>{gateBoardHeadline} · View gate board →</span>
             </Link>
           </motion.div>
         </div>
