@@ -6,8 +6,8 @@ import { getHermesLedgerPulse } from '@/features/hermes-ledger/store';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// ~200-byte change-detection beacon for /trust: the client polls this and
-// re-renders the page only when something actually changed.
+// Lightweight pulse for /trust: client polls for live PnL and structural
+// ledger changes (new rows, chain head).
 export async function GET() {
   const [pulse, exposure] = await Promise.all([
     getHermesLedgerPulse().catch(() => null),

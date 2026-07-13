@@ -9,7 +9,9 @@ import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
 import CopyCommands from './CopyCommands';
 import ScriptSource from './ScriptSource';
-import TrustAutoRefresh from './TrustAutoRefresh';
+import TrustLivePnL from './TrustLivePnL';
+import TrustLiveRow from './TrustLiveRow';
+import { TrustLivePulseProvider } from './TrustLivePulse';
 import VerifyInBrowser from './VerifyInBrowser';
 
 export const metadata: Metadata = {
@@ -17,10 +19,8 @@ export const metadata: Metadata = {
   description: 'Public record of Hermes decisions before outcomes are known.',
 };
 
-// The ledger is fed by the Hermes bridge; the server render is at most 1s
-// stale and open tabs re-fetch every 3s. The real freshness floor is the
-// bridge's mark cadence.
-export const revalidate = 1;
+// Sealed rows refresh on structural ledger changes; live PnL polls client-side.
+export const revalidate = 60;
 
 const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
@@ -37,16 +37,6 @@ const pnlFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
   signDisplay: 'always',
   style: 'currency',
-});
-
-const metaTimeFormatter = new Intl.DateTimeFormat('en-US', {
-  day: 'numeric',
-  hour: 'numeric',
-  hour12: true,
-  minute: '2-digit',
-  month: 'short',
-  timeZone: 'America/New_York',
-  timeZoneName: 'short',
 });
 
 function formatConstant(value: string) {
@@ -139,7 +129,6 @@ export default async function TrustPage() {
 
   return (
     <main className="hx-page trust-page">
-      <TrustAutoRefresh />
       <header className="hx-header">
         <div className="hx-header-inner">
           <Link href="/" className="hx-brand">
@@ -168,6 +157,7 @@ export default async function TrustPage() {
         </p>
       </section>
 
+      <TrustLivePulseProvider initialExposure={openExposure} livePosture={livePosture}>
       <section className="hx-shell trust-sheet-section">
         <div className="trust-sheet">
           <div className="trust-sheet-toolbar">
@@ -187,20 +177,7 @@ export default async function TrustPage() {
             ))}
             <div className="trust-sheet-meta-cell">
               <span>Live PnL</span>
-              <strong
-                className={
-                  openExposure && openExposure.unrealizedPnl > 0
-                    ? 'trust-pnl-pos'
-                    : openExposure && openExposure.unrealizedPnl < 0
-                      ? 'trust-pnl-neg'
-                      : undefined
-                }
-              >
-                {openExposure ? pnlFormatter.format(openExposure.unrealizedPnl) : '--'}
-              </strong>
-              {openExposure ? (
-                <span className="trust-meta-sub">as of {metaTimeFormatter.format(new Date(openExposure.asOf))}</span>
-              ) : null}
+              <TrustLivePnL />
             </div>
           </div>
 
@@ -218,42 +195,7 @@ export default async function TrustPage() {
                 </tr>
               </thead>
               <tbody>
-                {openExposure ? (
-                  <tr className="trust-live-row">
-                    <td className="trust-row-number">
-                      <span className="trust-open-live" aria-hidden="true" />
-                    </td>
-                    <td>
-                      {sealedAtFormatter.format(new Date(openExposure.asOf))}
-                      <span className="trust-record-id">LIVE</span>
-                    </td>
-                    <td>
-                      {openExposure.positions.length
-                        ? `Holding ${
-                            openExposure.positions.length === 1
-                              ? 'one open path'
-                              : `${openExposure.positions.length} open paths`
-                          }`
-                        : openExposure.unrealizedPnl === 0
-                          ? 'Flat · no open exposure'
-                          : 'Open exposure'}
-                    </td>
-                    <td>{livePosture}</td>
-                    <td>Open</td>
-                    <td
-                      className={
-                        openExposure.unrealizedPnl > 0
-                          ? 'trust-pnl-pos'
-                          : openExposure.unrealizedPnl < 0
-                            ? 'trust-pnl-neg'
-                            : undefined
-                      }
-                    >
-                      {pnlFormatter.format(openExposure.unrealizedPnl)}
-                    </td>
-                    <td>Live unrealized. Moves with the market; instrument named when the path closes.</td>
-                  </tr>
-                ) : null}
+                <TrustLiveRow />
                 {ledgerRows.map((row) => (
                   <tr key={row.row} className={row.rowClass === 'backfill' ? 'trust-row-backfill' : undefined}>
                     <td className="trust-row-number">{row.row}</td>
@@ -301,6 +243,7 @@ export default async function TrustPage() {
           </p>
         </div>
       </section>
+      </TrustLivePulseProvider>
 
       <section className="hx-shell trust-section">
         <div className="trust-simple-sheet">
