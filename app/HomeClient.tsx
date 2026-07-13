@@ -75,7 +75,7 @@ const footerSystems: Array<{ name: string; status: string; href?: string; hint?:
     name: 'Autonomy',
     status: 'Gated',
     href: '/gates#autonomy',
-    hint: 'The same decision discipline extended beyond markets, gated on four public conditions.',
+    hint: 'Beyond markets. Four conditions have to clear first.',
   },
 ];
 
@@ -541,9 +541,9 @@ export default function HomeClient({
           <motion.div className="inst-gates-strip" {...cardReveal(4)}>
             <Link href="/gates" className="inst-gates-strip-link" aria-label="View public gate board">
               <span>
-                <strong>Simulation & Autonomy</strong> — Gated. Conditions and progress are public.
+                <strong>Simulation and Autonomy</strong> stay gated — conditions and progress are public
               </span>
-              <span>{gateBoardHeadline} · View gate board →</span>
+              <span>{gateBoardHeadline} · Gate board →</span>
             </Link>
           </motion.div>
         </div>
@@ -697,7 +697,7 @@ export default function HomeClient({
                 </div>
                 <div>
                   <dt>Gate conditions</dt>
-                  <dd>Public, checkable requirements that must clear before Solace expands beyond markets.</dd>
+                  <dd>What has to clear before Solace moves past markets. Status is on the gate board.</dd>
                 </div>
                 <div>
                   <dt>Sealed row</dt>

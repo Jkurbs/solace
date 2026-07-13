@@ -17,8 +17,7 @@ import ThemeToggle from '../ThemeToggle';
 
 export const metadata: Metadata = {
   title: 'Solace — Gate Board',
-  description:
-    'Public, checkable gate conditions for Simulation and Autonomy. Domains are earned, not declared.',
+  description: 'Where Simulation and Autonomy stand. Eight conditions, public status.',
 };
 
 const updatedFormatter = new Intl.DateTimeFormat('en-US', {
@@ -60,12 +59,12 @@ export default function GatesPage() {
         <p className="section-kicker">Earned, not declared</p>
         <h1 className="gates-title">Gate board</h1>
         <p className="gates-dek">
-          Simulation and Autonomy stay gated until explicit, checkable conditions clear. This sheet is the public
-          record — not a roadmap promise.
+          Simulation and Autonomy do not open until these conditions clear. This sheet says where each one stands
+          today.
         </p>
         <p className="gates-meta">
-          Board v{gatesVersion} · Last updated {formatUpdatedAt(gatesLastUpdated)} · {boardProgress.met} of{' '}
-          {boardProgress.total} met
+          v{gatesVersion} · Updated {formatUpdatedAt(gatesLastUpdated)} · {boardProgress.met} of{' '}
+          {boardProgress.total} cleared
         </p>
       </section>
 
@@ -103,14 +102,14 @@ export default function GatesPage() {
               <div key={domain.id} className="gates-sheet-meta-cell">
                 <span>{domain.name}</span>
                 <strong>
-                  {domain.phase} · {summary.met}/{summary.total} met
+                  {domain.phase} · {summary.met}/{summary.total} cleared
                 </strong>
               </div>
             ))}
             <div className="gates-sheet-meta-cell">
               <span>Board</span>
               <strong>
-                {boardProgress.met}/{boardProgress.total} met
+                {boardProgress.met}/{boardProgress.total} cleared
               </strong>
             </div>
           </div>
@@ -135,7 +134,7 @@ export default function GatesPage() {
                         <span>{domain.name}</span>
                         <span className="gates-section-phase">{domain.phase}</span>
                         <span className="gates-section-count">
-                          {summary ? `${summary.met}/${summary.total} met` : null}
+                          {summary ? `${summary.met}/${summary.total} cleared` : null}
                         </span>
                         <span className="gates-section-summary">{domain.summary}</span>
                       </td>
@@ -172,10 +171,10 @@ export default function GatesPage() {
         </div>
 
         <p className="gates-sheet-note">
-          Status updates when a condition materially changes. Where evidence exists, progress is inspectable — not
-          taken on faith. Definitions live in the{' '}
+          We update a row when something actually changes. The Check column points to where you can verify it. Full
+          definitions are in{' '}
           <Link href="/brief#section-07" className="text-link">
-            technical brief §07
+            brief §07
           </Link>
           .
         </p>

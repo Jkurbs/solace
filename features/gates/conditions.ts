@@ -68,12 +68,12 @@ export const gateRevisions: GateRevision[] = [
   {
     version: '0.2',
     date: 'July 13, 2026',
-    note: 'Redesigned as a progression ladder and single gate sheet with evidence links.',
+    note: 'Ladder and single sheet layout.',
   },
   {
     version: '0.1',
     date: 'July 13, 2026',
-    note: 'Initial public gate board for Simulation and Autonomy.',
+    note: 'First public board.',
   },
 ];
 
@@ -82,40 +82,38 @@ export const gateDomains: GateDomain[] = [
     id: 'simulation',
     name: 'Simulation',
     phase: 'Building',
-    summary:
-      'Synthetic environments where hypotheses fail quietly before deployment. Simulation earns trust through the same loop as every Solace instrument: observe, model, simulate, deploy.',
+    summary: 'Hypotheses fail here before they fail in deployment.',
     conditions: [
       {
         id: 'sim-environment',
         label: 'Environment scaffold',
         definition:
-          'Synthetic markets reproduce the structure, timing, and regime axes Hermes reads in live markets — not price replay alone.',
+          'Synthetic markets cover structure, timing, and regime — the axes Hermes reads live — not just price replay.',
         status: 'not_met',
-        note: 'Representative synthetic market environments are not yet standing.',
+        note: 'Not standing yet.',
       },
       {
         id: 'sim-parity',
         label: 'Decision parity',
-        definition:
-          'The same gated decision engine that runs live runs in simulation without shortcut paths or hand-tuned overrides.',
+        definition: 'Simulation runs the same gated decision engine as live. No shortcuts.',
         status: 'partial',
-        note: 'Beta simulation treasury runs through Solace rails; full decision-engine parity is in progress.',
+        note: 'Simulation treasury is live on Solace rails. Engine parity still incomplete.',
         evidence: { href: '/hermes', label: 'Hermes' },
       },
       {
         id: 'sim-harness',
         label: 'Pre-deploy harness',
-        definition: 'Every deploy candidate passes automated simulation checks before capital moves.',
+        definition: 'Nothing deploys without passing automated simulation checks first.',
         status: 'not_met',
-        note: 'No automated simulation gate on the deploy path yet.',
+        note: 'Not on the deploy path yet.',
       },
       {
         id: 'sim-proof',
         label: 'Load-bearing proof',
         definition:
-          'At least one documented, published case where simulation caught a failure live testing would have missed.',
+          'One published case where simulation caught something live testing would have missed.',
         status: 'not_met',
-        note: 'No documented catch published yet. Autonomy waits on this condition.',
+        note: 'None published. Autonomy waits on this.',
       },
     ],
   },
@@ -123,45 +121,44 @@ export const gateDomains: GateDomain[] = [
     id: 'autonomy',
     name: 'Autonomy',
     phase: 'Gated',
-    summary:
-      'The same decision discipline extended beyond markets. Domains are earned, not declared — expansion waits until every condition below clears.',
+    summary: 'Same discipline, wider domains. Every row below has to clear first.',
     conditions: [
       {
         id: 'auto-regime',
         label: 'Regime cycles',
         definition:
-          'A complete bull-and-bear cycle in the primary markets Hermes trades. By construction, this gate is measured in years, not months.',
+          'One full bull-and-bear cycle in the markets Hermes trades. Years, not months.',
         status: 'not_met',
-        note: 'Neither of two complete cycles recorded.',
+        note: 'Neither of two complete.',
         evidence: { href: '/trust', label: 'Ledger' },
       },
       {
         id: 'auto-capital',
         label: 'Capital threshold',
         definition:
-          'A minimum of sustained, verified founder-and-approved-user capital under management, held through at least one full drawdown, before scale is considered. The figure will be published once set.',
+          'Enough verified capital under management, held through a full drawdown, before scale. The number gets published when it is set.',
         status: 'partial',
-        note: 'Founder capital only today. Threshold figure not yet published.',
+        note: 'Founder capital only. Threshold not published yet.',
         evidence: { href: '/trust', label: 'Ledger' },
       },
       {
         id: 'auto-oracle',
         label: 'Oracle calibration proven',
         definition:
-          'A Brier score on a resolved-question sample large enough to be statistically meaningful, published in full — not selectively.',
+          'Brier score on a resolved sample large enough to mean something — published in full.',
         status: 'partial',
-        note: 'Oracle is keeping score; resolved sample is still below the disclosure threshold.',
+        note: 'Keeping score. Sample still too small to claim.',
         evidence: { href: '/oracle', label: 'Oracle' },
       },
       {
         id: 'auto-simulation',
         label: 'Simulation load-bearing',
         definition:
-          'Synthetic environments are trusted to catch a failure before deployment, demonstrated by at least one documented case where simulation caught something live testing would have missed.',
+          'Simulation catches failures before deployment — with at least one documented case on the record.',
         status: 'not_met',
-        note: 'Blocked until Simulation load-bearing proof clears.',
+        note: 'Waiting on Simulation #04.',
         dependsOn: 'sim-proof',
-        evidence: { href: '#sim-proof', label: 'Simulation #04' },
+        evidence: { href: '#sim-proof', label: 'Sim #04' },
       },
     ],
   },
@@ -169,7 +166,7 @@ export const gateDomains: GateDomain[] = [
 
 export const gateStatusLabels: Record<GateStatus, string> = {
   met: 'Met',
-  partial: 'In progress',
+  partial: 'Partial',
   not_met: 'Open',
 };
 
@@ -220,18 +217,18 @@ export function getAutonomyGateHeadline() {
   const { met, total } = summarizeGateDomain(autonomy);
 
   if (met === 0) {
-    return 'Gated · no conditions met yet';
+    return 'Gated · none cleared';
   }
 
   if (met === total) {
-    return 'Gated · all conditions met';
+    return 'Gated · all cleared';
   }
 
-  return `Gated · ${met} of ${total} met`;
+  return `Gated · ${met} of ${total} cleared`;
 }
 
 export function getGateBoardHeadline() {
   const { met, total } = getTotalGateProgress();
 
-  return `${met} of ${total} met`;
+  return `${met} of ${total} cleared`;
 }
