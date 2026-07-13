@@ -359,7 +359,9 @@ function buildPoolMark(snapshot) {
   return {
     allocatedCapital,
     cashBalance,
-    effectiveAt: snapshot?.timestamp ?? new Date().toISOString(),
+    // Bridge ingest time — not the Hermes cache timestamp — so the public
+    // ledger's "as of" advances every tick even when KuCoin's mark is flat.
+    effectiveAt: new Date().toISOString(),
     fees: getNumber(account.fees),
     funding: getNumber(account.funding),
     grossEquity,

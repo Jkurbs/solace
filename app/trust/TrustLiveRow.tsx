@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import { hasLiveExposure, useTrustLivePulse } from './TrustLivePulse';
 
 const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
@@ -45,8 +47,31 @@ function pnlToneClass(unrealizedPnl: number) {
   return undefined;
 }
 
+function useSecondsSince(iso: string | null) {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!iso) {
+      setSeconds(0);
+      return;
+    }
+
+    const tick = () => {
+      setSeconds(Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000)));
+    };
+
+    tick();
+    const interval = window.setInterval(tick, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [iso]);
+
+  return seconds;
+}
+
 export default function TrustLiveRow() {
   const { livePosture, pulse } = useTrustLivePulse();
+  const secondsSince = useSecondsSince(pulse.asOf);
 
   if (!hasLiveExposure(pulse)) {
     return null;
@@ -61,6 +86,7 @@ export default function TrustLiveRow() {
       </td>
       <td>
         {sealedAtFormatter.format(new Date(pulse.asOf as string))}
+        {secondsSince < 120 ? ` · ${secondsSince}s ago` : ''}
         <span className="trust-record-id">LIVE</span>
       </td>
       <td>{decisionLabel(pulse.paths, unrealizedPnl)}</td>

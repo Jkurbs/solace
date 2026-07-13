@@ -19,8 +19,8 @@ export const metadata: Metadata = {
   description: 'Public record of Hermes decisions before outcomes are known.',
 };
 
-// Sealed rows refresh on structural ledger changes; live PnL polls client-side.
-export const revalidate = 60;
+// Live overlay polls client-side; keep the shell dynamic so first paint isn't build-stale.
+export const dynamic = 'force-dynamic';
 
 const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',

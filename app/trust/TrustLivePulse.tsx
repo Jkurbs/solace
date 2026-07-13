@@ -66,7 +66,7 @@ export function TrustLivePulseProvider({
       }
 
       try {
-        const response = await fetch('/api/hermes/ledger-pulse', { cache: 'no-store' });
+        const response = await fetch(`/api/hermes/ledger-pulse?ts=${Date.now()}`, { cache: 'no-store' });
 
         if (!response.ok) {
           throw new Error(String(response.status));

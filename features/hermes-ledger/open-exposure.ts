@@ -20,6 +20,20 @@ export type HermesOpenExposure = {
 
 const FRESHNESS_MS = 24 * 60 * 60 * 1000;
 
+function readSourceUnrealizedPnl(row: { source_unrealized_pnl: unknown; raw_payload: unknown }) {
+  const raw = row.raw_payload;
+
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const fromPayload = Number((raw as Record<string, unknown>).unrealizedPnl);
+
+    if (Number.isFinite(fromPayload)) {
+      return fromPayload;
+    }
+  }
+
+  return Number(row.source_unrealized_pnl ?? 0);
+}
+
 export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null> {
   if (!isSupabaseDataClientConfigured()) {
     return null;
@@ -83,7 +97,7 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
 
     const positions = latest.flatMap((row) => parsePublicPositions(row.raw_payload));
     const grossEquity = latest.reduce((total, row) => total + Number(row.source_equity ?? 0), 0);
-    const unrealizedPnl = latest.reduce((total, row) => total + Number(row.source_unrealized_pnl ?? 0), 0);
+    const unrealizedPnl = latest.reduce((total, row) => total + readSourceUnrealizedPnl(row), 0);
     // Peak equity across the recent mark window (single Hermes pool today).
     const peakEquity = Math.max(grossEquity, ...data.map((row) => Number(row.source_equity ?? 0)));
     const drawdownFromPeak = peakEquity > 0 ? Math.max(0, (peakEquity - grossEquity) / peakEquity) : 0;
