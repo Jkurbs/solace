@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/research`, priority: 0.8 },
     { url: `${BASE}/news`, priority: 0.8 },
     { url: `${BASE}/trust`, priority: 0.8 },
+    { url: `${BASE}/gates`, priority: 0.8 },
     { url: `${BASE}/oracle`, priority: 0.7 },
     { url: `${BASE}/brief/v0-1`, priority: 0.3 },
     { url: `${BASE}/brief/v0-2`, priority: 0.3 },

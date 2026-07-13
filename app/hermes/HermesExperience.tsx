@@ -520,6 +520,9 @@ export default function HermesExperience() {
               <Link href="/trust" className="hx-btn hx-btn-secondary">
                 See the decision ledger
               </Link>
+              <Link href="/gates" className="hx-btn hx-btn-secondary">
+                Gate conditions
+              </Link>
               <Link href="/research" className="text-link">
                 Or start with the research
               </Link>

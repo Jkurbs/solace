@@ -9,6 +9,8 @@ import SkyBackground from './SkyBackground';
 import Mark from './Mark';
 import ThemeToggle from './ThemeToggle';
 import NotePlate from './NotePlate';
+import { getAutonomyGateHeadline } from '@/features/gates/conditions';
+
 import { calibration } from './calibration';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
 import { hermesBetaVersionLabel } from '@/features/hermes-version';
@@ -66,14 +68,18 @@ const footerSystems: Array<{ name: string; status: string; href?: string; hint?:
   {
     name: 'Simulation',
     status: 'Building',
+    href: '/gates#simulation',
     hint: 'Synthetic environments where hypotheses fail quietly before deployment.',
   },
   {
     name: 'Autonomy',
     status: 'Gated',
+    href: '/gates#autonomy',
     hint: 'The same decision discipline extended beyond markets, gated on four public conditions.',
   },
 ];
+
+const autonomyGateHeadline = getAutonomyGateHeadline();
 
 const homepageQuestions = [
   {
@@ -505,20 +511,24 @@ export default function HomeClient({
           </motion.div>
 
           <motion.div className="inst-cell inst-cell-sim" {...cardReveal(2)}>
-            <div className="inst-card inst-card-quiet">
+            <Link href="/gates#simulation" className="inst-card inst-card-quiet">
               <span className="inst-chip is-idle">Building</span>
               <div className="inst-card-foot">
                 <div className="inst-card-name">
                   <strong>Simulation</strong>
                   <p>Synthetic environments where hypotheses fail quietly before deployment.</p>
                 </div>
+                <span className="inst-card-cta">Gate conditions →</span>
               </div>
-            </div>
+            </Link>
+            <Link href="/gates" className="inst-card-ledger" aria-label="Simulation and Autonomy gate conditions">
+              Gate conditions · public and checkable →
+            </Link>
           </motion.div>
 
           <motion.div className="inst-cell inst-cell-auto" {...cardReveal(3)}>
-            <Link href="/brief#section-07" className="inst-card inst-card-quiet">
-              <span className="inst-chip is-idle">Gated · no conditions met yet</span>
+            <Link href="/gates#autonomy" className="inst-card inst-card-quiet">
+              <span className="inst-chip is-idle">{autonomyGateHeadline}</span>
               <div className="inst-card-foot">
                 <div className="inst-card-name">
                   <strong>Autonomy</strong>
@@ -755,6 +765,9 @@ export default function HomeClient({
                 </li>
                 <li>
                   <Link href="/trust">Decision ledger</Link>
+                </li>
+                <li>
+                  <Link href="/gates">Gate conditions</Link>
                 </li>
                 <li>
                   <Link href="/hermes#request-access">Request access</Link>

@@ -242,7 +242,12 @@ export default function BriefPage() {
 
                   {section.number === '07' && (
                     <div className="gate-board" aria-label="Autonomy gate conditions">
-                      <p className="gate-board-title">Gate conditions — domains are earned</p>
+                      <p className="gate-board-title">
+                        Gate conditions — domains are earned ·{' '}
+                        <Link href="/gates" className="text-link">
+                          full board →
+                        </Link>
+                      </p>
                       <ul>
                         {gate.map((condition, index) => (
                           <li key={condition.label}>
