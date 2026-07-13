@@ -288,6 +288,19 @@ function buildPoolMark(snapshot) {
   };
 }
 
+function buildPublicPositions(snapshot) {
+  const positions = Array.isArray(snapshot?.positions) ? snapshot.positions : [];
+
+  return positions
+    .map((position) => {
+      const symbol = normalizeSymbol(position?.symbol || position?.exchange_symbol);
+      const side = String(position?.side || '').trim().toUpperCase() === 'SHORT' ? 'SHORT' : 'LONG';
+
+      return { side, symbol };
+    })
+    .filter((position) => position.symbol && ['LONG', 'SHORT'].includes(position.side));
+}
+
 function buildAllocationMark(snapshot, poolMark) {
   const account = snapshot?.account && typeof snapshot.account === 'object' ? snapshot.account : {};
   const positions = Array.isArray(snapshot?.positions) ? snapshot.positions : [];
@@ -335,6 +348,7 @@ function buildAllocationMark(snapshot, poolMark) {
   return {
     allocationBasis: 'capital',
     allocations,
+    positions: buildPublicPositions(snapshot),
     totalExposure,
     totalMargin: strategyRows.reduce((total, position) => total + position.marginUsd, 0),
     ...poolMark,

@@ -23,35 +23,64 @@ function pathKey(symbol: string, side: string) {
   return `${symbol.trim().toUpperCase()}:${side.trim().toUpperCase()}`;
 }
 
+function parsePositionIdentity(
+  record: Record<string, unknown>,
+  seen: Set<string>,
+  parsed: Array<{ symbol: string; side: string }>,
+) {
+  const symbol = typeof record.symbol === 'string' ? record.symbol.trim().toUpperCase() : '';
+  const side = typeof record.side === 'string' ? record.side.trim().toUpperCase() : '';
+
+  if (!symbol || !['LONG', 'SHORT'].includes(side) || seen.has(`${symbol}:${side}`)) {
+    return;
+  }
+
+  seen.add(`${symbol}:${side}`);
+  parsed.push({ side, symbol });
+}
+
+function parseAllocationIdentity(
+  record: Record<string, unknown>,
+  seen: Set<string>,
+  parsed: Array<{ symbol: string; side: string }>,
+) {
+  const side = typeof record.side === 'string' ? record.side.trim().toUpperCase() : '';
+  const asset = typeof record.asset === 'string' ? record.asset.trim().toUpperCase() : '';
+
+  if (!asset || asset === 'CASH' || !['LONG', 'SHORT'].includes(side)) {
+    return;
+  }
+
+  parsePositionIdentity({ side, symbol: `${asset}-USDT` }, seen, parsed);
+}
+
 export function parsePublicPositions(rawPayload: unknown): Array<{ symbol: string; side: string }> {
   if (!rawPayload || typeof rawPayload !== 'object') {
     return [];
   }
 
-  const positions = (rawPayload as Record<string, unknown>).positions;
-
-  if (!Array.isArray(positions)) {
-    return [];
-  }
-
+  const payload = rawPayload as Record<string, unknown>;
   const seen = new Set<string>();
   const parsed: Array<{ symbol: string; side: string }> = [];
 
-  for (const entry of positions) {
-    if (!entry || typeof entry !== 'object') {
-      continue;
+  if (Array.isArray(payload.positions)) {
+    for (const entry of payload.positions) {
+      if (!entry || typeof entry !== 'object') {
+        continue;
+      }
+
+      parsePositionIdentity(entry as Record<string, unknown>, seen, parsed);
     }
+  }
 
-    const record = entry as Record<string, unknown>;
-    const symbol = typeof record.symbol === 'string' ? record.symbol.trim().toUpperCase() : '';
-    const side = typeof record.side === 'string' ? record.side.trim().toUpperCase() : '';
+  if (!parsed.length && Array.isArray(payload.allocations)) {
+    for (const entry of payload.allocations) {
+      if (!entry || typeof entry !== 'object') {
+        continue;
+      }
 
-    if (!symbol || !['LONG', 'SHORT'].includes(side) || seen.has(`${symbol}:${side}`)) {
-      continue;
+      parseAllocationIdentity(entry as Record<string, unknown>, seen, parsed);
     }
-
-    seen.add(`${symbol}:${side}`);
-    parsed.push({ side, symbol });
   }
 
   return parsed;

@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { parsePublicPositions } from '@/features/hermes-ledger/path-tracking';
 import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/supabase/server';
 
 // Live open-exposure read for the public ledger strip: unrealized PnL from
@@ -16,42 +17,6 @@ export type HermesOpenExposure = {
   /** Open position identities (symbol + side only — never size or entry). */
   positions: Array<{ symbol: string; side: string }>;
 };
-
-// The bridge may include a `positions` array in the mark payload. Only the
-// identity fields are surfaced; anything else in the payload stays private.
-function parsePositions(rawPayload: unknown): Array<{ symbol: string; side: string }> {
-  if (!rawPayload || typeof rawPayload !== 'object') {
-    return [];
-  }
-
-  const positions = (rawPayload as Record<string, unknown>).positions;
-
-  if (!Array.isArray(positions)) {
-    return [];
-  }
-
-  const seen = new Set<string>();
-  const parsed: Array<{ symbol: string; side: string }> = [];
-
-  for (const entry of positions) {
-    if (!entry || typeof entry !== 'object') {
-      continue;
-    }
-
-    const record = entry as Record<string, unknown>;
-    const symbol = typeof record.symbol === 'string' ? record.symbol.trim().toUpperCase() : '';
-    const side = typeof record.side === 'string' ? record.side.trim().toUpperCase() : '';
-
-    if (!symbol || !['LONG', 'SHORT'].includes(side) || seen.has(`${symbol}:${side}`)) {
-      continue;
-    }
-
-    seen.add(`${symbol}:${side}`);
-    parsed.push({ side, symbol });
-  }
-
-  return parsed;
-}
 
 const FRESHNESS_MS = 24 * 60 * 60 * 1000;
 
@@ -116,7 +81,7 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
       return null;
     }
 
-    const positions = latest.flatMap((row) => parsePositions(row.raw_payload));
+    const positions = latest.flatMap((row) => parsePublicPositions(row.raw_payload));
     const grossEquity = latest.reduce((total, row) => total + Number(row.source_equity ?? 0), 0);
     const unrealizedPnl = latest.reduce((total, row) => total + Number(row.source_unrealized_pnl ?? 0), 0);
     // Peak equity across the recent mark window (single Hermes pool today).
