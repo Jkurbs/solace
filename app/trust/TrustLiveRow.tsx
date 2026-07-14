@@ -81,8 +81,9 @@ export default function TrustLiveRow() {
 
   return (
     <tr className="trust-live-row">
-      <td className="trust-row-number">
+      <td className="trust-row-number" title="Live open exposure">
         <span className="trust-open-live" aria-hidden="true" />
+        <span className="trust-live-label">Live</span>
       </td>
       <td>
         {sealedAtFormatter.format(new Date(pulse.asOf as string))}

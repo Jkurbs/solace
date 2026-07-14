@@ -59,6 +59,7 @@ const placeholderRow = {
   note: 'First row will be added after a decision is recorded.',
   rowHash: null as string | null,
   rowClass: null as string | null,
+  eventType: null as string | null,
   ref: null as string | null,
 };
 
@@ -101,8 +102,18 @@ export default async function TrustPage() {
           sealedAt: sealedAtFormatter.format(new Date(row.sealedAt)),
           decision: row.decision,
           posture: formatConstant(row.posture),
-          outcome: row.rowClass === 'system' ? '--' : (row.outcome ?? 'Open'),
-          pnl: row.outcome === null ? '--' : row.pnl === null ? '--' : pnlFormatter.format(row.pnl),
+          outcome:
+            row.rowClass === 'system'
+              ? '--'
+              : row.eventType === 'open'
+                ? 'Open'
+                : row.outcome ?? '--',
+          pnl:
+            row.eventType === 'open' || row.outcome === null
+              ? '--'
+              : row.pnl === null
+                ? '--'
+                : pnlFormatter.format(row.pnl),
           pnlTone:
             row.outcome === null || row.pnl === null || row.pnl === 0
               ? null
@@ -112,6 +123,7 @@ export default async function TrustPage() {
           note: row.note || '--',
           rowHash: row.rowHash,
           rowClass: row.rowClass,
+          eventType: row.eventType,
           ref: row.ref,
         }))
         .reverse()
@@ -197,7 +209,16 @@ export default async function TrustPage() {
               <tbody>
                 <TrustLiveRow />
                 {ledgerRows.map((row) => (
-                  <tr key={row.row} className={row.rowClass === 'backfill' ? 'trust-row-backfill' : undefined}>
+                  <tr
+                    key={row.row}
+                    className={
+                      row.rowClass === 'backfill'
+                        ? 'trust-row-backfill'
+                        : row.eventType === 'open'
+                          ? 'trust-row-open'
+                          : undefined
+                    }
+                  >
                     <td className="trust-row-number">{row.row}</td>
                     <td>
                       {row.sealedAt}

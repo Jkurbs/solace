@@ -111,7 +111,17 @@ export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: 
     }
 
     const state = await readState();
+    const activeKeys = new Set(positions.map((position) => pathKey(position.symbol, position.side)));
     let changed = false;
+
+    // Side flips and stale bookkeeping keys must not leave a dead LONG entry
+    // blocking a live SHORT (or vice versa) and re-sealing every mark tick.
+    for (const key of Object.keys(state)) {
+      if (!activeKeys.has(key)) {
+        delete state[key];
+        changed = true;
+      }
+    }
 
     for (const position of positions) {
       const key = pathKey(position.symbol, position.side);
@@ -122,7 +132,13 @@ export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: 
 
       const snapshot = await getStoredHermesBriefSnapshot().catch(() => null);
       const existing = await listHermesLedgerRows(1000);
-      const recordId = `HMS-${String(existing.length + 1).padStart(3, '0')}`;
+      const nextRecordNumber =
+        existing.reduce((max, row) => {
+          const match = row.recordId.match(/^HMS-(\d+)$/);
+
+          return match ? Math.max(max, Number(match[1])) : max;
+        }, 0) + 1;
+      const recordId = `HMS-${String(nextRecordNumber).padStart(3, '0')}`;
       const sealedAt = effectiveAt ?? new Date().toISOString();
       const row = await sealHermesLedgerRow({
         decision: 'Opened a path — instrument private until close',
