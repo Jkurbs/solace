@@ -35,6 +35,18 @@ function decisionLabel(paths: number, unrealizedPnl: number) {
   return 'Open exposure';
 }
 
+function resolveLivePosture(briefPosture: string, pulse: { paths: number; unrealizedPnl: number | null }) {
+  const hasExposure =
+    pulse.paths > 0 || (pulse.unrealizedPnl !== null && Math.abs(pulse.unrealizedPnl) > 1e-9);
+  const briefSaysStandingDown = briefPosture.toLowerCase().includes('standing');
+
+  if (hasExposure && briefSaysStandingDown) {
+    return 'Deployed';
+  }
+
+  return briefPosture;
+}
+
 function pnlToneClass(unrealizedPnl: number) {
   if (unrealizedPnl > 0) {
     return 'trust-pnl-pos';
@@ -71,6 +83,7 @@ function useSecondsSince(iso: string | null) {
 
 export default function TrustLiveRow() {
   const { livePosture, pulse } = useTrustLivePulse();
+  const displayedPosture = resolveLivePosture(livePosture, pulse);
   const secondsSince = useSecondsSince(pulse.asOf);
 
   if (!hasLiveExposure(pulse)) {
@@ -91,7 +104,7 @@ export default function TrustLiveRow() {
         <span className="trust-record-id">LIVE</span>
       </td>
       <td>{decisionLabel(pulse.paths, unrealizedPnl)}</td>
-      <td>{livePosture}</td>
+      <td>{displayedPosture}</td>
       <td>Open</td>
       <td className={pnlToneClass(unrealizedPnl)}>{pnlFormatter.format(unrealizedPnl)}</td>
       <td>Live unrealized. Moves with the market; instrument named when the path closes.</td>
