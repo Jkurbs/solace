@@ -486,8 +486,8 @@ h2 {
   }
 
   .home-shell {
-    /* The continuous sky (SkyBackground) carries the floor now. */
-    background: transparent;
+    /* Pure black floor — no charcoal wash under the quiet hero. */
+    background: #000000;
   }
 
   .sky-background {
@@ -1332,9 +1332,7 @@ h2 {
   .hero-quiet {
     padding-top: clamp(11rem, 24vh, 16rem);
     padding-bottom: clamp(5rem, 11vw, 8.5rem);
-    /* Pure black, easing into the page floor so the card grid below sits on
-       the site background without a visible seam. */
-    background: linear-gradient(180deg, #000000 0%, #000000 70%, rgba(0, 0, 0, 0) 100%);
+    background: #000000;
   }
 
   .hero-quiet-inner {
@@ -1391,9 +1389,7 @@ h2 {
     align-items: end;
     border: 1px solid rgba(250, 250, 250, 0.12);
     border-radius: 1.15rem;
-    background:
-      linear-gradient(135deg, rgba(250, 250, 250, 0.03), transparent 42%),
-      #0c0c0a;
+    background: #0a0a0a;
     padding: clamp(1.75rem, 3.5vw, 2.6rem) clamp(1.5rem, 3vw, 2.4rem);
     transition:
       border-color 0.35s ease,
@@ -11927,6 +11923,10 @@ h2 {
      theme variables inside dark plates so their contents stay light-on-dark
      in both themes (the plates are theme-immune by design). */
   html[data-theme='light'] .home-shell {
+    background: var(--background);
+  }
+
+  html[data-theme='light'] .hero-quiet {
     background: var(--background);
   }
 
