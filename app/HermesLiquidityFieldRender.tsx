@@ -618,7 +618,7 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
 
     scene.add(mesh);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.setClearColor(0x020202, 0);
+    renderer.setClearColor(0x000000, 0);
     renderer.domElement.className = 'hermes-render-canvas';
     renderer.domElement.dataset.hermesRender = 'liquidity-field';
     mount.appendChild(renderer.domElement);

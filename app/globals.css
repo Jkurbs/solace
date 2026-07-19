@@ -1034,7 +1034,7 @@ h2 {
     overflow: hidden;
     border: 0;
     border-radius: 0;
-    background: #0d0d0b;
+    background: #000000;
     transition: opacity 0.35s ease;
   }
 
@@ -1052,16 +1052,16 @@ h2 {
     overflow: hidden;
     border: 0;
     border-radius: 0;
-    background: #0d0d0b;
+    background: #000000;
   }
 
   .inst-card.inst-card-quiet {
     min-height: clamp(11rem, 17vw, 14rem);
-    background: #0b0b09;
+    background: #000000;
   }
 
   .inst-card.inst-card-quiet .inst-platter {
-    background: #0b0b09;
+    background: #000000;
   }
 
   .inst-copy {
@@ -1304,15 +1304,15 @@ h2 {
 
     .inst-card.inst-card-quiet .inst-platter {
       min-height: 5.25rem;
-      background: #0b0b09;
+      background: #000000;
     }
 
     .inst-card-scrim {
       background: linear-gradient(
         180deg,
-        rgba(2, 2, 2, 0.35) 0%,
-        rgba(2, 2, 2, 0.08) 45%,
-        rgba(2, 2, 2, 0.55) 100%
+        rgba(0, 0, 0, 0.4) 0%,
+        rgba(0, 0, 0, 0.05) 45%,
+        rgba(0, 0, 0, 0.55) 100%
       );
     }
 
@@ -1579,7 +1579,7 @@ h2 {
     aspect-ratio: 16 / 10;
     border: 1px solid rgba(250, 250, 250, 0.1);
     border-radius: 0.9rem;
-    background: #0d0d0b;
+    background: #000000;
   }
 
   .note-plate canvas {
@@ -7897,7 +7897,7 @@ h2 {
     padding: 0.85rem 1.1rem;
     border: 1px solid rgba(250, 250, 250, 0.12);
     border-radius: 0.85rem;
-    background: #0b0b09;
+    background: #000000;
     color: rgba(250, 250, 250, 0.62);
     font-family: var(--font-plex), monospace;
     font-size: 0.62rem;
@@ -12113,4 +12113,43 @@ h2 {
     background: #fbf8f1;
     box-shadow: 0 2rem 5rem rgba(19, 17, 12, 0.1);
   }
+}
+
+/* Homepage pure black — final cascade win over plate/media-query charcoal. */
+html:has(.home-shell),
+html:has(.home-shell) body,
+.home-shell,
+.home-shell .site-header,
+.home-shell .site-menu-panel,
+.home-shell .hero-quiet,
+.home-shell .inst-card,
+.home-shell .inst-platter,
+.home-shell .inst-card.inst-card-quiet,
+.home-shell .inst-card.inst-card-quiet .inst-platter,
+.home-shell .inst-gates-strip-link,
+.home-shell .home-vault-card,
+.home-shell .note-plate,
+.home-shell .site-footer {
+  background-color: #000000 !important;
+}
+
+html[data-theme='light']:has(.home-shell),
+html[data-theme='light']:has(.home-shell) body,
+html[data-theme='light'] .home-shell {
+  background-color: var(--background) !important;
+}
+
+html[data-theme='light'] .home-shell .site-header {
+  background-color: rgba(251, 248, 241, 0.92) !important;
+}
+
+html[data-theme='light'] .home-shell .inst-card:not(.inst-card-quiet) .inst-platter,
+html[data-theme='light'] .home-shell .note-plate {
+  background-color: #000000 !important;
+}
+
+html[data-theme='light'] .home-shell .inst-card.inst-card-quiet .inst-platter,
+html[data-theme='light'] .home-shell .inst-gates-strip-link,
+html[data-theme='light'] .home-shell .home-vault-card {
+  background-color: #f0ebe0 !important;
 }
