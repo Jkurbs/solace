@@ -499,34 +499,43 @@ export default function HomeClient({
       <section id="instruments" className="inst-wrap px-5 md:px-10">
         <div className="inst-grid mx-auto max-w-7xl">
           <motion.div id="hermes" className="inst-cell inst-cell-hermes scroll-mt-24" {...cardReveal(0)}>
-            <Link href="/hermes" className="inst-card">
-              <div className="inst-platter">
-                <div className="inst-card-render" aria-hidden="true">
-                  <HermesLiquidityFieldRender posture={hermesTelemetry?.posture} />
+            <div className="inst-card">
+              <Link href="/hermes" className="inst-card-fill" aria-label="Explore Hermes">
+                <div className="inst-platter">
+                  <div className="inst-card-render" aria-hidden="true">
+                    <HermesLiquidityFieldRender posture={hermesTelemetry?.posture} />
+                  </div>
+                  <div className="inst-card-scrim" aria-hidden="true" />
+                  <span className="inst-chip is-live">
+                    {hermesTelemetry ? <span className="inst-chip-dot" aria-hidden="true" /> : null}
+                    Live · {hermesBetaVersionLabel.replace(/^Hermes\s+/, '')}
+                  </span>
+                  {hermesTelemetry ? (
+                    <p className="inst-card-live-brief">
+                      <HermesLiveBriefing telemetry={hermesTelemetry} />
+                    </p>
+                  ) : null}
                 </div>
-                <div className="inst-card-scrim" aria-hidden="true" />
-                <span className="inst-chip is-live">
-                  {hermesTelemetry ? <span className="inst-chip-dot" aria-hidden="true" /> : null}
-                  Live · {hermesBetaVersionLabel.replace(/^Hermes\s+/, '')}
-                </span>
-                {hermesTelemetry ? (
-                  <p className="inst-card-live-brief">
-                    <HermesLiveBriefing telemetry={hermesTelemetry} />
-                  </p>
-                ) : null}
-              </div>
+              </Link>
               <div className="inst-copy">
-                <div className="inst-card-name">
+                <Link href="/hermes" className="inst-card-name">
                   <em className="inst-card-kicker">The first instrument</em>
                   <strong>Hermes</strong>
                   <p>
                     A live capital allocation engine that reads market structure to decide when capital should
                     move, wait, or be preserved.
                   </p>
+                </Link>
+                <div className="inst-card-ctas">
+                  <Link href="/hermes" className="inst-card-cta">
+                    Explore →
+                  </Link>
+                  <Link href="/trust" className="inst-card-cta inst-card-cta-ledger">
+                    Decision ledger →
+                  </Link>
                 </div>
-                <span className="inst-card-cta">Explore →</span>
               </div>
-            </Link>
+            </div>
           </motion.div>
 
           <motion.div id="oracle" className="inst-cell inst-cell-oracle scroll-mt-24" {...cardReveal(1)}>

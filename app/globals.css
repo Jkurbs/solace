@@ -1042,8 +1042,43 @@ h2 {
     min-height: clamp(26rem, 42vw, 32rem);
   }
 
-  a.inst-card:hover {
+  a.inst-card:hover,
+  .inst-card:has(.inst-card-fill:hover),
+  .inst-card:has(.inst-card-name:hover),
+  .inst-card:has(.inst-card-cta:hover) {
     opacity: 0.96;
+  }
+
+  /* Full-plate hit target when the card is a container (dual CTAs on Hermes). */
+  .inst-card-fill {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    border-radius: inherit;
+  }
+
+  .inst-card-fill .inst-platter {
+    position: absolute;
+    inset: 0;
+  }
+
+  .inst-card-ctas {
+    position: relative;
+    z-index: 3;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .inst-card-cta-ledger {
+    color: rgba(141, 184, 157, 0.72);
+  }
+
+  .inst-card:has(.inst-card-cta-ledger:hover) .inst-card-cta-ledger,
+  a.inst-card-cta-ledger:hover {
+    color: #8db89d;
   }
 
   .inst-platter {
@@ -1074,6 +1109,13 @@ h2 {
     align-items: flex-end;
     justify-content: space-between;
     gap: 1.25rem;
+    pointer-events: none;
+  }
+
+  .inst-copy .inst-card-name,
+  .inst-copy .inst-card-cta,
+  .inst-copy .inst-card-ctas {
+    pointer-events: auto;
   }
 
   .inst-card-render {
@@ -1251,9 +1293,13 @@ h2 {
     letter-spacing: 0.14em;
     text-transform: uppercase;
     transition: color 0.2s ease;
+    white-space: nowrap;
   }
 
-  a.inst-card:hover .inst-card-cta {
+  a.inst-card:hover .inst-card-cta,
+  .inst-card:has(.inst-card-fill:hover) .inst-card-cta:not(.inst-card-cta-ledger),
+  .inst-card:has(.inst-card-name:hover) .inst-card-cta:not(.inst-card-cta-ledger),
+  a.inst-card-cta:hover {
     color: var(--foreground);
   }
 
@@ -1293,8 +1339,23 @@ h2 {
       opacity: 1;
     }
 
-    a.inst-card:hover {
+    a.inst-card:hover,
+    .inst-card:has(.inst-card-fill:hover),
+    .inst-card:has(.inst-card-name:hover),
+    .inst-card:has(.inst-card-cta:hover) {
       opacity: 1;
+    }
+
+    .inst-card-fill {
+      position: relative;
+      inset: auto;
+      display: block;
+      border-radius: 0;
+    }
+
+    .inst-card-fill .inst-platter {
+      position: relative;
+      inset: auto;
     }
 
     .inst-platter {
@@ -1338,13 +1399,22 @@ h2 {
       color: rgba(250, 250, 250, 0.58);
     }
 
-    .inst-card-cta {
+    .inst-card-cta,
+    .inst-card-ctas {
       justify-self: start;
+    }
+
+    .inst-card-cta {
       color: rgba(250, 250, 250, 0.5);
     }
 
-    a.inst-card:hover .inst-card-cta {
+    a.inst-card:hover .inst-card-cta,
+    a.inst-card-cta:hover {
       color: var(--foreground);
+    }
+
+    .inst-card-cta-ledger {
+      color: rgba(141, 184, 157, 0.7);
     }
 
     .inst-card-metrics {
