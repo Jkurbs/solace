@@ -3,300 +3,108 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-// Homepage Simulation plate: probability cloud / field of outcomes.
-// Dense clusters = likely; sparse regions = unlikely; a glowing trajectory
-// threads the high-mass corridor. Same craft language as Hermes/Oracle —
-// orthographic shader plate, dust, grade, pointer probe — different idea.
+// Homepage Simulation plate: a self-contained glass cube laboratory.
+// Distinct motion vocabulary from Hermes (liquidity field) and Oracle (futures fan).
+// Nothing enters or leaves — possibility reorganizes only inside the box.
 
-const vertexShader = `
-  varying vec2 vUv;
+const CUBE = 1.0;
+const HALF = CUBE * 0.5;
+const PARTICLE_COUNT_DESKTOP = 5200;
+const PARTICLE_COUNT_MOBILE = 2800;
+const TRAJ_POINTS = 96;
+
+// Glass face: soft fresnel shell, not a solid wall.
+const glassVertex = `
+  varying vec3 vWorldNormal;
+  varying vec3 vViewDir;
 
   void main() {
-    vUv = uv;
-    gl_Position = vec4(position.xy, 0.0, 1.0);
+    vec4 worldPos = modelMatrix * vec4(position, 1.0);
+    vWorldNormal = normalize(mat3(modelMatrix) * normal);
+    vViewDir = normalize(cameraPosition - worldPos.xyz);
+    gl_Position = projectionMatrix * viewMatrix * worldPos;
   }
 `;
 
-const fragmentShader = `
+const glassFragment = `
   precision highp float;
-
-  uniform vec2 uResolution;
-  uniform float uPixelRatio;
-  uniform float uTime;
-  uniform sampler2D uField;
-  uniform sampler2D uPath;
-  uniform float uPathFade;
-  uniform float uFieldMix;
-  uniform vec2 uWell;
-  uniform vec2 uPointer;
-  uniform float uPointerGlow;
-
-  float hash(vec2 p) {
-    p = fract(p * vec2(123.34, 456.21));
-    p += dot(p, p + 45.32);
-    return fract(p.x * p.y);
-  }
-
-  float hash13(vec3 p) {
-    p = fract(p * vec3(443.897, 441.423, 437.195));
-    p += dot(p, p.yzx + 19.19);
-    return fract((p.x + p.y) * p.z);
-  }
-
-  float noise(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-    float a = hash(i);
-    float b = hash(i + vec2(1.0, 0.0));
-    float c = hash(i + vec2(0.0, 1.0));
-    float d = hash(i + vec2(1.0, 1.0));
-    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-  }
-
-  float fbm(vec2 p) {
-    float v = 0.0;
-    float a = 0.5;
-    for (int i = 0; i < 5; i++) {
-      v += a * noise(p);
-      p = p * 2.07 + vec2(11.3, 7.1);
-      a *= 0.5;
-    }
-    return v;
-  }
-
-  float fieldRaw(vec2 w) {
-    float inBounds = step(0.0, w.x) * step(w.x, 1.0) * step(0.0, w.y) * step(w.y, 1.0);
-    vec4 t = texture2D(uField, clamp(w, 0.0, 1.0));
-    float f = mix(t.r, t.g, uFieldMix) * inBounds;
-    float breathe = 0.96 + 0.04 * sin(uTime * 0.18);
-    return f * breathe;
-  }
-
-  // Probability dust: spawn density tracks the field so the cloud *is* the data.
-  vec3 cloudLayer(vec2 w, float scale, float drift, float weight, float seed, float radMul) {
-    vec2 q = w + vec2(uTime * drift, uTime * drift * 0.22);
-    vec2 g = q * vec2(scale, scale * 0.88);
-    vec2 cell = floor(g);
-    vec2 fr = fract(g);
-
-    float rnd = hash(cell * 1.17 + seed);
-    vec2 pp = vec2(hash(cell + vec2(7.1, 3.7) + seed), hash(cell + vec2(2.3, 9.2) + seed)) * 0.78 + 0.11;
-    vec2 sampleW = (cell + pp) / vec2(scale, scale * 0.88) - vec2(uTime * drift, uTime * drift * 0.22);
-
-    float fc = fieldRaw(sampleW);
-    // Dense clusters = high probability; sparse = unlikely.
-    float dens = smoothstep(0.03, 0.72, fc);
-    float spawn = step(rnd, dens * dens * 0.78 + dens * 0.14 + 0.014);
-
-    float radius = mix(0.012, 0.05, hash(cell + 5.5 + seed)) * radMul;
-    float pt = smoothstep(radius, radius * 0.08, length(fr - pp));
-    float tw = 0.55 + 0.45 * sin(uTime * (0.38 + rnd * 1.5) + rnd * 21.0);
-
-    // Cool scientific cloud; warm only in the densest cores.
-    float temp = smoothstep(0.28, 0.9, fc);
-    vec3 cold = vec3(0.38, 0.62, 0.95);
-    vec3 mid = vec3(0.58, 0.8, 0.98);
-    vec3 warm = vec3(0.95, 0.86, 0.7);
-    vec3 dcol = mix(cold, mid, smoothstep(0.12, 0.55, fc));
-    dcol = mix(dcol, warm, temp * 0.7);
-
-    return dcol * spawn * pt * tw * weight * (0.28 + fc * 1.4);
-  }
-
-  // Soft out-of-focus foreground particles — prestige-cinema depth of field.
-  vec3 bokeh(vec2 w, float scale, float drift, float seed) {
-    vec2 q = w + vec2(uTime * drift, uTime * drift * 0.3);
-    vec2 g = q * scale;
-    vec2 cell = floor(g);
-    vec2 fr = fract(g);
-
-    float rnd = hash(cell * 1.31 + seed);
-    float spawn = step(rnd, 0.12);
-    vec2 pp = vec2(hash(cell + vec2(3.1, 8.7) + seed), hash(cell + vec2(9.4, 2.2) + seed)) * 0.7 + 0.15;
-
-    float r = mix(0.13, 0.29, hash(cell + 6.8 + seed));
-    float disc = smoothstep(r, r * 0.36, length(fr - pp));
-    float tw = 0.55 + 0.45 * sin(uTime * (0.22 + rnd) + rnd * 29.0);
-
-    float fc = fieldRaw((cell + pp) / scale - vec2(uTime * drift, uTime * drift * 0.3));
-    vec3 col = mix(vec3(0.42, 0.64, 0.9), vec3(0.96, 0.86, 0.62), smoothstep(0.18, 0.75, fc));
-    return col * spawn * disc * tw * 0.05 * (0.4 + fc);
-  }
+  varying vec3 vWorldNormal;
+  varying vec3 vViewDir;
+  uniform float uOpacity;
+  uniform vec3 uTint;
 
   void main() {
-    vec2 uv = gl_FragCoord.xy / uResolution.xy;
-    float aspect = uResolution.x / max(uResolution.y, 1.0);
-    float mobile = 1.0 - smoothstep(0.94, 1.22, aspect);
+    float fres = pow(1.0 - max(dot(normalize(vWorldNormal), normalize(vViewDir)), 0.0), 2.4);
+    float face = 0.02 + fres * 0.22;
+    vec3 col = mix(uTint * 0.35, vec3(0.82, 0.92, 1.0), fres);
+    gl_FragColor = vec4(col, face * uOpacity);
+  }
+`;
 
-    // Visual mass lives left-center so plate copy can sit cleanly on the right.
-    vec2 w = uv;
-    w.x = mix(w.x, 0.14 + w.x * 0.8, mobile * 0.55);
+// Soft scientific dust points.
+const pointVertex = `
+  attribute float aSize;
+  attribute float aBright;
+  attribute float aSeed;
+  varying float vBright;
+  varying float vSeed;
+  uniform float uPixelRatio;
+  uniform float uTime;
 
-    // Slow camera drift + breathe — film, not wallpaper.
-    w += vec2(sin(uTime * 0.01), cos(uTime * 0.0075)) * 0.011;
-    w = (w - 0.5) * (1.0 + 0.007 * sin(uTime * 0.0065)) + 0.5;
+  void main() {
+    vBright = aBright;
+    vSeed = aSeed;
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    float tw = 0.82 + 0.18 * sin(uTime * (0.7 + aSeed * 1.4) + aSeed * 12.0);
+    gl_PointSize = aSize * uPixelRatio * tw * (180.0 / max(-mv.z, 0.001));
+    gl_Position = projectionMatrix * mv;
+  }
+`;
 
-    // Gentle lensing toward the densest probability well.
-    vec2 toWell = w - uWell;
-    float wr = length(toWell * vec2(1.25, 1.0));
-    vec2 wWarp = w - (toWell / max(wr, 0.001)) * 0.016 * exp(-wr * wr / 0.05);
+const pointFragment = `
+  precision highp float;
+  varying float vBright;
+  varying float vSeed;
 
-    // Pointer probe: attention gently bends and lights the field under it.
-    vec2 toPtr = uv - uPointer;
-    float prd = length(toPtr * vec2(1.2, 1.0));
-    float probe = exp(-prd * prd / 0.02) * uPointerGlow;
-    wWarp -= (toPtr / max(prd, 0.001)) * 0.007 * probe;
+  void main() {
+    vec2 p = gl_PointCoord * 2.0 - 1.0;
+    float d = length(p);
+    if (d > 1.0) discard;
+    float core = exp(-d * d * 3.8);
+    float halo = exp(-d * d * 1.2) * 0.35;
+    float a = (core + halo) * vBright;
+    // Cool laboratory palette; denser / brighter cores go slightly warm.
+    vec3 cold = vec3(0.45, 0.72, 0.98);
+    vec3 mid = vec3(0.72, 0.88, 1.0);
+    vec3 warm = vec3(0.98, 0.9, 0.72);
+    vec3 col = mix(cold, mid, smoothstep(0.25, 0.75, vBright));
+    col = mix(col, warm, smoothstep(0.7, 1.0, vBright) * 0.55);
+    col *= 0.92 + 0.08 * sin(vSeed * 40.0);
+    gl_FragColor = vec4(col, a);
+  }
+`;
 
-    // Holographic parallax: depth layers slide against the pointer.
-    vec2 ptrPar = (vec2(0.5) - uPointer) * 0.015 * uPointerGlow;
+const trajVertex = `
+  attribute float aAlong;
+  varying float vAlong;
+  void main() {
+    vAlong = aAlong;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
 
-    // Deep observatory void — never dead black (matches Hermes/Oracle contract).
-    vec3 color = vec3(0.0026, 0.0036, 0.0062);
+const trajFragment = `
+  precision highp float;
+  varying float vAlong;
+  uniform float uFade;
+  uniform float uPulse;
 
-    float neb = noise(w * 2.35 + vec2(uTime * 0.011, 0.0)) * 0.6 + noise(w * 5.0) * 0.4;
-    color += vec3(0.007, 0.014, 0.028) * neb * 0.65;
-
-    // Billowing cloud structure: low-frequency fbm clumps the dust into weather.
-    vec2 clumpDrift = vec2(uTime * 0.0085, -uTime * 0.0038);
-    float clump = fbm(wWarp * 3.05 + clumpDrift);
-    clump = smoothstep(0.38, 0.76, clump);
-
-    // Pseudo self-shadowing toward a soft light from upper-left.
-    float clumpTowardLight = fbm((wWarp + vec2(-0.48, 0.82) * 0.05) * 3.05 + clumpDrift);
-    clumpTowardLight = smoothstep(0.34, 0.72, clumpTowardLight);
-    float cloudLight = 0.48 + 0.95 * smoothstep(0.28, -0.32, clumpTowardLight - clump);
-
-    // God-ray: soft volumetric shaft raking through the densest well.
-    vec2 rayOrigin = vec2(uWell.x - 0.18, 1.28);
-    vec2 rayDir = normalize(uWell - rayOrigin + vec2(0.0, 0.02));
-    vec2 rel = w - rayOrigin;
-    float along = max(dot(rel, rayDir), 0.0);
-    float across = abs(rel.x * rayDir.y - rel.y * rayDir.x);
-    float shaft = exp(-across * across / (0.012 + along * 0.065)) * exp(-along * 0.95);
-    shaft *= 0.7 + 0.3 * fbm(vec2(along * 3.2 - uTime * 0.016, across * 9.0));
-    color += vec3(0.72, 0.86, 1.0) * shaft * 0.1;
-
-    // === PROBABILITY HAZE (the field itself as glowing terrain) ===
-    float f = fieldRaw(wWarp + ptrPar * 0.2);
-    vec3 deep = vec3(0.1, 0.18, 0.36);
-    vec3 midH = vec3(0.28, 0.48, 0.72);
-    vec3 pale = vec3(0.78, 0.88, 0.98);
-    vec3 warmCore = vec3(0.95, 0.82, 0.62);
-    vec3 haze = mix(deep, midH, smoothstep(0.12, 0.55, f));
-    haze = mix(haze, pale, smoothstep(0.55, 0.9, f));
-    haze = mix(haze, warmCore, smoothstep(0.72, 0.98, f) * 0.55);
-
-    // Soft iso-density shells — the cloud reads as a volume, not a wash.
-    float shell = abs(sin(f * 18.0 + fbm(wWarp * 6.0) * 2.0));
-    shell = pow(1.0 - shell, 8.0) * smoothstep(0.12, 0.55, f);
-    color += haze * pow(f, 2.2) * 0.42 * (0.45 + 0.85 * clump) * cloudLight;
-    color += pale * shell * 0.07 * cloudLight;
-
-    // Cold counter-haze where probability thins — teal breath in the void.
-    color += vec3(0.04, 0.1, 0.18) * (1.0 - smoothstep(0.04, 0.38, f)) * (0.35 + 0.65 * clump) * 0.45;
-
-    // === PROBABILITY DUST (four depths, clumped, lit by the shaft) ===
-    float dustBoost = (0.22 + 1.25 * clump) * (1.0 + shaft * 1.8) * cloudLight;
-    color += cloudLayer(wWarp + ptrPar * 0.45, 32.0, 0.0025, 0.42, 0.0, 1.0) * dustBoost;
-    color += cloudLayer(wWarp + ptrPar * 0.95, 60.0, 0.0042, 0.68, 17.0, 1.35) * dustBoost;
-    color += cloudLayer(wWarp + ptrPar * 1.6, 108.0, 0.0068, 0.95, 41.0, 2.15) * dustBoost;
-    color += cloudLayer(wWarp + ptrPar * 2.2, 180.0, 0.0092, 0.82, 71.0, 3.4) * clump * clump * (1.45 + shaft * 1.6);
-
-    // Micro-glitter in dense cores — the cloud has a crystalline body.
-    float micro = hash(floor(wWarp * vec2(170.0, 148.0) + uTime * 0.4));
-    color += vec3(0.92, 0.96, 1.0) * step(0.9965, micro) * smoothstep(0.35, 0.85, f) * 0.14;
-
-    // === TRAJECTORY through the probability field ===
-    vec4 path = texture2D(uPath, vec2(clamp(w.x, 0.0, 1.0), 0.5));
-    float py = path.r;
-    float pDefined = path.g;
-
-    float dxs = 3.0 / 512.0;
-    float py2 = texture2D(uPath, vec2(min(w.x + dxs, 1.0), 0.5)).r;
-    float slope = (py2 - py) / max(dxs, 1e-4);
-    float corr = inversesqrt(1.0 + slope * slope * (uResolution.y * uResolution.y) / (uResolution.x * uResolution.x));
-    float sPix = (uv.y - py) * uResolution.y * corr / uPixelRatio;
-    float dPix = abs(sPix);
-
-    float core = exp(-dPix * dPix / (1.15 * 1.15));
-    float halo = exp(-dPix * dPix / (12.0 * 12.0));
-    float wide = exp(-dPix * dPix / (50.0 * 50.0));
-
-    // Braided filaments — same craft language as Hermes, cooler then warm head.
-    float fil = 0.0;
-    for (int k = 0; k < 4; k++) {
-      float fk = float(k);
-      float fph = hash(vec2(fk * 2.3 + 1.0, 3.7)) * 6.2831;
-      float amp = 1.0 + fk * 0.8;
-      float off = sin(w.x * (7.5 + fk * 3.0) + fph + uTime * (0.2 + fk * 0.06)) * amp
-                + sin(w.x * (18.0 + fk * 4.5) - fph * 1.6 + uTime * 0.12) * amp * 0.32;
-      float d = sPix - off;
-      float shimmer = 0.78 + 0.22 * sin(w.x * 38.0 + fph * 3.0 + uTime * 0.55);
-      fil += exp(-d * d / (0.8 * 0.8)) * shimmer;
-    }
-
-    float ph = fract(uTime * 0.04);
-    float pdist = w.x - ph;
-    float pulse = exp(-pdist * pdist / 0.003);
-    float headY = texture2D(uPath, vec2(ph, 0.5)).r;
-    float headD = length(vec2((w.x - ph) * uResolution.x, (uv.y - headY) * uResolution.y)) / uPixelRatio;
-    float head = exp(-headD * headD / (24.0 * 24.0));
-
-    float pathLife = pDefined * smoothstep(0.015, 0.1, w.x) * (1.0 - 0.28 * smoothstep(0.68, 1.0, w.x));
-    float energize = 1.0 + 1.35 * pulse;
-    vec3 pathCol = vec3(0.0);
-    pathCol += vec3(0.88, 0.96, 1.0) * fil * 0.42 * energize;
-    pathCol += vec3(0.55, 0.82, 0.98) * core * 0.58 * energize;
-    pathCol += vec3(0.42, 0.68, 0.92) * halo * 0.16;
-    pathCol += vec3(0.36, 0.52, 0.72) * wide * 0.04;
-    pathCol += vec3(1.0, 0.9, 0.72) * head * 0.7;
-    // Warm where the trajectory rides dense probability.
-    pathCol = mix(pathCol, pathCol * vec3(1.12, 1.0, 0.85), smoothstep(0.32, 0.85, f) * 0.5);
-    color += pathCol * pathLife * uPathFade;
-
-    // The present: a single bright seed where the trajectory begins.
-    vec2 origin = vec2(0.04, texture2D(uPath, vec2(0.04, 0.5)).r);
-    float od = length(vec2((w.x - origin.x) * uResolution.x, (uv.y - origin.y) * uResolution.y)) / uPixelRatio;
-    float breath = 0.85 + 0.15 * sin(uTime * 0.48);
-    color += vec3(0.92, 0.96, 1.0) * exp(-od * od / 8.0) * 1.05 * breath * uPathFade;
-    color += vec3(0.5, 0.75, 0.95) * exp(-od * od / (68.0 * 68.0)) * 0.08 * uPathFade;
-
-    // === FOREGROUND BOKEH ===
-    color += bokeh(w + ptrPar * 2.6, 5.3, 0.0058, 4.0);
-    color += bokeh(w + ptrPar * 2.6, 3.1, 0.009, 27.0);
-
-    // The field brightens where it is being read.
-    color *= 1.0 + probe * 0.3;
-    color += vec3(0.55, 0.78, 0.98) * probe * pow(max(f, 0.0), 1.3) * 0.14;
-
-    // === GRADE (same contract as Hermes/Oracle) ===
-    float leftFade = smoothstep(0.0, 0.28, uv.x);
-    color *= mix(mix(0.36, 0.64, mobile), 1.0, leftFade);
-
-    float rightFade = smoothstep(1.0, 0.58, uv.x);
-    color *= mix(0.55, 1.0, rightFade);
-
-    float vert = smoothstep(0.0, 0.16, uv.y) * smoothstep(1.0, 0.78, uv.y);
-    color *= 0.74 + 0.26 * vert;
-
-    color = pow(max(color, 0.0), vec3(0.88));
-
-    float lum = dot(color, vec3(0.299, 0.587, 0.114));
-    color = mix(color * vec3(0.84, 0.96, 1.2), color, smoothstep(0.0, 0.3, lum));
-    color = mix(color, color * vec3(1.06, 1.0, 0.9), smoothstep(0.45, 0.95, lum) * 0.5);
-
-    float grain = hash13(vec3(gl_FragCoord.xy, uTime * 18.0)) - 0.5;
-    color += grain * 0.009;
-
-    color = min(color * 1.06 + 0.002, vec3(1.0));
-
-    // Luminance-keyed alpha: bright content opaque, empty void a thin veil
-    // so continuous sky can breathe through the plate.
-    float alphaLum = dot(color, vec3(0.299, 0.587, 0.114));
-    float alpha = clamp(0.18 + alphaLum * 5.5, 0.0, 1.0);
-
-    gl_FragColor = vec4(color / max(alpha, 0.02), alpha);
+  void main() {
+    float life = smoothstep(0.0, 0.08, vAlong) * (1.0 - smoothstep(0.88, 1.0, vAlong));
+    float head = exp(-pow(vAlong - uPulse, 2.0) / 0.01);
+    vec3 col = mix(vec3(0.4, 0.7, 0.95), vec3(1.0, 0.92, 0.75), head);
+    float a = (0.35 * life + 0.55 * head) * uFade;
+    gl_FragColor = vec4(col, a);
   }
 `;
 
@@ -310,177 +118,130 @@ function mulberry32(seed: number) {
   };
 }
 
-const FIELD_W = 256;
-const FIELD_H = 160;
-const PATH_STEPS = 512;
-
-type Well = { x: number; y: number; sx: number; sy: number; a: number };
-
-function buildWells(rand: () => number): Well[] {
-  // Primary corridor + secondary lobes — reads as a probability landscape.
-  return [
-    { x: 0.34 + (rand() - 0.5) * 0.05, y: 0.5 + (rand() - 0.5) * 0.06, sx: 0.15, sy: 0.09, a: 1.2 },
-    { x: 0.52 + (rand() - 0.5) * 0.06, y: 0.62 + (rand() - 0.5) * 0.07, sx: 0.1, sy: 0.065, a: 0.78 },
-    { x: 0.48 + (rand() - 0.5) * 0.07, y: 0.34 + (rand() - 0.5) * 0.06, sx: 0.095, sy: 0.055, a: 0.62 },
-    { x: 0.68 + (rand() - 0.5) * 0.05, y: 0.52 + (rand() - 0.5) * 0.08, sx: 0.085, sy: 0.055, a: 0.55 },
-    { x: 0.24 + (rand() - 0.5) * 0.04, y: 0.4 + (rand() - 0.5) * 0.05, sx: 0.07, sy: 0.05, a: 0.42 },
-    { x: 0.78 + (rand() - 0.5) * 0.04, y: 0.42 + (rand() - 0.5) * 0.07, sx: 0.07, sy: 0.048, a: 0.38 },
-  ];
+function clampInside(v: THREE.Vector3, pad = 0.04) {
+  const lim = HALF - pad;
+  v.x = Math.min(Math.max(v.x, -lim), lim);
+  v.y = Math.min(Math.max(v.y, -lim), lim);
+  v.z = Math.min(Math.max(v.z, -lim), lim);
+  return v;
 }
 
-function dominantWell(wells: Well[]) {
-  let best = wells[0];
-  for (const w of wells) {
-    if (w.a > best.a) best = w;
-  }
-  return { x: best.x, y: best.y };
+function smoothstep(edge0: number, edge1: number, x: number) {
+  const t = Math.min(Math.max((x - edge0) / (edge1 - edge0), 0), 1);
+  return t * t * (3 - 2 * t);
 }
 
-function buildProbabilityChannel(rand: () => number, wells: Well[]) {
-  const LX = 33;
-  const LY = 21;
-  const lattice = new Float32Array(LX * LY);
-  for (let i = 0; i < lattice.length; i++) lattice[i] = rand();
+const _pathTmp = new THREE.Vector3();
 
-  const latticeAt = (u: number, v: number) => {
-    const x = u * (LX - 1);
-    const y = v * (LY - 1);
-    const x0 = Math.floor(x);
-    const y0 = Math.floor(y);
-    const fx = x - x0;
-    const fy = y - y0;
-    const sx = fx * fx * (3 - 2 * fx);
-    const sy = fy * fy * (3 - 2 * fy);
-    const x1 = Math.min(x0 + 1, LX - 1);
-    const y1 = Math.min(y0 + 1, LY - 1);
-    const a = lattice[y0 * LX + x0];
-    const b = lattice[y0 * LX + x1];
-    const c = lattice[y1 * LX + x0];
-    const d = lattice[y1 * LX + x1];
-    return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
-  };
+// Formation targets inside the cube. Each mode is a different "hypothesis world".
+function targetFor(
+  mode: number,
+  seed: number,
+  i: number,
+  n: number,
+  t: number,
+  out: THREE.Vector3,
+) {
+  const u = i / Math.max(n - 1, 1);
+  // Decorrelate seed into three channels without allocating.
+  const s1 = seed;
+  const s2 = (seed * 1.6180339887) % 1;
+  const s3 = (seed * 2.718281828) % 1;
 
-  const data = new Float32Array(FIELD_W * FIELD_H);
-  let max = 0;
-
-  for (let j = 0; j < FIELD_H; j++) {
-    for (let i = 0; i < FIELD_W; i++) {
-      const u = i / (FIELD_W - 1);
-      const v = j / (FIELD_H - 1);
-
-      let value = 0;
-      for (const well of wells) {
-        const dx = (u - well.x) / well.sx;
-        const dy = (v - well.y) / well.sy;
-        value += well.a * Math.exp(-0.5 * (dx * dx + dy * dy));
-      }
-
-      // Soft ridge connecting the primary corridor — preferred path of mass.
-      const ridgeY = 0.5 + 0.07 * Math.sin(u * Math.PI * 1.6);
-      const ridge = Math.exp(-Math.pow((v - ridgeY) / 0.09, 2)) * 0.28 * (0.25 + 0.75 * u);
-      value += ridge;
-
-      value += latticeAt(u, v) * 0.28 + latticeAt((u * 2.6) % 1, (v * 2.2) % 1) * 0.14;
-
-      // Horizon fade: less structure far into the future.
-      const horizon = 0.38 + 0.62 * (1 - Math.pow(u, 1.12));
-      value *= horizon;
-
-      data[j * FIELD_W + i] = value;
-      if (value > max) max = value;
+  if (mode < 0.5) {
+    // Diffuse probability gas.
+    const a = s1 * Math.PI * 2;
+    const b = s2 * Math.PI * 2;
+    const r = Math.pow(0.15 + s3 * 0.85, 0.55) * HALF * 0.92;
+    out.set(
+      Math.sin(a) * Math.cos(b) * r,
+      (s2 * 2 - 1) * HALF * 0.85,
+      Math.cos(a) * Math.cos(b) * r * 0.9,
+    );
+    out.x += Math.sin(t * 0.22 + s1 * 9.0) * 0.03;
+    out.y += Math.cos(t * 0.18 + s2 * 7.0) * 0.025;
+  } else if (mode < 1.5) {
+    // Three coalescing clusters (hypothesis basins).
+    const cluster = Math.floor(s1 * 3) % 3;
+    const cx = cluster === 0 ? -0.22 : cluster === 1 ? 0.2 : 0.02;
+    const cy = cluster === 0 ? 0.12 : cluster === 1 ? -0.08 : 0.18;
+    const cz = cluster === 0 ? 0.1 : cluster === 1 ? -0.16 : -0.22;
+    const spread = 0.1 + s2 * 0.08;
+    const a = s3 * Math.PI * 2 + t * 0.15;
+    out.set(
+      cx + Math.cos(a) * spread * (0.5 + s1 * 0.5),
+      cy + Math.sin(a * 1.3) * spread * 0.7,
+      cz + Math.sin(a) * spread * (0.5 + s2 * 0.5),
+    );
+  } else if (mode < 2.5) {
+    // Lattice / crystal of possible states.
+    const g = 7;
+    const gx = (Math.floor(s1 * g) + 0.5) / g - 0.5;
+    const gy = (Math.floor(s2 * g) + 0.5) / g - 0.5;
+    const gz = (Math.floor(s3 * g) + 0.5) / g - 0.5;
+    const jitter = 0.018;
+    const breath = 1 + 0.02 * Math.sin(t * 0.35 + s1 * 4.0);
+    out.set(
+      (gx * CUBE * 0.82 + (s1 - 0.5) * jitter) * breath,
+      (gy * CUBE * 0.82 + (s2 - 0.5) * jitter) * breath,
+      (gz * CUBE * 0.82 + (s3 - 0.5) * jitter) * breath,
+    );
+  } else if (mode < 3.5) {
+    // Spiral / helical structure collapsing toward an axis.
+    if (s3 > 0.72) {
+      const sa = s1 * Math.PI * 2;
+      const sr = 0.22 + s2 * 0.2;
+      out.set(Math.cos(sa) * sr, (s2 - 0.5) * CUBE * 0.7, Math.sin(sa) * sr);
+    } else {
+      const turns = 3.2;
+      const angle = u * Math.PI * 2 * turns + t * 0.25;
+      const radius = 0.08 + (1 - u) * 0.28 * (0.6 + s2 * 0.4);
+      const y = (u - 0.5) * CUBE * 0.78;
+      out.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
     }
+  } else {
+    // Dominant trajectory corridor — mass concentrates along one path.
+    const pathT = u * 0.92 + s1 * 0.06;
+    const angle = pathT * Math.PI * 1.6;
+    const px = Math.sin(angle * 1.1) * 0.28;
+    const py = (pathT - 0.5) * CUBE * 0.72;
+    const pz = Math.cos(angle * 0.9) * 0.24;
+    // Orthonormal offset in the path's normal plane (no heap alloc).
+    const tx = -Math.cos(angle * 1.1);
+    const ty = 0.15;
+    const tz = Math.sin(angle * 0.9);
+    const tLen = Math.hypot(tx, ty, tz) || 1;
+    const tnx = tx / tLen;
+    const tny = ty / tLen;
+    const tnz = tz / tLen;
+    // bitangent ≈ tangent × up
+    let bx = tny * 0 - tnz * 1;
+    let by = tnz * 0 - tnx * 0;
+    let bz = tnx * 1 - tny * 0;
+    const bLen = Math.hypot(bx, by, bz) || 1;
+    bx /= bLen;
+    by /= bLen;
+    bz /= bLen;
+    const radial = (s2 - 0.5) * 0.12 * (1.1 - pathT);
+    const along = (s3 - 0.5) * 0.04;
+    out.set(
+      px + bx * radial + tnx * along,
+      py + by * radial + tny * along,
+      pz + bz * radial + tnz * along,
+    );
   }
 
-  for (let i = 0; i < data.length; i++) {
-    data[i] = Math.pow(data[i] / Math.max(max, 1e-6), 1.2);
-  }
-
-  return data;
+  return clampInside(out, 0.05);
 }
 
-function packField(channelA: Float32Array, channelB: Float32Array) {
-  const data = new Float32Array(FIELD_W * FIELD_H * 4);
-  for (let i = 0; i < FIELD_W * FIELD_H; i++) {
-    const base = i * 4;
-    data[base] = channelA[i];
-    data[base + 1] = channelB[i];
-    data[base + 2] = 0;
-    data[base + 3] = 1;
-  }
-  return data;
-}
-
-function sampleChannel(data: Float32Array, u: number, v: number) {
-  const x = Math.min(Math.max(u, 0), 1) * (FIELD_W - 1);
-  const y = Math.min(Math.max(v, 0), 1) * (FIELD_H - 1);
-  const x0 = Math.floor(x);
-  const y0 = Math.floor(y);
-  const x1 = Math.min(x0 + 1, FIELD_W - 1);
-  const y1 = Math.min(y0 + 1, FIELD_H - 1);
-  const fx = x - x0;
-  const fy = y - y0;
-  const a = data[y0 * FIELD_W + x0];
-  const b = data[y0 * FIELD_W + x1];
-  const c = data[y1 * FIELD_W + x0];
-  const d = data[y1 * FIELD_W + x1];
-  return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
-}
-
-function buildTrajectory(rand: () => number, field: Float32Array) {
-  const texture = new Float32Array(PATH_STEPS * 4);
-  let y = 0.5 + (rand() - 0.5) * 0.04;
-  let vy = 0;
-  const ys = new Float32Array(PATH_STEPS);
-
-  for (let s = 0; s < PATH_STEPS; s++) {
-    const t = s / (PATH_STEPS - 1);
-    // Hill-climb density gradient with damping — prefers the probability corridor.
-    const grad =
-      (sampleChannel(field, t, Math.min(y + 0.016, 0.95)) -
-        sampleChannel(field, t, Math.max(y - 0.016, 0.05))) /
-      0.032;
-    vy += grad * 0.0018;
-    vy += (rand() - 0.5) * 0.0011 * (0.35 + t);
-    vy *= 0.9;
-    y += vy + Math.sin(t * Math.PI * 1.35 + rand() * 0.5) * 0.0032;
-    y = Math.min(Math.max(y, 0.1), 0.9);
-    ys[s] = y;
-  }
-
-  // Smooth into a confident arc; keep a whisper of texture.
-  const smoothed = Float32Array.from(ys);
-  for (let pass = 0; pass < 3; pass++) {
-    const src = Float32Array.from(smoothed);
-    const radius = 7;
-    for (let s = 0; s < PATH_STEPS; s++) {
-      let sum = 0;
-      let count = 0;
-      for (let k = -radius; k <= radius; k++) {
-        const idx = s + k;
-        if (idx >= 0 && idx < PATH_STEPS) {
-          sum += src[idx];
-          count += 1;
-        }
-      }
-      smoothed[s] = sum / count;
-    }
-  }
-  for (let s = 0; s < PATH_STEPS; s++) {
-    ys[s] = smoothed[s] * 0.9 + ys[s] * 0.1;
-  }
-
-  for (let s = 0; s < PATH_STEPS; s++) {
-    const x = s / (PATH_STEPS - 1);
-    // Definition softens as uncertainty grows into the horizon.
-    const defined = 1.0 - 0.42 * Math.min(Math.max((x - 0.06) / 0.88, 0), 1);
-    const base = s * 4;
-    texture[base] = ys[s];
-    texture[base + 1] = defined;
-    texture[base + 2] = 1;
-    texture[base + 3] = 1;
-  }
-
-  return texture;
+function trajPoint(t: number, phase: number, out: THREE.Vector3) {
+  const angle = t * Math.PI * 1.6 + phase * 0.4;
+  out.set(
+    Math.sin(angle * 1.1) * 0.28,
+    (t - 0.5) * CUBE * 0.72,
+    Math.cos(angle * 0.9) * 0.24,
+  );
+  return clampInside(out, 0.08);
 }
 
 export default function SimulationEnsembleRender() {
@@ -488,20 +249,16 @@ export default function SimulationEnsembleRender() {
 
   useEffect(() => {
     const mount = mountRef.current;
-
-    if (!mount) {
-      return undefined;
-    }
+    if (!mount) return undefined;
 
     while (mount.firstChild) {
       mount.removeChild(mount.firstChild);
     }
 
     let renderer: THREE.WebGLRenderer;
-
     try {
       renderer = new THREE.WebGLRenderer({
-        antialias: false,
+        antialias: true,
         alpha: true,
         premultipliedAlpha: false,
         powerPreference: 'high-performance',
@@ -510,105 +267,191 @@ export default function SimulationEnsembleRender() {
       return undefined;
     }
 
-    const rand = mulberry32(20260719);
-    const wellsA = buildWells(rand);
-    const wellsB = buildWells(rand);
-    let channelA = buildProbabilityChannel(rand, wellsA);
-    let channelB = buildProbabilityChannel(rand, wellsB);
-    const fieldData = packField(channelA, channelB);
-    const pathData = buildTrajectory(rand, channelA);
-    const epochRand = mulberry32(910033);
-    let well = dominantWell(wellsA);
-    let wellTarget = dominantWell(wellsB);
-
-    const fieldTexture = new THREE.DataTexture(
-      fieldData,
-      FIELD_W,
-      FIELD_H,
-      THREE.RGBAFormat,
-      THREE.FloatType,
-    );
-    fieldTexture.minFilter = THREE.LinearFilter;
-    fieldTexture.magFilter = THREE.LinearFilter;
-    fieldTexture.wrapS = THREE.ClampToEdgeWrapping;
-    fieldTexture.wrapT = THREE.ClampToEdgeWrapping;
-    fieldTexture.needsUpdate = true;
-
-    const pathTexture = new THREE.DataTexture(
-      pathData,
-      PATH_STEPS,
-      1,
-      THREE.RGBAFormat,
-      THREE.FloatType,
-    );
-    pathTexture.minFilter = THREE.LinearFilter;
-    pathTexture.magFilter = THREE.LinearFilter;
-    pathTexture.wrapS = THREE.ClampToEdgeWrapping;
-    pathTexture.wrapT = THREE.ClampToEdgeWrapping;
-    pathTexture.needsUpdate = true;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isMobile = window.matchMedia('(max-width: 900px)').matches;
+    const count = isMobile ? PARTICLE_COUNT_MOBILE : PARTICLE_COUNT_DESKTOP;
+    const rand = mulberry32(20260721);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    const geometry = new THREE.PlaneGeometry(2, 2);
-    const uniforms = {
-      uResolution: { value: new THREE.Vector2(1, 1) },
-      uPixelRatio: { value: 1 },
-      uTime: { value: 0 },
-      uField: { value: fieldTexture },
-      uPath: { value: pathTexture },
-      uPathFade: { value: 1 },
-      uFieldMix: { value: 0 },
-      uWell: { value: new THREE.Vector2(well.x, well.y) },
-      uPointer: { value: new THREE.Vector2(0.5, 0.5) },
-      uPointerGlow: { value: 0 },
-    };
-    const material = new THREE.ShaderMaterial({
-      uniforms,
-      vertexShader,
-      fragmentShader,
-      depthTest: false,
-      depthWrite: false,
-      transparent: true,
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let frameId: number | null = null;
-    let startedAt = performance.now();
-    let visible = true;
+    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 20);
+    camera.position.set(1.55, 1.05, 2.05);
+    camera.lookAt(0, 0.02, 0);
 
-    scene.add(mesh);
+    const world = new THREE.Group();
+    scene.add(world);
+
+    // --- Glass cube shell ---
+    const shell = new THREE.Group();
+    world.add(shell);
+
+    const boxGeo = new THREE.BoxGeometry(CUBE, CUBE, CUBE);
+    const edgesGeo = new THREE.EdgesGeometry(boxGeo, 15);
+    const edgeMat = new THREE.LineBasicMaterial({
+      color: new THREE.Color(0xb8d4f0),
+      transparent: true,
+      opacity: 0.42,
+      depthWrite: false,
+    });
+    const edges = new THREE.LineSegments(edgesGeo, edgeMat);
+    shell.add(edges);
+
+    // Subtle inner edge double for glass thickness.
+    const innerEdgesGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(CUBE * 0.985, CUBE * 0.985, CUBE * 0.985), 15);
+    const innerEdgeMat = new THREE.LineBasicMaterial({
+      color: new THREE.Color(0x6a90b8),
+      transparent: true,
+      opacity: 0.14,
+      depthWrite: false,
+    });
+    shell.add(new THREE.LineSegments(innerEdgesGeo, innerEdgeMat));
+
+    const glassMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uOpacity: { value: 1 },
+        uTint: { value: new THREE.Color(0.35, 0.55, 0.85) },
+      },
+      vertexShader: glassVertex,
+      fragmentShader: glassFragment,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending,
+    });
+    const glassMesh = new THREE.Mesh(boxGeo, glassMat);
+    shell.add(glassMesh);
+
+    // Soft corner highlights (small points of specular).
+    const cornerGeo = new THREE.BufferGeometry();
+    const cornerPos = new Float32Array(8 * 3);
+    let ci = 0;
+    for (const x of [-HALF, HALF]) {
+      for (const y of [-HALF, HALF]) {
+        for (const z of [-HALF, HALF]) {
+          cornerPos[ci++] = x;
+          cornerPos[ci++] = y;
+          cornerPos[ci++] = z;
+        }
+      }
+    }
+    cornerGeo.setAttribute('position', new THREE.BufferAttribute(cornerPos, 3));
+    const corners = new THREE.Points(
+      cornerGeo,
+      new THREE.PointsMaterial({
+        color: 0xd8e8ff,
+        size: 0.028,
+        transparent: true,
+        opacity: 0.55,
+        depthWrite: false,
+        sizeAttenuation: true,
+      }),
+    );
+    shell.add(corners);
+
+    // --- Particle field ---
+    const positions = new Float32Array(count * 3);
+    const velocities = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+    const brights = new Float32Array(count);
+    const seeds = new Float32Array(count);
+    const tmp = new THREE.Vector3();
+    const target = new THREE.Vector3();
+    const pos = new THREE.Vector3();
+
+    for (let i = 0; i < count; i++) {
+      const s = rand();
+      seeds[i] = s;
+      sizes[i] = 0.008 + rand() * 0.016;
+      brights[i] = 0.25 + rand() * 0.55;
+      targetFor(0, s, i, count, 0, tmp);
+      positions[i * 3] = tmp.x;
+      positions[i * 3 + 1] = tmp.y;
+      positions[i * 3 + 2] = tmp.z;
+      velocities[i * 3] = 0;
+      velocities[i * 3 + 1] = 0;
+      velocities[i * 3 + 2] = 0;
+    }
+
+    const pGeo = new THREE.BufferGeometry();
+    pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    pGeo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+    pGeo.setAttribute('aBright', new THREE.BufferAttribute(brights, 1));
+    pGeo.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 1));
+
+    const pMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uPixelRatio: { value: 1 },
+        uTime: { value: 0 },
+      },
+      vertexShader: pointVertex,
+      fragmentShader: pointFragment,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const points = new THREE.Points(pGeo, pMat);
+    // Draw particles before glass so glass sits over them (read as inside).
+    points.renderOrder = 1;
+    glassMesh.renderOrder = 2;
+    edges.renderOrder = 3;
+    world.add(points);
+
+    // --- Dominant trajectory (emerges in mode 4, fades otherwise) ---
+    const trajPositions = new Float32Array(TRAJ_POINTS * 3);
+    const trajAlong = new Float32Array(TRAJ_POINTS);
+    for (let i = 0; i < TRAJ_POINTS; i++) {
+      trajAlong[i] = i / (TRAJ_POINTS - 1);
+      trajPoint(trajAlong[i], 0, tmp);
+      trajPositions[i * 3] = tmp.x;
+      trajPositions[i * 3 + 1] = tmp.y;
+      trajPositions[i * 3 + 2] = tmp.z;
+    }
+    const trajGeo = new THREE.BufferGeometry();
+    trajGeo.setAttribute('position', new THREE.BufferAttribute(trajPositions, 3));
+    trajGeo.setAttribute('aAlong', new THREE.BufferAttribute(trajAlong, 1));
+    const trajMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uFade: { value: 0 },
+        uPulse: { value: 0 },
+      },
+      vertexShader: trajVertex,
+      fragmentShader: trajFragment,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const trajectory = new THREE.Line(trajGeo, trajMat);
+    trajectory.renderOrder = 1;
+    world.add(trajectory);
+
+    // Soft ambient fill so the void isn't a flat clip.
+    const ambient = new THREE.AmbientLight(0x6a88aa, 0.35);
+    scene.add(ambient);
+
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setClearColor(0x000000, 0);
     renderer.domElement.className = 'hermes-render-canvas';
-    renderer.domElement.dataset.simulationRender = 'probability-cloud';
+    renderer.domElement.dataset.simulationRender = 'glass-cube';
     mount.appendChild(renderer.domElement);
 
-    const resize = () => {
-      const width = Math.max(1, mount.clientWidth);
-      const height = Math.max(1, mount.clientHeight);
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let frameId: number | null = null;
+    let startedAt = performance.now();
+    let visible = true;
+    let lastT = performance.now();
 
-      renderer.setPixelRatio(dpr);
-      renderer.setSize(width, height, false);
-      uniforms.uResolution.value.set(width * dpr, height * dpr);
-      uniforms.uPixelRatio.value = dpr;
-    };
-
-    const pointerState = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5, glow: 0, glowTarget: 0 };
+    const pointer = { x: 0, y: 0, tx: 0, ty: 0, glow: 0, glowTarget: 0 };
     const card = mount.closest('.inst-card');
 
     const onPointerMove = (event: PointerEvent) => {
       const rect = mount.getBoundingClientRect();
-      if (rect.width < 1 || rect.height < 1) {
-        return;
-      }
-
-      pointerState.tx = (event.clientX - rect.left) / rect.width;
-      pointerState.ty = 1 - (event.clientY - rect.top) / rect.height;
-      pointerState.glowTarget = 1;
+      if (rect.width < 1 || rect.height < 1) return;
+      pointer.tx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.ty = -(((event.clientY - rect.top) / rect.height) * 2 - 1);
+      pointer.glowTarget = 1;
     };
     const onPointerLeave = () => {
-      pointerState.glowTarget = 0;
+      pointer.glowTarget = 0;
+      pointer.tx = 0;
+      pointer.ty = 0;
     };
 
     if (card && !reducedMotion) {
@@ -616,70 +459,171 @@ export default function SimulationEnsembleRender() {
       card.addEventListener('pointerleave', onPointerLeave);
     }
 
-    // Morph field A↔B and reseed trajectory on a slow epoch (offset from Hermes/Oracle).
-    const EPOCH = 32;
-    const FADE = 1.15;
-    let swappedEpoch = -1;
+    // Mode cycle: gas → clusters → lattice → helix → dominant path → dissolve.
+    const MODE_COUNT = 5;
+    const MODE_HOLD = 5.8;
+    const MODE_BLEND = 1.6;
+    const EPOCH = MODE_COUNT * (MODE_HOLD + MODE_BLEND);
+
+    const resize = () => {
+      const width = Math.max(1, mount.clientWidth);
+      const height = Math.max(1, mount.clientHeight);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      renderer.setPixelRatio(dpr);
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      pMat.uniforms.uPixelRatio.value = dpr;
+
+      // Keep cube framed with a little air; bias left on wide plates for copy.
+      const aspect = width / height;
+      const dist = aspect < 1 ? 3.35 : 2.85;
+      camera.position.set(dist * 0.72, dist * 0.48, dist * 0.95);
+      camera.lookAt(aspect < 1.1 ? 0 : -0.05, 0.02, 0);
+    };
 
     const render = () => {
-      const elapsed = (performance.now() - startedAt) / 1000;
-      uniforms.uTime.value = elapsed;
+      const now = performance.now();
+      const dt = Math.min((now - lastT) / 1000, 0.05);
+      lastT = now;
+      const elapsed = (now - startedAt) / 1000;
+      pMat.uniforms.uTime.value = elapsed;
 
-      pointerState.x += (pointerState.tx - pointerState.x) * 0.08;
-      pointerState.y += (pointerState.ty - pointerState.y) * 0.08;
-      pointerState.glow += (pointerState.glowTarget - pointerState.glow) * 0.05;
-      uniforms.uPointer.value.set(pointerState.x, pointerState.y);
-      uniforms.uPointerGlow.value = pointerState.glow;
+      pointer.x += (pointer.tx - pointer.x) * 0.06;
+      pointer.y += (pointer.ty - pointer.y) * 0.06;
+      pointer.glow += (pointer.glowTarget - pointer.glow) * 0.05;
 
-      // Softly track the densest well as fields crossfade.
-      const mix = uniforms.uFieldMix.value;
-      const wx = well.x + (wellTarget.x - well.x) * mix;
-      const wy = well.y + (wellTarget.y - well.y) * mix;
-      uniforms.uWell.value.set(wx, wy);
-
+      // Slow laboratory turn + pointer lean.
       if (!reducedMotion) {
-        const phase = elapsed % EPOCH;
-        const epochIndex = Math.floor(elapsed / EPOCH);
-
-        // Field crossfade through the middle of the epoch.
-        let fieldMix = 0;
-        if (phase < 7) {
-          fieldMix = 0;
-        } else if (phase < 13) {
-          fieldMix = (phase - 7) / 6;
-        } else {
-          fieldMix = 1;
-        }
-        fieldMix = fieldMix * fieldMix * (3 - 2 * fieldMix);
-        uniforms.uFieldMix.value = fieldMix;
-
-        let pathFade = 1;
-        if (phase > EPOCH - FADE * 2) {
-          pathFade =
-            phase < EPOCH - FADE
-              ? 1 - (phase - (EPOCH - FADE * 2)) / FADE
-              : (phase - (EPOCH - FADE)) / FADE;
-        }
-        if (phase >= EPOCH - FADE && swappedEpoch !== epochIndex) {
-          swappedEpoch = epochIndex;
-          // Promote B→A, generate a new B so the next morph has fresh structure.
-          channelA = channelB;
-          const nextWells = buildWells(epochRand);
-          channelB = buildProbabilityChannel(epochRand, nextWells);
-          fieldData.set(packField(channelA, channelB));
-          fieldTexture.needsUpdate = true;
-          well = wellTarget;
-          wellTarget = dominantWell(nextWells);
-          const nextPath = buildTrajectory(epochRand, channelA);
-          pathData.set(nextPath);
-          pathTexture.needsUpdate = true;
-          uniforms.uFieldMix.value = 0;
-        }
-        uniforms.uPathFade.value = pathFade * pathFade * (3 - 2 * pathFade);
+        world.rotation.y = elapsed * 0.045 + pointer.x * 0.18 * pointer.glow;
+        world.rotation.x = 0.22 + Math.sin(elapsed * 0.11) * 0.03 + pointer.y * 0.1 * pointer.glow;
+        world.rotation.z = Math.sin(elapsed * 0.07) * 0.02;
       } else {
-        uniforms.uFieldMix.value = 0.35;
-        uniforms.uPathFade.value = 1;
+        world.rotation.y = 0.55;
+        world.rotation.x = 0.25;
       }
+
+      // Mode timeline.
+      const phase = reducedMotion ? MODE_HOLD * 2.2 : elapsed % EPOCH;
+      const slot = phase / (MODE_HOLD + MODE_BLEND);
+      const modeIndex = Math.floor(slot) % MODE_COUNT;
+      const local = phase - modeIndex * (MODE_HOLD + MODE_BLEND);
+      let modeA = modeIndex;
+      let modeB = (modeIndex + 1) % MODE_COUNT;
+      let blend = 0;
+      if (local > MODE_HOLD) {
+        blend = smoothstep(0, MODE_BLEND, local - MODE_HOLD);
+      }
+
+      // Trajectory visible mainly in dominant-path mode.
+      let trajFade = 0;
+      if (modeA === 4) trajFade = 1 - blend * 0.85;
+      if (modeB === 4) trajFade = Math.max(trajFade, blend);
+      if (modeA === 3 && blend > 0.5) trajFade = Math.max(trajFade, (blend - 0.5) * 1.4);
+      trajMat.uniforms.uFade.value = reducedMotion ? 0.55 : Math.min(trajFade, 1);
+      trajMat.uniforms.uPulse.value = (elapsed * 0.12) % 1;
+
+      // Update trajectory curve gently each frame (same analytic path).
+      const trajPhase = Math.floor(elapsed / EPOCH);
+      for (let i = 0; i < TRAJ_POINTS; i++) {
+        const tt = i / (TRAJ_POINTS - 1);
+        trajPoint(tt, trajPhase * 0.7, tmp);
+        trajPositions[i * 3] = tmp.x;
+        trajPositions[i * 3 + 1] = tmp.y;
+        trajPositions[i * 3 + 2] = tmp.z;
+      }
+      trajGeo.attributes.position.needsUpdate = true;
+
+      // Particles seek blended formation targets; stay strictly inside the cube.
+      const posAttr = pGeo.attributes.position as THREE.BufferAttribute;
+      const brightAttr = pGeo.attributes.aBright as THREE.BufferAttribute;
+      const damp = 1 - Math.exp(-dt * 3.2);
+      const spring = reducedMotion ? 0 : 1;
+
+      const step = Math.min(dt, 0.033);
+      const attract = 6.5;
+      const drag = Math.exp(-3.4 * step);
+
+      for (let i = 0; i < count; i++) {
+        const s = seeds[i];
+        const ix = i * 3;
+        targetFor(modeA, s, i, count, elapsed, pos);
+        if (blend > 0.001) {
+          targetFor(modeB, s, i, count, elapsed, target);
+          pos.lerp(target, blend);
+        }
+
+        let px = positions[ix];
+        let py = positions[ix + 1];
+        let pz = positions[ix + 2];
+        let vx = velocities[ix];
+        let vy = velocities[ix + 1];
+        let vz = velocities[ix + 2];
+
+        if (spring) {
+          vx = (vx + (pos.x - px) * attract * step) * drag;
+          vy = (vy + (pos.y - py) * attract * step) * drag;
+          vz = (vz + (pos.z - pz) * attract * step) * drag;
+          // Soft turbulence so it never freezes into a static diagram.
+          vx += Math.sin(elapsed * 0.9 + s * 20.0) * 0.12 * step;
+          vy += Math.cos(elapsed * 0.7 + s * 17.0) * 0.1 * step;
+          vz += Math.sin(elapsed * 0.6 + s * 13.0) * 0.12 * step;
+          px += vx;
+          py += vy;
+          pz += vz;
+        } else {
+          px += (pos.x - px) * damp;
+          py += (pos.y - py) * damp;
+          pz += (pos.z - pz) * damp;
+          vx = 0;
+          vy = 0;
+          vz = 0;
+        }
+
+        // Hard box constraint — nothing leaves the laboratory.
+        const lim = HALF - 0.03;
+        if (px > lim || px < -lim) {
+          px = Math.min(Math.max(px, -lim), lim);
+          vx *= -0.25;
+        }
+        if (py > lim || py < -lim) {
+          py = Math.min(Math.max(py, -lim), lim);
+          vy *= -0.25;
+        }
+        if (pz > lim || pz < -lim) {
+          pz = Math.min(Math.max(pz, -lim), lim);
+          vz *= -0.25;
+        }
+
+        positions[ix] = px;
+        positions[ix + 1] = py;
+        positions[ix + 2] = pz;
+        velocities[ix] = vx;
+        velocities[ix + 1] = vy;
+        velocities[ix + 2] = vz;
+
+        // Brighten particles near the dominant trajectory during path mode.
+        let b = 0.22 + s * 0.45;
+        if (trajFade > 0.05) {
+          trajPoint(Math.min(Math.max(py / (CUBE * 0.72) + 0.5, 0), 1), trajPhase * 0.7, _pathTmp);
+          const dx = px - _pathTmp.x;
+          const dy = py - _pathTmp.y;
+          const dz = pz - _pathTmp.z;
+          const dist2 = dx * dx + dy * dy + dz * dz;
+          b += Math.exp(-dist2 / 0.02) * 0.55 * trajFade;
+        }
+        if (modeA === 1 || modeB === 1) {
+          b += 0.08 * (modeA === 1 ? 1 - blend : blend);
+        }
+        brights[i] = Math.min(b, 1.15);
+      }
+
+      posAttr.needsUpdate = true;
+      brightAttr.needsUpdate = true;
+
+      // Glass opacity breathes slightly with mode transitions.
+      glassMat.uniforms.uOpacity.value = 0.9 + 0.1 * Math.sin(elapsed * 0.2);
+      edgeMat.opacity = 0.36 + 0.08 * pointer.glow + 0.06 * trajFade;
 
       renderer.render(scene, camera);
     };
@@ -699,6 +643,7 @@ export default function SimulationEnsembleRender() {
         const nowVisible = entries.some((entry) => entry.isIntersecting);
         if (nowVisible && !visible) {
           visible = true;
+          lastT = performance.now();
           if (!reducedMotion && frameId === null) {
             frameId = window.requestAnimationFrame(animate);
           }
@@ -714,7 +659,7 @@ export default function SimulationEnsembleRender() {
     visibilityObserver.observe(mount);
 
     if (reducedMotion) {
-      startedAt -= 12_000;
+      startedAt -= 14_000;
       render();
     } else {
       animate();
@@ -725,32 +670,33 @@ export default function SimulationEnsembleRender() {
     });
 
     return () => {
-      if (frameId !== null) {
-        window.cancelAnimationFrame(frameId);
-      }
-
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
       if (card) {
         card.removeEventListener('pointermove', onPointerMove as EventListener);
         card.removeEventListener('pointerleave', onPointerLeave);
       }
-
       resizeObserver.disconnect();
       visibilityObserver.disconnect();
-
       try {
-        geometry.dispose();
-        material.dispose();
-        fieldTexture.dispose();
-        pathTexture.dispose();
+        boxGeo.dispose();
+        edgesGeo.dispose();
+        innerEdgesGeo.dispose();
+        edgeMat.dispose();
+        innerEdgeMat.dispose();
+        glassMat.dispose();
+        cornerGeo.dispose();
+        (corners.material as THREE.Material).dispose();
+        pGeo.dispose();
+        pMat.dispose();
+        trajGeo.dispose();
+        trajMat.dispose();
         renderer.dispose();
-        if (renderer.domElement && renderer.domElement.parentNode) {
+        if (renderer.domElement.parentNode) {
           renderer.domElement.parentNode.removeChild(renderer.domElement);
         }
-        while (mount.firstChild) {
-          mount.removeChild(mount.firstChild);
-        }
+        while (mount.firstChild) mount.removeChild(mount.firstChild);
       } catch {
-        // swallow disposal errors during rapid HMR
+        // swallow HMR disposal races
       }
     };
   }, []);
