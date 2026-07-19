@@ -162,11 +162,9 @@ const fragmentShader = `
     // scene reads as a projection you can lean around, not a flat image.
     vec2 ptrPar = (vec2(0.5) - uPointer) * 0.016 * uPointerGlow;
 
-    vec3 color = vec3(0.003, 0.0045, 0.0075);
-
-    // Cold nebula floor — the void leans deep teal-blue, never dead black.
-    float neb = noise(w * 2.4 + vec2(uTime * 0.012, 0.0)) * 0.6 + noise(w * 5.1) * 0.4;
-    color += vec3(0.008, 0.016, 0.026) * neb * 0.7;
+    // True black void — field/path/dust carry all light (homepage plate must
+    // match the pure-black page floor).
+    vec3 color = vec3(0.0);
 
     // Billowing cloud structure: low-frequency fbm clumps the dust into
     // weather instead of uniform texture.
@@ -201,9 +199,6 @@ const fragmentShader = `
     // Order-book ladder striations: thin horizontal price levels in the glow.
     float ladder = 0.95 + 0.05 * sin(w.y * 190.0 + noise(w * 4.0) * 4.0);
     color += haze * pow(f, 2.6) * 0.36 * ladder * (0.4 + 0.9 * clump) * cloudLight;
-
-    // Cold counter-haze where the field thins: teal breath in the void.
-    color += vec3(0.05, 0.13, 0.19) * (1.0 - smoothstep(0.05, 0.4, f)) * (0.3 + 0.7 * clump) * 0.5;
 
     // === LIQUIDITY DUST (three depths, clumped into clouds, lit by the shaft) ===
     float dustBoost = (0.2 + 1.3 * clump) * (1.0 + shaft * 2.0) * cloudLight * (0.6 + 0.4 * uEnergy);
@@ -317,20 +312,21 @@ const fragmentShader = `
     color = pow(max(color, 0.0), vec3(0.88));
 
     float lum = dot(color, vec3(0.299, 0.587, 0.114));
-    color = mix(color * vec3(0.82, 0.97, 1.22), color, smoothstep(0.0, 0.3, lum));
-    color = mix(color, color * vec3(1.06, 1.0, 0.9), smoothstep(0.45, 0.95, lum) * 0.5);
+    // Grade only where there is light — never tint pure black into teal/grey.
+    float hasLight = smoothstep(0.0, 0.04, lum);
+    color = mix(color, color * vec3(1.06, 1.0, 0.9), smoothstep(0.45, 0.95, lum) * 0.5 * hasLight);
 
     float grain = hash13(vec3(gl_FragCoord.xy, uTime * 18.0)) - 0.5;
-    color += grain * 0.009;
+    color += grain * 0.006 * hasLight;
 
-    color = min(color * 1.06 + 0.003, vec3(1.0));
+    color = min(color * 1.06, vec3(1.0));
 
-    // Luminance-keyed alpha: bright content is opaque, empty void is a thin
-    // veil — so the continuous sky's stars shine through the section's air.
+    // Luminance-keyed alpha: empty void is fully transparent black (matches page).
     float alphaLum = dot(color, vec3(0.299, 0.587, 0.114));
-    float alpha = clamp(0.18 + alphaLum * 5.5, 0.0, 1.0);
+    float alpha = clamp(alphaLum * 7.0, 0.0, 1.0);
+    vec3 outRgb = alpha > 1e-4 ? color / alpha : vec3(0.0);
 
-    gl_FragColor = vec4(color / max(alpha, 0.02), alpha);
+    gl_FragColor = vec4(outRgb, alpha);
   }
 `;
 
