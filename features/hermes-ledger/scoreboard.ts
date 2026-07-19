@@ -2,13 +2,26 @@ import type { HermesLedgerRow } from './store';
 
 // Process-first scoreboard for /trust. Integrity metrics lead; performance
 // metrics are optional and only computed on sealed (non-backfill) decisions.
+//
+// Path accounting uses the two-row schema: an open stays "open" only until a
+// later close/void references it. Opens never receive an outcome field — that
+// lives on the close row — so "outcome === null" is not a pending signal.
 
 export type LedgerScoreboard = {
   process: {
     /** Decision-bearing rows (excludes system meta). */
     sealedDecisions: number;
-    pending: number;
-    resolved: number;
+    /**
+     * Open rows not referenced by a later close/void.
+     * Not the same as live exchange exposure (see ledger pulse paths).
+     */
+    openPaths: number;
+    /** Close rows on the chain. */
+    closedPaths: number;
+    /** Open rows successfully paired via close/void ref. */
+    pairedOpens: number;
+    /** Void rows (errored opens cancelled on-chain). */
+    voidedPaths: number;
     /** Share of decision rows that are stand-down / wait / no-trade. 0..1 */
     standDownRate: number;
     standDownCount: number;
@@ -82,17 +95,25 @@ function resolveDurationMs(row: HermesLedgerRow, openById: Map<string, HermesLed
 
 export function computeLedgerScoreboard(rows: HermesLedgerRow[]): LedgerScoreboard {
   const decisionRows = rows.filter(isDecisionRow);
-  const pending = decisionRows.filter((row) => row.outcome === null && row.eventType !== 'void').length;
-  const resolved = decisionRows.filter((row) => row.outcome !== null).length;
+  const openRows = decisionRows.filter((row) => row.eventType === 'open');
+  // Close/void rows that name their open make that path settled on-chain.
+  const settledOpenIds = new Set(
+    decisionRows
+      .filter((row) => (row.eventType === 'close' || row.eventType === 'void') && row.ref)
+      .map((row) => row.ref as string),
+  );
+  const openPaths = openRows.filter((row) => !settledOpenIds.has(row.recordId)).length;
+  const pairedOpens = openRows.filter((row) => settledOpenIds.has(row.recordId)).length;
+  const closedPaths = decisionRows.filter((row) => row.eventType === 'close').length;
+  const voidedPaths = decisionRows.filter((row) => row.eventType === 'void').length;
   const standDownCount = decisionRows.filter(isStandDownOrWait).length;
   const backfilled = rows.filter(isBackfill).length;
   const system = rows.filter(isSystem).length;
 
-  const openById = new Map(
-    rows.filter((row) => row.eventType === 'open').map((row) => [row.recordId, row] as const),
-  );
+  const openById = new Map(openRows.map((row) => [row.recordId, row] as const));
 
   // Performance sample: sealed-first guarantees only — exclude backfill and system.
+  // Prefer close rows with PnL; never treat opens as resolved outcomes.
   const sealedResolved = decisionRows.filter(
     (row) => !isBackfill(row) && row.outcome !== null && row.eventType !== 'open',
   );
@@ -147,12 +168,14 @@ export function computeLedgerScoreboard(rows: HermesLedgerRow[]): LedgerScoreboa
     },
     process: {
       backfilled,
-      pending,
-      resolved,
+      closedPaths,
+      openPaths,
+      pairedOpens,
       sealedDecisions: decisionRows.length,
       standDownCount,
       standDownRate: decisionRows.length > 0 ? standDownCount / decisionRows.length : 0,
       system,
+      voidedPaths,
     },
   };
 }

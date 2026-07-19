@@ -88,7 +88,7 @@ const howToRead = [
   ],
   [
     'Process before performance',
-    'The scoreboard above the sheet leads with sealed decisions, pending vs resolved, standing-down rate, and backfills. Outcome metrics (hit rate, expectancy) stay behind a toggle so the page does not read as a trading log.',
+    'The scoreboard above the sheet leads with sealed decisions, open paths vs closes (unpaired opens on the chain — not live exchange exposure), standing-down rate, and backfills. Outcome metrics (hit rate, expectancy) stay behind a toggle so the page does not read as a trading log.',
   ],
   [
     'Verifiable by math',

@@ -53,9 +53,13 @@ export default function TrustScoreboard({ scoreboard }: { scoreboard: LedgerScor
           detail={process.system ? `${process.system} system row${process.system === 1 ? '' : 's'} excluded` : 'Excludes system rows'}
         />
         <Metric
-          label="Pending · Resolved"
-          value={`${process.pending} · ${process.resolved}`}
-          detail="Open paths vs settled rows"
+          label="Open paths · Closed"
+          value={`${process.openPaths} · ${process.closedPaths}`}
+          detail={
+            process.pairedOpens || process.voidedPaths
+              ? `${process.pairedOpens} paired · ${process.voidedPaths} voided · unpaired opens on chain`
+              : 'Unpaired opens vs close rows (two-row path schema)'
+          }
         />
         <Metric
           label="Standing down rate"
