@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
 import { getHermesLedgerPulse } from '@/features/hermes-ledger/store';
+import { hermesVersion } from '@/features/hermes-version';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,6 +18,8 @@ export async function GET() {
   const response = NextResponse.json({
     asOf: exposure?.asOf ?? null,
     chainHead: pulse?.chainHead ?? null,
+    hermesVersion: hermesVersion.id,
+    hermesVersionLabel: hermesVersion.label,
     latestRecordId: pulse?.latestRecordId ?? null,
     paths: exposure?.positions.length ?? 0,
     rowCount: pulse?.rowCount ?? 0,

@@ -102,6 +102,11 @@ export default function TrustLiveRow() {
         {sealedAtFormatter.format(new Date(pulse.asOf as string))}
         {secondsSince < 120 ? ` · ${secondsSince}s ago` : ''}
         <span className="trust-record-id">LIVE</span>
+        {pulse.hermesVersion ? (
+          <span className="trust-tag" title={pulse.hermesVersionLabel ?? `Hermes v${pulse.hermesVersion}`}>
+            v{pulse.hermesVersion}
+          </span>
+        ) : null}
       </td>
       <td>{decisionLabel(pulse.paths, unrealizedPnl)}</td>
       <td>{displayedPosture}</td>

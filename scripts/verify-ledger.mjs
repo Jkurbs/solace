@@ -25,15 +25,18 @@ if (!response.ok) {
   process.exit(2);
 }
 
-const { chain, rows } = await response.json();
+const { chain, meta, rows } = await response.json();
 let prevHash = chain?.genesisPrevHash ?? 'GENESIS';
 let failures = 0;
 const classCounts = { backfill: 0, sealed: 0, system: 0, unclassified: 0 };
+const versionCounts = new Map();
 const openRows = new Map();
 const voidedOpens = new Set();
 
 for (const row of rows) {
   classCounts[row.rowClass ?? 'unclassified'] = (classCounts[row.rowClass ?? 'unclassified'] ?? 0) + 1;
+  const versionKey = row.hermesVersion ?? 'unversioned';
+  versionCounts.set(versionKey, (versionCounts.get(versionKey) ?? 0) + 1);
 
   // Open/close pairing: every close ref must resolve to an open row that
   // precedes it; unpaired opens must be live (or voided). Closes without a
@@ -107,6 +110,21 @@ console.log('');
 console.log(
   `Rows: ${rows.length} · sealed ${classCounts.sealed} · backfill ${classCounts.backfill} (labeled) · system ${classCounts.system}${classCounts.unclassified ? ` · unclassified ${classCounts.unclassified}` : ''}`,
 );
+
+if (meta?.hermesVersion?.label || meta?.hermesVersion?.id) {
+  console.log(
+    `Running Hermes: ${meta.hermesVersion.label ?? meta.hermesVersion.id}${meta.hermesVersion.id ? ` (${meta.hermesVersion.id})` : ''}`,
+  );
+}
+
+const versionSummary = [...versionCounts.entries()]
+  .sort(([a], [b]) => a.localeCompare(b))
+  .map(([version, count]) => `${version}×${count}`)
+  .join(' · ');
+
+if (versionSummary) {
+  console.log(`Row versions: ${versionSummary}`);
+}
 
 if (unresolvedOpens.length) {
   console.log(`Open paths without a close: ${unresolvedOpens.join(', ')} (live or awaiting close)`);

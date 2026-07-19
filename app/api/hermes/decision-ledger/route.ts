@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { LEDGER_GENESIS_PREV_HASH } from '@/features/hermes-ledger/hash';
 import { listHermesLedgerRows, resolveHermesLedgerRow, sealHermesLedgerRow } from '@/features/hermes-ledger/store';
 import { hermesPublicPostures } from '@/features/hermes-public-reading/types';
+import { hermesVersion } from '@/features/hermes-version';
 import { safeSecretEquals } from '@/lib/secret-compare';
 
 export const runtime = 'nodejs';
@@ -16,9 +17,16 @@ export async function GET() {
       genesisPrevHash: LEDGER_GENESIS_PREV_HASH,
       head: rows.at(-1)?.rowHash ?? null,
       hashing:
-        'row_hash = sha256(json {decision, note, posture, prev_hash, record_id, sealed_at(ISO)}); resolution_hash = sha256(json {outcome, pnl(2dp string|null), resolved_at(ISO), row_hash})',
+        'row_hash = sha256(json {decision, note, posture, prev_hash, record_id, sealed_at(ISO)}); resolution_hash = sha256(json {outcome, pnl(2dp string|null), resolved_at(ISO), row_hash}). hermes_version / event_type / ref / row_class are write-once unhashed metadata.',
     },
     count: rows.length,
+    meta: {
+      hermesVersion: {
+        channel: hermesVersion.channel,
+        id: hermesVersion.id,
+        label: hermesVersion.label,
+      },
+    },
     rows,
   });
 
@@ -122,8 +130,10 @@ export async function POST(request: Request) {
     }
 
     const rowClass = getString(body.rowClass, 12).toLowerCase();
+    const hermesVersionId = getString(body.hermesVersion ?? body.hermes_version, 32);
     const row = await sealHermesLedgerRow({
       decision,
+      hermesVersion: hermesVersionId || undefined,
       note,
       posture,
       recordId,

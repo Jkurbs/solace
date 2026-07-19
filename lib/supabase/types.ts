@@ -247,6 +247,7 @@ export type Database = {
           row_class: string | null;
           event_type: string | null;
           ref: string | null;
+          hermes_version: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -265,6 +266,7 @@ export type Database = {
           row_class?: string | null;
           event_type?: string | null;
           ref?: string | null;
+          hermes_version?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -283,6 +285,7 @@ export type Database = {
           row_class?: string | null;
           event_type?: string | null;
           ref?: string | null;
+          hermes_version?: string | null;
           created_at?: string;
           updated_at?: string;
         };

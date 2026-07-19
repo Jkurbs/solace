@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { hermesVersion } from '@/features/hermes-version';
 import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/supabase/server';
 import type { Database } from '@/lib/supabase/types';
 
@@ -23,6 +24,8 @@ export type HermesLedgerRow = {
   rowClass: HermesLedgerRowClass | null;
   eventType: HermesLedgerEventType | null;
   ref: string | null;
+  /** Agent id at seal time (e.g. '0.1.0'). Null for rows sealed before V4. */
+  hermesVersion: string | null;
 };
 
 type LedgerRowRecord = Database['public']['Tables']['hermes_decision_ledger']['Row'];
@@ -46,6 +49,7 @@ function fromRow(row: LedgerRowRecord): HermesLedgerRow {
   return {
     decision: row.decision,
     eventType: (row.event_type as HermesLedgerEventType | null) ?? null,
+    hermesVersion: row.hermes_version ?? null,
     note: row.note,
     outcome: row.outcome,
     pnl: row.pnl === null ? null : Math.round(row.pnl * 100) / 100,
@@ -216,6 +220,11 @@ export async function sealHermesLedgerRow(input: {
   eventType?: HermesLedgerEventType;
   /** For close/void rows: the record_id of the open row they resolve. */
   ref?: string;
+  /**
+   * Agent id at seal time. Defaults to the running product version.
+   * Unhashed write-once metadata (V4) — does not affect the chain.
+   */
+  hermesVersion?: string;
 }): Promise<HermesLedgerRow | null> {
   if (!isSupabaseDataClientConfigured()) {
     return null;
@@ -230,6 +239,7 @@ export async function sealHermesLedgerRow(input: {
     const supabase = await createSupabaseDataClient();
     const sealedAt = input.sealedAt ?? new Date().toISOString();
     const note = input.note ?? '';
+    const stampedVersion = (input.hermesVersion ?? hermesVersion.id).trim().slice(0, 32) || hermesVersion.id;
 
     // Two attempts: a concurrent seal grabbing the same chain tip trips the
     // prev_hash unique index; refetch the tip and retry once.
@@ -249,6 +259,8 @@ export async function sealHermesLedgerRow(input: {
         .from('hermes_decision_ledger')
         .insert({
           decision: input.decision,
+          event_type: input.eventType ?? null,
+          hermes_version: stampedVersion,
           note,
           outcome: input.outcome ?? null,
           pnl,
@@ -264,7 +276,6 @@ export async function sealHermesLedgerRow(input: {
           row_class: input.rowClass ?? 'sealed',
           row_hash: rowHash,
           sealed_at: sealedAt,
-          event_type: input.eventType ?? null,
         })
         .select('*')
         .maybeSingle();

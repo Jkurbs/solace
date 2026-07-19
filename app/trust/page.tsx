@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
 import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
 import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
+import { hermesVersion } from '@/features/hermes-version';
 
 import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
@@ -61,6 +62,7 @@ const placeholderRow = {
   rowClass: null as string | null,
   eventType: null as string | null,
   ref: null as string | null,
+  hermesVersion: null as string | null,
 };
 
 const MIN_VISIBLE_ROWS = 7;
@@ -73,6 +75,10 @@ const howToRead = [
   ],
   ['Everything counts', 'Waits and no-trade decisions get rows. Losses and drawdowns get rows. Nothing is deleted.'],
   ['Mechanism stays private', 'Entries, exits, position sizes, and thresholds never appear here. Open positions are named only after they close. The ledger proves discipline, not the recipe.'],
+  [
+    'Hermes version',
+    `Each new row stamps the agent that made the commitment (currently ${hermesVersion.label}). Rows sealed before versioning show no chip. A version cutover is also recorded as a sealed system row.`,
+  ],
   ['Founder capital only', 'PnL shown is the founder’s own money. The ledger is a record, not a claim. The sample is young, and it is labeled that way until it isn’t.'],
   [
     'Backfill is labeled',
@@ -125,6 +131,7 @@ export default async function TrustPage() {
           rowClass: row.rowClass,
           eventType: row.eventType,
           ref: row.ref,
+          hermesVersion: row.hermesVersion,
         }))
         .reverse()
     : [placeholderRow];
@@ -134,6 +141,7 @@ export default async function TrustPage() {
   );
   const sheetStatus = [
     ['Status', storedRows.length ? `${storedRows.length} decision${storedRows.length === 1 ? '' : 's'} recorded` : 'First decision pending'],
+    ['Hermes', hermesVersion.label],
     ['Capital', 'Founder only · $0 customer funds'],
     ['Public', 'Decisions, waits, outcomes, PnL'],
     ['Private', 'Entries, exits, sizes, thresholds'],
@@ -169,7 +177,11 @@ export default async function TrustPage() {
         </p>
       </section>
 
-      <TrustLivePulseProvider initialExposure={openExposure} livePosture={livePosture}>
+      <TrustLivePulseProvider
+        initialExposure={openExposure}
+        initialHermesVersion={{ id: hermesVersion.id, label: hermesVersion.label }}
+        livePosture={livePosture}
+      >
       <section className="hx-shell trust-sheet-section">
         <div className="trust-sheet">
           <div className="trust-sheet-toolbar">
@@ -236,6 +248,11 @@ export default async function TrustPage() {
                         </span>
                       ) : null}
                       {row.rowClass === 'system' ? <span className="trust-tag">System</span> : null}
+                      {row.hermesVersion ? (
+                        <span className="trust-tag" title={`Sealed under Hermes v${row.hermesVersion}`}>
+                          v{row.hermesVersion}
+                        </span>
+                      ) : null}
                     </td>
                     <td>{row.decision}</td>
                     <td>{row.posture}</td>

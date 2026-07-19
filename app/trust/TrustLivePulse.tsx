@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 export type LedgerPulse = {
   asOf: string | null;
   chainHead: string | null;
+  hermesVersion: string | null;
+  hermesVersionLabel: string | null;
   latestRecordId: string | null;
   paths: number;
   rowCount: number;
@@ -24,10 +26,13 @@ const TrustLivePulseContext = createContext<TrustLivePulseContextValue | null>(n
 
 function toPulse(
   exposure: { asOf: string; unrealizedPnl: number; positions: unknown[] } | null,
+  version?: { id: string; label: string } | null,
 ): LedgerPulse {
   return {
     asOf: exposure?.asOf ?? null,
     chainHead: null,
+    hermesVersion: version?.id ?? null,
+    hermesVersionLabel: version?.label ?? null,
     latestRecordId: null,
     paths: exposure?.positions.length ?? 0,
     rowCount: 0,
@@ -46,14 +51,16 @@ function structuralFingerprint(pulse: LedgerPulse) {
 export function TrustLivePulseProvider({
   children,
   initialExposure,
+  initialHermesVersion,
   livePosture,
 }: {
   children: React.ReactNode;
   initialExposure: { asOf: string; unrealizedPnl: number; positions: unknown[] } | null;
+  initialHermesVersion?: { id: string; label: string } | null;
   livePosture: string;
 }) {
   const router = useRouter();
-  const [pulse, setPulse] = useState<LedgerPulse>(() => toPulse(initialExposure));
+  const [pulse, setPulse] = useState<LedgerPulse>(() => toPulse(initialExposure, initialHermesVersion));
   const lastStructural = useRef<string | null>(null);
   const lastRefresh = useRef<number>(Date.now());
 
