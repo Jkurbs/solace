@@ -1085,6 +1085,14 @@ h2 {
     opacity: 0.75;
   }
 
+  .inst-cell-sim .inst-card-render {
+    opacity: 0.9;
+  }
+
+  .inst-cell-sim .inst-card {
+    min-height: clamp(20rem, 34vw, 26rem);
+  }
+
   .inst-card-scrim {
     position: absolute;
     inset: 0;

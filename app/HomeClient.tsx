@@ -28,6 +28,10 @@ const OracleFuturesRender = dynamic(() => import('./OracleFuturesRender'), {
   ssr: false,
 });
 
+const SimulationEnsembleRender = dynamic(() => import('./SimulationEnsembleRender'), {
+  ssr: false,
+});
+
 // Title-card cadence: long holds, short travel, no bounce. MotionConfig
 // reducedMotion="user" zeros this out for system-level reduced-motion prefs.
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
@@ -559,8 +563,12 @@ export default function HomeClient({
           </motion.div>
 
           <motion.div className="inst-cell inst-cell-sim" {...cardReveal(2)}>
-            <Link href="/gates#simulation" className="inst-card inst-card-quiet">
+            <Link href="/gates#simulation" className="inst-card">
               <div className="inst-platter">
+                <div className="inst-card-render" aria-hidden="true">
+                  <SimulationEnsembleRender />
+                </div>
+                <div className="inst-card-scrim" aria-hidden="true" />
                 <span className="inst-chip is-idle">Building</span>
               </div>
               <div className="inst-copy">
@@ -568,6 +576,7 @@ export default function HomeClient({
                   <strong>Simulation</strong>
                   <p>Synthetic environments where hypotheses fail quietly before deployment.</p>
                 </div>
+                <span className="inst-card-cta">Gate board →</span>
               </div>
             </Link>
           </motion.div>
