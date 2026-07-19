@@ -6,6 +6,7 @@ import * as THREE from 'three';
 // Homepage Simulation plate: a self-contained glass cube laboratory.
 // Distinct motion vocabulary from Hermes (liquidity field) and Oracle (futures fan).
 // Nothing enters or leaves — possibility reorganizes only inside the box.
+// The shell is real physical glass (transmission / IOR / thickness), not a fresnel sketch.
 
 const CUBE = 1.0;
 const HALF = CUBE * 0.5;
@@ -13,33 +14,77 @@ const PARTICLE_COUNT_DESKTOP = 5200;
 const PARTICLE_COUNT_MOBILE = 2800;
 const TRAJ_POINTS = 96;
 
-// Glass face: soft fresnel shell, not a solid wall.
-const glassVertex = `
-  varying vec3 vWorldNormal;
-  varying vec3 vViewDir;
+/** Dark studio env: a few bright panels in void so glass gets real speculars without indoor room look. */
+function createGlassEnvironment(renderer: THREE.WebGLRenderer) {
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  pmrem.compileEquirectangularShader();
 
-  void main() {
-    vec4 worldPos = modelMatrix * vec4(position, 1.0);
-    vWorldNormal = normalize(mat3(modelMatrix) * normal);
-    vViewDir = normalize(cameraPosition - worldPos.xyz);
-    gl_Position = projectionMatrix * viewMatrix * worldPos;
+  const envScene = new THREE.Scene();
+  envScene.background = new THREE.Color(0x010204);
+
+  const panels: THREE.Mesh[] = [];
+  const addPanel = (
+    color: number,
+    position: [number, number, number],
+    scale: [number, number],
+    rotation: [number, number, number] = [0, 0, 0],
+  ) => {
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }),
+    );
+    mesh.position.set(position[0], position[1], position[2]);
+    mesh.scale.set(scale[0], scale[1], 1);
+    mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+    envScene.add(mesh);
+    panels.push(mesh);
+  };
+
+  // Key strip light (top-front) — primary specular edge on glass.
+  addPanel(0xffffff, [1.2, 2.6, 2.0], [5.5, 0.35], [-0.7, 0.25, 0]);
+  // Cool fill (left)
+  addPanel(0x6a9ad4, [-2.8, 0.6, 0.4], [1.4, 3.2], [0, 1.1, 0]);
+  // Soft warm rim (back-right) — barely there, keeps glass alive in rotation.
+  addPanel(0xb8a078, [2.2, 0.2, -2.4], [2.2, 1.6], [0.2, -0.5, 0]);
+  // Ground bounce (very dim)
+  addPanel(0x1a2838, [0, -2.4, 0.5], [6, 6], [-Math.PI / 2, 0, 0]);
+  // Small hard spark for crystal corners
+  addPanel(0xe8f2ff, [0.6, 1.8, 2.4], [0.5, 0.5], [-0.4, 0.1, 0]);
+
+  const envMap = pmrem.fromScene(envScene, 0.04).texture;
+
+  for (const mesh of panels) {
+    mesh.geometry.dispose();
+    (mesh.material as THREE.Material).dispose();
   }
-`;
+  pmrem.dispose();
 
-const glassFragment = `
-  precision highp float;
-  varying vec3 vWorldNormal;
-  varying vec3 vViewDir;
-  uniform float uOpacity;
-  uniform vec3 uTint;
+  return envMap;
+}
 
-  void main() {
-    float fres = pow(1.0 - max(dot(normalize(vWorldNormal), normalize(vViewDir)), 0.0), 2.4);
-    float face = 0.02 + fres * 0.22;
-    vec3 col = mix(uTint * 0.35, vec3(0.82, 0.92, 1.0), fres);
-    gl_FragColor = vec4(col, face * uOpacity);
-  }
-`;
+function createGlassMaterial(envMap: THREE.Texture, opts?: { thickness?: number; transmission?: number }) {
+  return new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(0xe8f1fa),
+    metalness: 0,
+    roughness: 0.04,
+    transmission: opts?.transmission ?? 1,
+    thickness: opts?.thickness ?? 0.55,
+    ior: 1.5,
+    reflectivity: 0.5,
+    transparent: true,
+    opacity: 1,
+    depthWrite: false,
+    side: THREE.FrontSide,
+    envMap,
+    envMapIntensity: 1.15,
+    clearcoat: 1,
+    clearcoatRoughness: 0.06,
+    attenuationColor: new THREE.Color(0x6f9cc8),
+    attenuationDistance: 1.35,
+    specularIntensity: 1,
+    specularColor: new THREE.Color(0xf2f7ff),
+  });
+}
 
 // Soft scientific dust points.
 const pointVertex = `
@@ -277,50 +322,60 @@ export default function SimulationEnsembleRender() {
     camera.position.set(1.55, 1.05, 2.05);
     camera.lookAt(0, 0.02, 0);
 
+    const envMap = createGlassEnvironment(renderer);
+    scene.environment = envMap;
+
     const world = new THREE.Group();
     scene.add(world);
 
-    // --- Glass cube shell ---
+    // --- Real glass cube shell (physical transmission) ---
     const shell = new THREE.Group();
     world.add(shell);
 
     const boxGeo = new THREE.BoxGeometry(CUBE, CUBE, CUBE);
+    // Slightly higher segment count so refraction/speculars don't faceted-look on edges.
+    const outerGlassGeo = new THREE.BoxGeometry(CUBE, CUBE, CUBE, 1, 1, 1);
+    const innerGlassGeo = new THREE.BoxGeometry(CUBE * 0.965, CUBE * 0.965, CUBE * 0.965);
+
+    const glassMat = createGlassMaterial(envMap, { thickness: 0.62, transmission: 1 });
+    const glassMesh = new THREE.Mesh(outerGlassGeo, glassMat);
+    glassMesh.renderOrder = 2;
+    shell.add(glassMesh);
+
+    // Inner surface: reads as pane thickness when the cube turns (aquarium glass).
+    const innerGlassMat = createGlassMaterial(envMap, { thickness: 0.18, transmission: 0.92 });
+    innerGlassMat.side = THREE.BackSide;
+    innerGlassMat.envMapIntensity = 0.55;
+    innerGlassMat.roughness = 0.08;
+    innerGlassMat.opacity = 0.55;
+    const innerGlassMesh = new THREE.Mesh(innerGlassGeo, innerGlassMat);
+    innerGlassMesh.renderOrder = 2;
+    shell.add(innerGlassMesh);
+
     const edgesGeo = new THREE.EdgesGeometry(boxGeo, 15);
     const edgeMat = new THREE.LineBasicMaterial({
-      color: new THREE.Color(0xb8d4f0),
+      color: new THREE.Color(0xd0e4f8),
       transparent: true,
-      opacity: 0.42,
+      opacity: 0.55,
       depthWrite: false,
     });
     const edges = new THREE.LineSegments(edgesGeo, edgeMat);
+    edges.renderOrder = 4;
     shell.add(edges);
 
-    // Subtle inner edge double for glass thickness.
-    const innerEdgesGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(CUBE * 0.985, CUBE * 0.985, CUBE * 0.985), 15);
+    // Inner edge double for optical thickness.
+    const innerEdgesGeo = new THREE.EdgesGeometry(innerGlassGeo, 15);
     const innerEdgeMat = new THREE.LineBasicMaterial({
-      color: new THREE.Color(0x6a90b8),
+      color: new THREE.Color(0x7aa0c4),
       transparent: true,
-      opacity: 0.14,
+      opacity: 0.22,
       depthWrite: false,
     });
-    shell.add(new THREE.LineSegments(innerEdgesGeo, innerEdgeMat));
+    const innerEdges = new THREE.LineSegments(innerEdgesGeo, innerEdgeMat);
+    innerEdges.renderOrder = 4;
+    shell.add(innerEdges);
 
-    const glassMat = new THREE.ShaderMaterial({
-      uniforms: {
-        uOpacity: { value: 1 },
-        uTint: { value: new THREE.Color(0.35, 0.55, 0.85) },
-      },
-      vertexShader: glassVertex,
-      fragmentShader: glassFragment,
-      transparent: true,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      blending: THREE.NormalBlending,
-    });
-    const glassMesh = new THREE.Mesh(boxGeo, glassMat);
-    shell.add(glassMesh);
-
-    // Soft corner highlights (small points of specular).
+    // Soft corner catches — physical glass still benefits from a whisper of point glints.
     const cornerGeo = new THREE.BufferGeometry();
     const cornerPos = new Float32Array(8 * 3);
     let ci = 0;
@@ -337,14 +392,16 @@ export default function SimulationEnsembleRender() {
     const corners = new THREE.Points(
       cornerGeo,
       new THREE.PointsMaterial({
-        color: 0xd8e8ff,
-        size: 0.028,
+        color: 0xf2f8ff,
+        size: 0.032,
         transparent: true,
-        opacity: 0.55,
+        opacity: 0.7,
         depthWrite: false,
         sizeAttenuation: true,
+        blending: THREE.AdditiveBlending,
       }),
     );
+    corners.renderOrder = 5;
     shell.add(corners);
 
     // --- Particle field ---
@@ -389,10 +446,8 @@ export default function SimulationEnsembleRender() {
       blending: THREE.AdditiveBlending,
     });
     const points = new THREE.Points(pGeo, pMat);
-    // Draw particles before glass so glass sits over them (read as inside).
+    // Particles first; glass shell over them so transmission refracts the field.
     points.renderOrder = 1;
-    glassMesh.renderOrder = 2;
-    edges.renderOrder = 3;
     world.add(points);
 
     // --- Dominant trajectory (emerges in mode 4, fades otherwise) ---
@@ -423,11 +478,22 @@ export default function SimulationEnsembleRender() {
     trajectory.renderOrder = 1;
     world.add(trajectory);
 
-    // Soft ambient fill so the void isn't a flat clip.
-    const ambient = new THREE.AmbientLight(0x6a88aa, 0.35);
+    // Studio lights for clearcoat / specular response on the physical glass.
+    const ambient = new THREE.AmbientLight(0x6a88aa, 0.28);
     scene.add(ambient);
+    const key = new THREE.DirectionalLight(0xf2f7ff, 1.35);
+    key.position.set(2.4, 3.2, 2.8);
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(0x6a9ad4, 0.45);
+    fill.position.set(-2.2, 0.8, 1.2);
+    scene.add(fill);
+    const rim = new THREE.DirectionalLight(0xb8c4d8, 0.35);
+    rim.position.set(-0.5, 1.2, -2.6);
+    scene.add(rim);
 
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
     renderer.setClearColor(0x000000, 0);
     renderer.domElement.className = 'hermes-render-canvas';
     renderer.domElement.dataset.simulationRender = 'glass-cube';
@@ -621,9 +687,14 @@ export default function SimulationEnsembleRender() {
       posAttr.needsUpdate = true;
       brightAttr.needsUpdate = true;
 
-      // Glass opacity breathes slightly with mode transitions.
-      glassMat.uniforms.uOpacity.value = 0.9 + 0.1 * Math.sin(elapsed * 0.2);
-      edgeMat.opacity = 0.36 + 0.08 * pointer.glow + 0.06 * trajFade;
+      // Glass stays mostly still; edges brighten slightly under attention / path climax.
+      const glassLive = 0.04 * Math.sin(elapsed * 0.2);
+      glassMat.roughness = 0.035 + glassLive * 0.5 + pointer.glow * 0.01;
+      glassMat.envMapIntensity = 1.05 + pointer.glow * 0.25 + trajFade * 0.15;
+      innerGlassMat.envMapIntensity = 0.5 + pointer.glow * 0.12;
+      edgeMat.opacity = 0.48 + 0.12 * pointer.glow + 0.1 * trajFade;
+      innerEdgeMat.opacity = 0.18 + 0.06 * pointer.glow;
+      (corners.material as THREE.PointsMaterial).opacity = 0.55 + 0.25 * pointer.glow + 0.1 * trajFade;
 
       renderer.render(scene, camera);
     };
@@ -679,17 +750,22 @@ export default function SimulationEnsembleRender() {
       visibilityObserver.disconnect();
       try {
         boxGeo.dispose();
+        outerGlassGeo.dispose();
+        innerGlassGeo.dispose();
         edgesGeo.dispose();
         innerEdgesGeo.dispose();
         edgeMat.dispose();
         innerEdgeMat.dispose();
         glassMat.dispose();
+        innerGlassMat.dispose();
         cornerGeo.dispose();
         (corners.material as THREE.Material).dispose();
         pGeo.dispose();
         pMat.dispose();
         trajGeo.dispose();
         trajMat.dispose();
+        envMap.dispose();
+        scene.environment = null;
         renderer.dispose();
         if (renderer.domElement.parentNode) {
           renderer.domElement.parentNode.removeChild(renderer.domElement);

@@ -420,12 +420,17 @@ export default function HomeClient({
               only when structure, regime, and timing agree — and most hours, they do not.
             </motion.p>
             <motion.div variants={fade} className="hero-quiet-actions">
-              <Link href="/hermes" className="hermes-product-button hermes-product-button-light">
-                Explore Hermes
+              <Link href="/brief" className="hermes-product-button hermes-product-button-light">
+                Read the brief
               </Link>
-              <Link href="/trust" className="hermes-product-button hermes-product-button-dark">
-                Decision ledger
-              </Link>
+              <div className="hero-quiet-actions-row">
+                <Link href="/hermes" className="hermes-product-button hermes-product-button-dark">
+                  Explore Hermes
+                </Link>
+                <Link href="/trust" className="hermes-product-button hermes-product-button-dark">
+                  Decision ledger
+                </Link>
+              </div>
             </motion.div>
             <motion.p variants={fade} className="hero-gloss">
               An instrument here is a system Solace builds and operates, not a financial product. New to
@@ -466,13 +471,18 @@ export default function HomeClient({
             <motion.p variants={fade} className="hero-body mt-7 max-w-2xl text-lg leading-8 text-muted md:text-xl">
               Solace builds instruments for disciplined capital allocation under uncertainty.
             </motion.p>
-            <motion.div variants={fade} className="hero-actions mt-9 flex flex-wrap items-center gap-x-7 gap-y-3">
+            <motion.div variants={fade} className="hero-actions mt-9">
               <Link href="/brief" className="primary-link">
                 Read the brief
               </Link>
-              <Link href="/hermes" className="hermes-product-button hermes-product-button-dark min-h-[2.75rem]">
-                Explore Hermes
-              </Link>
+              <div className="hero-actions-row">
+                <Link href="/hermes" className="hermes-product-button hermes-product-button-dark min-h-[2.75rem]">
+                  Explore Hermes
+                </Link>
+                <Link href="/trust" className="hermes-product-button hermes-product-button-dark min-h-[2.75rem]">
+                  Decision ledger
+                </Link>
+              </div>
             </motion.div>
             <motion.p variants={fade} className="hero-gloss">
               An instrument here is a system Solace builds and operates, not a financial product. New to
