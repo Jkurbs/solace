@@ -1024,8 +1024,8 @@ h2 {
     color: #8db89d;
   }
 
-  /* Desktop: square full-bleed plate in the grid cell, copy overlaid.
-     Mobile: edge-to-edge platter, product description below. */
+  /* Desktop: rounded plate in the grid cell, copy overlaid.
+     Mobile (≤900px): edge-to-edge square platter, product description below. */
   .inst-card {
     position: relative;
     display: block;
@@ -1033,7 +1033,7 @@ h2 {
     min-height: clamp(24rem, 40vw, 30rem);
     overflow: hidden;
     border: 0;
-    border-radius: 0;
+    border-radius: 1.15rem;
     background: #000000;
     transition: opacity 0.35s ease;
   }
@@ -1051,7 +1051,7 @@ h2 {
     inset: 0;
     overflow: hidden;
     border: 0;
-    border-radius: 0;
+    border-radius: inherit;
     background: #000000;
   }
 
