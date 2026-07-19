@@ -1313,12 +1313,46 @@ h2 {
     line-height: 1.7;
   }
 
+  .hero-proof {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem 1rem;
+    width: min(100%, 40rem);
+    margin: 2.35rem auto 0;
+    padding: 1rem 0 0;
+    border-top: 1px solid rgba(250, 250, 250, 0.12);
+  }
+
+  .hero-proof > div {
+    text-align: center;
+  }
+
+  .hero-proof span {
+    display: block;
+    color: rgba(250, 250, 250, 0.42);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.56rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .hero-proof strong {
+    display: block;
+    margin-top: 0.4rem;
+    color: #fafafa;
+    font-family: var(--font-plex), monospace;
+    font-size: clamp(1.15rem, 2vw, 1.4rem);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+
   .hero-quiet-actions {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 1rem;
-    margin-top: 2.75rem;
+    margin-top: 2.35rem;
   }
 
   .hero-quiet-actions .hermes-product-button {
@@ -1326,6 +1360,32 @@ h2 {
     min-height: 3.35rem;
     padding: 0 1.7rem;
     font-size: 1.05rem;
+  }
+
+  @media (max-width: 640px) {
+    .hero-proof {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+      gap: 1rem 0.85rem;
+    }
+  }
+
+  .inst-section-head {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 0.55rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .inst-section-title {
+    margin: 0;
+    max-width: 18ch;
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(1.85rem, 3.2vw, 2.6rem);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
   }
 
   /* --- HOMEPAGE LEDGER VAULT (process-first public record) --- */
@@ -1518,9 +1578,14 @@ h2 {
 
   .news-strip-head {
     display: flex;
-    align-items: baseline;
+    align-items: flex-end;
     justify-content: space-between;
     gap: 1rem;
+  }
+
+  .news-strip-head > div {
+    display: grid;
+    gap: 0.55rem;
   }
 
   .news-strip-head h2 {
@@ -1529,7 +1594,23 @@ h2 {
     font-family: var(--font-display), Georgia, serif;
     font-size: clamp(1.75rem, 2.8vw, 2.35rem);
     font-weight: 500;
-    line-height: 1;
+    line-height: 1.05;
+  }
+
+  html[data-theme='light'] .hero-proof {
+    border-top-color: rgba(19, 17, 12, 0.12);
+  }
+
+  html[data-theme='light'] .hero-proof span {
+    color: rgba(19, 17, 12, 0.48);
+  }
+
+  html[data-theme='light'] .hero-proof strong {
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .inst-section-title {
+    color: #13110c;
   }
 
   /* --- NEWS INDEX --- */
@@ -4186,20 +4267,77 @@ h2 {
     color: rgba(184, 190, 199, 0.6);
   }
 
+  .footer-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr);
+    gap: 0.35rem 1.5rem;
+  }
+
+  .footer-brand-dek {
+    max-width: 22rem;
+    margin: 0.7rem 0 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+
   .footer-heading {
     font-family: var(--font-plex), monospace;
     font-size: 0.62rem;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: rgba(214, 208, 196, 0.6);
   }
 
-  .footer-col ul {
-    margin-top: 1rem;
-    display: grid;
-    gap: 0.65rem;
+  .footer-accordion {
+    border-top: 1px solid rgba(250, 250, 250, 0.08);
+  }
+
+  .footer-accordion > .footer-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
     list-style: none;
-    padding: 0;
+    cursor: pointer;
+    padding: 0.85rem 0;
+    color: rgba(250, 250, 250, 0.62);
+    transition: color 180ms ease;
+    user-select: none;
+  }
+
+  .footer-accordion > .footer-heading::-webkit-details-marker {
+    display: none;
+  }
+
+  .footer-accordion > .footer-heading::after {
+    content: '+';
+    font-family: var(--font-plex), monospace;
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1;
+    color: rgba(250, 250, 250, 0.4);
+  }
+
+  .footer-accordion[open] > .footer-heading {
+    color: rgba(250, 250, 250, 0.88);
+  }
+
+  .footer-accordion[open] > .footer-heading::after {
+    content: '−';
+    color: rgba(250, 250, 250, 0.55);
+  }
+
+  .footer-accordion > .footer-heading:hover {
+    color: var(--foreground);
+  }
+
+  .footer-col ul {
+    margin: 0;
+    display: grid;
+    gap: 0.55rem;
+    list-style: none;
+    padding: 0 0 0.95rem;
   }
 
   .footer-col li {
@@ -4207,8 +4345,8 @@ h2 {
     align-items: baseline;
     justify-content: space-between;
     gap: 1rem;
-    max-width: 16rem;
-    font-size: 0.92rem;
+    max-width: 18rem;
+    font-size: 0.9rem;
     color: rgba(250, 250, 250, 0.72);
   }
 
@@ -4226,20 +4364,42 @@ h2 {
 
   .footer-status {
     font-family: var(--font-plex), monospace;
-    font-size: 0.6rem;
-    letter-spacing: 0.16em;
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: rgba(214, 208, 196, 0.55);
     white-space: nowrap;
   }
 
   .footer-stamp {
-    margin-top: 1.4rem;
+    margin-top: 0.85rem;
     font-family: var(--font-plex), monospace;
-    font-size: 0.62rem;
-    letter-spacing: 0.2em;
+    font-size: 0.58rem;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: rgba(250, 250, 250, 0.4);
+  }
+
+  @media (min-width: 900px) {
+    .footer-grid {
+      grid-template-columns: minmax(12rem, 1.25fr) repeat(4, minmax(0, 1fr));
+      gap: 1.25rem 1.5rem;
+      align-items: start;
+    }
+
+    .footer-brand {
+      padding-right: 1rem;
+    }
+
+    /* Desktop: keep sections open as a compact column stack of rows, still
+       collapsible — no forced open so the default footprint stays small. */
+    .footer-accordion {
+      border-top: 0;
+    }
+
+    .footer-accordion > .footer-heading {
+      padding: 0.35rem 0 0.55rem;
+    }
   }
 
   .footer-fineprint {
@@ -10799,6 +10959,27 @@ h2 {
   html[data-theme='light'] .footer-fineprint,
   html[data-theme='light'] .footer-stamp {
     color: rgba(19, 17, 12, 0.5);
+  }
+
+  html[data-theme='light'] .footer-accordion {
+    border-top-color: rgba(19, 17, 12, 0.1);
+  }
+
+  html[data-theme='light'] .footer-accordion > .footer-heading {
+    color: rgba(19, 17, 12, 0.55);
+  }
+
+  html[data-theme='light'] .footer-accordion > .footer-heading::after {
+    color: rgba(19, 17, 12, 0.35);
+  }
+
+  html[data-theme='light'] .footer-accordion[open] > .footer-heading,
+  html[data-theme='light'] .footer-accordion > .footer-heading:hover {
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .footer-brand-dek {
+    color: rgba(19, 17, 12, 0.62);
   }
 
   html[data-theme='light'] .footer-stamp-link {

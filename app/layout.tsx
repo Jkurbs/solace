@@ -5,15 +5,15 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://solace.fyi"),
-  title: "Solace — Independent Research Company",
+  title: "Solace — Instruments for capital under uncertainty",
   description:
-    'Solace is an independent research company building instruments for disciplined capital allocation under uncertainty.',
+    'Independent research observatory. Hermes decides when capital should move, wait, or stand down — and seals every decision before the outcome is known.',
   openGraph: {
     siteName: "Solace",
     type: "website",
-    title: "Solace — Independent Research Company",
+    title: "Solace — Instruments for capital under uncertainty",
     description:
-      'Solace is an independent research company building instruments for disciplined capital allocation under uncertainty.',
+      'Independent research observatory. Hermes decides when capital should move, wait, or stand down — and seals every decision before the outcome is known.',
   },
   // Without twitter:card, X renders pasted links without the large image.
   twitter: {
