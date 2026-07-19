@@ -302,27 +302,26 @@ h2 {
     padding: 0 2.25rem;
   }
 
+  /* Nav type ladder: brand slightly above links; CTA matches link size with
+     firmer weight; tracking tight enough that short words still hold. */
   .site-wordmark,
   .site-nav a,
   .site-action-link {
-    font-family: var(--font-plex);
-    font-weight: 700;
+    font-family: var(--font-plex), monospace;
     text-transform: uppercase;
   }
 
-  /* Matches .hx-brand on the Hermes page, but white on the homepage. */
+  /* Matches .hx-brand — full foreground apex of the bar. */
   .site-wordmark {
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
     justify-self: start;
     color: var(--foreground);
-    font-family: var(--font-plex), monospace;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.2em;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
     line-height: 1;
-    text-transform: uppercase;
     transition: color 0.2s ease;
   }
 
@@ -339,29 +338,31 @@ h2 {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 2rem;
+    gap: 1.85rem;
   }
 
-  /* One register for the whole bar: the wordmark's mono voice. Links sit
-     dimmer than the brand; hover brings them to full brightness. */
   .site-nav a,
   .site-action-link {
-    color: rgba(250, 250, 250, 0.62);
-    font-family: var(--font-plex), monospace;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
+    color: rgba(250, 250, 250, 0.56);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
     line-height: 1;
     text-decoration: none;
-    text-transform: uppercase;
     transition:
       color 180ms ease,
-      border-color 180ms ease;
+      border-color 180ms ease,
+      font-weight 180ms ease;
   }
 
   .site-nav a:hover,
   .site-action-link:hover {
     color: var(--foreground);
+  }
+
+  .site-nav a[aria-current='page'] {
+    color: var(--foreground);
+    font-weight: 600;
   }
 
   .site-actions {
@@ -371,12 +372,16 @@ h2 {
     gap: 0.75rem;
   }
 
+  .site-action-login {
+    color: rgba(250, 250, 250, 0.48);
+  }
+
   .site-action-primary {
     border-bottom: 0;
     color: var(--foreground);
-    font-size: 0.66rem;
-    font-weight: 650;
-    letter-spacing: 0.14em;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
   }
 
   .site-action-separator {
@@ -454,15 +459,21 @@ h2 {
   .site-menu-panel a {
     border-bottom: 1px solid rgba(250, 250, 250, 0.08);
     padding: 0.82rem 1rem;
-    color: rgba(250, 250, 250, 0.76);
-    font-family: var(--font-plex);
-    font-size: 0.78rem;
-    font-weight: 700;
+    color: rgba(250, 250, 250, 0.62);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
     line-height: 1;
     text-transform: uppercase;
     transition:
       background 180ms ease,
       color 180ms ease;
+  }
+
+  .site-menu-panel a[aria-current='page'] {
+    color: var(--foreground);
+    font-weight: 600;
   }
 
   .site-menu-panel a:last-child {
@@ -5217,12 +5228,12 @@ h2 {
     }
 
     .site-action-link {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
     }
 
     .site-action-primary {
-      font-size: 0.66rem;
-      letter-spacing: 0.14em;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
     }
 
     .site-menu-button {
@@ -5886,17 +5897,36 @@ h2 {
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
-    color: var(--muted);
+    color: var(--foreground);
     font-family: var(--font-plex), monospace;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.2em;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     transition: color 0.2s ease;
   }
 
   .hx-brand:hover {
     color: var(--foreground);
+  }
+
+  /* Header CTAs share the nav mono ladder — not a second display voice. */
+  .hx-header .hx-btn {
+    font-family: var(--font-plex), monospace;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .hx-header .hx-btn-sm {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+
+  .hx-header .hx-btn-secondary {
+    font-weight: 500;
+    letter-spacing: 0.12em;
   }
 
   .hx-shell {
@@ -11218,15 +11248,24 @@ h2 {
   /* --- site chrome (header nav, menu, mark) --- */
   html[data-theme='light'] .site-nav a,
   html[data-theme='light'] .site-action-link {
-    color: rgba(19, 17, 12, 0.55);
+    color: rgba(19, 17, 12, 0.52);
   }
 
   html[data-theme='light'] .site-nav a:hover,
-  html[data-theme='light'] .site-action-link:hover {
+  html[data-theme='light'] .site-action-link:hover,
+  html[data-theme='light'] .site-nav a[aria-current='page'] {
     color: #13110c;
   }
 
+  html[data-theme='light'] .site-action-login {
+    color: rgba(19, 17, 12, 0.45);
+  }
+
   html[data-theme='light'] .site-action-primary {
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .hx-brand {
     color: #13110c;
   }
 
