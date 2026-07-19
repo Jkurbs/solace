@@ -250,13 +250,7 @@ export type LedgerVaultSummary = {
   openPaths: number | null;
   closedPaths: number;
   backfilled: number;
-  /** 0..1 share of decision rows that are stand-down / wait. */
-  standDownRate: number;
 };
-
-function formatStandDownRate(rate: number) {
-  return `${Math.round(rate * 100)}%`;
-}
 
 export type HermesTelemetry = {
   posture: HermesPublicPosture;
@@ -412,46 +406,26 @@ export default function HomeClient({
               </Link>
             </motion.div>
             <motion.p variants={fade} className="section-kicker mt-8">
-              Independent research observatory · {hermesBetaVersionLabel}
+              Independent research observatory
             </motion.p>
             <motion.h1 variants={titleFade} className="hero-quiet-title">
-              Instruments for capital under uncertainty.
+              Systems for reading complexity.
             </motion.h1>
             <motion.p variants={fade} className="hero-quiet-body">
-              Hermes decides when capital should move, wait, or stand down — and seals every decision before
-              the outcome is known. Domains are earned. Founder capital only.
+              Solace builds instruments for disciplined capital allocation under uncertainty. Capital moves
+              only when structure, regime, and timing agree — and most hours, they do not.
             </motion.p>
-            <motion.div variants={fade} className="hero-proof" aria-label="Process metrics">
-              <div>
-                <span>Sealed decisions</span>
-                <strong>{ledgerVault.sealedDecisions}</strong>
-              </div>
-              <div>
-                <span>Open paths</span>
-                <strong>{ledgerVault.openPaths === null ? '—' : ledgerVault.openPaths}</strong>
-              </div>
-              <div>
-                <span>Standing down</span>
-                <strong>{formatStandDownRate(ledgerVault.standDownRate)}</strong>
-              </div>
-              <div>
-                <span>Backfilled</span>
-                <strong>{ledgerVault.backfilled}</strong>
-              </div>
-            </motion.div>
             <motion.div variants={fade} className="hero-quiet-actions">
               <Link href="/hermes" className="hermes-product-button hermes-product-button-light">
                 Explore Hermes
               </Link>
               <Link href="/trust" className="hermes-product-button hermes-product-button-dark">
-                Inspect the ledger
+                Decision ledger
               </Link>
             </motion.div>
             <motion.p variants={fade} className="hero-gloss">
-              An instrument is a system Solace builds and operates — not a financial product.{' '}
-              <a href="#faq">What to know first</a>
-              {' · '}
-              <a href="#ledger">Public record</a>
+              An instrument here is a system Solace builds and operates, not a financial product. New to
+              Solace? <a href="#faq">Start with the questions</a>.
             </motion.p>
           </motion.div>
         </section>
@@ -483,23 +457,22 @@ export default function HomeClient({
               variants={titleFade}
               className="hero-title mt-6 max-w-3xl font-serif text-[clamp(3.4rem,9vw,8rem)] font-medium leading-[0.9]"
             >
-              Instruments for capital under uncertainty.
+              Systems for reading complexity.
             </motion.h1>
             <motion.p variants={fade} className="hero-body mt-7 max-w-2xl text-lg leading-8 text-muted md:text-xl">
-              Hermes decides when capital should move, wait, or stand down — and seals every decision before
-              the outcome is known.
+              Solace builds instruments for disciplined capital allocation under uncertainty.
             </motion.p>
             <motion.div variants={fade} className="hero-actions mt-9 flex flex-wrap items-center gap-x-7 gap-y-3">
+              <Link href="/brief" className="primary-link">
+                Read the brief
+              </Link>
               <Link href="/hermes" className="hermes-product-button hermes-product-button-dark min-h-[2.75rem]">
                 Explore Hermes
               </Link>
-              <Link href="/trust" className="primary-link">
-                Inspect the ledger
-              </Link>
             </motion.div>
             <motion.p variants={fade} className="hero-gloss">
-              An instrument is a system Solace builds and operates — not a financial product.{' '}
-              <a href="#faq">What to know first</a>
+              An instrument here is a system Solace builds and operates, not a financial product. New to
+              Solace? <a href="#faq">Start with the questions</a>.
             </motion.p>
           </div>
         </motion.div>
@@ -521,12 +494,7 @@ export default function HomeClient({
       <>
       <section id="instruments" className="inst-wrap px-5 md:px-10">
         <div className="inst-grid mx-auto max-w-7xl">
-          <motion.div className="inst-section-head" {...cardReveal(0)}>
-            <p className="section-kicker">I · Instruments</p>
-            <h2 className="inst-section-title">Live systems. Earned domains.</h2>
-          </motion.div>
-
-          <motion.div id="hermes" className="inst-cell inst-cell-hermes scroll-mt-24" {...cardReveal(1)}>
+          <motion.div id="hermes" className="inst-cell inst-cell-hermes scroll-mt-24" {...cardReveal(0)}>
             <Link href="/hermes" className="inst-card">
               <div className="inst-card-render" aria-hidden="true">
                 <HermesLiquidityFieldRender posture={hermesTelemetry?.posture} />
@@ -546,8 +514,8 @@ export default function HomeClient({
                   <em className="inst-card-kicker">The first instrument</em>
                   <strong>Hermes</strong>
                   <p>
-                    Reads market structure and decides when capital should move, wait, or stand down. Decisions
-                    are sealed before outcomes exist.
+                    A live capital allocation engine that reads market structure to decide when capital should
+                    move, wait, or be preserved.
                   </p>
                 </div>
                 <span className="inst-card-cta">Explore →</span>
@@ -555,13 +523,13 @@ export default function HomeClient({
             </Link>
           </motion.div>
 
-          <motion.div id="oracle" className="inst-cell inst-cell-oracle scroll-mt-24" {...cardReveal(2)}>
+          <motion.div id="oracle" className="inst-cell inst-cell-oracle scroll-mt-24" {...cardReveal(1)}>
             <Link href="/oracle" className="inst-card">
               <div className="inst-card-render" aria-hidden="true">
                 <OracleFuturesRender />
               </div>
               <div className="inst-card-scrim" aria-hidden="true" />
-              <span className="inst-chip is-cal">As measured</span>
+              <span className="inst-chip is-cal">Keeping score</span>
               <div className="inst-card-metrics">
                 <span>
                   <em>Resolved</em>
@@ -579,14 +547,14 @@ export default function HomeClient({
               <div className="inst-card-foot">
                 <div className="inst-card-name">
                   <strong>Oracle</strong>
-                  <p>Probabilities over real events — scored against what happened, published as measured.</p>
+                  <p>Live probability over real events, scored against what happened.</p>
                 </div>
-                <span className="inst-card-cta">Calibration record →</span>
+                <span className="inst-card-cta">Live record →</span>
               </div>
             </Link>
           </motion.div>
 
-          <motion.div className="inst-cell inst-cell-sim" {...cardReveal(3)}>
+          <motion.div className="inst-cell inst-cell-sim" {...cardReveal(2)}>
             <Link href="/gates#simulation" className="inst-card inst-card-quiet">
               <span className="inst-chip is-idle">Building</span>
               <div className="inst-card-foot">
@@ -598,21 +566,22 @@ export default function HomeClient({
             </Link>
           </motion.div>
 
-          <motion.div className="inst-cell inst-cell-auto" {...cardReveal(4)}>
+          <motion.div className="inst-cell inst-cell-auto" {...cardReveal(3)}>
             <Link href="/gates#autonomy" className="inst-card inst-card-quiet">
               <span className="inst-chip is-idle">{autonomyGateHeadline}</span>
               <div className="inst-card-foot">
                 <div className="inst-card-name">
                   <strong>Autonomy</strong>
                   <p>
-                    The same discipline beyond markets. Domains are earned, not declared.
+                    Read the structure, act, stand down: the same discipline, extended beyond markets.
+                    Domains are earned, not declared.
                   </p>
                 </div>
               </div>
             </Link>
           </motion.div>
 
-          <motion.div className="inst-gates-strip" {...cardReveal(5)}>
+          <motion.div className="inst-gates-strip" {...cardReveal(4)}>
             <Link href="/gates" className="inst-gates-strip-link" aria-label="View public gate board">
               <span>
                 <strong>Simulation and Autonomy</strong> stay gated — conditions and progress are public
@@ -624,14 +593,14 @@ export default function HomeClient({
       </section>
 
       <section id="ledger" className="home-vault-wrap px-5 md:px-10 scroll-mt-24">
-        <motion.div className="home-vault mx-auto max-w-7xl" {...cardReveal(6)}>
+        <motion.div className="home-vault mx-auto max-w-7xl" {...cardReveal(5)}>
           <Link href="/trust" className="home-vault-card" aria-label="Open the Hermes decision ledger">
             <div className="home-vault-copy">
-              <p className="section-kicker">II · Public record</p>
-              <h2>Sealed before the outcome.</h2>
+              <p className="section-kicker">Public record</p>
+              <h2>Decision ledger</h2>
               <p>
-                Every Hermes decision gets a row on a hash-chained ledger before its result is known. Process
-                first — outcomes second. Founder capital only. Young sample: a record, not a claim.
+                Every Hermes decision gets a sealed row before the outcome is known. Process and integrity
+                first — outcomes second. Founder capital only.
               </p>
             </div>
             <div className="home-vault-metrics" aria-label="Ledger process metrics">
@@ -644,8 +613,8 @@ export default function HomeClient({
                 <strong>{ledgerVault.openPaths === null ? '—' : ledgerVault.openPaths}</strong>
               </div>
               <div>
-                <span>Standing down</span>
-                <strong>{formatStandDownRate(ledgerVault.standDownRate)}</strong>
+                <span>Closed</span>
+                <strong>{ledgerVault.closedPaths}</strong>
               </div>
               <div>
                 <span>Backfilled</span>
@@ -727,7 +696,7 @@ export default function HomeClient({
       <section className="research-strip px-5 md:px-10">
         <motion.div className="research-strip-inner mx-auto max-w-7xl" {...sectionReveal}>
           <div className="research-strip-copy">
-            <p className="section-kicker">III · Writing</p>
+            <p className="section-kicker">Latest from the observatory</p>
             <h3>{latestNote.title}</h3>
             <p className="research-strip-dek">{latestNote.dek}</p>
           </div>
@@ -749,10 +718,7 @@ export default function HomeClient({
           variants={listStagger}
         >
           <motion.div className="news-strip-head" variants={listItem}>
-            <div>
-              <p className="section-kicker">IV · News</p>
-              <h2>What shipped. What is checkable.</h2>
-            </div>
+            <h2>News</h2>
             <Link href="/news" className="text-link">
               All news
             </Link>
@@ -781,7 +747,7 @@ export default function HomeClient({
           variants={listStagger}
         >
           <motion.div className="faq-strip-head" variants={listItem}>
-            <p className="section-kicker">V · First questions</p>
+            <p className="section-kicker">FAQ</p>
             <h2>What to know first.</h2>
           </motion.div>
           <div className="faq-list">
@@ -849,15 +815,15 @@ export default function HomeClient({
         </motion.div>
       </section>
 
-      <footer className="site-footer px-5 pb-8 pt-10 md:px-10">
+      <footer className="site-footer px-5 pb-10 pt-14 md:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="theme-divide footer-grid pt-8">
-            <div className="footer-brand">
-              <p className="flex items-center gap-2.5 font-serif text-xl font-medium text-foreground">
-                <Mark size={22} className="site-mark" />
+          <div className="theme-divide grid gap-12 pt-12 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_0.8fr_1.1fr]">
+            <div>
+              <p className="flex items-center gap-2.5 font-serif text-2xl font-medium text-foreground">
+                <Mark size={28} className="site-mark" />
                 Solace
               </p>
-              <p className="footer-brand-dek">
+              <p className="mt-3 max-w-xs text-sm leading-7 text-muted">
                 Independent research company. Instruments for uncertainty, kept only when they survive
                 contact with the world.
               </p>
@@ -871,85 +837,77 @@ export default function HomeClient({
             </div>
 
             <div className="footer-col">
-              <details className="footer-accordion">
-                <summary className="footer-heading">Instruments</summary>
-                <ul>
-                  {footerSystems.map((system) => (
-                    <li key={system.name} title={system.hint}>
-                      {system.href ? (
-                        <a href={system.href}>{system.name}</a>
-                      ) : (
-                        <span className="footer-static">{system.name}</span>
-                      )}
-                      <span className="footer-status">{system.status}</span>
-                    </li>
-                  ))}
-                </ul>
-              </details>
+              <p className="footer-heading">Instruments</p>
+              <ul>
+                {footerSystems.map((system) => (
+                  <li key={system.name} title={system.hint}>
+                    {system.href ? (
+                      <a href={system.href}>{system.name}</a>
+                    ) : (
+                      <span className="footer-static">{system.name}</span>
+                    )}
+                    <span className="footer-status">{system.status}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             <div className="footer-col">
-              <details className="footer-accordion">
-                <summary className="footer-heading">Company</summary>
-                <ul>
-                  <li>
-                    <Link href="/brief">Technical brief</Link>
-                  </li>
-                  <li>
-                    <Link href="/research">Research</Link>
-                  </li>
-                  <li>
-                    <Link href="/news">News</Link>
-                  </li>
-                  <li>
-                    <Link href="/trust">Decision ledger</Link>
-                  </li>
-                  <li>
-                    <Link href="/gates">Gate conditions</Link>
-                  </li>
-                  <li>
-                    <Link href="/hermes#request-access">Request access</Link>
-                  </li>
-                  <li>
-                    <Link href="/terms">Terms of service</Link>
-                  </li>
-                  <li>
-                    <Link href="/privacy">Privacy policy</Link>
-                  </li>
-                </ul>
-              </details>
+              <p className="footer-heading">Company</p>
+              <ul>
+                <li>
+                  <Link href="/brief">Technical brief</Link>
+                </li>
+                <li>
+                  <Link href="/research">Research</Link>
+                </li>
+                <li>
+                  <Link href="/news">News</Link>
+                </li>
+                <li>
+                  <Link href="/trust">Decision ledger</Link>
+                </li>
+                <li>
+                  <Link href="/gates">Gate conditions</Link>
+                </li>
+                <li>
+                  <Link href="/hermes#request-access">Request access</Link>
+                </li>
+                <li>
+                  <Link href="/terms">Terms of service</Link>
+                </li>
+                <li>
+                  <Link href="/privacy">Privacy policy</Link>
+                </li>
+              </ul>
             </div>
 
             <div className="footer-col">
-              <details className="footer-accordion">
-                <summary className="footer-heading">Socials</summary>
-                <ul>
-                  {footerSocials.map((social) => (
-                    <li key={social.name}>
-                      <a href={social.href} target="_blank" rel="noreferrer">
-                        {social.name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </details>
+              <p className="footer-heading">Socials</p>
+              <ul>
+                {footerSocials.map((social) => (
+                  <li key={social.name}>
+                    <a href={social.href} target="_blank" rel="noreferrer">
+                      {social.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             <div className="footer-col">
-              <details className="footer-accordion">
-                <summary className="footer-heading">Contact</summary>
-                <ul>
-                  {footerEmails.map((email) => (
-                    <li key={email}>
-                      <a href={`mailto:${email}`}>{email}</a>
-                    </li>
-                  ))}
-                </ul>
-              </details>
+              <p className="footer-heading">Contact</p>
+              <ul>
+                {footerEmails.map((email) => (
+                  <li key={email}>
+                    <a href={`mailto:${email}`}>{email}</a>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
-          <div className="theme-divide mt-8 flex flex-col gap-2 pt-4 md:flex-row md:items-center md:justify-between">
+          <div className="theme-divide mt-12 flex flex-col gap-2 pt-5 md:flex-row md:items-center md:justify-between">
             <p className="footer-fineprint">© 2026 Solace. All rights reserved.</p>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
               <ThemeToggle />

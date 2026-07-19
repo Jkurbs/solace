@@ -80,7 +80,6 @@ export default async function Home() {
     closedPaths: scoreboard.process.closedPaths,
     openPaths: scoreboard.process.openPaths,
     sealedDecisions: scoreboard.process.sealedDecisions,
-    standDownRate: scoreboard.process.standDownRate,
   };
   const latestNote: LatestNote = article
     ? { title: article.title, dek: article.dek, label: article.label }
