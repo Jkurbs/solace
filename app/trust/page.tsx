@@ -88,7 +88,7 @@ const howToRead = [
   ],
   [
     'Process before performance',
-    'The scoreboard above the sheet leads with sealed decisions, open paths vs closes (unpaired opens on the chain — not live exchange exposure), standing-down rate, and backfills. Outcome metrics (hit rate, expectancy) stay behind a toggle so the page does not read as a trading log.',
+    'The scoreboard above the sheet leads with sealed decisions, live open paths vs closes, standing-down rate, and backfills. Open paths come from the same live marks as the LIVE row — not from historical open seals still unpaired on the chain. Outcome metrics stay behind a toggle so the page does not read as a trading log.',
   ],
   [
     'Verifiable by math',
@@ -102,7 +102,11 @@ export default async function TrustPage() {
     getHermesOpenExposure().catch(() => null),
     getStoredHermesBriefSnapshot().catch(() => null),
   ]);
-  const scoreboard = computeLedgerScoreboard(storedRows);
+  const scoreboard = computeLedgerScoreboard(storedRows, {
+    // Headline open count = live marks (same source as the LIVE row), never
+    // the pile of unpaired historical open seals on the chain.
+    liveOpenPaths: openExposure ? openExposure.positions.length : null,
+  });
   const livePosture =
     briefSnapshot && briefSnapshot.brief_id !== 'fallback' ? formatConstant(briefSnapshot.posture) : '--';
   // Chain order assigns the row numbers; display is newest-first with the

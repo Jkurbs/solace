@@ -3,23 +3,28 @@ import type { HermesLedgerRow } from './store';
 // Process-first scoreboard for /trust. Integrity metrics lead; performance
 // metrics are optional and only computed on sealed (non-backfill) decisions.
 //
-// Path accounting uses the two-row schema: an open stays "open" only until a
-// later close/void references it. Opens never receive an outcome field — that
-// lives on the close row — so "outcome === null" is not a pending signal.
+// "Open paths" means live exchange exposure (same source as the LIVE row), not
+// unpaired open seals on the chain. Historical opens without a close/void ref
+// are integrity debt (unpairedChainOpens), not concurrent positions.
 
 export type LedgerScoreboard = {
   process: {
     /** Decision-bearing rows (excludes system meta). */
     sealedDecisions: number;
     /**
-     * Open rows not referenced by a later close/void.
-     * Not the same as live exchange exposure (see ledger pulse paths).
+     * Currently open paths from the live mark feed.
+     * Null when marks are missing/stale — never invent from unpaired history.
      */
-    openPaths: number;
+    openPaths: number | null;
     /** Close rows on the chain. */
     closedPaths: number;
     /** Open rows successfully paired via close/void ref. */
     pairedOpens: number;
+    /**
+     * Open seals still without a close/void ref. Archive integrity signal —
+     * not live inventory.
+     */
+    unpairedChainOpens: number;
     /** Void rows (errored opens cancelled on-chain). */
     voidedPaths: number;
     /** Share of decision rows that are stand-down / wait / no-trade. 0..1 */
@@ -41,6 +46,11 @@ export type LedgerScoreboard = {
     /** Mean seal→resolve duration in hours; null when unmeasurable. */
     avgResolveHours: number | null;
   };
+};
+
+export type LedgerScoreboardOptions = {
+  /** Live open position count from pool source marks (bridge). */
+  liveOpenPaths?: number | null;
 };
 
 function isSystem(row: HermesLedgerRow) {
@@ -93,7 +103,10 @@ function resolveDurationMs(row: HermesLedgerRow, openById: Map<string, HermesLed
   return null;
 }
 
-export function computeLedgerScoreboard(rows: HermesLedgerRow[]): LedgerScoreboard {
+export function computeLedgerScoreboard(
+  rows: HermesLedgerRow[],
+  options: LedgerScoreboardOptions = {},
+): LedgerScoreboard {
   const decisionRows = rows.filter(isDecisionRow);
   const openRows = decisionRows.filter((row) => row.eventType === 'open');
   // Close/void rows that name their open make that path settled on-chain.
@@ -102,13 +115,18 @@ export function computeLedgerScoreboard(rows: HermesLedgerRow[]): LedgerScoreboa
       .filter((row) => (row.eventType === 'close' || row.eventType === 'void') && row.ref)
       .map((row) => row.ref as string),
   );
-  const openPaths = openRows.filter((row) => !settledOpenIds.has(row.recordId)).length;
+  const unpairedChainOpens = openRows.filter((row) => !settledOpenIds.has(row.recordId)).length;
   const pairedOpens = openRows.filter((row) => settledOpenIds.has(row.recordId)).length;
   const closedPaths = decisionRows.filter((row) => row.eventType === 'close').length;
   const voidedPaths = decisionRows.filter((row) => row.eventType === 'void').length;
   const standDownCount = decisionRows.filter(isStandDownOrWait).length;
   const backfilled = rows.filter(isBackfill).length;
   const system = rows.filter(isSystem).length;
+
+  const liveOpenPaths =
+    typeof options.liveOpenPaths === 'number' && Number.isFinite(options.liveOpenPaths)
+      ? Math.max(0, Math.floor(options.liveOpenPaths))
+      : null;
 
   const openById = new Map(openRows.map((row) => [row.recordId, row] as const));
 
@@ -169,12 +187,13 @@ export function computeLedgerScoreboard(rows: HermesLedgerRow[]): LedgerScoreboa
     process: {
       backfilled,
       closedPaths,
-      openPaths,
+      openPaths: liveOpenPaths,
       pairedOpens,
       sealedDecisions: decisionRows.length,
       standDownCount,
       standDownRate: decisionRows.length > 0 ? standDownCount / decisionRows.length : 0,
       system,
+      unpairedChainOpens,
       voidedPaths,
     },
   };

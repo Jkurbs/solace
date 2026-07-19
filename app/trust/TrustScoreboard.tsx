@@ -54,11 +54,13 @@ export default function TrustScoreboard({ scoreboard }: { scoreboard: LedgerScor
         />
         <Metric
           label="Open paths · Closed"
-          value={`${process.openPaths} · ${process.closedPaths}`}
+          value={`${process.openPaths === null ? '—' : process.openPaths} · ${process.closedPaths}`}
           detail={
-            process.pairedOpens || process.voidedPaths
-              ? `${process.pairedOpens} paired · ${process.voidedPaths} voided · unpaired opens on chain`
-              : 'Unpaired opens vs close rows (two-row path schema)'
+            process.openPaths === null
+              ? 'Live marks unavailable · closed = close rows on chain'
+              : process.unpairedChainOpens > process.openPaths
+                ? `Live exchange paths · ${process.unpairedChainOpens} unpaired open seals still on chain`
+                : `Live exchange paths · ${process.pairedOpens} paired opens · ${process.closedPaths} closes`
           }
         />
         <Metric
