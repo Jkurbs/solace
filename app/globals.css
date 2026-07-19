@@ -976,7 +976,9 @@ h2 {
     border: 1px solid rgba(250, 250, 250, 0.1);
     border-radius: 1.15rem;
     background: #0d0d0b;
-    transition: border-color 0.25s ease, transform 0.25s ease;
+    transition:
+      border-color 0.35s ease,
+      transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .inst-cell-hermes .inst-card {
@@ -985,7 +987,7 @@ h2 {
 
   a.inst-card:hover {
     border-color: rgba(250, 250, 250, 0.28);
-    transform: translateY(-3px);
+    transform: translateY(-4px);
   }
 
   /* Deliberately near-empty: unbuilt domains show nothing, on purpose. */
@@ -1332,12 +1334,14 @@ h2 {
       linear-gradient(135deg, rgba(250, 250, 250, 0.03), transparent 42%),
       #0c0c0a;
     padding: clamp(1.75rem, 3.5vw, 2.6rem) clamp(1.5rem, 3vw, 2.4rem);
-    transition: border-color 0.25s ease, transform 0.25s ease;
+    transition:
+      border-color 0.35s ease,
+      transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .home-vault-card:hover {
     border-color: rgba(250, 250, 250, 0.28);
-    transform: translateY(-2px);
+    transform: translateY(-3px);
   }
 
   .home-vault-copy {

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
-import { MotionConfig, motion } from 'framer-motion';
+import { MotionConfig, motion, useReducedMotion } from 'framer-motion';
 
 import SkyBackground from './SkyBackground';
 import Mark from './Mark';
@@ -28,37 +28,69 @@ const OracleFuturesRender = dynamic(() => import('./OracleFuturesRender'), {
   ssr: false,
 });
 
-const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
+// Title-card cadence: long holds, short travel, no bounce. MotionConfig
+// reducedMotion="user" zeros this out for system-level reduced-motion prefs.
+const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
+const easeSoft = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
 const fade = {
-  hidden: { opacity: 1, y: 0 },
+  hidden: { opacity: 0, y: 14 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 1, ease },
+    transition: { duration: 0.75, ease: easeOut },
+  },
+};
+
+const titleFade = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 1, ease: easeSoft },
   },
 };
 
 const sectionReveal = {
-  initial: { opacity: 1, y: 0 },
+  initial: { opacity: 0, y: 28 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: '-14% 0px -14% 0px' },
-  transition: { duration: 0.9, ease },
+  viewport: { once: true, amount: 0.18, margin: '0px 0px -6% 0px' },
+  transition: { duration: 0.9, ease: easeOut },
 };
 
 const cardReveal = (index: number) => ({
-  ...sectionReveal,
-  viewport: { once: true, margin: '-8% 0px -8% 0px' },
-  transition: { ...sectionReveal.transition, delay: index * 0.08 },
+  initial: { opacity: 0, y: 26 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.12, margin: '0px 0px -4% 0px' },
+  transition: { duration: 0.82, ease: easeOut, delay: Math.min(index * 0.075, 0.3) },
 });
 
 const stagger = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.18,
+      staggerChildren: 0.1,
+      delayChildren: 0.06,
     },
+  },
+};
+
+const listStagger = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.04,
+    },
+  },
+};
+
+const listItem = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.65, ease: easeOut },
   },
 };
 
@@ -348,6 +380,10 @@ export default function HomeClient({
   newsItems: NewsItem[];
   pill: HeroPill;
 }) {
+  const reduceMotion = useReducedMotion();
+  // reducedMotion users skip entrance; everyone else gets the title-card stagger.
+  const heroInitial = reduceMotion ? false : 'hidden';
+
   return (
     <main className="home-shell relative min-h-screen overflow-x-hidden text-foreground">
       <MotionConfig reducedMotion="user">
@@ -357,7 +393,7 @@ export default function HomeClient({
       {HERO_VARIANT === 'quiet' ? (
         <section className="hero-quiet relative overflow-hidden px-5 md:px-10">
           <motion.div
-            initial="hidden"
+            initial={heroInitial}
             animate="show"
             variants={stagger}
             className="hero-quiet-inner relative z-10 mx-auto max-w-6xl"
@@ -372,7 +408,7 @@ export default function HomeClient({
             <motion.p variants={fade} className="section-kicker mt-8">
               Independent research observatory
             </motion.p>
-            <motion.h1 variants={fade} className="hero-quiet-title">
+            <motion.h1 variants={titleFade} className="hero-quiet-title">
               Systems for reading complexity.
             </motion.h1>
             <motion.p variants={fade} className="hero-quiet-body">
@@ -401,7 +437,7 @@ export default function HomeClient({
         <div className="hero-vignette" />
 
         <motion.div
-          initial="hidden"
+          initial={heroInitial}
           animate="show"
           variants={stagger}
           className="hero-content relative z-10 mx-auto grid max-w-7xl items-center"
@@ -418,7 +454,7 @@ export default function HomeClient({
               Independent research observatory
             </motion.p>
             <motion.h1
-              variants={fade}
+              variants={titleFade}
               className="hero-title mt-6 max-w-3xl font-serif text-[clamp(3.4rem,9vw,8rem)] font-medium leading-[0.9]"
             >
               Systems for reading complexity.
@@ -443,9 +479,9 @@ export default function HomeClient({
 
         <motion.div
           className="hero-caption"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.1, delay: 0.9, ease }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.75, ease: easeOut }}
         >
           <span>Markets · Live</span>
           <span>Simulation · Building</span>
@@ -674,89 +710,107 @@ export default function HomeClient({
       </section>
 
       <section className="news-strip px-5 md:px-10">
-        <motion.div className="news-strip-inner mx-auto max-w-7xl" {...sectionReveal}>
-          <div className="news-strip-head">
+        <motion.div
+          className="news-strip-inner mx-auto max-w-7xl"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.15, margin: '0px 0px -6% 0px' }}
+          variants={listStagger}
+        >
+          <motion.div className="news-strip-head" variants={listItem}>
             <h2>News</h2>
             <Link href="/news" className="text-link">
               All news
             </Link>
-          </div>
+          </motion.div>
           <div className="news-grid">
             {newsItems.map((item) => (
-              <Link key={item.slug} href={`/news/${item.slug}`} className="news-item">
-                <NotePlate seed={item.slug} tint={item.tint} label={item.label} />
-                <span className="news-item-date">{newsDateFormat.format(new Date(item.date))}</span>
-                <span className="news-item-title">{item.title}</span>
-                <span className="news-item-dek">{item.dek}</span>
-              </Link>
+              <motion.div key={item.slug} variants={listItem}>
+                <Link href={`/news/${item.slug}`} className="news-item">
+                  <NotePlate seed={item.slug} tint={item.tint} label={item.label} />
+                  <span className="news-item-date">{newsDateFormat.format(new Date(item.date))}</span>
+                  <span className="news-item-title">{item.title}</span>
+                  <span className="news-item-dek">{item.dek}</span>
+                </Link>
+              </motion.div>
             ))}
           </div>
         </motion.div>
       </section>
 
       <section id="faq" className="faq-strip scroll-mt-24 px-5 md:px-10">
-        <motion.div className="faq-strip-inner mx-auto max-w-7xl" {...sectionReveal}>
-          <div className="faq-strip-head">
+        <motion.div
+          className="faq-strip-inner mx-auto max-w-7xl"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.12, margin: '0px 0px -6% 0px' }}
+          variants={listStagger}
+        >
+          <motion.div className="faq-strip-head" variants={listItem}>
             <p className="section-kicker">FAQ</p>
             <h2>What to know first.</h2>
-          </div>
+          </motion.div>
           <div className="faq-list">
             {homepageQuestions.map((item) => (
-              <details key={item.question} className="faq-item">
-                <summary>{item.question}</summary>
-                <p>{item.answer}</p>
-              </details>
+              <motion.div key={item.question} variants={listItem}>
+                <details className="faq-item">
+                  <summary>{item.question}</summary>
+                  <p>{item.answer}</p>
+                </details>
+              </motion.div>
             ))}
-            <details className="faq-item">
-              <summary>Terms used across this site</summary>
-              <dl className="glossary-list">
-                <div>
-                  <dt>Instrument</dt>
-                  <dd>A system Solace builds and operates, not a security or financial product.</dd>
-                </div>
-                <div>
-                  <dt>Reading</dt>
-                  <dd>Hermes&rsquo;s most recent assessment of market conditions.</dd>
-                </div>
-                <div>
-                  <dt>Posture</dt>
-                  <dd>How boldly capital is routed right now, from standing down to fully deployed.</dd>
-                </div>
-                <div>
-                  <dt>Regime</dt>
-                  <dd>The market&rsquo;s prevailing character. Hermes acts only while the regime stays in character.</dd>
-                </div>
-                <div>
-                  <dt>Liquidity path</dt>
-                  <dd>
-                    Hermes&rsquo;s core abstraction: whether the field between here and a price destination can
-                    carry price at all.
-                  </dd>
-                </div>
-                <div>
-                  <dt>Calibration · Brier score</dt>
-                  <dd>How closely stated probabilities match reality. Lower is better; 0.25 is a coin flip.</dd>
-                </div>
-                <div>
-                  <dt>Gate conditions</dt>
-                  <dd>What has to clear before Solace moves past markets. Status is on the gate board.</dd>
-                </div>
-                <div>
-                  <dt>Sealed row</dt>
-                  <dd>
-                    A ledger entry written before its outcome is known, then hashed and chained so it cannot be
-                    quietly edited.
-                  </dd>
-                </div>
-                <div>
-                  <dt>Backfill</dt>
-                  <dd>
-                    A ledger row recorded after its outcome was already known. Labeled, never hidden; backfilled
-                    rows do not claim the sealed-first guarantee.
-                  </dd>
-                </div>
-              </dl>
-            </details>
+            <motion.div variants={listItem}>
+              <details className="faq-item">
+                <summary>Terms used across this site</summary>
+                <dl className="glossary-list">
+                  <div>
+                    <dt>Instrument</dt>
+                    <dd>A system Solace builds and operates, not a security or financial product.</dd>
+                  </div>
+                  <div>
+                    <dt>Reading</dt>
+                    <dd>Hermes&rsquo;s most recent assessment of market conditions.</dd>
+                  </div>
+                  <div>
+                    <dt>Posture</dt>
+                    <dd>How boldly capital is routed right now, from standing down to fully deployed.</dd>
+                  </div>
+                  <div>
+                    <dt>Regime</dt>
+                    <dd>The market&rsquo;s prevailing character. Hermes acts only while the regime stays in character.</dd>
+                  </div>
+                  <div>
+                    <dt>Liquidity path</dt>
+                    <dd>
+                      Hermes&rsquo;s core abstraction: whether the field between here and a price destination can
+                      carry price at all.
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Calibration · Brier score</dt>
+                    <dd>How closely stated probabilities match reality. Lower is better; 0.25 is a coin flip.</dd>
+                  </div>
+                  <div>
+                    <dt>Gate conditions</dt>
+                    <dd>What has to clear before Solace moves past markets. Status is on the gate board.</dd>
+                  </div>
+                  <div>
+                    <dt>Sealed row</dt>
+                    <dd>
+                      A ledger entry written before its outcome is known, then hashed and chained so it cannot be
+                      quietly edited.
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Backfill</dt>
+                    <dd>
+                      A ledger row recorded after its outcome was already known. Labeled, never hidden; backfilled
+                      rows do not claim the sealed-first guarantee.
+                    </dd>
+                  </div>
+                </dl>
+              </details>
+            </motion.div>
           </div>
         </motion.div>
       </section>
