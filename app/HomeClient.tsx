@@ -823,15 +823,15 @@ export default function HomeClient({
         </motion.div>
       </section>
 
-      <footer className="site-footer px-5 pb-10 pt-14 md:px-8">
+      <footer className="site-footer px-5 pb-8 pt-10 md:px-10">
         <div className="mx-auto max-w-7xl">
-          <div className="theme-divide grid gap-12 pt-12 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_0.8fr_1.1fr]">
-            <div>
-              <p className="flex items-center gap-2.5 font-serif text-2xl font-medium text-foreground">
-                <Mark size={28} className="site-mark" />
+          <div className="theme-divide footer-grid pt-8">
+            <div className="footer-brand">
+              <p className="flex items-center gap-2.5 font-serif text-xl font-medium text-foreground">
+                <Mark size={22} className="site-mark" />
                 Solace
               </p>
-              <p className="mt-3 max-w-xs text-sm leading-7 text-muted">
+              <p className="footer-brand-dek">
                 Independent research company. Instruments for uncertainty, kept only when they survive
                 contact with the world.
               </p>
@@ -845,77 +845,85 @@ export default function HomeClient({
             </div>
 
             <div className="footer-col">
-              <p className="footer-heading">Instruments</p>
-              <ul>
-                {footerSystems.map((system) => (
-                  <li key={system.name} title={system.hint}>
-                    {system.href ? (
-                      <a href={system.href}>{system.name}</a>
-                    ) : (
-                      <span className="footer-static">{system.name}</span>
-                    )}
-                    <span className="footer-status">{system.status}</span>
-                  </li>
-                ))}
-              </ul>
+              <details className="footer-accordion">
+                <summary className="footer-heading">Instruments</summary>
+                <ul>
+                  {footerSystems.map((system) => (
+                    <li key={system.name} title={system.hint}>
+                      {system.href ? (
+                        <a href={system.href}>{system.name}</a>
+                      ) : (
+                        <span className="footer-static">{system.name}</span>
+                      )}
+                      <span className="footer-status">{system.status}</span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
             </div>
 
             <div className="footer-col">
-              <p className="footer-heading">Company</p>
-              <ul>
-                <li>
-                  <Link href="/brief">Technical brief</Link>
-                </li>
-                <li>
-                  <Link href="/research">Research</Link>
-                </li>
-                <li>
-                  <Link href="/news">News</Link>
-                </li>
-                <li>
-                  <Link href="/trust">Decision ledger</Link>
-                </li>
-                <li>
-                  <Link href="/gates">Gate conditions</Link>
-                </li>
-                <li>
-                  <Link href="/hermes#request-access">Request access</Link>
-                </li>
-                <li>
-                  <Link href="/terms">Terms of service</Link>
-                </li>
-                <li>
-                  <Link href="/privacy">Privacy policy</Link>
-                </li>
-              </ul>
+              <details className="footer-accordion">
+                <summary className="footer-heading">Company</summary>
+                <ul>
+                  <li>
+                    <Link href="/brief">Technical brief</Link>
+                  </li>
+                  <li>
+                    <Link href="/research">Research</Link>
+                  </li>
+                  <li>
+                    <Link href="/news">News</Link>
+                  </li>
+                  <li>
+                    <Link href="/trust">Decision ledger</Link>
+                  </li>
+                  <li>
+                    <Link href="/gates">Gate conditions</Link>
+                  </li>
+                  <li>
+                    <Link href="/hermes#request-access">Request access</Link>
+                  </li>
+                  <li>
+                    <Link href="/terms">Terms of service</Link>
+                  </li>
+                  <li>
+                    <Link href="/privacy">Privacy policy</Link>
+                  </li>
+                </ul>
+              </details>
             </div>
 
             <div className="footer-col">
-              <p className="footer-heading">Socials</p>
-              <ul>
-                {footerSocials.map((social) => (
-                  <li key={social.name}>
-                    <a href={social.href} target="_blank" rel="noreferrer">
-                      {social.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              <details className="footer-accordion">
+                <summary className="footer-heading">Socials</summary>
+                <ul>
+                  {footerSocials.map((social) => (
+                    <li key={social.name}>
+                      <a href={social.href} target="_blank" rel="noreferrer">
+                        {social.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
             </div>
 
             <div className="footer-col">
-              <p className="footer-heading">Contact</p>
-              <ul>
-                {footerEmails.map((email) => (
-                  <li key={email}>
-                    <a href={`mailto:${email}`}>{email}</a>
-                  </li>
-                ))}
-              </ul>
+              <details className="footer-accordion">
+                <summary className="footer-heading">Contact</summary>
+                <ul>
+                  {footerEmails.map((email) => (
+                    <li key={email}>
+                      <a href={`mailto:${email}`}>{email}</a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
             </div>
           </div>
 
-          <div className="theme-divide mt-12 flex flex-col gap-2 pt-5 md:flex-row md:items-center md:justify-between">
+          <div className="theme-divide mt-8 flex flex-col gap-2 pt-4 md:flex-row md:items-center md:justify-between">
             <p className="footer-fineprint">© 2026 Solace. All rights reserved.</p>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
               <ThemeToggle />
