@@ -1072,13 +1072,13 @@ h2 {
     gap: 1rem;
   }
 
-  .inst-card-cta-ledger {
-    color: rgba(141, 184, 157, 0.72);
+  .inst-card-cta-brief {
+    color: rgba(250, 250, 250, 0.55);
   }
 
-  .inst-card:has(.inst-card-cta-ledger:hover) .inst-card-cta-ledger,
-  a.inst-card-cta-ledger:hover {
-    color: #8db89d;
+  .inst-card:has(.inst-card-cta-brief:hover) .inst-card-cta-brief,
+  a.inst-card-cta-brief:hover {
+    color: var(--foreground);
   }
 
   .inst-platter {
@@ -1297,8 +1297,8 @@ h2 {
   }
 
   a.inst-card:hover .inst-card-cta,
-  .inst-card:has(.inst-card-fill:hover) .inst-card-cta:not(.inst-card-cta-ledger),
-  .inst-card:has(.inst-card-name:hover) .inst-card-cta:not(.inst-card-cta-ledger),
+  .inst-card:has(.inst-card-fill:hover) .inst-card-cta,
+  .inst-card:has(.inst-card-name:hover) .inst-card-cta,
   a.inst-card-cta:hover {
     color: var(--foreground);
   }
@@ -1411,10 +1411,6 @@ h2 {
     a.inst-card:hover .inst-card-cta,
     a.inst-card-cta:hover {
       color: var(--foreground);
-    }
-
-    .inst-card-cta-ledger {
-      color: rgba(141, 184, 157, 0.7);
     }
 
     .inst-card-metrics {

@@ -420,15 +420,12 @@ export default function HomeClient({
               only when structure, regime, and timing agree — and most hours, they do not.
             </motion.p>
             <motion.div variants={fade} className="hero-quiet-actions">
-              <Link href="/brief" className="hermes-product-button hermes-product-button-light">
-                Read the brief
-              </Link>
               <div className="hero-quiet-actions-row">
-                <Link href="/hermes" className="hermes-product-button hermes-product-button-dark">
+                <Link href="/hermes" className="hermes-product-button hermes-product-button-light">
                   Explore Hermes
                 </Link>
-                <Link href="/trust" className="hermes-product-button hermes-product-button-dark">
-                  Decision ledger
+                <Link href="/brief" className="hermes-product-button hermes-product-button-dark">
+                  Read the brief
                 </Link>
               </div>
             </motion.div>
@@ -472,15 +469,12 @@ export default function HomeClient({
               Solace builds instruments for disciplined capital allocation under uncertainty.
             </motion.p>
             <motion.div variants={fade} className="hero-actions mt-9">
-              <Link href="/brief" className="primary-link">
-                Read the brief
-              </Link>
               <div className="hero-actions-row">
                 <Link href="/hermes" className="hermes-product-button hermes-product-button-dark min-h-[2.75rem]">
                   Explore Hermes
                 </Link>
-                <Link href="/trust" className="hermes-product-button hermes-product-button-dark min-h-[2.75rem]">
-                  Decision ledger
+                <Link href="/brief" className="primary-link">
+                  Read the brief
                 </Link>
               </div>
             </motion.div>
@@ -540,8 +534,8 @@ export default function HomeClient({
                   <Link href="/hermes" className="inst-card-cta">
                     Explore →
                   </Link>
-                  <Link href="/trust" className="inst-card-cta inst-card-cta-ledger">
-                    Decision ledger →
+                  <Link href="/brief" className="inst-card-cta inst-card-cta-brief">
+                    Brief →
                   </Link>
                 </div>
               </div>

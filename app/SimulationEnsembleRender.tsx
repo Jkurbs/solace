@@ -244,6 +244,55 @@ function targetFor(
       const y = (u - 0.5) * CUBE * 0.78;
       out.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
     }
+  } else if (mode < 4.5) {
+    // Miniature spiral galaxy — core, arms, thin disk, sparse halo. Contained world.
+    const arms = 3;
+    const maxR = HALF * 0.9;
+    const spin = t * 0.16;
+
+    if (s3 > 0.9) {
+      // Sparse spherical halo.
+      const ha = s1 * Math.PI * 2;
+      const hb = (s2 - 0.5) * Math.PI;
+      const hr = Math.pow(0.2 + s1 * 0.8, 0.55) * maxR * 0.72;
+      out.set(
+        Math.cos(ha) * Math.cos(hb) * hr,
+        Math.sin(hb) * hr * 0.55,
+        Math.sin(ha) * Math.cos(hb) * hr,
+      );
+    } else if (s3 < 0.14) {
+      // Dense nuclear bulge.
+      const br = Math.pow(s2, 0.55) * 0.085;
+      const ba = s1 * Math.PI * 2 + spin * 1.4;
+      const bh = (s3 - 0.07) * 0.22;
+      out.set(Math.cos(ba) * br, bh, Math.sin(ba) * br);
+    } else {
+      // Logarithmic spiral arms in a thin disk.
+      const arm = Math.floor(s1 * arms) % arms;
+      // Mass toward the core (not uniform in radius).
+      const radius = Math.pow(0.04 + s2 * 0.96, 0.62) * maxR;
+      const wind = 2.85;
+      const armPhase = (arm / arms) * Math.PI * 2;
+      const theta =
+        armPhase +
+        Math.log(1.0 + radius * 9.0) * wind +
+        spin +
+        (s3 - 0.5) * (0.1 + radius * 0.22);
+      // Disk flattens outward; slight warp.
+      const diskH =
+        (s1 - 0.5) * (0.028 + (1.0 - radius / maxR) * 0.055) +
+        Math.sin(theta * 2.0 + s2 * 4.0) * 0.008 * radius;
+      let x = Math.cos(theta) * radius;
+      let y = diskH;
+      let z = Math.sin(theta) * radius;
+      // Tilt so the galaxy reads in 3D inside the cube (not a flat plate).
+      const tilt = 0.42;
+      const cy = Math.cos(tilt);
+      const sy = Math.sin(tilt);
+      const y2 = y * cy - z * sy;
+      const z2 = y * sy + z * cy;
+      out.set(x * 0.96, y2, z2 * 0.96);
+    }
   } else {
     // Dominant trajectory corridor — mass concentrates along one path.
     const pathT = u * 0.92 + s1 * 0.06;
@@ -525,11 +574,13 @@ export default function SimulationEnsembleRender() {
       card.addEventListener('pointerleave', onPointerLeave);
     }
 
-    // Mode cycle: gas → clusters → lattice → helix → dominant path → dissolve.
-    const MODE_COUNT = 5;
-    const MODE_HOLD = 5.8;
-    const MODE_BLEND = 1.6;
+    // Mode cycle: gas → clusters → lattice → helix → galaxy → dominant path.
+    const MODE_COUNT = 6;
+    const MODE_HOLD = 5.4;
+    const MODE_BLEND = 1.5;
     const EPOCH = MODE_COUNT * (MODE_HOLD + MODE_BLEND);
+    const PATH_MODE = 5;
+    const GALAXY_MODE = 4;
 
     const resize = () => {
       const width = Math.max(1, mount.clientWidth);
@@ -583,11 +634,18 @@ export default function SimulationEnsembleRender() {
 
       // Trajectory visible mainly in dominant-path mode.
       let trajFade = 0;
-      if (modeA === 4) trajFade = 1 - blend * 0.85;
-      if (modeB === 4) trajFade = Math.max(trajFade, blend);
-      if (modeA === 3 && blend > 0.5) trajFade = Math.max(trajFade, (blend - 0.5) * 1.4);
+      if (modeA === PATH_MODE) trajFade = 1 - blend * 0.85;
+      if (modeB === PATH_MODE) trajFade = Math.max(trajFade, blend);
+      if (modeA === GALAXY_MODE && blend > 0.55) trajFade = Math.max(trajFade, (blend - 0.55) * 1.6);
       trajMat.uniforms.uFade.value = reducedMotion ? 0.55 : Math.min(trajFade, 1);
       trajMat.uniforms.uPulse.value = (elapsed * 0.12) % 1;
+
+      const inGalaxy =
+        modeA === GALAXY_MODE || modeB === GALAXY_MODE
+          ? modeA === GALAXY_MODE
+            ? 1 - blend
+            : blend
+          : 0;
 
       // Update trajectory curve gently each frame (same analytic path).
       const trajPhase = Math.floor(elapsed / EPOCH);
@@ -627,13 +685,16 @@ export default function SimulationEnsembleRender() {
         let vz = velocities[ix + 2];
 
         if (spring) {
-          vx = (vx + (pos.x - px) * attract * step) * drag;
-          vy = (vy + (pos.y - py) * attract * step) * drag;
-          vz = (vz + (pos.z - pz) * attract * step) * drag;
+          // Galaxy arms stay crisper with slightly stronger attract + less noise.
+          const aMul = 1 + inGalaxy * 0.35;
+          const nMul = 1 - inGalaxy * 0.55;
+          vx = (vx + (pos.x - px) * attract * aMul * step) * drag;
+          vy = (vy + (pos.y - py) * attract * aMul * step) * drag;
+          vz = (vz + (pos.z - pz) * attract * aMul * step) * drag;
           // Soft turbulence so it never freezes into a static diagram.
-          vx += Math.sin(elapsed * 0.9 + s * 20.0) * 0.12 * step;
-          vy += Math.cos(elapsed * 0.7 + s * 17.0) * 0.1 * step;
-          vz += Math.sin(elapsed * 0.6 + s * 13.0) * 0.12 * step;
+          vx += Math.sin(elapsed * 0.9 + s * 20.0) * 0.12 * nMul * step;
+          vy += Math.cos(elapsed * 0.7 + s * 17.0) * 0.1 * nMul * step;
+          vz += Math.sin(elapsed * 0.6 + s * 13.0) * 0.12 * nMul * step;
           px += vx;
           py += vy;
           pz += vz;
@@ -681,7 +742,15 @@ export default function SimulationEnsembleRender() {
         if (modeA === 1 || modeB === 1) {
           b += 0.08 * (modeA === 1 ? 1 - blend : blend);
         }
-        brights[i] = Math.min(b, 1.15);
+        // Galaxy: hot core, cooler arms — distance from nuclear center.
+        if (inGalaxy > 0.02) {
+          const coreR2 = px * px + py * py * 1.4 + pz * pz;
+          b += Math.exp(-coreR2 / 0.012) * 0.7 * inGalaxy;
+          b += Math.exp(-coreR2 / 0.08) * 0.18 * inGalaxy;
+          // Dim halo motes slightly so the disk reads.
+          if (coreR2 > 0.22) b *= 1 - 0.2 * inGalaxy;
+        }
+        brights[i] = Math.min(b, 1.2);
       }
 
       posAttr.needsUpdate = true;
