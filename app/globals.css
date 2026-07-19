@@ -5302,12 +5302,9 @@ h2 {
   }
 
   @media (max-width: 767px) {
-    .home-shell {
-      background:
-        radial-gradient(circle at 92% 18%, rgba(214, 208, 196, 0.08), transparent 18rem),
-        radial-gradient(circle at 70% 48rem, rgba(184, 190, 199, 0.035), transparent 18rem),
-        linear-gradient(180deg, #0a0a0a 0%, #050504 34rem, #0a0a0a 72rem, #060604 100%);
-    }
+    /* Do not reintroduce a charcoal/cream wash on the home floor.
+       Pure black is owned by the homepage black rules; this block only
+       handles mobile chrome layout. */
 
     .site-header-inner {
       min-height: 4.1rem;
@@ -12115,7 +12112,9 @@ h2 {
   }
 }
 
-/* Homepage pure black — final cascade win over plate/media-query charcoal. */
+/* Homepage pure black — final cascade win over plate/media-query charcoal.
+   Use the `background` shorthand so no leftover gradient layers can sit above
+   background-color (mobile used to set multi-stop background: on .home-shell). */
 html:has(.home-shell),
 html:has(.home-shell) body,
 .home-shell,
@@ -12130,7 +12129,8 @@ html:has(.home-shell) body,
 .home-shell .home-vault-card,
 .home-shell .note-plate,
 .home-shell .site-footer {
-  background-color: #000000 !important;
+  background: #000000 !important;
+  background-image: none !important;
 }
 
 html[data-theme='light']:has(.home-shell),
