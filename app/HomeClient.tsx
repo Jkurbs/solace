@@ -496,20 +496,22 @@ export default function HomeClient({
         <div className="inst-grid mx-auto max-w-7xl">
           <motion.div id="hermes" className="inst-cell inst-cell-hermes scroll-mt-24" {...cardReveal(0)}>
             <Link href="/hermes" className="inst-card">
-              <div className="inst-card-render" aria-hidden="true">
-                <HermesLiquidityFieldRender posture={hermesTelemetry?.posture} />
+              <div className="inst-platter">
+                <div className="inst-card-render" aria-hidden="true">
+                  <HermesLiquidityFieldRender posture={hermesTelemetry?.posture} />
+                </div>
+                <div className="inst-card-scrim" aria-hidden="true" />
+                <span className="inst-chip is-live">
+                  {hermesTelemetry ? <span className="inst-chip-dot" aria-hidden="true" /> : null}
+                  Live · {hermesBetaVersionLabel.replace(/^Hermes\s+/, '')}
+                </span>
+                {hermesTelemetry ? (
+                  <p className="inst-card-live-brief">
+                    <HermesLiveBriefing telemetry={hermesTelemetry} />
+                  </p>
+                ) : null}
               </div>
-              <div className="inst-card-scrim" aria-hidden="true" />
-              <span className="inst-chip is-live">
-                {hermesTelemetry ? <span className="inst-chip-dot" aria-hidden="true" /> : null}
-                Live · {hermesBetaVersionLabel.replace(/^Hermes\s+/, '')}
-              </span>
-              {hermesTelemetry ? (
-                <p className="inst-card-live-brief">
-                  <HermesLiveBriefing telemetry={hermesTelemetry} />
-                </p>
-              ) : null}
-              <div className="inst-card-foot">
+              <div className="inst-copy">
                 <div className="inst-card-name">
                   <em className="inst-card-kicker">The first instrument</em>
                   <strong>Hermes</strong>
@@ -525,26 +527,28 @@ export default function HomeClient({
 
           <motion.div id="oracle" className="inst-cell inst-cell-oracle scroll-mt-24" {...cardReveal(1)}>
             <Link href="/oracle" className="inst-card">
-              <div className="inst-card-render" aria-hidden="true">
-                <OracleFuturesRender />
+              <div className="inst-platter">
+                <div className="inst-card-render" aria-hidden="true">
+                  <OracleFuturesRender />
+                </div>
+                <div className="inst-card-scrim" aria-hidden="true" />
+                <span className="inst-chip is-cal">Keeping score</span>
+                <div className="inst-card-metrics">
+                  <span>
+                    <em>Resolved</em>
+                    <strong>{calibration.resolved}</strong>
+                  </span>
+                  <span title="Forecast accuracy. Lower is better; 0.25 is a coin flip.">
+                    <em>Brier</em>
+                    <strong>{calibration.brier.toFixed(2)}</strong>
+                  </span>
+                  <span>
+                    <em>As of</em>
+                    <strong>{calibration.asOf}</strong>
+                  </span>
+                </div>
               </div>
-              <div className="inst-card-scrim" aria-hidden="true" />
-              <span className="inst-chip is-cal">Keeping score</span>
-              <div className="inst-card-metrics">
-                <span>
-                  <em>Resolved</em>
-                  <strong>{calibration.resolved}</strong>
-                </span>
-                <span title="Forecast accuracy. Lower is better; 0.25 is a coin flip.">
-                  <em>Brier</em>
-                  <strong>{calibration.brier.toFixed(2)}</strong>
-                </span>
-                <span>
-                  <em>As of</em>
-                  <strong>{calibration.asOf}</strong>
-                </span>
-              </div>
-              <div className="inst-card-foot">
+              <div className="inst-copy">
                 <div className="inst-card-name">
                   <strong>Oracle</strong>
                   <p>Live probability over real events, scored against what happened.</p>
@@ -556,8 +560,10 @@ export default function HomeClient({
 
           <motion.div className="inst-cell inst-cell-sim" {...cardReveal(2)}>
             <Link href="/gates#simulation" className="inst-card inst-card-quiet">
-              <span className="inst-chip is-idle">Building</span>
-              <div className="inst-card-foot">
+              <div className="inst-platter">
+                <span className="inst-chip is-idle">Building</span>
+              </div>
+              <div className="inst-copy">
                 <div className="inst-card-name">
                   <strong>Simulation</strong>
                   <p>Synthetic environments where hypotheses fail quietly before deployment.</p>
@@ -568,8 +574,10 @@ export default function HomeClient({
 
           <motion.div className="inst-cell inst-cell-auto" {...cardReveal(3)}>
             <Link href="/gates#autonomy" className="inst-card inst-card-quiet">
-              <span className="inst-chip is-idle">{autonomyGateHeadline}</span>
-              <div className="inst-card-foot">
+              <div className="inst-platter">
+                <span className="inst-chip is-idle">{autonomyGateHeadline}</span>
+              </div>
+              <div className="inst-copy">
                 <div className="inst-card-name">
                   <strong>Autonomy</strong>
                   <p>
