@@ -978,20 +978,18 @@ h2 {
     color: #8db89d;
   }
 
-  /* Desktop: single framed card, copy overlaid on the platter.
-     Mobile (≤900px): full-width platter, product description below. */
+  /* Desktop: square full-bleed plate in the grid cell, copy overlaid.
+     Mobile: edge-to-edge platter, product description below. */
   .inst-card {
     position: relative;
     display: block;
     height: 100%;
     min-height: clamp(24rem, 40vw, 30rem);
     overflow: hidden;
-    border: 1px solid rgba(250, 250, 250, 0.1);
-    border-radius: 1.15rem;
+    border: 0;
+    border-radius: 0;
     background: #0d0d0b;
-    transition:
-      border-color 0.35s ease,
-      transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.35s ease;
   }
 
   .inst-cell-hermes .inst-card {
@@ -999,14 +997,15 @@ h2 {
   }
 
   a.inst-card:hover {
-    border-color: rgba(250, 250, 250, 0.28);
-    transform: translateY(-4px);
+    opacity: 0.96;
   }
 
   .inst-platter {
     position: absolute;
     inset: 0;
     overflow: hidden;
+    border: 0;
+    border-radius: 0;
     background: #0d0d0b;
   }
 
@@ -1205,11 +1204,29 @@ h2 {
   }
 
   @media (max-width: 900px) {
+    .inst-wrap {
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    .inst-grid {
+      gap: 1.75rem 0;
+      max-width: none;
+    }
+
     .inst-grid > * {
       grid-column: 1 / -1;
     }
 
-    /* Full-width platter; product copy sits underneath — not on the field. */
+    /* Keep section chrome and copy on the page margin; platters go edge-to-edge. */
+    .inst-section-head,
+    .inst-copy,
+    .inst-gates-strip {
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
+    }
+
+    /* Full-bleed square platter; product copy sits underneath. */
     .inst-card,
     .inst-cell-hermes .inst-card,
     .inst-card.inst-card-quiet {
@@ -1219,25 +1236,20 @@ h2 {
       border: 0;
       border-radius: 0;
       background: transparent;
-      transform: none;
+      opacity: 1;
     }
 
     a.inst-card:hover {
-      border-color: transparent;
-      transform: none;
-    }
-
-    a.inst-card:hover .inst-platter {
-      border-color: rgba(250, 250, 250, 0.28);
+      opacity: 1;
     }
 
     .inst-platter {
       position: relative;
       inset: auto;
+      width: 100%;
       min-height: clamp(14.5rem, 48vw, 18.5rem);
-      border: 1px solid rgba(250, 250, 250, 0.1);
-      border-radius: 1.15rem;
-      transition: border-color 0.35s ease;
+      border: 0;
+      border-radius: 0;
     }
 
     .inst-cell-hermes .inst-platter {
@@ -1263,7 +1275,8 @@ h2 {
       display: grid;
       gap: 0.85rem;
       margin-top: 1rem;
-      padding: 0 0.1rem 0.35rem;
+      padding-top: 0;
+      padding-bottom: 0.35rem;
     }
 
     .inst-card-name p {
@@ -10767,8 +10780,8 @@ h2 {
   }
 
   html[data-theme='light'] .inst-card.inst-card-quiet {
-    border-color: rgba(19, 17, 12, 0.16);
-    background: #fbf8f1;
+    border: 0;
+    background: #f0ebe0;
   }
 
   html[data-theme='light'] .inst-card-quiet .inst-card-name > strong {
@@ -11987,8 +12000,8 @@ h2 {
     }
 
     html[data-theme='light'] .inst-card.inst-card-quiet .inst-platter {
-      border-color: rgba(19, 17, 12, 0.16);
-      background: #fbf8f1;
+      border: 0;
+      background: #f0ebe0;
     }
   }
 
