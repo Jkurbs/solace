@@ -95,8 +95,10 @@ const fragmentShader = `
     float prd = length(toPtr * vec2(1.2, 1.0));
     float probe = exp(-prd * prd / 0.02) * uPointerGlow;
 
-    // True black void — fan/dust carry the light (homepage plate = pure black).
-    vec3 color = vec3(0.0);
+    vec3 color = vec3(0.0028, 0.0038, 0.0058);
+
+    float neb = noise(w * 2.3 + vec2(uTime * 0.01, 0.0)) * 0.6 + noise(w * 4.9) * 0.4;
+    color += vec3(0.007, 0.015, 0.024) * neb * 0.6;
 
     float clump = fbm(w * 3.0 + vec2(uTime * 0.007, -uTime * 0.003));
     clump = smoothstep(0.42, 0.8, clump);
@@ -166,20 +168,20 @@ const fragmentShader = `
     color = pow(max(color, 0.0), vec3(0.88));
 
     float lum2 = dot(color, vec3(0.299, 0.587, 0.114));
-    float hasLight = smoothstep(0.0, 0.04, lum2);
-    color = mix(color, color * vec3(1.06, 1.0, 0.9), smoothstep(0.45, 0.95, lum2) * 0.5 * hasLight);
+    color = mix(color * vec3(0.82, 0.97, 1.22), color, smoothstep(0.0, 0.3, lum2));
+    color = mix(color, color * vec3(1.06, 1.0, 0.9), smoothstep(0.45, 0.95, lum2) * 0.5);
 
     float grain = hash13(vec3(gl_FragCoord.xy, uTime * 18.0)) - 0.5;
-    color += grain * 0.006 * hasLight;
+    color += grain * 0.009;
 
-    color = min(color * 1.05, vec3(1.0));
+    color = min(color * 1.05 + 0.002, vec3(1.0));
 
-    // Empty void is fully transparent black (matches pure-black homepage).
+    // Luminance-keyed alpha: the void is a thin veil, not a wall — stars
+    // from the continuous sky stay visible inside the section.
     float alphaLum = dot(color, vec3(0.299, 0.587, 0.114));
-    float alpha = clamp(alphaLum * 7.0, 0.0, 1.0);
-    vec3 outRgb = alpha > 1e-4 ? color / alpha : vec3(0.0);
+    float alpha = clamp(0.18 + alphaLum * 5.5, 0.0, 1.0);
 
-    gl_FragColor = vec4(outRgb, alpha);
+    gl_FragColor = vec4(color / max(alpha, 0.02), alpha);
   }
 `;
 
