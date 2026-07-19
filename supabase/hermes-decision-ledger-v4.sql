@@ -2,7 +2,7 @@
 -- Adds an UNHASHED write-once metadata column (same pattern as V3
 -- event_type / ref / row_class). Existing row hashes are untouched.
 --
---   hermes_version: software id that made the commitment (e.g. '0.1.0').
+--   hermes_version: software id that made the commitment (e.g. '0.2.0').
 --                   Null on rows sealed before this migration.
 --
 -- The running product label lives in features/hermes-version.ts; new seals

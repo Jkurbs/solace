@@ -212,6 +212,14 @@ export type NewsItem = {
   tint: PlateTint;
 };
 
+/** Process-first ledger teaser for the homepage vault strip. */
+export type LedgerVaultSummary = {
+  sealedDecisions: number;
+  openPaths: number | null;
+  closedPaths: number;
+  backfilled: number;
+};
+
 export type HermesTelemetry = {
   posture: HermesPublicPosture;
   reason?: string;
@@ -330,13 +338,13 @@ const HOME_LAYOUT: 'sections' | 'cards' = 'cards';
 export default function HomeClient({
   hermesTelemetry,
   latestNote,
-  ledgerRowCount = 0,
+  ledgerVault,
   newsItems,
   pill,
 }: {
   hermesTelemetry: HermesTelemetry | null;
   latestNote: LatestNote;
-  ledgerRowCount?: number;
+  ledgerVault: LedgerVaultSummary;
   newsItems: NewsItem[];
   pill: HeroPill;
 }) {
@@ -347,12 +355,12 @@ export default function HomeClient({
       <Header />
 
       {HERO_VARIANT === 'quiet' ? (
-        <section className="hero-quiet relative overflow-hidden px-5 md:px-8">
+        <section className="hero-quiet relative overflow-hidden px-5 md:px-10">
           <motion.div
             initial="hidden"
             animate="show"
             variants={stagger}
-            className="hero-quiet-inner relative z-10 mx-auto max-w-5xl"
+            className="hero-quiet-inner relative z-10 mx-auto max-w-6xl"
           >
             <motion.div variants={fade}>
               <Link href={pill.href} className="hero-note-pill">
@@ -361,21 +369,22 @@ export default function HomeClient({
                 <span aria-hidden="true">→</span>
               </Link>
             </motion.div>
-            <motion.p variants={fade} className="section-kicker mt-7">
+            <motion.p variants={fade} className="section-kicker mt-8">
               Independent research observatory
             </motion.p>
             <motion.h1 variants={fade} className="hero-quiet-title">
               Systems for reading complexity.
             </motion.h1>
             <motion.p variants={fade} className="hero-quiet-body">
-              Solace builds instruments for disciplined capital allocation under uncertainty.
+              Solace builds instruments for disciplined capital allocation under uncertainty. Capital moves
+              only when structure, regime, and timing agree — and most hours, they do not.
             </motion.p>
             <motion.div variants={fade} className="hero-quiet-actions">
               <Link href="/hermes" className="hermes-product-button hermes-product-button-light">
                 Explore Hermes
               </Link>
-              <Link href="/brief" className="hermes-product-button hermes-product-button-dark">
-                Read Brief
+              <Link href="/trust" className="hermes-product-button hermes-product-button-dark">
+                Decision ledger
               </Link>
             </motion.div>
             <motion.p variants={fade} className="hero-gloss">
@@ -446,7 +455,8 @@ export default function HomeClient({
       )}
 
       {HOME_LAYOUT === 'cards' ? (
-      <section id="instruments" className="inst-wrap px-5 md:px-8">
+      <>
+      <section id="instruments" className="inst-wrap px-5 md:px-10">
         <div className="inst-grid mx-auto max-w-7xl">
           <motion.div id="hermes" className="inst-cell inst-cell-hermes scroll-mt-24" {...cardReveal(0)}>
             <Link href="/hermes" className="inst-card">
@@ -474,9 +484,6 @@ export default function HomeClient({
                 </div>
                 <span className="inst-card-cta">Explore →</span>
               </div>
-            </Link>
-            <Link href="/trust" className="inst-card-ledger" aria-label="Hermes public decision ledger">
-              {ledgerRowCount > 0 ? `Decision ledger · ${ledgerRowCount} rows →` : 'Decision ledger →'}
             </Link>
           </motion.div>
 
@@ -548,6 +555,41 @@ export default function HomeClient({
           </motion.div>
         </div>
       </section>
+
+      <section id="ledger" className="home-vault-wrap px-5 md:px-10 scroll-mt-24">
+        <motion.div className="home-vault mx-auto max-w-7xl" {...cardReveal(5)}>
+          <Link href="/trust" className="home-vault-card" aria-label="Open the Hermes decision ledger">
+            <div className="home-vault-copy">
+              <p className="section-kicker">Public record</p>
+              <h2>Decision ledger</h2>
+              <p>
+                Every Hermes decision gets a sealed row before the outcome is known. Process and integrity
+                first — outcomes second. Founder capital only.
+              </p>
+            </div>
+            <div className="home-vault-metrics" aria-label="Ledger process metrics">
+              <div>
+                <span>Sealed decisions</span>
+                <strong>{ledgerVault.sealedDecisions}</strong>
+              </div>
+              <div>
+                <span>Open paths</span>
+                <strong>{ledgerVault.openPaths === null ? '—' : ledgerVault.openPaths}</strong>
+              </div>
+              <div>
+                <span>Closed</span>
+                <strong>{ledgerVault.closedPaths}</strong>
+              </div>
+              <div>
+                <span>Backfilled</span>
+                <strong>{ledgerVault.backfilled}</strong>
+              </div>
+            </div>
+            <span className="home-vault-cta">Inspect the chain →</span>
+          </Link>
+        </motion.div>
+      </section>
+      </>
       ) : (
       <>
       <section id="hermes" className="hermes-section scroll-mt-24">
@@ -615,7 +657,7 @@ export default function HomeClient({
       </>
       )}
 
-      <section className="research-strip px-5 md:px-8">
+      <section className="research-strip px-5 md:px-10">
         <motion.div className="research-strip-inner mx-auto max-w-7xl" {...sectionReveal}>
           <div className="research-strip-copy">
             <p className="section-kicker">Latest from the observatory</p>
@@ -631,7 +673,7 @@ export default function HomeClient({
         </motion.div>
       </section>
 
-      <section className="news-strip px-5 md:px-8">
+      <section className="news-strip px-5 md:px-10">
         <motion.div className="news-strip-inner mx-auto max-w-7xl" {...sectionReveal}>
           <div className="news-strip-head">
             <h2>News</h2>
@@ -652,7 +694,7 @@ export default function HomeClient({
         </motion.div>
       </section>
 
-      <section id="faq" className="faq-strip scroll-mt-24 px-5 md:px-8">
+      <section id="faq" className="faq-strip scroll-mt-24 px-5 md:px-10">
         <motion.div className="faq-strip-inner mx-auto max-w-7xl" {...sectionReveal}>
           <div className="faq-strip-head">
             <p className="section-kicker">FAQ</p>

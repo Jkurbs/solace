@@ -11,8 +11,8 @@ import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
 import CopyCommands from './CopyCommands';
 import ScriptSource from './ScriptSource';
+import TrustLedgerTable from './TrustLedgerTable';
 import TrustLivePnL from './TrustLivePnL';
-import TrustLiveRow from './TrustLiveRow';
 import { TrustLivePulseProvider } from './TrustLivePulse';
 import TrustScoreboard from './TrustScoreboard';
 import VerifyInBrowser from './VerifyInBrowser';
@@ -66,8 +66,6 @@ const placeholderRow = {
   ref: null as string | null,
   hermesVersion: null as string | null,
 };
-
-const MIN_VISIBLE_ROWS = 7;
 
 const howToRead = [
   ['Sealed first', 'A row is created the moment Hermes decides, before the outcome is known. Nothing is written after the fact.'],
@@ -146,10 +144,6 @@ export default async function TrustPage() {
         }))
         .reverse()
     : [placeholderRow];
-  const blankRows = Array.from(
-    { length: Math.max(0, MIN_VISIBLE_ROWS - ledgerRows.length - (openExposure ? 1 : 0)) },
-    (_, index) => String(ledgerRows.length + index + 1),
-  );
   const sheetStatus = [
     ['Status', storedRows.length ? `${storedRows.length} decision${storedRows.length === 1 ? '' : 's'} recorded` : 'First decision pending'],
     ['Hermes', hermesVersion.label],
@@ -218,76 +212,7 @@ export default async function TrustPage() {
             </div>
           </div>
 
-          <div className="trust-table-wrap">
-            <table className="trust-ledger-table">
-              <thead>
-                <tr>
-                  <th className="trust-row-head">#</th>
-                  <th>Time</th>
-                  <th>Decision</th>
-                  <th>Posture</th>
-                  <th>Outcome</th>
-                  <th>PnL / DD</th>
-                  <th>Note</th>
-                </tr>
-              </thead>
-              <tbody>
-                <TrustLiveRow />
-                {ledgerRows.map((row) => (
-                  <tr
-                    key={row.row}
-                    className={
-                      row.rowClass === 'backfill'
-                        ? 'trust-row-backfill'
-                        : row.eventType === 'open'
-                          ? 'trust-row-open'
-                          : undefined
-                    }
-                  >
-                    <td className="trust-row-number">{row.row}</td>
-                    <td>
-                      {row.sealedAt}
-                      <span className="trust-record-id" title={row.rowHash ?? undefined}>
-                        {row.recordId}
-                        {row.rowHash ? ` · ${row.rowHash.slice(0, 10)}` : ''}
-                        {row.ref ? ` · ref ${row.ref}` : ''}
-                      </span>
-                      {row.rowClass === 'backfill' ? (
-                        <span
-                          className="trust-tag"
-                          title="Recorded after the outcome was known; does not carry the sealed-first guarantee."
-                        >
-                          Backfill
-                        </span>
-                      ) : null}
-                      {row.rowClass === 'system' ? <span className="trust-tag">System</span> : null}
-                      {row.hermesVersion ? (
-                        <span className="trust-tag" title={`Sealed under Hermes v${row.hermesVersion}`}>
-                          v{row.hermesVersion}
-                        </span>
-                      ) : null}
-                    </td>
-                    <td>{row.decision}</td>
-                    <td>{row.posture}</td>
-                    <td>{row.outcome}</td>
-                    <td className={row.pnlTone ? `trust-pnl-${row.pnlTone}` : undefined}>{row.pnl}</td>
-                    <td>{row.note}</td>
-                  </tr>
-                ))}
-                {blankRows.map((row) => (
-                  <tr key={row} className="trust-empty-row">
-                    <td className="trust-row-number">{row}</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <TrustLedgerTable rows={ledgerRows} />
           <p className="trust-ledger-disclosure">
             Founder capital only · PnL net of fees and funding · Young sample: a record, not a claim · Not an
             offer, not investment advice

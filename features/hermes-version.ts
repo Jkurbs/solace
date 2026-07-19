@@ -2,8 +2,8 @@
 // Bump `id` when the running agent changes; seal a system epoch row on cutover
 // so the public chain records when the new version took effect.
 export const hermesVersion = {
-  id: '0.1.0',
-  label: 'Hermes Beta v0.1.0',
+  id: '0.2.0',
+  label: 'Hermes Beta v0.2.0',
   channel: 'beta',
 } as const;
 

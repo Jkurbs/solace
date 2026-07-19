@@ -1,3 +1,4 @@
+import { hermesVersion } from '@/features/hermes-version';
 import type { PlateTint } from '@/lib/note-plate';
 
 export type NewsPost = {
@@ -66,7 +67,7 @@ Between every signal and every order sits a gate with three conditions. The stru
 
 ## What is live today
 
-Hermes Beta v0.1.0 operates on founder capital only. No outside capital is at risk while access opens in stages. Approved users will fund Hermes by depositing directly into Solace, with capital becoming eligible for allocation only after account, identity, settlement, treasury, and risk checks clear.
+${hermesVersion.label} operates on founder capital only. No outside capital is at risk while access opens in stages. Approved users will fund Hermes by depositing directly into Solace, with capital becoming eligible for allocation only after account, identity, settlement, treasury, and risk checks clear.
 
 Risk is governed in layers: posture, sizing that scales with the depth of the field, hard drawdown guards, and kill switches that halt the system entirely. Money movement stays separate from signal generation.
 

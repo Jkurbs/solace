@@ -1,9 +1,10 @@
 import { getLatestPublishedArticle } from '@/features/articles/store';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
+import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
+import { computeLedgerScoreboard } from '@/features/hermes-ledger/scoreboard';
+import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { getLatestNewsPost, newsPosts } from '@/features/news/posts';
-
-import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
 
 import HomeClient, { type HeroPill, type HermesTelemetry, type LatestNote, type NewsItem } from './HomeClient';
 
@@ -65,12 +66,21 @@ const fallbackNote: LatestNote = {
 };
 
 export default async function Home() {
-  const [article, hermesTelemetry, ledgerRows] = await Promise.all([
+  const [article, hermesTelemetry, ledgerRows, openExposure] = await Promise.all([
     getLatestPublishedArticle().catch(() => null),
     getHermesTelemetry(),
-    listHermesLedgerRows(500).catch(() => []),
+    listHermesLedgerRows(1000).catch(() => []),
+    getHermesOpenExposure().catch(() => null),
   ]);
-  const ledgerRowCount = ledgerRows.length;
+  const scoreboard = computeLedgerScoreboard(ledgerRows, {
+    liveOpenPaths: openExposure ? openExposure.positions.length : null,
+  });
+  const ledgerVault = {
+    backfilled: scoreboard.process.backfilled,
+    closedPaths: scoreboard.process.closedPaths,
+    openPaths: scoreboard.process.openPaths,
+    sealedDecisions: scoreboard.process.sealedDecisions,
+  };
   const latestNote: LatestNote = article
     ? { title: article.title, dek: article.dek, label: article.label }
     : fallbackNote;
@@ -98,7 +108,7 @@ export default async function Home() {
     <HomeClient
       hermesTelemetry={hermesTelemetry}
       latestNote={latestNote}
-      ledgerRowCount={ledgerRowCount}
+      ledgerVault={ledgerVault}
       newsItems={newsItems}
       pill={pill}
     />

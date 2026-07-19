@@ -24,7 +24,7 @@ export type HermesLedgerRow = {
   rowClass: HermesLedgerRowClass | null;
   eventType: HermesLedgerEventType | null;
   ref: string | null;
-  /** Agent id at seal time (e.g. '0.1.0'). Null for rows sealed before V4. */
+  /** Agent id at seal time (e.g. '0.2.0'). Null for rows sealed before V4. */
   hermesVersion: string | null;
 };
 
