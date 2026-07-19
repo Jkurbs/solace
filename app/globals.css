@@ -1438,8 +1438,8 @@ h2 {
 
   /* --- HOMEPAGE LEDGER VAULT (process-first public record) --- */
   .home-vault-wrap {
-    padding-top: clamp(1.5rem, 4vw, 2.75rem);
-    padding-bottom: clamp(3.5rem, 8vw, 6rem);
+    padding-top: clamp(3rem, 7vw, 5.5rem);
+    padding-bottom: clamp(5rem, 11vw, 8.5rem);
   }
 
   .home-vault-card {
@@ -1611,15 +1611,15 @@ h2 {
 
   /* --- HOMEPAGE NEWS STRIP --- */
   .news-strip {
-    padding-top: clamp(2.25rem, 5vw, 3.5rem);
-    padding-bottom: clamp(5.5rem, 12vw, 9.5rem);
+    padding-top: clamp(3.5rem, 8vw, 5.5rem);
+    padding-bottom: clamp(6.5rem, 14vw, 11rem);
   }
 
   .news-strip-inner {
     display: grid;
     gap: 2.6rem;
     border-top: 1px solid rgba(250, 250, 250, 0.1);
-    padding-top: clamp(2.8rem, 5.5vw, 4rem);
+    padding-top: clamp(3.25rem, 6.5vw, 4.75rem);
   }
 
   .news-strip-head {
@@ -1688,8 +1688,8 @@ h2 {
 
   /* --- HOMEPAGE FAQ STRIP --- */
   .faq-strip {
-    padding-top: clamp(1rem, 3vw, 1.75rem);
-    padding-bottom: clamp(5rem, 10vw, 8rem);
+    padding-top: clamp(2.5rem, 6vw, 4rem);
+    padding-bottom: clamp(6rem, 12vw, 9.5rem);
   }
 
   .faq-strip-inner {
@@ -1698,7 +1698,7 @@ h2 {
     gap: clamp(2.4rem, 5.5vw, 5.5rem);
     align-items: start;
     border-top: 1px solid rgba(250, 250, 250, 0.1);
-    padding-top: clamp(2.8rem, 5.5vw, 4rem);
+    padding-top: clamp(3.25rem, 6.5vw, 4.75rem);
   }
 
   .faq-strip-head {
@@ -1833,8 +1833,8 @@ h2 {
   /* --- LATEST RESEARCH STRIP --- */
   /* Vertical padding only — longhand so the section's px-5/md:px-8 survives. */
   .research-strip {
-    padding-top: clamp(5rem, 11vw, 8.5rem);
-    padding-bottom: clamp(3.5rem, 8vw, 6rem);
+    padding-top: clamp(6.5rem, 14vw, 10.5rem);
+    padding-bottom: clamp(4.5rem, 10vw, 7.5rem);
   }
 
   .research-strip-inner {
@@ -1843,7 +1843,7 @@ h2 {
     gap: 2rem 3.5rem;
     align-items: end;
     border-top: 1px solid rgba(250, 250, 250, 0.1);
-    padding-top: clamp(2.8rem, 5.5vw, 4rem);
+    padding-top: clamp(3.25rem, 6.5vw, 4.75rem);
   }
 
   .research-strip-copy {
