@@ -32,20 +32,20 @@ const sections: BriefSection[] = [
     title: 'Thesis',
     body: [
       'Solace is an independent research company building instruments for decision-making under uncertainty. The operating belief is narrow and testable: individual events resist prediction, but the structure around them — liquidity, timing, regime, probability — can be read, modeled, and acted on with discipline.',
-      'Solace begins with financial markets because financial markets compress feedback. They expose timing, uncertainty, and system quality in days rather than years, and they fund the work. Every instrument follows one loop: observe, model, simulate, deploy — and keep only what survives contact with the world.',
+      'Solace begins with markets because markets compress feedback. They expose timing, uncertainty, and system quality in days rather than years, and they fund the work. Every instrument follows one loop: observe, model, simulate, deploy — and keep only what survives contact with the world.',
     ],
   },
   {
     number: '02',
     title: 'The observatory',
     body: [
-      'Two instruments operate today. Hermes reads financial market structure and acts on it. The Oracle holds questions about real events open and weighs futures until the world resolves them. They share one discipline: signal must earn action, and most of the time the correct action is none.',
+      'Two instruments operate today. Hermes reads market structure and acts on it. The Oracle holds questions about real events open and weighs futures until the world resolves them. They share one discipline: signal must earn action, and most of the time the correct action is none.',
       'Both instruments log their decisions as they are made. Nothing in the record is written retroactively.',
     ],
   },
   {
     number: '03',
-    title: 'Hermes — the financial market instrument',
+    title: 'Hermes — the market instrument',
     body: [
       'Hermes is a live system that reads liquidity distribution, timing, and regime character across multiple timeframes. Its core abstraction is the liquidity path: the premise that a price destination matters less than whether the field between here and there can carry price. Hermes evaluates candidate paths and commits only when structure, timing, and regime agree.',
       'Execution is gated, not continuous. A dedicated decision engine sits between signal and order, enforcing entry conditions, position sizing, stop placement, and portfolio constraints. When the regime breaks character, Hermes changes posture or stands down entirely.',
@@ -90,17 +90,17 @@ const sections: BriefSection[] = [
     title: 'Horizon',
     body: [
       'Everything in this brief describes what Solace does now. This section describes what it’s for, stated at a distance, on purpose.',
-      'The instruments Solace builds are not specific to financial markets. Hermes reads structure, timing, and regime to decide when a system should act and when it should stand down. Financial markets are where that loop is tested first, because they compress feedback into days instead of years and because they fund the work. The longer aim is instruments that make the same kind of disciplined, checkable decisions in systems beyond finance: wherever timing, resource allocation, and uncertainty matter and outcomes can be verified against reality. This is a multi-year horizon, named now so the gate conditions below have a destination, not a near-term roadmap item.',
-      'Domains are earned, not declared. Expansion beyond financial markets is gated on the conditions below, and this board is the public record of their status. Each gate is defined so it can be checked, not just claimed:',
+      'The instruments Solace builds are not specific to financial markets. Hermes reads structure, timing, and regime to decide when a system should act and when it should stand down. Markets are where that loop is tested first, because they compress feedback into days instead of years and because they fund the work. The longer aim is instruments that make the same kind of disciplined, checkable decisions in systems beyond finance: wherever timing, resource allocation, and uncertainty matter and outcomes can be verified against reality. This is a multi-year horizon, named now so the gate conditions below have a destination, not a near-term roadmap item.',
+      'Domains are earned, not declared. Expansion beyond markets is gated on the conditions below, and this board is the public record of their status. Each gate is defined so it can be checked, not just claimed:',
     ],
     list: [
-      'Regime cycles — a complete bull-and-bear cycle in the primary financial markets Hermes trades. By construction, this gate is measured in years, not months.',
+      'Regime cycles — a complete bull-and-bear cycle in the primary markets Hermes trades. By construction, this gate is measured in years, not months.',
       'Capital threshold — a minimum of sustained, verified founder-and-approved-user capital under management, held through at least one full drawdown, before scale is considered. The specific figure will be published once it’s set, not held back after the fact.',
       'Oracle calibration proven — a Brier score on a resolved-question sample large enough to be statistically meaningful, published in full, not selectively.',
       'Simulation load-bearing — synthetic environments are trusted to catch a failure before deployment, demonstrated by at least one documented case where simulation caught something live testing would have missed.',
     ],
     after: [
-      'Until every gate clears, Solace is a financial markets company. That’s not a hedge; it’s the actual current scope.',
+      'Until every gate clears, Solace is a markets company. That’s not a hedge; it’s the actual current scope.',
     ],
   },
   {
@@ -172,8 +172,8 @@ export default function BriefPage() {
             </p>
             <p>
               What I have is four years building production systems that had to work under real
-              conditions, and enough time and founder capital in financial markets to believe there is
-              structure worth testing.
+              conditions, and enough time and founder capital in markets to believe there is structure
+              worth testing.
             </p>
             <p>That belief is unproven.</p>
             <p>
