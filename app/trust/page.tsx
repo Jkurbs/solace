@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
 import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
+import { computeLedgerScoreboard } from '@/features/hermes-ledger/scoreboard';
 import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
 import { hermesVersion } from '@/features/hermes-version';
 
@@ -13,6 +14,7 @@ import ScriptSource from './ScriptSource';
 import TrustLivePnL from './TrustLivePnL';
 import TrustLiveRow from './TrustLiveRow';
 import { TrustLivePulseProvider } from './TrustLivePulse';
+import TrustScoreboard from './TrustScoreboard';
 import VerifyInBrowser from './VerifyInBrowser';
 
 export const metadata: Metadata = {
@@ -85,6 +87,10 @@ const howToRead = [
     'Nine rows recorded at the ledger rebuild carry outcomes that were already known; they are tagged BACKFILL and do not claim the sealed-first guarantee. The reclassification is itself a sealed row.',
   ],
   [
+    'Process before performance',
+    'The scoreboard above the sheet leads with sealed decisions, pending vs resolved, standing-down rate, and backfills. Outcome metrics (hit rate, expectancy) stay behind a toggle so the page does not read as a trading log.',
+  ],
+  [
     'Verifiable by math',
     'Every row is hashed and chained to the row before it at seal time. Editing any past row breaks the chain. Recompute it yourself: the verify script lives at solace.fyi/verify-ledger.mjs and runs against the public ledger data.',
   ],
@@ -92,10 +98,11 @@ const howToRead = [
 
 export default async function TrustPage() {
   const [storedRows, openExposure, briefSnapshot] = await Promise.all([
-    listHermesLedgerRows(200).catch(() => []),
+    listHermesLedgerRows(1000).catch(() => []),
     getHermesOpenExposure().catch(() => null),
     getStoredHermesBriefSnapshot().catch(() => null),
   ]);
+  const scoreboard = computeLedgerScoreboard(storedRows);
   const livePosture =
     briefSnapshot && briefSnapshot.brief_id !== 'fallback' ? formatConstant(briefSnapshot.posture) : '--';
   // Chain order assigns the row numbers; display is newest-first with the
@@ -191,6 +198,8 @@ export default async function TrustPage() {
             </div>
             <span>Public view</span>
           </div>
+
+          <TrustScoreboard scoreboard={scoreboard} />
 
           <div className="trust-sheet-meta">
             {sheetStatus.map(([label, value]) => (

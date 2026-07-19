@@ -6886,6 +6886,151 @@ h2 {
     line-height: 1.3;
   }
 
+  /* Process-first scoreboard: integrity metrics lead; outcomes behind a toggle.
+     No performance green/red on primary cells — the ledger is not a trading log. */
+  .trust-scoreboard {
+    border-bottom: 1px solid rgba(250, 250, 250, 0.16);
+    background: #0c0c0b;
+  }
+
+  .trust-scoreboard-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1rem 0.7rem;
+    border-bottom: 1px solid rgba(250, 250, 250, 0.1);
+  }
+
+  .trust-scoreboard-head p {
+    margin: 0;
+    color: rgba(250, 250, 250, 0.44);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .trust-scoreboard-head h3 {
+    margin: 0.2rem 0 0;
+    color: #fafafa;
+    font-size: 0.92rem;
+    font-weight: 650;
+    line-height: 1.25;
+  }
+
+  .trust-scoreboard-dek {
+    max-width: 28rem;
+    text-align: right;
+    color: rgba(250, 250, 250, 0.42) !important;
+    font-family: var(--font-plex), monospace !important;
+    font-size: 0.58rem !important;
+    letter-spacing: 0.1em !important;
+    line-height: 1.55;
+    text-transform: uppercase !important;
+  }
+
+  .trust-score-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .trust-score-cell {
+    min-height: 4.6rem;
+    padding: 0.85rem 0.9rem;
+    border-right: 1px solid rgba(250, 250, 250, 0.12);
+  }
+
+  .trust-score-cell:last-child {
+    border-right: 0;
+  }
+
+  .trust-score-cell span {
+    display: block;
+    color: rgba(250, 250, 250, 0.44);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .trust-score-cell strong {
+    display: block;
+    margin-top: 0.45rem;
+    color: #fafafa;
+    font-size: 1.15rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+
+  .trust-score-cell em {
+    display: block;
+    margin-top: 0.35rem;
+    color: rgba(250, 250, 250, 0.38);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.55rem;
+    font-style: normal;
+    letter-spacing: 0.08em;
+    line-height: 1.45;
+    text-transform: uppercase;
+  }
+
+  .trust-score-grid-secondary {
+    border-top: 1px solid rgba(250, 250, 250, 0.1);
+    background: rgba(250, 250, 250, 0.015);
+  }
+
+  .trust-score-grid-secondary .trust-score-cell strong {
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgba(250, 250, 250, 0.88);
+  }
+
+  .trust-scoreboard-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 1rem 0.7rem;
+    border-top: 1px solid rgba(250, 250, 250, 0.1);
+  }
+
+  .trust-scoreboard-actions span {
+    color: rgba(250, 250, 250, 0.36);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .trust-score-toggle {
+    appearance: none;
+    margin: 0;
+    border: 1px solid rgba(250, 250, 250, 0.18);
+    border-radius: 0.2rem;
+    background: rgba(250, 250, 250, 0.03);
+    color: rgba(250, 250, 250, 0.72);
+    cursor: pointer;
+    font-family: var(--font-plex), monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    min-height: 1.85rem;
+    padding: 0 0.7rem;
+    text-transform: uppercase;
+  }
+
+  .trust-score-toggle:hover {
+    border-color: rgba(250, 250, 250, 0.32);
+    color: #fafafa;
+  }
+
+  .trust-score-toggle:focus-visible {
+    outline: 1px solid rgba(211, 181, 133, 0.7);
+    outline-offset: 2px;
+  }
+
   .trust-table-wrap {
     overflow-x: auto;
   }
@@ -7515,7 +7660,8 @@ h2 {
     }
 
     .trust-page .trust-sheet-meta,
-    .trust-page .trust-info-grid {
+    .trust-page .trust-info-grid,
+    .trust-page .trust-score-grid {
       grid-template-columns: 1fr;
     }
 
@@ -7526,6 +7672,30 @@ h2 {
 
     .trust-page .trust-sheet-meta-cell:last-child {
       border-bottom: 0;
+    }
+
+    .trust-page .trust-scoreboard-head {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .trust-page .trust-scoreboard-dek {
+      max-width: none;
+      text-align: left;
+    }
+
+    .trust-page .trust-score-cell {
+      border-right: 0;
+      border-bottom: 1px solid rgba(250, 250, 250, 0.1);
+    }
+
+    .trust-page .trust-score-cell:last-child {
+      border-bottom: 0;
+    }
+
+    .trust-page .trust-scoreboard-actions {
+      align-items: flex-start;
+      flex-direction: column;
     }
 
     .trust-page .trust-ledger-table {
@@ -7568,6 +7738,32 @@ h2 {
 
     .trust-sheet-meta-cell:nth-child(n + 3) {
       border-top: 1px solid rgba(250, 250, 250, 0.14);
+    }
+
+    .trust-score-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .trust-score-cell:nth-child(2n) {
+      border-right: 0;
+    }
+
+    .trust-score-cell:nth-child(n + 3) {
+      border-top: 1px solid rgba(250, 250, 250, 0.1);
+    }
+
+    .trust-scoreboard-head {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .trust-scoreboard-dek {
+      max-width: none;
+      text-align: left;
+    }
+
+    .trust-scoreboard-actions {
+      flex-wrap: wrap;
     }
 
     .trust-info-grid {
@@ -10426,7 +10622,12 @@ h2 {
 
   html[data-theme='light'] .trust-sheet-toolbar,
   html[data-theme='light'] .trust-sheet-meta,
-  html[data-theme='light'] .trust-sheet-meta-cell {
+  html[data-theme='light'] .trust-sheet-meta-cell,
+  html[data-theme='light'] .trust-scoreboard,
+  html[data-theme='light'] .trust-scoreboard-head,
+  html[data-theme='light'] .trust-score-cell,
+  html[data-theme='light'] .trust-scoreboard-actions,
+  html[data-theme='light'] .trust-score-grid-secondary {
     border-color: rgba(19, 17, 12, 0.14);
   }
 
@@ -10436,6 +10637,45 @@ h2 {
 
   html[data-theme='light'] .trust-sheet-meta-cell {
     background: #f5f0e4;
+  }
+
+  html[data-theme='light'] .trust-scoreboard {
+    background: #f7f2e8;
+  }
+
+  html[data-theme='light'] .trust-scoreboard-head p,
+  html[data-theme='light'] .trust-score-cell span,
+  html[data-theme='light'] .trust-scoreboard-actions span,
+  html[data-theme='light'] .trust-scoreboard-dek {
+    color: rgba(19, 17, 12, 0.55) !important;
+  }
+
+  html[data-theme='light'] .trust-scoreboard-head h3,
+  html[data-theme='light'] .trust-score-cell strong {
+    color: #13110c;
+  }
+
+  html[data-theme='light'] .trust-score-cell em {
+    color: rgba(19, 17, 12, 0.45);
+  }
+
+  html[data-theme='light'] .trust-score-grid-secondary {
+    background: rgba(19, 17, 12, 0.03);
+  }
+
+  html[data-theme='light'] .trust-score-grid-secondary .trust-score-cell strong {
+    color: rgba(19, 17, 12, 0.88);
+  }
+
+  html[data-theme='light'] .trust-score-toggle {
+    border-color: rgba(19, 17, 12, 0.18);
+    background: rgba(19, 17, 12, 0.03);
+    color: rgba(19, 17, 12, 0.72);
+  }
+
+  html[data-theme='light'] .trust-score-toggle:hover {
+    border-color: rgba(19, 17, 12, 0.35);
+    color: #13110c;
   }
 
   html[data-theme='light'] .trust-info-table h2 {
