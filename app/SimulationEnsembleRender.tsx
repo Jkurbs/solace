@@ -338,6 +338,7 @@ const positionShader = `
 const pointVertex = `
   attribute vec2 aRef;
   attribute float aSeed;
+  attribute vec3 aColor;
   uniform sampler2D texturePosition;
   uniform float uPixelRatio;
   uniform float uTime;
@@ -349,16 +350,16 @@ const pointVertex = `
   uniform float uFreeFall;
   uniform float uInPath;
   varying float vBright;
-  varying float vSeed;
+  varying vec3 vColor;
 
   ${formationGlsl}
 
   void main() {
     vec4 posSample = texture2D(texturePosition, aRef);
     vec3 pos = posSample.xyz;
-    vSeed = aSeed;
+    vColor = aColor;
 
-    float b = 0.18 + aSeed * 0.4;
+    float b = 0.22 + aSeed * 0.45;
     b *= 0.88 + 0.12 * ((pos.z + HALF) / CUBE);
     b *= 0.92 + 0.08 * ((pos.y + HALF) / CUBE);
 
@@ -379,11 +380,9 @@ const pointVertex = `
     vBright = min(b, 1.25);
 
     vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-    // Slightly larger discs so individual spectral colors are legible in the stack.
-    float size = mix(0.0065, 0.016, aSeed);
+    float size = mix(0.008, 0.02, aSeed);
     float tw = 0.85 + 0.15 * sin(uTime * (0.5 + aSeed * 1.2) + aSeed * 12.0);
-    float densityScale = mix(1.05, 0.88, smoothstep(0.0, 1.0, vBright));
-    gl_PointSize = size * densityScale * uPixelRatio * tw * (210.0 / max(-mv.z, 0.001));
+    gl_PointSize = size * uPixelRatio * tw * (220.0 / max(-mv.z, 0.001));
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -391,59 +390,34 @@ const pointVertex = `
 const pointFragment = `
   precision highp float;
   varying float vBright;
-  varying float vSeed;
-
-  // Celestial spectrum: saturated spectral families so hue survives additive stack.
-  // Seed picks family; brightness lifts intensity — do NOT wash to white early.
-  vec3 celestialColor(float seed, float bright) {
-    float t = fract(seed * 17.0 + seed * 0.37);
-    // Pure-ish primaries (high chroma). Additive + ACES will still calm them.
-    vec3 indigo = vec3(0.25, 0.20, 1.00);
-    vec3 violet = vec3(0.72, 0.18, 1.00);
-    vec3 azure  = vec3(0.15, 0.55, 1.00);
-    vec3 teal   = vec3(0.10, 0.95, 0.85);
-    vec3 rose   = vec3(1.00, 0.22, 0.55);
-    vec3 gold   = vec3(1.00, 0.72, 0.18);
-
-    vec3 base;
-    if (t < 0.22) {
-      base = indigo;
-    } else if (t < 0.42) {
-      base = azure;
-    } else if (t < 0.60) {
-      base = violet;
-    } else if (t < 0.78) {
-      base = teal;
-    } else if (t < 0.92) {
-      base = rose;
-    } else {
-      base = gold;
-    }
-
-    // Keep chroma at high brightness — only a light stellar lift, not whiteout.
-    float hot = smoothstep(0.85, 1.2, bright);
-    base = mix(base, mix(base, gold, 0.5), hot * 0.4);
-    base *= 0.85 + 0.2 * sin(seed * 51.0);
-    return base;
-  }
+  varying vec3 vColor;
 
   void main() {
     vec2 p = gl_PointCoord * 2.0 - 1.0;
     float d = length(p);
     if (d > 1.0) discard;
-    float core = exp(-d * d * 3.6);
-    float halo = exp(-d * d * 1.15) * 0.4;
-    // Lower energy so additive stacks don't blow to white before color reads.
-    float a = (core * 0.9 + halo * 0.35) * clamp(vBright, 0.0, 1.15) * 0.42;
-    vec3 col = celestialColor(vSeed, vBright);
-    // Cool rim / warm core for a star-like disc without killing hue.
-    vec3 rim = col * vec3(0.75, 0.8, 1.15);
-    col = mix(rim, col * 1.15, core);
-    // CRITICAL: AdditiveBlending uses One,One — RGB is added as-is.
-    // Premultiply by intensity or every particle dumps full white-ish color.
-    gl_FragColor = vec4(col * a, a);
+    float core = exp(-d * d * 3.2);
+    float halo = exp(-d * d * 1.05) * 0.45;
+    float a = (core + halo) * clamp(vBright, 0.15, 1.2) * 0.75;
+    // Vertex color is already a high-chroma celestial family.
+    // SRC_ALPHA, ONE additive: pass unpremultiplied RGB; GPU multiplies by a.
+    vec3 col = vColor * (0.65 + 0.55 * core);
+    // Slight gold lift only at extreme brightness (path / core), keeps hue.
+    col = mix(col, vec3(1.0, 0.78, 0.35), smoothstep(0.95, 1.25, vBright) * 0.25);
+    gl_FragColor = vec4(col, a);
   }
 `;
+
+/** High-chroma celestial families for vertex colors (visible under additive stack). */
+function celestialRgb(seed: number): [number, number, number] {
+  const t = seed - Math.floor(seed);
+  if (t < 0.2) return [0.35, 0.25, 1.0]; // indigo
+  if (t < 0.4) return [0.2, 0.65, 1.0]; // azure
+  if (t < 0.58) return [0.78, 0.22, 1.0]; // violet
+  if (t < 0.74) return [0.15, 0.95, 0.8]; // teal
+  if (t < 0.9) return [1.0, 0.28, 0.55]; // rose
+  return [1.0, 0.75, 0.2]; // gold
+}
 
 const hazeVertex = `
   varying vec3 vNormal;
@@ -768,13 +742,20 @@ export default function SimulationEnsembleRender() {
 
     const refs = new Float32Array(particleCount * 2);
     const seeds = new Float32Array(particleCount);
+    const colors = new Float32Array(particleCount * 3);
+    const posData = pos0.image.data as Float32Array;
     for (let i = 0; i < particleCount; i++) {
       const x = (i % gpuSize) / gpuSize;
       const y = Math.floor(i / gpuSize) / gpuSize;
       // Sample texel centers.
       refs[i * 2] = x + 0.5 / gpuSize;
       refs[i * 2 + 1] = y + 0.5 / gpuSize;
-      seeds[i] = (pos0.image.data as Float32Array)[i * 4 + 3];
+      const seed = posData[i * 4 + 3];
+      seeds[i] = seed;
+      const [cr, cg, cb] = celestialRgb(seed);
+      colors[i * 3] = cr;
+      colors[i * 3 + 1] = cg;
+      colors[i * 3 + 2] = cb;
     }
 
     const pGeo = new THREE.BufferGeometry();
@@ -782,6 +763,7 @@ export default function SimulationEnsembleRender() {
     pGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(particleCount * 3), 3));
     pGeo.setAttribute('aRef', new THREE.BufferAttribute(refs, 2));
     pGeo.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 1));
+    pGeo.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
     pGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 1.2);
 
     const pMat = new THREE.ShaderMaterial({
@@ -801,11 +783,19 @@ export default function SimulationEnsembleRender() {
       fragmentShader: pointFragment,
       transparent: true,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
+      // Explicit additive that multiplies by fragment alpha (not One,One).
+      blending: THREE.CustomBlending,
+      blendEquation: THREE.AddEquation,
+      blendSrc: THREE.SrcAlphaFactor,
+      blendDst: THREE.OneFactor,
+      blendSrcAlpha: THREE.OneFactor,
+      blendDstAlpha: THREE.OneFactor,
+      toneMapped: false,
     });
     const points = new THREE.Points(pGeo, pMat);
     points.frustumCulled = false;
-    points.renderOrder = 1;
+    // Draw after glass shell so transmission/clearcoat cannot grey the field out.
+    points.renderOrder = 4;
     if (gpuOk) world.add(points);
 
     // --- Trajectory filaments ---
