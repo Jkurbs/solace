@@ -108,118 +108,125 @@ vec3 trajPoint(float t, float phase) {
   ), 0.08);
 }
 
+// Iconic formations (readable at a glance while held):
+// 0 sphere shell · 1 torus · 2 wire cube · 3 double helix · 4 galaxy · 5 infinity
 vec3 targetFor(float mode, float seed, float u, float t) {
   float s1 = seed;
   float s2 = fract(seed * 1.6180339887);
   float s3 = fract(seed * 2.718281828);
+  float TAU = 6.2831853;
   vec3 outp = vec3(0.0);
 
   if (mode < 0.5) {
-    float a = s1 * 6.2831853;
-    float b = s2 * 6.2831853;
-    float r = pow(0.15 + s3 * 0.85, 0.55) * HALF * 0.92;
+    // Hollow sphere shell — clear ball of possibilities.
+    float th = s1 * TAU;
+    float ph = acos(clamp(s2 * 2.0 - 1.0, -1.0, 1.0));
+    float r = HALF * 0.68 * (0.96 + s3 * 0.06);
     outp = vec3(
-      sin(a) * cos(b) * r,
-      (s2 * 2.0 - 1.0) * HALF * 0.85,
-      cos(a) * cos(b) * r * 0.9
+      r * sin(ph) * cos(th),
+      r * cos(ph),
+      r * sin(ph) * sin(th)
     );
-    outp.x += sin(t * 0.22 + s1 * 9.0) * 0.03;
-    outp.y += cos(t * 0.18 + s2 * 7.0) * 0.025;
   } else if (mode < 1.5) {
-    float cluster = floor(s1 * 3.0);
-    float cx = cluster < 0.5 ? -0.22 : (cluster < 1.5 ? 0.2 : 0.02);
-    float cy = cluster < 0.5 ? 0.12 : (cluster < 1.5 ? -0.08 : 0.18);
-    float cz = cluster < 0.5 ? 0.1 : (cluster < 1.5 ? -0.16 : -0.22);
-    float spread = 0.1 + s2 * 0.08;
-    float a = s3 * 6.2831853 + t * 0.15;
-    outp = vec3(
-      cx + cos(a) * spread * (0.5 + s1 * 0.5),
-      cy + sin(a * 1.3) * spread * 0.7,
-      cz + sin(a) * spread * (0.5 + s2 * 0.5)
-    );
+    // Torus / ring — slow spin so it reads as a solid object.
+    float R = 0.30;
+    float rr = 0.105;
+    float uu = s1 * TAU + t * 0.12;
+    float vv = s2 * TAU;
+    float cx = (R + rr * cos(vv)) * cos(uu);
+    float cy = rr * sin(vv);
+    float cz = (R + rr * cos(vv)) * sin(uu);
+    // Tilt for 3D read.
+    float tilt = 0.55;
+    outp = vec3(cx, cy * cos(tilt) - cz * sin(tilt), cy * sin(tilt) + cz * cos(tilt));
   } else if (mode < 2.5) {
-    float g = 7.0;
-    float gx = (floor(s1 * g) + 0.5) / g - 0.5;
-    float gy = (floor(s2 * g) + 0.5) / g - 0.5;
-    float gz = (floor(s3 * g) + 0.5) / g - 0.5;
-    float jitter = 0.018;
-    float breath = 1.0 + 0.02 * sin(t * 0.35 + s1 * 4.0);
-    outp = vec3(
-      (gx * CUBE * 0.82 + (s1 - 0.5) * jitter) * breath,
-      (gy * CUBE * 0.82 + (s2 - 0.5) * jitter) * breath,
-      (gz * CUBE * 0.82 + (s3 - 0.5) * jitter) * breath
-    );
-  } else if (mode < 3.5) {
-    if (s3 > 0.72) {
-      float sa = s1 * 6.2831853;
-      float sr = 0.22 + s2 * 0.2;
-      outp = vec3(cos(sa) * sr, (s2 - 0.5) * CUBE * 0.7, sin(sa) * sr);
+    // Wireframe cube — particles on the 12 edges only.
+    float edge = floor(s1 * 12.0);
+    float along = s2;
+    float e = HALF * 0.62;
+    // Edge endpoints as min/max corners along one axis.
+    // edges 0-3 bottom square, 4-7 top, 8-11 verticals
+    if (edge < 4.0) {
+      float k = edge;
+      if (k < 0.5) outp = vec3(mix(-e, e, along), -e, -e);
+      else if (k < 1.5) outp = vec3(e, -e, mix(-e, e, along));
+      else if (k < 2.5) outp = vec3(mix(e, -e, along), -e, e);
+      else outp = vec3(-e, -e, mix(e, -e, along));
+    } else if (edge < 8.0) {
+      float k = edge - 4.0;
+      if (k < 0.5) outp = vec3(mix(-e, e, along), e, -e);
+      else if (k < 1.5) outp = vec3(e, e, mix(-e, e, along));
+      else if (k < 2.5) outp = vec3(mix(e, -e, along), e, e);
+      else outp = vec3(-e, e, mix(e, -e, along));
     } else {
-      float turns = 3.2;
-      float angle = u * 6.2831853 * turns + t * 0.25;
-      float radius = 0.08 + (1.0 - u) * 0.28 * (0.6 + s2 * 0.4);
-      float y = (u - 0.5) * CUBE * 0.78;
-      outp = vec3(cos(angle) * radius, y, sin(angle) * radius);
+      float k = edge - 8.0;
+      if (k < 0.5) outp = vec3(-e, mix(-e, e, along), -e);
+      else if (k < 1.5) outp = vec3(e, mix(-e, e, along), -e);
+      else if (k < 2.5) outp = vec3(e, mix(-e, e, along), e);
+      else outp = vec3(-e, mix(-e, e, along), e);
+    }
+    // Tiny thickness so edges aren't infinitely thin.
+    outp += (vec3(s1, s2, s3) - 0.5) * 0.012;
+  } else if (mode < 3.5) {
+    // Double helix — two clear strands + occasional rungs.
+    float y = (s1 - 0.5) * 0.82;
+    float strand = step(0.5, s2);
+    float ang = y * 9.0 + t * 0.22 + strand * 3.14159265;
+    float rad = 0.155;
+    if (s3 > 0.82) {
+      // Base-pair rung between strands.
+      float a0 = y * 9.0 + t * 0.22;
+      vec3 p0 = vec3(cos(a0) * rad, y, sin(a0) * rad);
+      vec3 p1 = vec3(cos(a0 + 3.14159265) * rad, y, sin(a0 + 3.14159265) * rad);
+      outp = mix(p0, p1, s2);
+    } else {
+      outp = vec3(cos(ang) * rad, y, sin(ang) * rad);
     }
   } else if (mode < 4.5) {
-    float arms = 3.0;
-    float maxR = HALF * 0.9;
-    float spin = t * 0.16;
-    if (s3 > 0.9) {
-      float ha = s1 * 6.2831853;
-      float hb = (s2 - 0.5) * 3.14159265;
-      float hr = pow(0.2 + s1 * 0.8, 0.55) * maxR * 0.72;
-      outp = vec3(
-        cos(ha) * cos(hb) * hr,
-        sin(hb) * hr * 0.55,
-        sin(ha) * cos(hb) * hr
-      );
-    } else if (s3 < 0.14) {
-      float br = pow(s2, 0.55) * 0.085;
-      float ba = s1 * 6.2831853 + spin * 1.4;
-      float bh = (s3 - 0.07) * 0.22;
-      outp = vec3(cos(ba) * br, bh, sin(ba) * br);
+    // Spiral galaxy — tight arms, bright core, thin disk.
+    float arms = 2.0;
+    float maxR = HALF * 0.78;
+    float spin = t * 0.1;
+    if (s3 < 0.12) {
+      float br = pow(s2, 0.45) * 0.07;
+      float ba = s1 * TAU + spin * 1.2;
+      outp = vec3(cos(ba) * br, (s3 - 0.06) * 0.12, sin(ba) * br);
     } else {
       float arm = floor(s1 * arms);
-      float radius = pow(0.04 + s2 * 0.96, 0.62) * maxR;
-      float wind = 2.85;
-      float armPhase = (arm / arms) * 6.2831853;
-      float theta = armPhase + log(1.0 + radius * 9.0) * wind + spin
-                 + (s3 - 0.5) * (0.1 + radius * 0.22);
-      float diskH = (s1 - 0.5) * (0.028 + (1.0 - radius / maxR) * 0.055)
-                 + sin(theta * 2.0 + s2 * 4.0) * 0.008 * radius;
+      float radius = pow(0.02 + s2 * 0.98, 0.55) * maxR;
+      float wind = 3.4;
+      float armPhase = (arm / arms) * TAU;
+      float theta = armPhase + log(1.0 + radius * 11.0) * wind + spin
+                 + (s3 - 0.5) * (0.05 + radius * 0.12);
+      float diskH = (s1 - 0.5) * (0.012 + (1.0 - radius / maxR) * 0.03);
       float x = cos(theta) * radius;
       float y = diskH;
       float z = sin(theta) * radius;
-      float tilt = 0.42;
-      float cy = cos(tilt);
-      float sy = sin(tilt);
-      outp = vec3(x * 0.96, y * cy - z * sy, (y * sy + z * cy) * 0.96);
+      float tilt = 0.48;
+      outp = vec3(x, y * cos(tilt) - z * sin(tilt), y * sin(tilt) + z * cos(tilt));
     }
   } else {
-    float pathT = u * 0.92 + s1 * 0.06;
-    float angle = pathT * 3.14159265 * 1.6;
-    float px = sin(angle * 1.1) * 0.28;
-    float py = (pathT - 0.5) * CUBE * 0.72;
-    float pz = cos(angle * 0.9) * 0.24;
-    float tx = -cos(angle * 1.1);
-    float ty = 0.15;
-    float tz = sin(angle * 0.9);
-    float tLen = max(length(vec3(tx, ty, tz)), 1e-4);
-    vec3 tn = vec3(tx, ty, tz) / tLen;
-    vec3 b = normalize(vec3(-tz, 0.0, tx));
-    float radial = (s2 - 0.5) * 0.1 * (1.05 - pathT);
-    float along = (s3 - 0.5) * 0.035;
-    outp = vec3(px, py, pz) + b * radial + tn * along;
+    // Infinity (lemniscate) ribbon — unmistakable symbol of open possibility.
+    float th = s1 * TAU + t * 0.1;
+    float sc = 0.34;
+    float den = 1.0 + sin(th) * sin(th);
+    float x = sc * cos(th) / den;
+    float z = sc * sin(th) * cos(th) / den;
+    float y = (s2 - 0.5) * 0.05 + sin(th * 2.0) * 0.02 * s3;
+    // Thin ribbon thickness.
+    float nx = -sin(th);
+    float nz = cos(th) * cos(th) - sin(th) * sin(th);
+    float nlen = max(length(vec2(nx, nz)), 1e-4);
+    outp = vec3(x, y, z) + vec3(nx, 0.0, nz) / nlen * ((s3 - 0.5) * 0.04);
   }
 
-  // Continuous micro-morph so the field never freezes into a diagram.
-  float morph = 0.012 + 0.01 * sin(t * 0.31 + seed * 6.0);
-  outp.x += sin(t * 0.55 + seed * 17.0) * morph;
-  outp.y += cos(t * 0.47 + seed * 13.0) * morph * 0.85;
-  outp.z += sin(t * 0.39 + seed * 11.0) * morph;
+  // Whisper of life only — keep silhouettes sharp during hold.
+  float morph = 0.0035;
+  outp.x += sin(t * 0.4 + seed * 11.0) * morph;
+  outp.y += cos(t * 0.35 + seed * 9.0) * morph;
+  outp.z += sin(t * 0.3 + seed * 7.0) * morph;
 
-  return clampInside(outp, 0.05);
+  return clampInside(outp, 0.04);
 }
 
 vec3 scatterTarget(float seed, float t) {
@@ -289,24 +296,24 @@ const velocityShader = `
       target = clampInside(target, 0.05);
     }
 
-    // Lock hard in hold; wild in chaos/break.
-    float aMul = 0.55
-      + uShape * 1.1
-      + uShapeLock * 1.65
-      + uInGalaxy * 0.35
-      + uInPath * 0.45
-      - uFreeFall * 0.35
+    // Stronger hold snap so icons stay sharp; chaos stays wild.
+    float aMul = 0.5
+      + uShape * 1.25
+      + uShapeLock * 2.1
+      + uInGalaxy * 0.3
+      + uInPath * 0.35
+      - uFreeFall * 0.4
       - uDetonate * 0.15;
-    float nMul = max(0.04,
-      0.2
-      + uFreeFall * 1.35
-      + uDetonate * 0.9
-      - uShape * 0.55
-      - uShapeLock * 0.85
-      - uInGalaxy * 0.25
+    float nMul = max(0.03,
+      0.18
+      + uFreeFall * 1.4
+      + uDetonate * 0.95
+      - uShape * 0.65
+      - uShapeLock * 1.05
+      - uInGalaxy * 0.2
       - uInPath * 0.2);
-    float attract = 9.5 * max(aMul, 0.2);
-    float drag = exp(-(2.4 + uShapeLock * 2.8) * uDt);
+    float attract = 11.0 * max(aMul, 0.2);
+    float drag = exp(-(2.6 + uShapeLock * 3.4) * uDt);
 
     v += (target - p) * attract * uDt;
     v *= drag;
@@ -917,15 +924,16 @@ export default function SimulationEnsembleRender() {
       card.addEventListener('pointerleave', onPointerLeave);
     }
 
-    // Cadence per shape: chaos → lock → hold → break → next.
+    // Cadence: chaos → lock → long hold (readable) → break. More control.
+    // Shapes: sphere · torus · wire cube · double helix · galaxy · infinity
     const MODE_COUNT = 6;
-    const T_CHAOS = 2.2;
-    const T_LOCK = 1.7;
-    const T_HOLD = 4.4;
-    const T_BREAK = 1.6;
+    const T_CHAOS = 1.8;
+    const T_LOCK = 2.4;
+    const T_HOLD = 7.0;
+    const T_BREAK = 2.0;
     const SLOT = T_CHAOS + T_LOCK + T_HOLD + T_BREAK;
     const EPOCH = MODE_COUNT * SLOT;
-    const PATH_MODE = 5;
+    const PATH_MODE = 5; // infinity ribbon uses path head lightly
     const GALAXY_MODE = 4;
 
     const resize = () => {
@@ -1038,13 +1046,9 @@ export default function SimulationEnsembleRender() {
         shapeLock = 1;
       }
 
+      // Infinity is the silhouette — no competing path line.
       let trajFade = 0;
       let trajFray = 0;
-      if (modeA === PATH_MODE) {
-        trajFade = shape * shapeLock;
-        trajFray = detonate * 0.85 + (1 - shape) * 0.5;
-      }
-      trajFade = reducedMotion && modeA === PATH_MODE ? 0.7 : Math.min(Math.max(trajFade, 0), 1);
       trajMat.uniforms.uFade.value = trajFade * (1 - freeFall * 0.55);
       trajMat.uniforms.uPulse.value = (elapsed * 0.14) % 1;
       trajMat.uniforms.uFray.value = reducedMotion ? 0 : trajFray;
@@ -1075,42 +1079,39 @@ export default function SimulationEnsembleRender() {
       headMat.opacity = trajFade * (0.55 + 0.45 * (1 - trajFray));
       headMat.size = 0.04 + trajFade * 0.035;
 
-      // Haze follows shape lock (readable body while held).
+      // Soft volume under each icon while held.
       for (let h = 0; h < HAZE_COUNT; h++) setHaze(h, 0, 0, 0, 0.1, 0);
       const hazeBoost = shape * shapeLock * (1 - freeFall * 0.7) * (1 - detonate * 0.35);
       if (modeA === 0) {
-        setHaze(0, 0, 0, 0, 0.42, 0.16 * hazeBoost, 0.1);
+        // Sphere shell glow
+        setHaze(0, 0, 0, 0, 0.55, 0.12 * hazeBoost, 0.08);
       }
       if (modeA === 1) {
-        setHaze(0, -0.22, 0.12, 0.1, 0.2, 0.28 * hazeBoost, 0.2);
-        setHaze(1, 0.2, -0.08, -0.16, 0.18, 0.24 * hazeBoost, 0.15);
-        setHaze(2, 0.02, 0.18, -0.22, 0.17, 0.22 * hazeBoost, 0.12);
+        // Torus core
+        setHaze(0, 0, 0, 0, 0.28, 0.18 * hazeBoost, 0.15);
       }
       if (modeA === 2) {
-        setHaze(0, 0, 0, 0, 0.38, 0.14 * hazeBoost, 0.05);
+        // Cube interior
+        setHaze(0, 0, 0, 0, 0.42, 0.1 * hazeBoost, 0.05);
       }
       if (modeA === 3) {
-        setHaze(0, 0, 0, 0, 0.16, 0.22 * hazeBoost, 0.25);
-        setHaze(1, 0, 0.2, 0, 0.14, 0.14 * hazeBoost, 0.1);
-        setHaze(2, 0, -0.2, 0, 0.14, 0.14 * hazeBoost, 0.1);
+        // Helix spine
+        setHaze(0, 0, 0.15, 0, 0.14, 0.16 * hazeBoost, 0.2);
+        setHaze(1, 0, -0.15, 0, 0.14, 0.16 * hazeBoost, 0.2);
       }
       if (inGalaxy > 0.02) {
-        setHaze(0, 0, 0, 0, 0.16, 0.42 * inGalaxy * hazeBoost, 0.55);
-        setHaze(1, 0.12, 0.02, 0.08, 0.22, 0.16 * inGalaxy * hazeBoost, 0.2);
-        setHaze(2, -0.14, -0.03, -0.1, 0.2, 0.14 * inGalaxy * hazeBoost, 0.15);
-        setHaze(3, 0.05, -0.08, 0.16, 0.18, 0.12 * inGalaxy * hazeBoost, 0.1);
+        setHaze(0, 0, 0, 0, 0.14, 0.4 * inGalaxy * hazeBoost, 0.55);
+        setHaze(1, 0.14, 0.02, 0.08, 0.2, 0.14 * inGalaxy * hazeBoost, 0.2);
+        setHaze(2, -0.14, -0.02, -0.08, 0.2, 0.14 * inGalaxy * hazeBoost, 0.15);
       }
       if (inPath > 0.02) {
-        trajPoint(0.25, trajPhase, _pathTmp);
-        trajPoint(0.55, trajPhase, _pathTmp2);
-        trajPoint(0.8, trajPhase, _tmp);
-        setHaze(0, _pathTmp.x, _pathTmp.y, _pathTmp.z, 0.14, 0.22 * inPath * hazeBoost, 0.35);
-        setHaze(1, _pathTmp2.x, _pathTmp2.y, _pathTmp2.z, 0.13, 0.28 * inPath * hazeBoost, 0.45);
-        setHaze(2, _tmp.x, _tmp.y, _tmp.z, 0.12, 0.2 * inPath * hazeBoost, 0.3);
-        setHaze(3, headArr[0], headArr[1], headArr[2], 0.1, 0.35 * trajFade * hazeBoost, 0.7);
+        // Infinity lobes
+        setHaze(0, 0.2, 0, 0, 0.16, 0.2 * inPath * hazeBoost, 0.35);
+        setHaze(1, -0.2, 0, 0, 0.16, 0.2 * inPath * hazeBoost, 0.35);
+        setHaze(2, 0, 0, 0, 0.1, 0.14 * inPath * hazeBoost, 0.25);
       }
       if (detonate > 0.05) {
-        setHaze(5, 0, 0, 0, 0.38 + detonate * 0.25, 0.22 * detonate, 0.45);
+        setHaze(5, 0, 0, 0, 0.38 + detonate * 0.25, 0.2 * detonate, 0.4);
       }
 
       // GPU sim step
