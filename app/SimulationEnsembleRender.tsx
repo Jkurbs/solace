@@ -241,8 +241,8 @@ const velocityShader = `
   uniform float uTime;
   uniform float uDt;
   uniform float uModeA;
-  uniform float uModeB;
-  uniform float uReform;
+  uniform float uShape;      // 0 = chaos, 1 = fully locked to formation
+  uniform float uShapeLock;  // extra snap during hold
   uniform float uDetonate;
   uniform float uFreeFall;
   uniform float uInPath;
@@ -263,48 +263,66 @@ const velocityShader = `
     float idx = (gl_FragCoord.x - 0.5) + (gl_FragCoord.y - 0.5) * resolution.x;
     float u = idx * uIndexScale;
 
-    vec3 target = targetFor(uModeA, seed, u, uTime);
-    if (uReform > 0.001) {
-      vec3 tB = targetFor(uModeB, seed, u, uTime);
-      target = mix(target, tB, uReform);
-    }
+    // Cadence: chaos scatter ↔ formation target. Shape holds when uShapeLock is high.
+    vec3 form = targetFor(uModeA, seed, u, uTime);
+    vec3 chaos = scatterTarget(seed, uTime * 1.15 + uModeA * 4.2);
+    vec3 target = mix(chaos, form, clamp(uShape, 0.0, 1.0));
+
     if (uDetonate > 0.001) {
-      float burst = 1.0 + uDetonate * (0.55 + seed * 0.45);
+      float burst = 1.0 + uDetonate * (0.85 + seed * 0.55);
       target *= burst;
-      target += vec3(seed - 0.5, fract(seed * 1.7) - 0.5, fract(seed * 2.3) - 0.5) * uDetonate * 0.2;
+      target += vec3(seed - 0.5, fract(seed * 1.7) - 0.5, fract(seed * 2.3) - 0.5) * uDetonate * 0.35;
       target = clampInside(target, 0.04);
     }
     if (uFreeFall > 0.001) {
-      vec3 sc = scatterTarget(seed, uTime + uModeA * 3.1);
-      target = mix(target, sc, uFreeFall);
+      target = mix(target, chaos, uFreeFall);
     }
-    if (uInPath > 0.02) {
+    if (uInPath > 0.02 && uShape > 0.35) {
       float pathT = clamp((p.y / (CUBE * 0.72) + 0.5) * 0.85 + seed * 0.12, 0.0, 1.0);
       vec3 corridor = trajPoint(pathT, uTrajPhase);
-      float magnet = uInPath * (0.55 + (1.0 - uTrajFray) * 0.4);
+      float magnet = uInPath * uShape * (0.6 + (1.0 - uTrajFray) * 0.4);
       target = mix(target, corridor, magnet);
       if (uTrajFray > 0.05) {
-        float splay = uTrajFray * (0.08 + seed * 0.12);
+        float splay = uTrajFray * (0.1 + seed * 0.14);
         target += vec3(seed - 0.5, fract(seed * 1.3) - 0.5, fract(seed * 2.1) - 0.5) * splay * vec3(2.2, 1.0, 2.2);
       }
       target = clampInside(target, 0.05);
     }
 
-    float aMul = 1.0 + uInGalaxy * 0.4 + uInPath * 0.55 + uReform * 0.35 + uDetonate * 0.2 - uFreeFall * 0.25;
-    float nMul = max(0.15, 1.0 - uInGalaxy * 0.55 - uInPath * 0.4 + uFreeFall * 0.9 + uDetonate * 0.5);
-    float attract = 7.2 * aMul;
-    float drag = exp(-3.2 * uDt);
+    // Lock hard in hold; wild in chaos/break.
+    float aMul = 0.55
+      + uShape * 1.1
+      + uShapeLock * 1.65
+      + uInGalaxy * 0.35
+      + uInPath * 0.45
+      - uFreeFall * 0.35
+      - uDetonate * 0.15;
+    float nMul = max(0.04,
+      0.2
+      + uFreeFall * 1.35
+      + uDetonate * 0.9
+      - uShape * 0.55
+      - uShapeLock * 0.85
+      - uInGalaxy * 0.25
+      - uInPath * 0.2);
+    float attract = 9.5 * max(aMul, 0.2);
+    float drag = exp(-(2.4 + uShapeLock * 2.8) * uDt);
 
     v += (target - p) * attract * uDt;
     v *= drag;
     v += vec3(
-      sin(uTime * 0.9 + seed * 20.0),
-      cos(uTime * 0.7 + seed * 17.0),
-      sin(uTime * 0.6 + seed * 13.0)
-    ) * 0.14 * nMul * uDt;
+      sin(uTime * 1.1 + seed * 20.0),
+      cos(uTime * 0.85 + seed * 17.0),
+      sin(uTime * 0.7 + seed * 13.0)
+    ) * 0.22 * nMul * uDt;
 
-    if (uDetonate > 0.2 && uDetonate < 0.85) {
-      v += p * uDetonate * 0.35 * uDt * 8.0;
+    if (uDetonate > 0.15) {
+      v += p * uDetonate * 0.55 * uDt * 10.0;
+      v += vec3(
+        sin(seed * 40.0 + uTime * 8.0),
+        cos(seed * 31.0 - uTime * 7.0),
+        sin(seed * 23.0 + uTime * 9.0)
+      ) * uDetonate * 0.45 * uDt * 12.0;
     }
 
     gl_FragColor = vec4(v, 1.0);
@@ -716,10 +734,10 @@ export default function SimulationEnsembleRender() {
     velUniforms.uTime = { value: 0 };
     velUniforms.uDt = { value: 0.016 };
     velUniforms.uModeA = { value: 0 };
-    velUniforms.uModeB = { value: 1 };
-    velUniforms.uReform = { value: 0 };
+    velUniforms.uShape = { value: 0 };
+    velUniforms.uShapeLock = { value: 0 };
     velUniforms.uDetonate = { value: 0 };
-    velUniforms.uFreeFall = { value: 0 };
+    velUniforms.uFreeFall = { value: 1 };
     velUniforms.uInPath = { value: 0 };
     velUniforms.uInGalaxy = { value: 0 };
     velUniforms.uTrajFray = { value: 0 };
@@ -899,10 +917,14 @@ export default function SimulationEnsembleRender() {
       card.addEventListener('pointerleave', onPointerLeave);
     }
 
+    // Cadence per shape: chaos → lock → hold → break → next.
     const MODE_COUNT = 6;
-    const MODE_HOLD = 5.2;
-    const MODE_BLEND = 1.85;
-    const EPOCH = MODE_COUNT * (MODE_HOLD + MODE_BLEND);
+    const T_CHAOS = 2.2;
+    const T_LOCK = 1.7;
+    const T_HOLD = 4.4;
+    const T_BREAK = 1.6;
+    const SLOT = T_CHAOS + T_LOCK + T_HOLD + T_BREAK;
+    const EPOCH = MODE_COUNT * SLOT;
     const PATH_MODE = 5;
     const GALAXY_MODE = 4;
 
@@ -969,51 +991,66 @@ export default function SimulationEnsembleRender() {
         world.rotation.x = 0.25;
       }
 
-      const phase = reducedMotion ? MODE_HOLD * 4.8 : elapsed % EPOCH;
-      const slotLen = MODE_HOLD + MODE_BLEND;
-      const modeIndex = Math.floor(phase / slotLen) % MODE_COUNT;
-      const local = phase - modeIndex * slotLen;
+      // Reduced motion: freeze mid-hold on galaxy.
+      const phase = reducedMotion ? T_CHAOS + T_LOCK + T_HOLD * 0.5 : elapsed % EPOCH;
+      const modeIndex = Math.floor(phase / SLOT) % MODE_COUNT;
+      const local = phase - modeIndex * SLOT;
       const modeA = modeIndex;
-      const modeB = (modeIndex + 1) % MODE_COUNT;
-      let blend = 0;
-      if (local > MODE_HOLD) {
-        blend = smoothstep(0, MODE_BLEND, local - MODE_HOLD);
+
+      // Explicit four-beat loop (readable formation, not constant soup).
+      let freeFall = 0;
+      let detonate = 0;
+      let shape = 0;
+      let shapeLock = 0;
+      if (local < T_CHAOS) {
+        // Out of control.
+        const t = local / T_CHAOS;
+        freeFall = 1;
+        shape = 0;
+        shapeLock = 0;
+        detonate = t < 0.2 ? (1 - t / 0.2) * 0.25 : 0;
+      } else if (local < T_CHAOS + T_LOCK) {
+        // Snap into shape.
+        const t = smoothstep(0, 1, (local - T_CHAOS) / T_LOCK);
+        freeFall = 1 - t;
+        shape = t;
+        shapeLock = t * t;
+        detonate = 0;
+      } else if (local < T_CHAOS + T_LOCK + T_HOLD) {
+        // Keep the shape — calm, readable structure.
+        freeFall = 0;
+        detonate = 0;
+        shape = 1;
+        shapeLock = 1;
+      } else {
+        // Break down → back to chaos.
+        const t = smoothstep(0, 1, (local - T_CHAOS - T_LOCK - T_HOLD) / T_BREAK);
+        shape = 1 - t;
+        shapeLock = Math.max(0, 1 - t * 1.4);
+        detonate = Math.sin(t * Math.PI) * 0.95;
+        freeFall = smoothstep(0.25, 1, t);
       }
 
-      const detonate = blend > 0 ? smoothstep(0, 0.38, blend) * (1 - smoothstep(0.38, 0.52, blend)) : 0;
-      const freeFall = blend > 0 ? smoothstep(0.32, 0.48, blend) * (1 - smoothstep(0.55, 0.72, blend)) : 0;
-      const reform = blend > 0 ? smoothstep(0.52, 0.95, blend) : 0;
+      if (reducedMotion) {
+        freeFall = 0;
+        detonate = 0;
+        shape = 1;
+        shapeLock = 1;
+      }
 
       let trajFade = 0;
       let trajFray = 0;
       if (modeA === PATH_MODE) {
-        trajFade = 1 - reform * 0.95;
-        trajFray = reform;
+        trajFade = shape * shapeLock;
+        trajFray = detonate * 0.85 + (1 - shape) * 0.5;
       }
-      if (modeB === PATH_MODE) {
-        trajFade = Math.max(trajFade, reform);
-        trajFray = Math.min(trajFray, 1 - reform);
-      }
-      if (modeA === GALAXY_MODE && blend > 0.5) {
-        trajFade = Math.max(trajFade, (blend - 0.5) * 1.5 * reform);
-      }
-      trajFade = reducedMotion ? 0.65 : Math.min(Math.max(trajFade, 0), 1);
-      trajMat.uniforms.uFade.value = trajFade * (1 - freeFall * 0.7);
+      trajFade = reducedMotion && modeA === PATH_MODE ? 0.7 : Math.min(Math.max(trajFade, 0), 1);
+      trajMat.uniforms.uFade.value = trajFade * (1 - freeFall * 0.55);
       trajMat.uniforms.uPulse.value = (elapsed * 0.14) % 1;
       trajMat.uniforms.uFray.value = reducedMotion ? 0 : trajFray;
 
-      const inGalaxy =
-        modeA === GALAXY_MODE || modeB === GALAXY_MODE
-          ? modeA === GALAXY_MODE
-            ? 1 - blend
-            : blend
-          : 0;
-      const inPath =
-        modeA === PATH_MODE || modeB === PATH_MODE
-          ? modeA === PATH_MODE
-            ? 1 - reform
-            : reform
-          : 0;
+      const inGalaxy = modeA === GALAXY_MODE ? shape : 0;
+      const inPath = modeA === PATH_MODE ? shape : 0;
 
       const trajPhase = Math.floor(elapsed / EPOCH) * 0.7;
       for (let f = 0; f < FILAMENT_COUNT; f++) {
@@ -1038,46 +1075,42 @@ export default function SimulationEnsembleRender() {
       headMat.opacity = trajFade * (0.55 + 0.45 * (1 - trajFray));
       headMat.size = 0.04 + trajFade * 0.035;
 
-      // Haze
+      // Haze follows shape lock (readable body while held).
       for (let h = 0; h < HAZE_COUNT; h++) setHaze(h, 0, 0, 0, 0.1, 0);
-      const hazeBoost = (1 - freeFall * 0.85) * (1 - detonate * 0.4);
-      if (modeA === 0 || modeB === 0) {
-        const g = modeA === 0 ? 1 - reform : reform;
-        setHaze(0, 0, 0, 0, 0.42, 0.16 * g * hazeBoost, 0.1);
+      const hazeBoost = shape * shapeLock * (1 - freeFall * 0.7) * (1 - detonate * 0.35);
+      if (modeA === 0) {
+        setHaze(0, 0, 0, 0, 0.42, 0.16 * hazeBoost, 0.1);
       }
-      if (modeA === 1 || modeB === 1) {
-        const g = modeA === 1 ? 1 - reform : reform;
-        setHaze(0, -0.22, 0.12, 0.1, 0.2, 0.26 * g * hazeBoost, 0.2);
-        setHaze(1, 0.2, -0.08, -0.16, 0.18, 0.22 * g * hazeBoost, 0.15);
-        setHaze(2, 0.02, 0.18, -0.22, 0.17, 0.2 * g * hazeBoost, 0.12);
+      if (modeA === 1) {
+        setHaze(0, -0.22, 0.12, 0.1, 0.2, 0.28 * hazeBoost, 0.2);
+        setHaze(1, 0.2, -0.08, -0.16, 0.18, 0.24 * hazeBoost, 0.15);
+        setHaze(2, 0.02, 0.18, -0.22, 0.17, 0.22 * hazeBoost, 0.12);
       }
-      if (modeA === 2 || modeB === 2) {
-        const g = modeA === 2 ? 1 - reform : reform;
-        setHaze(0, 0, 0, 0, 0.38, 0.12 * g * hazeBoost, 0.05);
+      if (modeA === 2) {
+        setHaze(0, 0, 0, 0, 0.38, 0.14 * hazeBoost, 0.05);
       }
-      if (modeA === 3 || modeB === 3) {
-        const g = modeA === 3 ? 1 - reform : reform;
-        setHaze(0, 0, 0, 0, 0.16, 0.2 * g * hazeBoost, 0.25);
-        setHaze(1, 0, 0.2, 0, 0.14, 0.12 * g * hazeBoost, 0.1);
-        setHaze(2, 0, -0.2, 0, 0.14, 0.12 * g * hazeBoost, 0.1);
+      if (modeA === 3) {
+        setHaze(0, 0, 0, 0, 0.16, 0.22 * hazeBoost, 0.25);
+        setHaze(1, 0, 0.2, 0, 0.14, 0.14 * hazeBoost, 0.1);
+        setHaze(2, 0, -0.2, 0, 0.14, 0.14 * hazeBoost, 0.1);
       }
       if (inGalaxy > 0.02) {
-        setHaze(0, 0, 0, 0, 0.16, 0.4 * inGalaxy * hazeBoost, 0.55);
-        setHaze(1, 0.12, 0.02, 0.08, 0.22, 0.14 * inGalaxy * hazeBoost, 0.2);
-        setHaze(2, -0.14, -0.03, -0.1, 0.2, 0.12 * inGalaxy * hazeBoost, 0.15);
-        setHaze(3, 0.05, -0.08, 0.16, 0.18, 0.1 * inGalaxy * hazeBoost, 0.1);
+        setHaze(0, 0, 0, 0, 0.16, 0.42 * inGalaxy * hazeBoost, 0.55);
+        setHaze(1, 0.12, 0.02, 0.08, 0.22, 0.16 * inGalaxy * hazeBoost, 0.2);
+        setHaze(2, -0.14, -0.03, -0.1, 0.2, 0.14 * inGalaxy * hazeBoost, 0.15);
+        setHaze(3, 0.05, -0.08, 0.16, 0.18, 0.12 * inGalaxy * hazeBoost, 0.1);
       }
       if (inPath > 0.02) {
         trajPoint(0.25, trajPhase, _pathTmp);
         trajPoint(0.55, trajPhase, _pathTmp2);
         trajPoint(0.8, trajPhase, _tmp);
-        setHaze(0, _pathTmp.x, _pathTmp.y, _pathTmp.z, 0.14, 0.2 * inPath * hazeBoost, 0.35);
-        setHaze(1, _pathTmp2.x, _pathTmp2.y, _pathTmp2.z, 0.13, 0.26 * inPath * hazeBoost, 0.45);
-        setHaze(2, _tmp.x, _tmp.y, _tmp.z, 0.12, 0.18 * inPath * hazeBoost, 0.3);
-        setHaze(3, headArr[0], headArr[1], headArr[2], 0.1, 0.32 * trajFade * hazeBoost, 0.7);
+        setHaze(0, _pathTmp.x, _pathTmp.y, _pathTmp.z, 0.14, 0.22 * inPath * hazeBoost, 0.35);
+        setHaze(1, _pathTmp2.x, _pathTmp2.y, _pathTmp2.z, 0.13, 0.28 * inPath * hazeBoost, 0.45);
+        setHaze(2, _tmp.x, _tmp.y, _tmp.z, 0.12, 0.2 * inPath * hazeBoost, 0.3);
+        setHaze(3, headArr[0], headArr[1], headArr[2], 0.1, 0.35 * trajFade * hazeBoost, 0.7);
       }
       if (detonate > 0.05) {
-        setHaze(5, 0, 0, 0, 0.35 + detonate * 0.2, 0.18 * detonate, 0.4);
+        setHaze(5, 0, 0, 0, 0.38 + detonate * 0.25, 0.22 * detonate, 0.45);
       }
 
       // GPU sim step
@@ -1086,8 +1119,8 @@ export default function SimulationEnsembleRender() {
         velUniforms.uTime.value = elapsed;
         velUniforms.uDt.value = step;
         velUniforms.uModeA.value = modeA;
-        velUniforms.uModeB.value = modeB;
-        velUniforms.uReform.value = reform;
+        velUniforms.uShape.value = shape;
+        velUniforms.uShapeLock.value = shapeLock;
         velUniforms.uDetonate.value = detonate;
         velUniforms.uFreeFall.value = freeFall;
         velUniforms.uInPath.value = inPath;
@@ -1098,7 +1131,10 @@ export default function SimulationEnsembleRender() {
         gpuCompute.compute();
         pMat.uniforms.texturePosition.value = gpuCompute.getCurrentRenderTarget(posVar).texture;
       } else if (gpuOk) {
-        // Static snapshot for reduced motion.
+        velUniforms.uShape.value = 1;
+        velUniforms.uShapeLock.value = 1;
+        velUniforms.uFreeFall.value = 0;
+        velUniforms.uDetonate.value = 0;
         pMat.uniforms.texturePosition.value = gpuCompute.getCurrentRenderTarget(posVar).texture;
       }
 
