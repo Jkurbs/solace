@@ -217,6 +217,30 @@ function getFeeValue(value) {
   return getOptionalNumber(value);
 }
 
+/**
+ * Close PnL for the public ledger must match Hermes' close figure.
+ * Hermes/exchange `realized_pnl` is typically already net of trading fees.
+ * Never re-subtract fees from that number or recent ledger rows drift from
+ * the close the operator just saw. Prefer explicit net_pnl when present.
+ */
+function resolveClosePnl({ explicitNet, explicitRealized, funding = 0 }) {
+  if (explicitNet !== undefined) {
+    return { netPnl: explicitNet, realizedPnl: explicitRealized ?? explicitNet };
+  }
+
+  if (explicitRealized === undefined) {
+    return null;
+  }
+
+  // Realized is the exchange close PnL (fee-net). Apply funding only when
+  // Hermes did not already publish a net figure — keep funding sign.
+  const fundingAmount = Number.isFinite(funding) ? funding : 0;
+  return {
+    netPnl: explicitRealized - fundingAmount,
+    realizedPnl: explicitRealized,
+  };
+}
+
 function buildTradeEventFromHermesTrade(trade) {
   if (!trade || typeof trade !== 'object' || Array.isArray(trade)) {
     return null;
@@ -224,22 +248,22 @@ function buildTradeEventFromHermesTrade(trade) {
 
   const status = String(trade.status || '').toLowerCase();
   const closedAt = getIsoDate(trade.exit_time, trade.closedAt, trade.closed_at);
-  const realizedPnl = getOptionalNumber(trade.realized_pnl, trade.realizedPnl, trade.net_pnl, trade.netPnl);
+  const explicitRealized = getOptionalNumber(trade.realized_pnl, trade.realizedPnl);
+  const explicitNet = getOptionalNumber(trade.net_pnl, trade.netPnl);
+  const fees = getFeeValue(trade.fees) ?? getOptionalNumber(trade.fee, trade.tradeFee) ?? 0;
+  const funding = getOptionalNumber(trade.funding, trade.funding_fee, trade.fundingFee) ?? 0;
+  const resolved = resolveClosePnl({ explicitNet, explicitRealized, funding });
 
-  if (!closedAt || realizedPnl === undefined || (!status.includes('closed') && !trade.exit_time && !trade.closedAt && !trade.closed_at)) {
+  if (!closedAt || !resolved || (!status.includes('closed') && !trade.exit_time && !trade.closedAt && !trade.closed_at)) {
     return null;
   }
 
   const symbol = normalizeSymbol(trade.symbol);
-  const sourceTradeId = String(trade.trade_id || trade.id || `${symbol}_${closedAt}_${realizedPnl}`).trim();
+  const sourceTradeId = String(trade.trade_id || trade.id || `${symbol}_${closedAt}_${resolved.netPnl}`).trim();
 
   if (!symbol || !sourceTradeId) {
     return null;
   }
-
-  const fees = getFeeValue(trade.fees) ?? getOptionalNumber(trade.fee, trade.tradeFee) ?? 0;
-  const funding = getOptionalNumber(trade.funding, trade.funding_fee, trade.fundingFee) ?? 0;
-  const netPnl = getOptionalNumber(trade.net_pnl, trade.netPnl) ?? realizedPnl - fees - funding;
 
   return {
     closedAt,
@@ -247,12 +271,12 @@ function buildTradeEventFromHermesTrade(trade) {
     exitPrice: getOptionalNumber(trade.exit_price, trade.exitPrice),
     fees,
     funding,
-    netPnl,
+    netPnl: resolved.netPnl,
     openedAt: getIsoDate(trade.entry_time, trade.openedAt, trade.opened_at),
     poolId: process.env.HERMES_POOL_ID ?? 'pool_balanced_v1',
     quantity: getOptionalNumber(trade.position_size, trade.quantity, trade.contracts),
     rawPayload: trade,
-    realizedPnl,
+    realizedPnl: resolved.realizedPnl,
     side: getTradeSide(trade),
     sourceExchange: 'hermes_trades',
     sourcePositionId: String(trade.close_id || trade.closeId || '').trim() || undefined,
@@ -276,7 +300,7 @@ function buildTradeEventFromPositionHistory(position) {
     info.closeTime,
     info.close_time,
   );
-  const realizedPnl = getOptionalNumber(
+  const explicitRealized = getOptionalNumber(
     position.realizedPnl,
     position.realisedPnl,
     position.realized_pnl,
@@ -285,20 +309,23 @@ function buildTradeEventFromPositionHistory(position) {
     info.realisedPnl,
     info.pnl,
   );
+  const explicitNet = getOptionalNumber(position.netPnl, position.net_pnl, info.netPnl);
+  // Keep funding signed (income can be negative cost). Fees are magnitude only.
+  const fees = Math.abs(getOptionalNumber(position.fees, position.tradeFee, info.tradeFee, info.fee) ?? 0);
+  const funding = getOptionalNumber(position.funding, position.fundingFee, info.fundingFee) ?? 0;
+  const resolved = resolveClosePnl({ explicitNet, explicitRealized, funding });
 
-  if (!symbol || !closedAt || realizedPnl === undefined) {
+  if (!symbol || !closedAt || !resolved) {
     return null;
   }
 
-  const sourceTradeId = String(position.id || info.closeId || info.close_id || `${symbol}_${closedAt}_${realizedPnl}`).trim();
+  const sourceTradeId = String(
+    position.id || info.closeId || info.close_id || `${symbol}_${closedAt}_${resolved.netPnl}`,
+  ).trim();
 
   if (!sourceTradeId) {
     return null;
   }
-
-  const fees = Math.abs(getOptionalNumber(position.fees, position.tradeFee, info.tradeFee, info.fee) ?? 0);
-  const funding = Math.abs(getOptionalNumber(position.funding, position.fundingFee, info.fundingFee) ?? 0);
-  const netPnl = getOptionalNumber(position.netPnl, position.net_pnl, info.netPnl) ?? realizedPnl - fees - funding;
 
   return {
     closedAt,
@@ -306,18 +333,44 @@ function buildTradeEventFromPositionHistory(position) {
     exitPrice: getOptionalNumber(position.exitPrice, position.exit_price, info.closePrice),
     fees,
     funding,
-    netPnl,
+    netPnl: resolved.netPnl,
     openedAt: getIsoDate(position.openedAt, position.openTime, info.openTime),
     poolId: process.env.HERMES_POOL_ID ?? 'pool_balanced_v1',
     quantity: getOptionalNumber(position.contracts, position.quantity, info.closeSize, info.size),
     rawPayload: position,
-    realizedPnl,
+    realizedPnl: resolved.realizedPnl,
     side: getTradeSide(position),
     sourceExchange: 'kucoin_futures',
     sourcePositionId: String(position.sourcePositionId || position.source_position_id || info.positionId || info.position_id || '').trim() || undefined,
     sourceTradeId,
     symbol,
   };
+}
+
+/** Prefer Hermes recent-trades over KuCoin history for the same close. */
+function dedupeTradeEvents(events) {
+  const preferred = new Map();
+
+  for (const event of events) {
+    if (!event) continue;
+    // Bucket by instrument + side + close minute so two feeds of the same
+    // close don't seal two ledger rows with different PnL.
+    const closedMinute = String(event.closedAt || '').slice(0, 16);
+    const key = `${event.symbol}|${event.side}|${closedMinute}`;
+    const existing = preferred.get(key);
+
+    if (!existing) {
+      preferred.set(key, event);
+      continue;
+    }
+
+    // hermes_trades wins; otherwise keep the first (already preferred order).
+    if (existing.sourceExchange !== 'hermes_trades' && event.sourceExchange === 'hermes_trades') {
+      preferred.set(key, event);
+    }
+  }
+
+  return [...preferred.values()];
 }
 
 function buildSourceCapitalFlow(flow) {
@@ -929,10 +982,10 @@ async function runBridgeOnce({ hermesApiUrl, secret, solaceAppUrl }) {
       console.warn(error instanceof Error ? error.message : error);
       return [];
     });
-  const tradeEvents = [
+  const tradeEvents = dedupeTradeEvents([
     ...recentTrades.map(buildTradeEventFromHermesTrade),
     ...positionHistory.map(buildTradeEventFromPositionHistory),
-  ].filter(Boolean);
+  ]);
   const tradeEventResult = await postSolaceTradeEvents(solaceAppUrl, secret, tradeEvents).catch((error) => {
     const message = error instanceof Error ? error.message : String(error);
     console.warn(message);

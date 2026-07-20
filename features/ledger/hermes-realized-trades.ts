@@ -102,8 +102,13 @@ export async function postHermesRealizedTradeEvent(input: HermesRealizedTradeEve
 
   const realizedPnl = normalizeAmount(input.realizedPnl);
   const fees = Math.max(0, normalizeAmount(input.fees ?? 0));
-  const funding = Math.max(0, normalizeAmount(input.funding ?? 0));
-  const netPnl = normalizeAmount(input.netPnl ?? realizedPnl - fees - funding);
+  // Funding may be income (negative cost). Do not clamp to ≥ 0.
+  const funding = normalizeAmount(input.funding ?? 0);
+  // Prefer explicit net. Exchange/Hermes realized is typically already fee-net;
+  // only fold funding into the fallback so we never double-subtract fees.
+  const netPnl = normalizeAmount(
+    input.netPnl !== undefined && input.netPnl !== null ? input.netPnl : realizedPnl - funding,
+  );
 
   try {
     const supabase = await createSupabaseDataClient();
