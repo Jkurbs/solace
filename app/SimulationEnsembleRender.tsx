@@ -2,23 +2,22 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { GPUComputationRenderer } from 'three/addons/misc/GPUComputationRenderer.js';
 
-// Homepage Simulation plate: a self-contained glass cube laboratory.
-// Distinct motion vocabulary from Hermes (liquidity field) and Oracle (futures fan).
-// Nothing enters or leaves — possibility reorganizes only inside the box.
-// The shell is real physical glass (transmission / IOR / thickness), not a fresnel sketch.
-// Worlds collapse (detonate → free fall → recondense); path is the emotional climax;
-// soft volume haze makes dense regions read as matter.
+// Homepage Simulation plate: self-contained glass cube laboratory.
+// Dense GPU particle field (~80k desktop / ~25k mobile) continuously morphs
+// between hypothesis worlds. Collapse beats, path climax, galaxy, volume haze.
+// Nothing enters or leaves the box.
 
 const CUBE = 1.0;
 const HALF = CUBE * 0.5;
-const PARTICLE_COUNT_DESKTOP = 5200;
-const PARTICLE_COUNT_MOBILE = 2800;
+// Texture size → particle count (square). Desktop ~83k, mobile ~26k.
+const GPU_SIZE_DESKTOP = 288;
+const GPU_SIZE_MOBILE = 160;
 const TRAJ_POINTS = 128;
 const FILAMENT_COUNT = 3;
 const HAZE_COUNT = 6;
 
-/** Dark studio env: a few bright panels in void so glass gets real speculars without indoor room look. */
 function createGlassEnvironment(renderer: THREE.WebGLRenderer) {
   const pmrem = new THREE.PMREMGenerator(renderer);
   pmrem.compileEquirectangularShader();
@@ -51,13 +50,11 @@ function createGlassEnvironment(renderer: THREE.WebGLRenderer) {
   addPanel(0xe8f2ff, [0.6, 1.8, 2.4], [0.5, 0.5], [-0.4, 0.1, 0]);
 
   const envMap = pmrem.fromScene(envScene, 0.04).texture;
-
   for (const mesh of panels) {
     mesh.geometry.dispose();
     (mesh.material as THREE.Material).dispose();
   }
   pmrem.dispose();
-
   return envMap;
 }
 
@@ -85,22 +82,308 @@ function createGlassMaterial(envMap: THREE.Texture, opts?: { thickness?: number;
   });
 }
 
-// Soft scientific dust points.
-const pointVertex = `
-  attribute float aSize;
-  attribute float aBright;
-  attribute float aSeed;
-  varying float vBright;
-  varying float vSeed;
-  uniform float uPixelRatio;
+// Shared GLSL for formation targets (used by velocity compute).
+const formationGlsl = `
+const float CUBE = 1.0;
+const float HALF = 0.5;
+
+float hash11(float p) {
+  p = fract(p * 0.1031);
+  p *= p + 33.33;
+  p *= p + p;
+  return fract(p);
+}
+
+vec3 clampInside(vec3 v, float pad) {
+  float lim = HALF - pad;
+  return clamp(v, vec3(-lim), vec3(lim));
+}
+
+vec3 trajPoint(float t, float phase) {
+  float angle = t * 3.14159265 * 1.6 + phase * 0.4;
+  return clampInside(vec3(
+    sin(angle * 1.1) * 0.28,
+    (t - 0.5) * CUBE * 0.72,
+    cos(angle * 0.9) * 0.24
+  ), 0.08);
+}
+
+vec3 targetFor(float mode, float seed, float u, float t) {
+  float s1 = seed;
+  float s2 = fract(seed * 1.6180339887);
+  float s3 = fract(seed * 2.718281828);
+  vec3 outp = vec3(0.0);
+
+  if (mode < 0.5) {
+    float a = s1 * 6.2831853;
+    float b = s2 * 6.2831853;
+    float r = pow(0.15 + s3 * 0.85, 0.55) * HALF * 0.92;
+    outp = vec3(
+      sin(a) * cos(b) * r,
+      (s2 * 2.0 - 1.0) * HALF * 0.85,
+      cos(a) * cos(b) * r * 0.9
+    );
+    outp.x += sin(t * 0.22 + s1 * 9.0) * 0.03;
+    outp.y += cos(t * 0.18 + s2 * 7.0) * 0.025;
+  } else if (mode < 1.5) {
+    float cluster = floor(s1 * 3.0);
+    float cx = cluster < 0.5 ? -0.22 : (cluster < 1.5 ? 0.2 : 0.02);
+    float cy = cluster < 0.5 ? 0.12 : (cluster < 1.5 ? -0.08 : 0.18);
+    float cz = cluster < 0.5 ? 0.1 : (cluster < 1.5 ? -0.16 : -0.22);
+    float spread = 0.1 + s2 * 0.08;
+    float a = s3 * 6.2831853 + t * 0.15;
+    outp = vec3(
+      cx + cos(a) * spread * (0.5 + s1 * 0.5),
+      cy + sin(a * 1.3) * spread * 0.7,
+      cz + sin(a) * spread * (0.5 + s2 * 0.5)
+    );
+  } else if (mode < 2.5) {
+    float g = 7.0;
+    float gx = (floor(s1 * g) + 0.5) / g - 0.5;
+    float gy = (floor(s2 * g) + 0.5) / g - 0.5;
+    float gz = (floor(s3 * g) + 0.5) / g - 0.5;
+    float jitter = 0.018;
+    float breath = 1.0 + 0.02 * sin(t * 0.35 + s1 * 4.0);
+    outp = vec3(
+      (gx * CUBE * 0.82 + (s1 - 0.5) * jitter) * breath,
+      (gy * CUBE * 0.82 + (s2 - 0.5) * jitter) * breath,
+      (gz * CUBE * 0.82 + (s3 - 0.5) * jitter) * breath
+    );
+  } else if (mode < 3.5) {
+    if (s3 > 0.72) {
+      float sa = s1 * 6.2831853;
+      float sr = 0.22 + s2 * 0.2;
+      outp = vec3(cos(sa) * sr, (s2 - 0.5) * CUBE * 0.7, sin(sa) * sr);
+    } else {
+      float turns = 3.2;
+      float angle = u * 6.2831853 * turns + t * 0.25;
+      float radius = 0.08 + (1.0 - u) * 0.28 * (0.6 + s2 * 0.4);
+      float y = (u - 0.5) * CUBE * 0.78;
+      outp = vec3(cos(angle) * radius, y, sin(angle) * radius);
+    }
+  } else if (mode < 4.5) {
+    float arms = 3.0;
+    float maxR = HALF * 0.9;
+    float spin = t * 0.16;
+    if (s3 > 0.9) {
+      float ha = s1 * 6.2831853;
+      float hb = (s2 - 0.5) * 3.14159265;
+      float hr = pow(0.2 + s1 * 0.8, 0.55) * maxR * 0.72;
+      outp = vec3(
+        cos(ha) * cos(hb) * hr,
+        sin(hb) * hr * 0.55,
+        sin(ha) * cos(hb) * hr
+      );
+    } else if (s3 < 0.14) {
+      float br = pow(s2, 0.55) * 0.085;
+      float ba = s1 * 6.2831853 + spin * 1.4;
+      float bh = (s3 - 0.07) * 0.22;
+      outp = vec3(cos(ba) * br, bh, sin(ba) * br);
+    } else {
+      float arm = floor(s1 * arms);
+      float radius = pow(0.04 + s2 * 0.96, 0.62) * maxR;
+      float wind = 2.85;
+      float armPhase = (arm / arms) * 6.2831853;
+      float theta = armPhase + log(1.0 + radius * 9.0) * wind + spin
+                 + (s3 - 0.5) * (0.1 + radius * 0.22);
+      float diskH = (s1 - 0.5) * (0.028 + (1.0 - radius / maxR) * 0.055)
+                 + sin(theta * 2.0 + s2 * 4.0) * 0.008 * radius;
+      float x = cos(theta) * radius;
+      float y = diskH;
+      float z = sin(theta) * radius;
+      float tilt = 0.42;
+      float cy = cos(tilt);
+      float sy = sin(tilt);
+      outp = vec3(x * 0.96, y * cy - z * sy, (y * sy + z * cy) * 0.96);
+    }
+  } else {
+    float pathT = u * 0.92 + s1 * 0.06;
+    float angle = pathT * 3.14159265 * 1.6;
+    float px = sin(angle * 1.1) * 0.28;
+    float py = (pathT - 0.5) * CUBE * 0.72;
+    float pz = cos(angle * 0.9) * 0.24;
+    float tx = -cos(angle * 1.1);
+    float ty = 0.15;
+    float tz = sin(angle * 0.9);
+    float tLen = max(length(vec3(tx, ty, tz)), 1e-4);
+    vec3 tn = vec3(tx, ty, tz) / tLen;
+    vec3 b = normalize(vec3(-tz, 0.0, tx));
+    float radial = (s2 - 0.5) * 0.1 * (1.05 - pathT);
+    float along = (s3 - 0.5) * 0.035;
+    outp = vec3(px, py, pz) + b * radial + tn * along;
+  }
+
+  // Continuous micro-morph so the field never freezes into a diagram.
+  float morph = 0.012 + 0.01 * sin(t * 0.31 + seed * 6.0);
+  outp.x += sin(t * 0.55 + seed * 17.0) * morph;
+  outp.y += cos(t * 0.47 + seed * 13.0) * morph * 0.85;
+  outp.z += sin(t * 0.39 + seed * 11.0) * morph;
+
+  return clampInside(outp, 0.05);
+}
+
+vec3 scatterTarget(float seed, float t) {
+  float s1 = seed;
+  float s2 = fract(seed * 1.6180339887);
+  float s3 = fract(seed * 2.718281828);
+  float a = s1 * 6.2831853 + t * 0.7;
+  float b = s2 * 6.2831853 - t * 0.45;
+  float r = (0.2 + s3 * 0.75) * HALF * 0.95;
+  return clampInside(vec3(
+    sin(a) * cos(b) * r,
+    (s2 * 2.0 - 1.0) * HALF * 0.88 + sin(t * 1.1 + s1 * 8.0) * 0.04,
+    cos(a) * cos(b) * r
+  ), 0.04);
+}
+`;
+
+const velocityShader = `
   uniform float uTime;
+  uniform float uDt;
+  uniform float uModeA;
+  uniform float uModeB;
+  uniform float uReform;
+  uniform float uDetonate;
+  uniform float uFreeFall;
+  uniform float uInPath;
+  uniform float uInGalaxy;
+  uniform float uTrajFray;
+  uniform float uTrajPhase;
+  uniform float uIndexScale;
+
+  ${formationGlsl}
 
   void main() {
-    vBright = aBright;
+    vec2 uv = gl_FragCoord.xy / resolution.xy;
+    vec4 posSample = texture2D(texturePosition, uv);
+    vec4 velSample = texture2D(textureVelocity, uv);
+    vec3 p = posSample.xyz;
+    vec3 v = velSample.xyz;
+    float seed = posSample.w;
+    float idx = (gl_FragCoord.x - 0.5) + (gl_FragCoord.y - 0.5) * resolution.x;
+    float u = idx * uIndexScale;
+
+    vec3 target = targetFor(uModeA, seed, u, uTime);
+    if (uReform > 0.001) {
+      vec3 tB = targetFor(uModeB, seed, u, uTime);
+      target = mix(target, tB, uReform);
+    }
+    if (uDetonate > 0.001) {
+      float burst = 1.0 + uDetonate * (0.55 + seed * 0.45);
+      target *= burst;
+      target += vec3(seed - 0.5, fract(seed * 1.7) - 0.5, fract(seed * 2.3) - 0.5) * uDetonate * 0.2;
+      target = clampInside(target, 0.04);
+    }
+    if (uFreeFall > 0.001) {
+      vec3 sc = scatterTarget(seed, uTime + uModeA * 3.1);
+      target = mix(target, sc, uFreeFall);
+    }
+    if (uInPath > 0.02) {
+      float pathT = clamp((p.y / (CUBE * 0.72) + 0.5) * 0.85 + seed * 0.12, 0.0, 1.0);
+      vec3 corridor = trajPoint(pathT, uTrajPhase);
+      float magnet = uInPath * (0.55 + (1.0 - uTrajFray) * 0.4);
+      target = mix(target, corridor, magnet);
+      if (uTrajFray > 0.05) {
+        float splay = uTrajFray * (0.08 + seed * 0.12);
+        target += vec3(seed - 0.5, fract(seed * 1.3) - 0.5, fract(seed * 2.1) - 0.5) * splay * vec3(2.2, 1.0, 2.2);
+      }
+      target = clampInside(target, 0.05);
+    }
+
+    float aMul = 1.0 + uInGalaxy * 0.4 + uInPath * 0.55 + uReform * 0.35 + uDetonate * 0.2 - uFreeFall * 0.25;
+    float nMul = max(0.15, 1.0 - uInGalaxy * 0.55 - uInPath * 0.4 + uFreeFall * 0.9 + uDetonate * 0.5);
+    float attract = 7.2 * aMul;
+    float drag = exp(-3.2 * uDt);
+
+    v += (target - p) * attract * uDt;
+    v *= drag;
+    v += vec3(
+      sin(uTime * 0.9 + seed * 20.0),
+      cos(uTime * 0.7 + seed * 17.0),
+      sin(uTime * 0.6 + seed * 13.0)
+    ) * 0.14 * nMul * uDt;
+
+    if (uDetonate > 0.2 && uDetonate < 0.85) {
+      v += p * uDetonate * 0.35 * uDt * 8.0;
+    }
+
+    gl_FragColor = vec4(v, 1.0);
+  }
+`;
+
+const positionShader = `
+  uniform float uDt;
+
+  ${formationGlsl}
+
+  void main() {
+    vec2 uv = gl_FragCoord.xy / resolution.xy;
+    vec4 posSample = texture2D(texturePosition, uv);
+    vec4 velSample = texture2D(textureVelocity, uv);
+    vec3 p = posSample.xyz;
+    vec3 v = velSample.xyz;
+    float seed = posSample.w;
+
+    p += v;
+
+    float lim = HALF - 0.03;
+    if (p.x > lim || p.x < -lim) { p.x = clamp(p.x, -lim, lim); }
+    if (p.y > lim || p.y < -lim) { p.y = clamp(p.y, -lim, lim); }
+    if (p.z > lim || p.z < -lim) { p.z = clamp(p.z, -lim, lim); }
+
+    gl_FragColor = vec4(p, seed);
+  }
+`;
+
+const pointVertex = `
+  attribute vec2 aRef;
+  attribute float aSeed;
+  uniform sampler2D texturePosition;
+  uniform float uPixelRatio;
+  uniform float uTime;
+  uniform float uTrajFade;
+  uniform float uTrajFray;
+  uniform float uTrajPhase;
+  uniform float uInGalaxy;
+  uniform float uDetonate;
+  uniform float uFreeFall;
+  uniform float uInPath;
+  varying float vBright;
+  varying float vSeed;
+
+  ${formationGlsl}
+
+  void main() {
+    vec4 posSample = texture2D(texturePosition, aRef);
+    vec3 pos = posSample.xyz;
     vSeed = aSeed;
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    float tw = 0.82 + 0.18 * sin(uTime * (0.7 + aSeed * 1.4) + aSeed * 12.0);
-    gl_PointSize = aSize * uPixelRatio * tw * (180.0 / max(-mv.z, 0.001));
+
+    float b = 0.18 + aSeed * 0.4;
+    b *= 0.88 + 0.12 * ((pos.z + HALF) / CUBE);
+    b *= 0.92 + 0.08 * ((pos.y + HALF) / CUBE);
+
+    if (uTrajFade > 0.04) {
+      float pathT = clamp(pos.y / (CUBE * 0.72) + 0.5, 0.0, 1.0);
+      vec3 corridor = trajPoint(pathT, uTrajPhase);
+      float dist2 = dot(pos - corridor, pos - corridor);
+      b += exp(-dist2 / 0.015) * 0.75 * uTrajFade * (1.0 - uTrajFray * 0.5);
+      b += exp(-dist2 / 0.06) * 0.2 * uTrajFade;
+    }
+    if (uInGalaxy > 0.02) {
+      float coreR2 = pos.x * pos.x + pos.y * pos.y * 1.4 + pos.z * pos.z;
+      b += exp(-coreR2 / 0.012) * 0.75 * uInGalaxy;
+      b += exp(-coreR2 / 0.08) * 0.2 * uInGalaxy;
+      if (coreR2 > 0.22) b *= 1.0 - 0.2 * uInGalaxy;
+    }
+    b += uDetonate * 0.2 + uFreeFall * 0.06;
+    vBright = min(b, 1.25);
+
+    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+    float size = mix(0.0045, 0.011, aSeed);
+    float tw = 0.85 + 0.15 * sin(uTime * (0.5 + aSeed * 1.2) + aSeed * 12.0);
+    // Dense field: slightly smaller points, bright cores pop.
+    float densityScale = mix(1.0, 0.82, smoothstep(0.0, 1.0, vBright));
+    gl_PointSize = size * densityScale * uPixelRatio * tw * (200.0 / max(-mv.z, 0.001));
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -114,10 +397,10 @@ const pointFragment = `
     vec2 p = gl_PointCoord * 2.0 - 1.0;
     float d = length(p);
     if (d > 1.0) discard;
-    float core = exp(-d * d * 3.8);
-    float halo = exp(-d * d * 1.2) * 0.35;
-    float a = (core + halo) * vBright;
-    vec3 cold = vec3(0.45, 0.72, 0.98);
+    float core = exp(-d * d * 4.2);
+    float halo = exp(-d * d * 1.4) * 0.28;
+    float a = (core + halo) * vBright * 0.85;
+    vec3 cold = vec3(0.42, 0.7, 0.98);
     vec3 mid = vec3(0.72, 0.88, 1.0);
     vec3 warm = vec3(0.98, 0.9, 0.72);
     vec3 col = mix(cold, mid, smoothstep(0.25, 0.75, vBright));
@@ -127,7 +410,6 @@ const pointFragment = `
   }
 `;
 
-// Soft volumetric haze balls — density as matter, not only points.
 const hazeVertex = `
   varying vec3 vNormal;
   varying vec3 vView;
@@ -148,7 +430,6 @@ const hazeFragment = `
 
   void main() {
     float ndv = max(dot(normalize(vNormal), normalize(vView)), 0.0);
-    // Soft ball: bright center, fade at limb.
     float body = pow(ndv, 1.6);
     float rim = pow(1.0 - ndv, 2.8) * 0.35;
     float a = (body * 0.55 + rim) * uIntensity;
@@ -179,13 +460,11 @@ const trajFragment = `
 
   void main() {
     float life = smoothstep(0.0, 0.06, vAlong) * (1.0 - smoothstep(0.9, 1.0, vAlong));
-    // Fray: tail unravels first as the path dies.
     life *= 1.0 - uFray * smoothstep(0.35, 1.0, vAlong) * 0.85;
     float head = exp(-pow(vAlong - uPulse, 2.0) / 0.008);
     float spine = 1.0 - vFil * 0.28;
     vec3 col = mix(vec3(0.42, 0.72, 0.98), vec3(1.0, 0.93, 0.78), head * 0.9 + (1.0 - vFil) * 0.15);
     float a = (0.22 * life * spine + 0.72 * head * spine) * uFade;
-    // Secondary filaments slightly dimmer.
     a *= mix(1.0, 0.55, vFil);
     gl_FragColor = vec4(col, a);
   }
@@ -201,14 +480,6 @@ function mulberry32(seed: number) {
   };
 }
 
-function clampInside(v: THREE.Vector3, pad = 0.04) {
-  const lim = HALF - pad;
-  v.x = Math.min(Math.max(v.x, -lim), lim);
-  v.y = Math.min(Math.max(v.y, -lim), lim);
-  v.z = Math.min(Math.max(v.z, -lim), lim);
-  return v;
-}
-
 function smoothstep(edge0: number, edge1: number, x: number) {
   const t = Math.min(Math.max((x - edge0) / (edge1 - edge0), 0), 1);
   return t * t * (3 - 2 * t);
@@ -216,156 +487,7 @@ function smoothstep(edge0: number, edge1: number, x: number) {
 
 const _pathTmp = new THREE.Vector3();
 const _pathTmp2 = new THREE.Vector3();
-
-// Formation targets inside the cube. Each mode is a different "hypothesis world".
-function targetFor(
-  mode: number,
-  seed: number,
-  i: number,
-  n: number,
-  t: number,
-  out: THREE.Vector3,
-) {
-  const u = i / Math.max(n - 1, 1);
-  const s1 = seed;
-  const s2 = (seed * 1.6180339887) % 1;
-  const s3 = (seed * 2.718281828) % 1;
-
-  if (mode < 0.5) {
-    const a = s1 * Math.PI * 2;
-    const b = s2 * Math.PI * 2;
-    const r = Math.pow(0.15 + s3 * 0.85, 0.55) * HALF * 0.92;
-    out.set(
-      Math.sin(a) * Math.cos(b) * r,
-      (s2 * 2 - 1) * HALF * 0.85,
-      Math.cos(a) * Math.cos(b) * r * 0.9,
-    );
-    out.x += Math.sin(t * 0.22 + s1 * 9.0) * 0.03;
-    out.y += Math.cos(t * 0.18 + s2 * 7.0) * 0.025;
-  } else if (mode < 1.5) {
-    const cluster = Math.floor(s1 * 3) % 3;
-    const cx = cluster === 0 ? -0.22 : cluster === 1 ? 0.2 : 0.02;
-    const cy = cluster === 0 ? 0.12 : cluster === 1 ? -0.08 : 0.18;
-    const cz = cluster === 0 ? 0.1 : cluster === 1 ? -0.16 : -0.22;
-    const spread = 0.1 + s2 * 0.08;
-    const a = s3 * Math.PI * 2 + t * 0.15;
-    out.set(
-      cx + Math.cos(a) * spread * (0.5 + s1 * 0.5),
-      cy + Math.sin(a * 1.3) * spread * 0.7,
-      cz + Math.sin(a) * spread * (0.5 + s2 * 0.5),
-    );
-  } else if (mode < 2.5) {
-    const g = 7;
-    const gx = (Math.floor(s1 * g) + 0.5) / g - 0.5;
-    const gy = (Math.floor(s2 * g) + 0.5) / g - 0.5;
-    const gz = (Math.floor(s3 * g) + 0.5) / g - 0.5;
-    const jitter = 0.018;
-    const breath = 1 + 0.02 * Math.sin(t * 0.35 + s1 * 4.0);
-    out.set(
-      (gx * CUBE * 0.82 + (s1 - 0.5) * jitter) * breath,
-      (gy * CUBE * 0.82 + (s2 - 0.5) * jitter) * breath,
-      (gz * CUBE * 0.82 + (s3 - 0.5) * jitter) * breath,
-    );
-  } else if (mode < 3.5) {
-    if (s3 > 0.72) {
-      const sa = s1 * Math.PI * 2;
-      const sr = 0.22 + s2 * 0.2;
-      out.set(Math.cos(sa) * sr, (s2 - 0.5) * CUBE * 0.7, Math.sin(sa) * sr);
-    } else {
-      const turns = 3.2;
-      const angle = u * Math.PI * 2 * turns + t * 0.25;
-      const radius = 0.08 + (1 - u) * 0.28 * (0.6 + s2 * 0.4);
-      const y = (u - 0.5) * CUBE * 0.78;
-      out.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
-    }
-  } else if (mode < 4.5) {
-    const arms = 3;
-    const maxR = HALF * 0.9;
-    const spin = t * 0.16;
-
-    if (s3 > 0.9) {
-      const ha = s1 * Math.PI * 2;
-      const hb = (s2 - 0.5) * Math.PI;
-      const hr = Math.pow(0.2 + s1 * 0.8, 0.55) * maxR * 0.72;
-      out.set(
-        Math.cos(ha) * Math.cos(hb) * hr,
-        Math.sin(hb) * hr * 0.55,
-        Math.sin(ha) * Math.cos(hb) * hr,
-      );
-    } else if (s3 < 0.14) {
-      const br = Math.pow(s2, 0.55) * 0.085;
-      const ba = s1 * Math.PI * 2 + spin * 1.4;
-      const bh = (s3 - 0.07) * 0.22;
-      out.set(Math.cos(ba) * br, bh, Math.sin(ba) * br);
-    } else {
-      const arm = Math.floor(s1 * arms) % arms;
-      const radius = Math.pow(0.04 + s2 * 0.96, 0.62) * maxR;
-      const wind = 2.85;
-      const armPhase = (arm / arms) * Math.PI * 2;
-      const theta =
-        armPhase +
-        Math.log(1.0 + radius * 9.0) * wind +
-        spin +
-        (s3 - 0.5) * (0.1 + radius * 0.22);
-      const diskH =
-        (s1 - 0.5) * (0.028 + (1.0 - radius / maxR) * 0.055) +
-        Math.sin(theta * 2.0 + s2 * 4.0) * 0.008 * radius;
-      const x = Math.cos(theta) * radius;
-      const y = diskH;
-      const z = Math.sin(theta) * radius;
-      const tilt = 0.42;
-      const cy = Math.cos(tilt);
-      const sy = Math.sin(tilt);
-      out.set(x * 0.96, y * cy - z * sy, (y * sy + z * cy) * 0.96);
-    }
-  } else {
-    // Dominant trajectory corridor — mass concentrates along one path.
-    const pathT = u * 0.92 + s1 * 0.06;
-    const angle = pathT * Math.PI * 1.6;
-    const px = Math.sin(angle * 1.1) * 0.28;
-    const py = (pathT - 0.5) * CUBE * 0.72;
-    const pz = Math.cos(angle * 0.9) * 0.24;
-    const tx = -Math.cos(angle * 1.1);
-    const ty = 0.15;
-    const tz = Math.sin(angle * 0.9);
-    const tLen = Math.hypot(tx, ty, tz) || 1;
-    const tnx = tx / tLen;
-    const tny = ty / tLen;
-    const tnz = tz / tLen;
-    let bx = -tnz;
-    let by = 0;
-    let bz = tnx;
-    const bLen = Math.hypot(bx, by, bz) || 1;
-    bx /= bLen;
-    by /= bLen;
-    bz /= bLen;
-    const radial = (s2 - 0.5) * 0.1 * (1.05 - pathT);
-    const along = (s3 - 0.5) * 0.035;
-    out.set(
-      px + bx * radial + tnx * along,
-      py + by * radial + tny * along,
-      pz + bz * radial + tnz * along,
-    );
-  }
-
-  return clampInside(out, 0.05);
-}
-
-/** Scatter target for the free-fall beat between worlds. */
-function scatterTarget(seed: number, t: number, out: THREE.Vector3) {
-  const s1 = seed;
-  const s2 = (seed * 1.6180339887) % 1;
-  const s3 = (seed * 2.718281828) % 1;
-  const a = s1 * Math.PI * 2 + t * 0.7;
-  const b = s2 * Math.PI * 2 - t * 0.45;
-  const r = (0.2 + s3 * 0.75) * HALF * 0.95;
-  out.set(
-    Math.sin(a) * Math.cos(b) * r,
-    (s2 * 2 - 1) * HALF * 0.88 + Math.sin(t * 1.1 + s1 * 8.0) * 0.04,
-    Math.cos(a) * Math.cos(b) * r,
-  );
-  return clampInside(out, 0.04);
-}
+const _tmp = new THREE.Vector3();
 
 function trajPoint(t: number, phase: number, out: THREE.Vector3) {
   const angle = t * Math.PI * 1.6 + phase * 0.4;
@@ -374,30 +496,59 @@ function trajPoint(t: number, phase: number, out: THREE.Vector3) {
     (t - 0.5) * CUBE * 0.72,
     Math.cos(angle * 0.9) * 0.24,
   );
-  return clampInside(out, 0.08);
+  const lim = HALF - 0.08;
+  out.x = Math.min(Math.max(out.x, -lim), lim);
+  out.y = Math.min(Math.max(out.y, -lim), lim);
+  out.z = Math.min(Math.max(out.z, -lim), lim);
+  return out;
 }
 
-/** Offset a path sample onto a braid filament. */
 function trajFilament(t: number, phase: number, fil: number, fray: number, out: THREE.Vector3) {
   trajPoint(t, phase, out);
   const angle = t * Math.PI * 1.6 + phase * 0.4;
   const tx = -Math.cos(angle * 1.1);
-  const ty = 0.15;
   const tz = Math.sin(angle * 0.9);
-  const tLen = Math.hypot(tx, ty, tz) || 1;
+  const tLen = Math.hypot(tx, 0.15, tz) || 1;
   let bx = -tz / tLen;
-  let by = 0;
   let bz = tx / tLen;
-  const bLen = Math.hypot(bx, by, bz) || 1;
+  const bLen = Math.hypot(bx, bz) || 1;
   bx /= bLen;
   bz /= bLen;
   const amp = (0.012 + fil * 0.014) * (1 + fray * 3.5 * t);
   const wave = Math.sin(t * 14.0 + fil * 2.1 + phase) * amp;
   const wave2 = Math.cos(t * 9.0 - fil * 1.7) * amp * 0.45;
   out.x += bx * wave + (tx / tLen) * wave2 * 0.3;
-  out.y += by * wave + ty * wave2 * 0.2;
+  out.y += 0.15 * wave2 * 0.2;
   out.z += bz * wave + (tz / tLen) * wave2 * 0.3;
-  return clampInside(out, 0.06);
+  return out;
+}
+
+function fillParticleTextures(
+  posTex: THREE.DataTexture,
+  velTex: THREE.DataTexture,
+  size: number,
+  rand: () => number,
+) {
+  const pos = posTex.image.data as Float32Array;
+  const vel = velTex.image.data as Float32Array;
+  const n = size * size;
+  for (let i = 0; i < n; i++) {
+    const i4 = i * 4;
+    const seed = rand();
+    const a = rand() * Math.PI * 2;
+    const b = rand() * Math.PI * 2;
+    const r = Math.pow(0.15 + rand() * 0.85, 0.55) * HALF * 0.9;
+    pos[i4] = Math.sin(a) * Math.cos(b) * r;
+    pos[i4 + 1] = (rand() * 2 - 1) * HALF * 0.85;
+    pos[i4 + 2] = Math.cos(a) * Math.cos(b) * r * 0.9;
+    pos[i4 + 3] = seed;
+    vel[i4] = 0;
+    vel[i4 + 1] = 0;
+    vel[i4 + 2] = 0;
+    vel[i4 + 3] = 1;
+  }
+  posTex.needsUpdate = true;
+  velTex.needsUpdate = true;
 }
 
 export default function SimulationEnsembleRender() {
@@ -425,8 +576,9 @@ export default function SimulationEnsembleRender() {
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.matchMedia('(max-width: 900px)').matches;
-    const count = isMobile ? PARTICLE_COUNT_MOBILE : PARTICLE_COUNT_DESKTOP;
-    const rand = mulberry32(20260721);
+    const gpuSize = isMobile ? GPU_SIZE_MOBILE : GPU_SIZE_DESKTOP;
+    const particleCount = gpuSize * gpuSize;
+    const rand = mulberry32(20260722);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 20);
@@ -439,12 +591,12 @@ export default function SimulationEnsembleRender() {
     const world = new THREE.Group();
     scene.add(world);
 
-    // --- Real glass cube shell ---
+    // --- Glass shell ---
     const shell = new THREE.Group();
     world.add(shell);
 
     const boxGeo = new THREE.BoxGeometry(CUBE, CUBE, CUBE);
-    const outerGlassGeo = new THREE.BoxGeometry(CUBE, CUBE, CUBE, 1, 1, 1);
+    const outerGlassGeo = new THREE.BoxGeometry(CUBE, CUBE, CUBE);
     const innerGlassGeo = new THREE.BoxGeometry(CUBE * 0.965, CUBE * 0.965, CUBE * 0.965);
 
     const glassMat = createGlassMaterial(envMap, { thickness: 0.62, transmission: 1 });
@@ -479,9 +631,7 @@ export default function SimulationEnsembleRender() {
       opacity: 0.22,
       depthWrite: false,
     });
-    const innerEdges = new THREE.LineSegments(innerEdgesGeo, innerEdgeMat);
-    innerEdges.renderOrder = 5;
-    shell.add(innerEdges);
+    shell.add(new THREE.LineSegments(innerEdgesGeo, innerEdgeMat));
 
     const cornerGeo = new THREE.BufferGeometry();
     const cornerPos = new Float32Array(8 * 3);
@@ -511,11 +661,10 @@ export default function SimulationEnsembleRender() {
     corners.renderOrder = 6;
     shell.add(corners);
 
-    // --- Volume haze (soft density orbs) ---
+    // --- Volume haze ---
     const hazeGroup = new THREE.Group();
-    hazeGroup.renderOrder = 0;
     world.add(hazeGroup);
-    const hazeSphereGeo = new THREE.SphereGeometry(1, 20, 16);
+    const hazeSphereGeo = new THREE.SphereGeometry(1, 16, 12);
     const hazeMeshes: THREE.Mesh[] = [];
     const hazeMats: THREE.ShaderMaterial[] = [];
     for (let h = 0; h < HAZE_COUNT; h++) {
@@ -529,7 +678,6 @@ export default function SimulationEnsembleRender() {
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
-        side: THREE.FrontSide,
       });
       const mesh = new THREE.Mesh(hazeSphereGeo, mat);
       mesh.scale.setScalar(0.12);
@@ -539,41 +687,80 @@ export default function SimulationEnsembleRender() {
       hazeMats.push(mat);
     }
 
-    // --- Particle field ---
-    const positions = new Float32Array(count * 3);
-    const velocities = new Float32Array(count * 3);
-    const sizes = new Float32Array(count);
-    const brights = new Float32Array(count);
-    const seeds = new Float32Array(count);
-    const tmp = new THREE.Vector3();
-    const target = new THREE.Vector3();
-    const pos = new THREE.Vector3();
-    const scatter = new THREE.Vector3();
+    // --- GPU particle field ---
+    const gpuCompute = new GPUComputationRenderer(gpuSize, gpuSize, renderer);
+    // Prefer half-float on mobile for memory/bandwidth.
+    if (isMobile) {
+      gpuCompute.setDataType(THREE.HalfFloatType);
+    }
 
-    for (let i = 0; i < count; i++) {
-      const s = rand();
-      seeds[i] = s;
-      sizes[i] = 0.008 + rand() * 0.016;
-      brights[i] = 0.25 + rand() * 0.55;
-      targetFor(0, s, i, count, 0, tmp);
-      positions[i * 3] = tmp.x;
-      positions[i * 3 + 1] = tmp.y;
-      positions[i * 3 + 2] = tmp.z;
-      velocities[i * 3] = 0;
-      velocities[i * 3 + 1] = 0;
-      velocities[i * 3 + 2] = 0;
+    const pos0 = gpuCompute.createTexture();
+    const vel0 = gpuCompute.createTexture();
+    fillParticleTextures(pos0, vel0, gpuSize, rand);
+
+    const velVar = gpuCompute.addVariable('textureVelocity', velocityShader, vel0);
+    const posVar = gpuCompute.addVariable('texturePosition', positionShader, pos0);
+    gpuCompute.setVariableDependencies(velVar, [velVar, posVar]);
+    gpuCompute.setVariableDependencies(posVar, [velVar, posVar]);
+
+    const velUniforms = velVar.material.uniforms;
+    velUniforms.uTime = { value: 0 };
+    velUniforms.uDt = { value: 0.016 };
+    velUniforms.uModeA = { value: 0 };
+    velUniforms.uModeB = { value: 1 };
+    velUniforms.uReform = { value: 0 };
+    velUniforms.uDetonate = { value: 0 };
+    velUniforms.uFreeFall = { value: 0 };
+    velUniforms.uInPath = { value: 0 };
+    velUniforms.uInGalaxy = { value: 0 };
+    velUniforms.uTrajFray = { value: 0 };
+    velUniforms.uTrajPhase = { value: 0 };
+    velUniforms.uIndexScale = { value: 1 / Math.max(particleCount - 1, 1) };
+
+    posVar.material.uniforms.uDt = { value: 0.016 };
+
+    let gpuOk = true;
+    const gpuError = gpuCompute.init();
+    if (gpuError !== null) {
+      // Retry with half float if full float failed.
+      gpuCompute.setDataType(THREE.HalfFloatType);
+      const retry = gpuCompute.init();
+      if (retry !== null) {
+        gpuOk = false;
+        console.warn('Simulation GPU particles unavailable:', retry);
+      }
+    }
+
+    const refs = new Float32Array(particleCount * 2);
+    const seeds = new Float32Array(particleCount);
+    for (let i = 0; i < particleCount; i++) {
+      const x = (i % gpuSize) / gpuSize;
+      const y = Math.floor(i / gpuSize) / gpuSize;
+      // Sample texel centers.
+      refs[i * 2] = x + 0.5 / gpuSize;
+      refs[i * 2 + 1] = y + 0.5 / gpuSize;
+      seeds[i] = (pos0.image.data as Float32Array)[i * 4 + 3];
     }
 
     const pGeo = new THREE.BufferGeometry();
-    pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    pGeo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
-    pGeo.setAttribute('aBright', new THREE.BufferAttribute(brights, 1));
+    // Dummy positions required by Three; real positions come from texture.
+    pGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(particleCount * 3), 3));
+    pGeo.setAttribute('aRef', new THREE.BufferAttribute(refs, 2));
     pGeo.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 1));
+    pGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 1.2);
 
     const pMat = new THREE.ShaderMaterial({
       uniforms: {
+        texturePosition: { value: null as THREE.Texture | null },
         uPixelRatio: { value: 1 },
         uTime: { value: 0 },
+        uTrajFade: { value: 0 },
+        uTrajFray: { value: 0 },
+        uTrajPhase: { value: 0 },
+        uInGalaxy: { value: 0 },
+        uDetonate: { value: 0 },
+        uFreeFall: { value: 0 },
+        uInPath: { value: 0 },
       },
       vertexShader: pointVertex,
       fragmentShader: pointFragment,
@@ -582,10 +769,11 @@ export default function SimulationEnsembleRender() {
       blending: THREE.AdditiveBlending,
     });
     const points = new THREE.Points(pGeo, pMat);
+    points.frustumCulled = false;
     points.renderOrder = 1;
-    world.add(points);
+    if (gpuOk) world.add(points);
 
-    // --- Dominant trajectory + braid filaments ---
+    // --- Trajectory filaments ---
     const trajVertCount = TRAJ_POINTS * FILAMENT_COUNT;
     const trajPositions = new Float32Array(trajVertCount * 3);
     const trajAlong = new Float32Array(trajVertCount);
@@ -596,13 +784,11 @@ export default function SimulationEnsembleRender() {
         const idx = f * TRAJ_POINTS + i;
         trajAlong[idx] = i / (TRAJ_POINTS - 1);
         trajFil[idx] = f / Math.max(FILAMENT_COUNT - 1, 1);
-        trajFilament(trajAlong[idx], 0, f, 0, tmp);
-        trajPositions[idx * 3] = tmp.x;
-        trajPositions[idx * 3 + 1] = tmp.y;
-        trajPositions[idx * 3 + 2] = tmp.z;
-        if (i < TRAJ_POINTS - 1) {
-          trajIndices.push(idx, idx + 1);
-        }
+        trajFilament(trajAlong[idx], 0, f, 0, _tmp);
+        trajPositions[idx * 3] = _tmp.x;
+        trajPositions[idx * 3 + 1] = _tmp.y;
+        trajPositions[idx * 3 + 2] = _tmp.z;
+        if (i < TRAJ_POINTS - 1) trajIndices.push(idx, idx + 1);
       }
     }
     const trajGeo = new THREE.BufferGeometry();
@@ -626,7 +812,6 @@ export default function SimulationEnsembleRender() {
     trajectory.renderOrder = 2;
     world.add(trajectory);
 
-    // Soft path head point.
     const headGeo = new THREE.BufferGeometry();
     headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3));
     const headMat = new THREE.PointsMaterial({
@@ -642,8 +827,7 @@ export default function SimulationEnsembleRender() {
     headPoint.renderOrder = 2;
     world.add(headPoint);
 
-    const ambient = new THREE.AmbientLight(0x6a88aa, 0.28);
-    scene.add(ambient);
+    scene.add(new THREE.AmbientLight(0x6a88aa, 0.28));
     const key = new THREE.DirectionalLight(0xf2f7ff, 1.35);
     key.position.set(2.4, 3.2, 2.8);
     scene.add(key);
@@ -659,7 +843,8 @@ export default function SimulationEnsembleRender() {
     renderer.toneMappingExposure = 1.05;
     renderer.setClearColor(0x000000, 0);
     renderer.domElement.className = 'hermes-render-canvas';
-    renderer.domElement.dataset.simulationRender = 'glass-cube';
+    renderer.domElement.dataset.simulationRender = 'glass-cube-gpu';
+    renderer.domElement.dataset.particleCount = String(particleCount);
     mount.appendChild(renderer.domElement);
 
     let frameId: number | null = null;
@@ -688,8 +873,6 @@ export default function SimulationEnsembleRender() {
       card.addEventListener('pointerleave', onPointerLeave);
     }
 
-    // Mode cycle: gas → clusters → lattice → helix → galaxy → dominant path.
-    // Hold is longer on galaxy/path; blend is a collapse beat (detonate → free fall → reform).
     const MODE_COUNT = 6;
     const MODE_HOLD = 5.2;
     const MODE_BLEND = 1.85;
@@ -744,7 +927,6 @@ export default function SimulationEnsembleRender() {
       const dt = Math.min((now - lastT) / 1000, 0.05);
       lastT = now;
       const elapsed = (now - startedAt) / 1000;
-      pMat.uniforms.uTime.value = elapsed;
 
       pointer.x += (pointer.tx - pointer.x) * 0.06;
       pointer.y += (pointer.ty - pointer.y) * 0.06;
@@ -770,18 +952,13 @@ export default function SimulationEnsembleRender() {
         blend = smoothstep(0, MODE_BLEND, local - MODE_HOLD);
       }
 
-      // Collapse beat inside the blend: detonate → free fall → recondense.
-      // 0–0.38 detonate, 0.38–0.55 scatter, 0.55–1.0 reform.
       const detonate = blend > 0 ? smoothstep(0, 0.38, blend) * (1 - smoothstep(0.38, 0.52, blend)) : 0;
       const freeFall = blend > 0 ? smoothstep(0.32, 0.48, blend) * (1 - smoothstep(0.55, 0.72, blend)) : 0;
       const reform = blend > 0 ? smoothstep(0.52, 0.95, blend) : 0;
-      const chaos = Math.max(detonate, freeFall);
 
-      // Path climax envelope + fray on exit.
       let trajFade = 0;
       let trajFray = 0;
       if (modeA === PATH_MODE) {
-        // Hold full strength, fray as we leave.
         trajFade = 1 - reform * 0.95;
         trajFray = reform;
       }
@@ -789,7 +966,6 @@ export default function SimulationEnsembleRender() {
         trajFade = Math.max(trajFade, reform);
         trajFray = Math.min(trajFray, 1 - reform);
       }
-      // Prefade in from galaxy collapse.
       if (modeA === GALAXY_MODE && blend > 0.5) {
         trajFade = Math.max(trajFade, (blend - 0.5) * 1.5 * reform);
       }
@@ -811,228 +987,108 @@ export default function SimulationEnsembleRender() {
             : reform
           : 0;
 
-      const trajPhase = Math.floor(elapsed / EPOCH);
+      const trajPhase = Math.floor(elapsed / EPOCH) * 0.7;
       for (let f = 0; f < FILAMENT_COUNT; f++) {
         for (let i = 0; i < TRAJ_POINTS; i++) {
           const idx = f * TRAJ_POINTS + i;
           const tt = i / (TRAJ_POINTS - 1);
-          trajFilament(tt, trajPhase * 0.7, f, trajFray, tmp);
-          trajPositions[idx * 3] = tmp.x;
-          trajPositions[idx * 3 + 1] = tmp.y;
-          trajPositions[idx * 3 + 2] = tmp.z;
+          trajFilament(tt, trajPhase, f, trajFray, _tmp);
+          trajPositions[idx * 3] = _tmp.x;
+          trajPositions[idx * 3 + 1] = _tmp.y;
+          trajPositions[idx * 3 + 2] = _tmp.z;
         }
       }
       trajGeo.attributes.position.needsUpdate = true;
 
-      // Path head
       const pulse = trajMat.uniforms.uPulse.value as number;
-      trajPoint(pulse, trajPhase * 0.7, tmp);
+      trajPoint(pulse, trajPhase, _tmp);
       const headArr = headGeo.attributes.position.array as Float32Array;
-      headArr[0] = tmp.x;
-      headArr[1] = tmp.y;
-      headArr[2] = tmp.z;
+      headArr[0] = _tmp.x;
+      headArr[1] = _tmp.y;
+      headArr[2] = _tmp.z;
       headGeo.attributes.position.needsUpdate = true;
       headMat.opacity = trajFade * (0.55 + 0.45 * (1 - trajFray));
       headMat.size = 0.04 + trajFade * 0.035;
 
-      // --- Volume haze by mode ---
+      // Haze
       for (let h = 0; h < HAZE_COUNT; h++) setHaze(h, 0, 0, 0, 0.1, 0);
       const hazeBoost = (1 - freeFall * 0.85) * (1 - detonate * 0.4);
       if (modeA === 0 || modeB === 0) {
         const g = modeA === 0 ? 1 - reform : reform;
-        setHaze(0, 0, 0, 0, 0.42, 0.18 * g * hazeBoost, 0.1);
+        setHaze(0, 0, 0, 0, 0.42, 0.16 * g * hazeBoost, 0.1);
       }
       if (modeA === 1 || modeB === 1) {
         const g = modeA === 1 ? 1 - reform : reform;
-        setHaze(0, -0.22, 0.12, 0.1, 0.2, 0.28 * g * hazeBoost, 0.2);
-        setHaze(1, 0.2, -0.08, -0.16, 0.18, 0.24 * g * hazeBoost, 0.15);
-        setHaze(2, 0.02, 0.18, -0.22, 0.17, 0.22 * g * hazeBoost, 0.12);
+        setHaze(0, -0.22, 0.12, 0.1, 0.2, 0.26 * g * hazeBoost, 0.2);
+        setHaze(1, 0.2, -0.08, -0.16, 0.18, 0.22 * g * hazeBoost, 0.15);
+        setHaze(2, 0.02, 0.18, -0.22, 0.17, 0.2 * g * hazeBoost, 0.12);
       }
       if (modeA === 2 || modeB === 2) {
         const g = modeA === 2 ? 1 - reform : reform;
-        setHaze(0, 0, 0, 0, 0.38, 0.14 * g * hazeBoost, 0.05);
+        setHaze(0, 0, 0, 0, 0.38, 0.12 * g * hazeBoost, 0.05);
       }
       if (modeA === 3 || modeB === 3) {
         const g = modeA === 3 ? 1 - reform : reform;
-        setHaze(0, 0, 0, 0, 0.16, 0.22 * g * hazeBoost, 0.25);
-        setHaze(1, 0, 0.2, 0, 0.14, 0.14 * g * hazeBoost, 0.1);
-        setHaze(2, 0, -0.2, 0, 0.14, 0.14 * g * hazeBoost, 0.1);
+        setHaze(0, 0, 0, 0, 0.16, 0.2 * g * hazeBoost, 0.25);
+        setHaze(1, 0, 0.2, 0, 0.14, 0.12 * g * hazeBoost, 0.1);
+        setHaze(2, 0, -0.2, 0, 0.14, 0.12 * g * hazeBoost, 0.1);
       }
       if (inGalaxy > 0.02) {
-        setHaze(0, 0, 0, 0, 0.16, 0.42 * inGalaxy * hazeBoost, 0.55);
-        setHaze(1, 0.12, 0.02, 0.08, 0.22, 0.16 * inGalaxy * hazeBoost, 0.2);
-        setHaze(2, -0.14, -0.03, -0.1, 0.2, 0.14 * inGalaxy * hazeBoost, 0.15);
-        setHaze(3, 0.05, -0.08, 0.16, 0.18, 0.12 * inGalaxy * hazeBoost, 0.1);
+        setHaze(0, 0, 0, 0, 0.16, 0.4 * inGalaxy * hazeBoost, 0.55);
+        setHaze(1, 0.12, 0.02, 0.08, 0.22, 0.14 * inGalaxy * hazeBoost, 0.2);
+        setHaze(2, -0.14, -0.03, -0.1, 0.2, 0.12 * inGalaxy * hazeBoost, 0.15);
+        setHaze(3, 0.05, -0.08, 0.16, 0.18, 0.1 * inGalaxy * hazeBoost, 0.1);
       }
       if (inPath > 0.02) {
-        trajPoint(0.25, trajPhase * 0.7, _pathTmp);
-        trajPoint(0.55, trajPhase * 0.7, _pathTmp2);
-        trajPoint(0.8, trajPhase * 0.7, tmp);
-        setHaze(0, _pathTmp.x, _pathTmp.y, _pathTmp.z, 0.14, 0.22 * inPath * hazeBoost, 0.35);
-        setHaze(1, _pathTmp2.x, _pathTmp2.y, _pathTmp2.z, 0.13, 0.28 * inPath * hazeBoost, 0.45);
-        setHaze(2, tmp.x, tmp.y, tmp.z, 0.12, 0.2 * inPath * hazeBoost, 0.3);
-        // Head bloom
-        setHaze(3, headArr[0], headArr[1], headArr[2], 0.1, 0.35 * trajFade * hazeBoost, 0.7);
+        trajPoint(0.25, trajPhase, _pathTmp);
+        trajPoint(0.55, trajPhase, _pathTmp2);
+        trajPoint(0.8, trajPhase, _tmp);
+        setHaze(0, _pathTmp.x, _pathTmp.y, _pathTmp.z, 0.14, 0.2 * inPath * hazeBoost, 0.35);
+        setHaze(1, _pathTmp2.x, _pathTmp2.y, _pathTmp2.z, 0.13, 0.26 * inPath * hazeBoost, 0.45);
+        setHaze(2, _tmp.x, _tmp.y, _tmp.z, 0.12, 0.18 * inPath * hazeBoost, 0.3);
+        setHaze(3, headArr[0], headArr[1], headArr[2], 0.1, 0.32 * trajFade * hazeBoost, 0.7);
       }
-      // Chaos flash — brief volume bloom on detonate.
       if (detonate > 0.05) {
-        setHaze(5, 0, 0, 0, 0.35 + detonate * 0.2, 0.2 * detonate, 0.4);
+        setHaze(5, 0, 0, 0, 0.35 + detonate * 0.2, 0.18 * detonate, 0.4);
       }
 
-      const posAttr = pGeo.attributes.position as THREE.BufferAttribute;
-      const brightAttr = pGeo.attributes.aBright as THREE.BufferAttribute;
-      const damp = 1 - Math.exp(-dt * 3.2);
-      const spring = reducedMotion ? 0 : 1;
+      // GPU sim step
       const step = Math.min(dt, 0.033);
-      const drag = Math.exp(-3.2 * step);
-
-      for (let i = 0; i < count; i++) {
-        const s = seeds[i];
-        const ix = i * 3;
-
-        // Formation targets with collapse beat.
-        targetFor(modeA, s, i, count, elapsed, pos);
-        if (reform > 0.001) {
-          targetFor(modeB, s, i, count, elapsed, target);
-          pos.lerp(target, reform);
-        }
-        if (detonate > 0.001) {
-          // Detonate: fling outward from formation center of mass (origin-ish).
-          const burst = 1 + detonate * (0.55 + s * 0.45);
-          pos.x *= burst;
-          pos.y *= burst;
-          pos.z *= burst;
-          pos.x += (s - 0.5) * detonate * 0.2;
-          pos.y += (((s * 1.7) % 1) - 0.5) * detonate * 0.2;
-          pos.z += (((s * 2.3) % 1) - 0.5) * detonate * 0.2;
-          clampInside(pos, 0.04);
-        }
-        if (freeFall > 0.001) {
-          scatterTarget(s, elapsed + modeIndex * 3.1, scatter);
-          pos.lerp(scatter, freeFall);
-        }
-
-        // Path climax: hard magnetize onto corridor; fray on exit.
-        if (inPath > 0.02) {
-          const pathT = Math.min(Math.max((positions[ix + 1] / (CUBE * 0.72) + 0.5) * 0.85 + s * 0.12, 0), 1);
-          trajPoint(pathT, trajPhase * 0.7, target);
-          const magnet = inPath * (0.55 + (1 - trajFray) * 0.4);
-          pos.lerp(target, magnet);
-          if (trajFray > 0.05) {
-            // Unravel: splay off the spine.
-            const splay = trajFray * (0.08 + s * 0.12);
-            pos.x += (s - 0.5) * splay * 2.2;
-            pos.y += (((s * 1.3) % 1) - 0.5) * splay;
-            pos.z += (((s * 2.1) % 1) - 0.5) * splay * 2.2;
-          }
-          clampInside(pos, 0.05);
-        }
-
-        let px = positions[ix];
-        let py = positions[ix + 1];
-        let pz = positions[ix + 2];
-        let vx = velocities[ix];
-        let vy = velocities[ix + 1];
-        let vz = velocities[ix + 2];
-
-        if (spring) {
-          const aMul =
-            1 +
-            inGalaxy * 0.4 +
-            inPath * 0.55 +
-            reform * 0.35 +
-            detonate * 0.2 -
-            freeFall * 0.25;
-          const nMul = Math.max(0.15, 1 - inGalaxy * 0.55 - inPath * 0.4 + freeFall * 0.9 + detonate * 0.5);
-          const attract = 6.8 * aMul;
-          vx = (vx + (pos.x - px) * attract * step) * drag;
-          vy = (vy + (pos.y - py) * attract * step) * drag;
-          vz = (vz + (pos.z - pz) * attract * step) * drag;
-          vx += Math.sin(elapsed * 0.9 + s * 20.0) * 0.14 * nMul * step;
-          vy += Math.cos(elapsed * 0.7 + s * 17.0) * 0.12 * nMul * step;
-          vz += Math.sin(elapsed * 0.6 + s * 13.0) * 0.14 * nMul * step;
-          // Detonate impulse once per particle direction.
-          if (detonate > 0.2 && detonate < 0.85) {
-            const impulse = detonate * 0.35 * step * 8;
-            vx += px * impulse;
-            vy += py * impulse;
-            vz += pz * impulse;
-          }
-          px += vx;
-          py += vy;
-          pz += vz;
-        } else {
-          px += (pos.x - px) * damp;
-          py += (pos.y - py) * damp;
-          pz += (pos.z - pz) * damp;
-          vx = 0;
-          vy = 0;
-          vz = 0;
-        }
-
-        const lim = HALF - 0.03;
-        if (px > lim || px < -lim) {
-          px = Math.min(Math.max(px, -lim), lim);
-          vx *= -0.28;
-        }
-        if (py > lim || py < -lim) {
-          py = Math.min(Math.max(py, -lim), lim);
-          vy *= -0.28;
-        }
-        if (pz > lim || pz < -lim) {
-          pz = Math.min(Math.max(pz, -lim), lim);
-          vz *= -0.28;
-        }
-
-        positions[ix] = px;
-        positions[ix + 1] = py;
-        positions[ix + 2] = pz;
-        velocities[ix] = vx;
-        velocities[ix + 1] = vy;
-        velocities[ix + 2] = vz;
-
-        let b = 0.2 + s * 0.42;
-        // Depth cue: slightly dim farther particles (view-ish using -z bias in world).
-        b *= 0.88 + 0.12 * ((pz + HALF) / CUBE);
-
-        if (trajFade > 0.04) {
-          const pathT = Math.min(Math.max(py / (CUBE * 0.72) + 0.5, 0), 1);
-          trajPoint(pathT, trajPhase * 0.7, _pathTmp);
-          const dx = px - _pathTmp.x;
-          const dy = py - _pathTmp.y;
-          const dz = pz - _pathTmp.z;
-          const dist2 = dx * dx + dy * dy + dz * dz;
-          b += Math.exp(-dist2 / 0.015) * 0.75 * trajFade * (1 - trajFray * 0.5);
-          b += Math.exp(-dist2 / 0.06) * 0.2 * trajFade;
-        }
-        if (modeA === 1 || modeB === 1) {
-          b += 0.08 * (modeA === 1 ? 1 - reform : reform);
-        }
-        if (inGalaxy > 0.02) {
-          const coreR2 = px * px + py * py * 1.4 + pz * pz;
-          b += Math.exp(-coreR2 / 0.012) * 0.75 * inGalaxy;
-          b += Math.exp(-coreR2 / 0.08) * 0.2 * inGalaxy;
-          if (coreR2 > 0.22) b *= 1 - 0.2 * inGalaxy;
-        }
-        // Chaos flash
-        b += detonate * 0.2 + freeFall * 0.06;
-        // Soft floor shadow: dim lower half slightly.
-        b *= 0.92 + 0.08 * ((py + HALF) / CUBE);
-
-        brights[i] = Math.min(b, 1.25);
+      if (gpuOk && !reducedMotion) {
+        velUniforms.uTime.value = elapsed;
+        velUniforms.uDt.value = step;
+        velUniforms.uModeA.value = modeA;
+        velUniforms.uModeB.value = modeB;
+        velUniforms.uReform.value = reform;
+        velUniforms.uDetonate.value = detonate;
+        velUniforms.uFreeFall.value = freeFall;
+        velUniforms.uInPath.value = inPath;
+        velUniforms.uInGalaxy.value = inGalaxy;
+        velUniforms.uTrajFray.value = trajFray;
+        velUniforms.uTrajPhase.value = trajPhase;
+        posVar.material.uniforms.uDt.value = step;
+        gpuCompute.compute();
+        pMat.uniforms.texturePosition.value = gpuCompute.getCurrentRenderTarget(posVar).texture;
+      } else if (gpuOk) {
+        // Static snapshot for reduced motion.
+        pMat.uniforms.texturePosition.value = gpuCompute.getCurrentRenderTarget(posVar).texture;
       }
 
-      posAttr.needsUpdate = true;
-      brightAttr.needsUpdate = true;
+      pMat.uniforms.uTime.value = elapsed;
+      pMat.uniforms.uTrajFade.value = trajFade;
+      pMat.uniforms.uTrajFray.value = trajFray;
+      pMat.uniforms.uTrajPhase.value = trajPhase;
+      pMat.uniforms.uInGalaxy.value = inGalaxy;
+      pMat.uniforms.uDetonate.value = detonate;
+      pMat.uniforms.uFreeFall.value = freeFall;
+      pMat.uniforms.uInPath.value = inPath;
 
-      // Glass reacts to interior energy (path / detonate).
       const interiorHeat = trajFade * 0.55 + detonate * 0.35 + inGalaxy * 0.15;
       glassMat.roughness = 0.03 + 0.02 * Math.sin(elapsed * 0.2) + pointer.glow * 0.01;
       glassMat.envMapIntensity = 1.05 + pointer.glow * 0.25 + interiorHeat * 0.45;
       glassMat.clearcoatRoughness = 0.05 + (1 - interiorHeat) * 0.04;
       innerGlassMat.envMapIntensity = 0.5 + pointer.glow * 0.12 + interiorHeat * 0.2;
       edgeMat.opacity = 0.48 + 0.12 * pointer.glow + 0.18 * trajFade + 0.1 * detonate;
-      innerEdgeMat.opacity = 0.18 + 0.06 * pointer.glow + 0.08 * interiorHeat;
       (corners.material as THREE.PointsMaterial).opacity =
         0.55 + 0.25 * pointer.glow + 0.2 * trajFade + 0.15 * detonate;
 
@@ -1068,6 +1124,14 @@ export default function SimulationEnsembleRender() {
     resize();
     resizeObserver.observe(mount);
     visibilityObserver.observe(mount);
+
+    // Warm up one compute so the first paint has positions.
+    if (gpuOk) {
+      velUniforms.uTime.value = 0;
+      velUniforms.uDt.value = 0.016;
+      gpuCompute.compute();
+      pMat.uniforms.texturePosition.value = gpuCompute.getCurrentRenderTarget(posVar).texture;
+    }
 
     if (reducedMotion) {
       startedAt -= 22_000;
@@ -1108,6 +1172,8 @@ export default function SimulationEnsembleRender() {
         trajMat.dispose();
         headGeo.dispose();
         headMat.dispose();
+        pos0.dispose();
+        vel0.dispose();
         envMap.dispose();
         scene.environment = null;
         renderer.dispose();
