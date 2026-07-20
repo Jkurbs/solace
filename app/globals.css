@@ -995,6 +995,14 @@ h2 {
     grid-column: span 7;
   }
 
+  .inst-cell-auto .inst-card {
+    min-height: clamp(18rem, 32vw, 24rem);
+  }
+
+  .inst-cell-auto .inst-card-render {
+    opacity: 1;
+  }
+
   .inst-cell-hermes {
     position: relative;
   }

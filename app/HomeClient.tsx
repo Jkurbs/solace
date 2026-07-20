@@ -32,6 +32,10 @@ const SimulationEnsembleRender = dynamic(() => import('./SimulationEnsembleRende
   ssr: false,
 });
 
+const AutonomyLoopRender = dynamic(() => import('./AutonomyLoopRender'), {
+  ssr: false,
+});
+
 // Title-card cadence: long holds, short travel, no bounce. MotionConfig
 // reducedMotion="user" zeros this out for system-level reduced-motion prefs.
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
@@ -595,8 +599,12 @@ export default function HomeClient({
           </motion.div>
 
           <motion.div className="inst-cell inst-cell-auto" {...cardReveal(3)}>
-            <Link href="/gates#autonomy" className="inst-card inst-card-quiet">
+            <Link href="/gates#autonomy" className="inst-card">
               <div className="inst-platter">
+                <div className="inst-card-render" aria-hidden="true">
+                  <AutonomyLoopRender />
+                </div>
+                <div className="inst-card-scrim" aria-hidden="true" />
                 <span className="inst-chip is-idle">{autonomyGateHeadline}</span>
               </div>
               <div className="inst-copy">
@@ -607,6 +615,7 @@ export default function HomeClient({
                     Domains are earned, not declared.
                   </p>
                 </div>
+                <span className="inst-card-cta">Gate board →</span>
               </div>
             </Link>
           </motion.div>
