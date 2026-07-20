@@ -104,11 +104,18 @@ export async function postHermesRealizedTradeEvent(input: HermesRealizedTradeEve
   const fees = Math.max(0, normalizeAmount(input.fees ?? 0));
   // Funding may be income (negative cost). Do not clamp to ≥ 0.
   const funding = normalizeAmount(input.funding ?? 0);
-  // Prefer explicit net. Exchange/Hermes realized is typically already fee-net;
-  // only fold funding into the fallback so we never double-subtract fees.
-  const netPnl = normalizeAmount(
-    input.netPnl !== undefined && input.netPnl !== null ? input.netPnl : realizedPnl - funding,
-  );
+  // KuCoin/Hermes realized is already net of fees+funding. Hermes also often
+  // sends netPnl = realized - fees - abs(funding) (double-count). Detect and
+  // keep exchange realized as the sealed close PnL.
+  const explicitNet =
+    input.netPnl !== undefined && input.netPnl !== null ? normalizeAmount(input.netPnl) : null;
+  const reconstructed = normalizeAmount(realizedPnl - fees - Math.abs(funding));
+  const netPnl =
+    explicitNet === null
+      ? realizedPnl
+      : Math.abs(reconstructed - explicitNet) < 0.02
+        ? realizedPnl
+        : explicitNet;
 
   try {
     const supabase = await createSupabaseDataClient();
@@ -148,7 +155,16 @@ export async function postHermesRealizedTradeEvent(input: HermesRealizedTradeEve
           .maybeSingle();
 
         if (!existing.error && existing.data) {
-          return fromHermesRealizedTradeEventRow(existing.data);
+          // Append-only table cannot rewrite a bad net_pnl. Return exchange
+          // close when stored net double-counted fees already inside realized.
+          const event = fromHermesRealizedTradeEventRow(existing.data);
+          const reconstructed = normalizeAmount(
+            event.realizedPnl - Math.abs(event.fees) - Math.abs(event.funding),
+          );
+          if (Math.abs(reconstructed - event.netPnl) < 0.02) {
+            return { ...event, netPnl: event.realizedPnl };
+          }
+          return event;
         }
       }
 

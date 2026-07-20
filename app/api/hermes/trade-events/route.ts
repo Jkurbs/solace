@@ -140,7 +140,14 @@ async function sealClosedTradeLedgerRow(event: HermesRealizedTradeEvent) {
     }
 
     const snapshot = await getStoredHermesBriefSnapshot().catch(() => null);
-    const outcome = event.netPnl > 0 ? 'Advanced' : event.netPnl < 0 ? 'Gave back' : 'Flat';
+    // Prefer exchange realized when Hermes net double-counted fees already
+    // inside realized (realized - fees - funding ≈ net). Matches KuCoin close.
+    const fees = Math.abs(Number(event.fees) || 0);
+    const funding = Math.abs(Number(event.funding) || 0);
+    const reconstructed = Math.round((event.realizedPnl - fees - funding) * 100) / 100;
+    const closePnl =
+      Math.abs(reconstructed - event.netPnl) < 0.02 ? event.realizedPnl : event.netPnl;
+    const outcome = closePnl > 0 ? 'Advanced' : closePnl < 0 ? 'Gave back' : 'Flat';
     // Pair with the sealed open row when one exists. Null for paths opened
     // before the two-row schema: those closes are honestly unpaired.
     const ref = await popOpenPathRef(event.symbol, event.side);
@@ -150,7 +157,7 @@ async function sealClosedTradeLedgerRow(event: HermesRealizedTradeEvent) {
       eventType: 'close',
       note: formatHoldDuration(event.openedAt, event.closedAt),
       outcome,
-      pnl: event.netPnl,
+      pnl: closePnl,
       posture: snapshot && snapshot.brief_id !== 'fallback' ? snapshot.posture : 'DEPLOYED',
       recordId: `HMS-T-${event.sourceTradeId.slice(-8)}`,
       ref: ref ?? undefined,

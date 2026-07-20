@@ -218,27 +218,35 @@ function getFeeValue(value) {
 }
 
 /**
- * Close PnL for the public ledger must match Hermes' close figure.
- * Hermes/exchange `realized_pnl` is typically already net of trading fees.
- * Never re-subtract fees from that number or recent ledger rows drift from
- * the close the operator just saw. Prefer explicit net_pnl when present.
+ * Close PnL for the public ledger must match the exchange close figure.
+ *
+ * KuCoin position-history `pnl` / Hermes `realizedPnl` is already net of
+ * trade fees and funding. Hermes currently also publishes
+ * `netPnl = realizedPnl - fees - abs(funding)`, which double-counts those
+ * costs (HYPE close: exchange +0.50 → ledger wrongly sealed +0.31).
+ *
+ * Prefer exchange realized when net looks double-counted; otherwise prefer
+ * explicit net when present.
  */
-function resolveClosePnl({ explicitNet, explicitRealized, funding = 0 }) {
-  if (explicitNet !== undefined) {
-    return { netPnl: explicitNet, realizedPnl: explicitRealized ?? explicitNet };
-  }
-
-  if (explicitRealized === undefined) {
+function resolveClosePnl({ explicitNet, explicitRealized, fees = 0, funding = 0 }) {
+  if (explicitRealized === undefined && explicitNet === undefined) {
     return null;
   }
 
-  // Realized is the exchange close PnL (fee-net). Apply funding only when
-  // Hermes did not already publish a net figure — keep funding sign.
-  const fundingAmount = Number.isFinite(funding) ? funding : 0;
-  return {
-    netPnl: explicitRealized - fundingAmount,
-    realizedPnl: explicitRealized,
-  };
+  if (explicitRealized !== undefined && explicitNet !== undefined) {
+    const reconstructed = explicitRealized - Math.abs(fees) - Math.abs(funding);
+    if (Math.abs(reconstructed - explicitNet) < 0.02) {
+      return { netPnl: explicitRealized, realizedPnl: explicitRealized };
+    }
+    // Distinct semantics (not the double-count pattern) — keep explicit net.
+    return { netPnl: explicitNet, realizedPnl: explicitRealized };
+  }
+
+  if (explicitRealized !== undefined) {
+    return { netPnl: explicitRealized, realizedPnl: explicitRealized };
+  }
+
+  return { netPnl: explicitNet, realizedPnl: explicitNet };
 }
 
 function buildTradeEventFromHermesTrade(trade) {
@@ -252,7 +260,7 @@ function buildTradeEventFromHermesTrade(trade) {
   const explicitNet = getOptionalNumber(trade.net_pnl, trade.netPnl);
   const fees = getFeeValue(trade.fees) ?? getOptionalNumber(trade.fee, trade.tradeFee) ?? 0;
   const funding = getOptionalNumber(trade.funding, trade.funding_fee, trade.fundingFee) ?? 0;
-  const resolved = resolveClosePnl({ explicitNet, explicitRealized, funding });
+  const resolved = resolveClosePnl({ explicitNet, explicitRealized, fees, funding });
 
   if (!closedAt || !resolved || (!status.includes('closed') && !trade.exit_time && !trade.closedAt && !trade.closed_at)) {
     return null;
@@ -313,7 +321,14 @@ function buildTradeEventFromPositionHistory(position) {
   // Keep funding signed (income can be negative cost). Fees are magnitude only.
   const fees = Math.abs(getOptionalNumber(position.fees, position.tradeFee, info.tradeFee, info.fee) ?? 0);
   const funding = getOptionalNumber(position.funding, position.fundingFee, info.fundingFee) ?? 0;
-  const resolved = resolveClosePnl({ explicitNet, explicitRealized, funding });
+  // Prefer raw KuCoin info.pnl when present — same figure the exchange UI uses.
+  const exchangePnl = getOptionalNumber(info.pnl, info.realisedPnl, info.realizedPnl);
+  const resolved = resolveClosePnl({
+    explicitNet,
+    explicitRealized: exchangePnl ?? explicitRealized,
+    fees,
+    funding,
+  });
 
   if (!symbol || !closedAt || !resolved) {
     return null;

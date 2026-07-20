@@ -2,9 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
+import { correctSealedClosePnls } from '@/features/hermes-ledger/close-pnl';
 import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
 import { computeLedgerScoreboard } from '@/features/hermes-ledger/scoreboard';
 import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
+import { getRecentHermesRealizedTradeEvents } from '@/features/ledger/hermes-realized-trades';
 import { hermesVersion } from '@/features/hermes-version';
 
 import Mark from '../Mark';
@@ -95,12 +97,26 @@ const howToRead = [
 ];
 
 export default async function TrustPage() {
-  const [storedRows, openExposure, briefSnapshot] = await Promise.all([
+  const poolId = process.env.HERMES_POOL_ID ?? 'pool_balanced_v1';
+  const [storedRows, openExposure, briefSnapshot, realizedTrades] = await Promise.all([
     listHermesLedgerRows(1000).catch(() => []),
     getHermesOpenExposure().catch(() => null),
     getStoredHermesBriefSnapshot().catch(() => null),
+    getRecentHermesRealizedTradeEvents({ limit: 500, poolId }).catch(() => []),
   ]);
-  const scoreboard = computeLedgerScoreboard(storedRows, {
+  // KuCoin pnl is already fee-net; Hermes netPnl sometimes double-counts. Correct
+  // sealed close figures for public display/scoreboard (chain bytes unchanged).
+  const displayRows = correctSealedClosePnls(
+    storedRows,
+    realizedTrades.map((trade) => ({
+      fees: trade.fees,
+      funding: trade.funding,
+      netPnl: trade.netPnl,
+      realizedPnl: trade.realizedPnl,
+      sourceTradeId: trade.sourceTradeId,
+    })),
+  );
+  const scoreboard = computeLedgerScoreboard(displayRows, {
     // Headline open count = live marks (same source as the LIVE row), never
     // the pile of unpaired historical open seals on the chain.
     liveOpenPaths: openExposure ? openExposure.positions.length : null,
@@ -109,8 +125,8 @@ export default async function TrustPage() {
     briefSnapshot && briefSnapshot.brief_id !== 'fallback' ? formatConstant(briefSnapshot.posture) : '--';
   // Chain order assigns the row numbers; display is newest-first with the
   // live view pinned on top. Verification order is untouched.
-  const ledgerRows = storedRows.length
-    ? storedRows
+  const ledgerRows = displayRows.length
+    ? displayRows
         .map((row, index) => ({
           row: String(index + 1),
           recordId: row.recordId,
