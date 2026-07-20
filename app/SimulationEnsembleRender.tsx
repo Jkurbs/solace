@@ -379,11 +379,11 @@ const pointVertex = `
     vBright = min(b, 1.25);
 
     vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-    float size = mix(0.0045, 0.011, aSeed);
+    // Slightly larger discs so individual spectral colors are legible in the stack.
+    float size = mix(0.0065, 0.016, aSeed);
     float tw = 0.85 + 0.15 * sin(uTime * (0.5 + aSeed * 1.2) + aSeed * 12.0);
-    // Dense field: slightly smaller points, bright cores pop.
-    float densityScale = mix(1.0, 0.82, smoothstep(0.0, 1.0, vBright));
-    gl_PointSize = size * densityScale * uPixelRatio * tw * (200.0 / max(-mv.z, 0.001));
+    float densityScale = mix(1.05, 0.88, smoothstep(0.0, 1.0, vBright));
+    gl_PointSize = size * densityScale * uPixelRatio * tw * (210.0 / max(-mv.z, 0.001));
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -393,53 +393,55 @@ const pointFragment = `
   varying float vBright;
   varying float vSeed;
 
-  // Celestial spectrum inside the cube: nebula → stellar → rare gold cores.
-  // Seed picks a spectral family; brightness lifts cool dust into starlight.
+  // Celestial spectrum: saturated spectral families so hue survives additive stack.
+  // Seed picks family; brightness lifts intensity — do NOT wash to white early.
   vec3 celestialColor(float seed, float bright) {
-    float t = fract(seed * 7.13 + seed * seed * 3.1);
-    // Deep space families (restrained — not a rainbow party).
-    vec3 indigo = vec3(0.28, 0.34, 0.92);   // cool B-star / ion
-    vec3 violet = vec3(0.55, 0.32, 0.95);   // nebula violet
-    vec3 azure  = vec3(0.32, 0.72, 1.00);   // stellar blue
-    vec3 teal   = vec3(0.28, 0.88, 0.82);   // cyan nebula
-    vec3 rose   = vec3(0.92, 0.42, 0.72);   // H-alpha whisper (rare)
-    vec3 gold   = vec3(1.00, 0.88, 0.58);   // warm core / path climax
-    vec3 white  = vec3(0.92, 0.96, 1.00);
+    float t = fract(seed * 17.0 + seed * 0.37);
+    // Pure-ish primaries (high chroma). Additive + ACES will still calm them.
+    vec3 indigo = vec3(0.25, 0.20, 1.00);
+    vec3 violet = vec3(0.72, 0.18, 1.00);
+    vec3 azure  = vec3(0.15, 0.55, 1.00);
+    vec3 teal   = vec3(0.10, 0.95, 0.85);
+    vec3 rose   = vec3(1.00, 0.22, 0.55);
+    vec3 gold   = vec3(1.00, 0.72, 0.18);
 
     vec3 base;
-    if (t < 0.28) {
-      base = mix(indigo, azure, t / 0.28);
-    } else if (t < 0.55) {
-      base = mix(azure, teal, (t - 0.28) / 0.27);
+    if (t < 0.22) {
+      base = indigo;
+    } else if (t < 0.42) {
+      base = azure;
+    } else if (t < 0.60) {
+      base = violet;
     } else if (t < 0.78) {
-      base = mix(violet, indigo, (t - 0.55) / 0.23);
+      base = teal;
     } else if (t < 0.92) {
-      base = mix(teal, rose, (t - 0.78) / 0.14);
+      base = rose;
     } else {
-      base = mix(rose, gold, (t - 0.92) / 0.08);
+      base = gold;
     }
 
-    // Dim particles stay deep nebula; bright ones go stellar / white-hot.
-    vec3 col = mix(base * 0.55, base, smoothstep(0.15, 0.7, bright));
-    col = mix(col, white, smoothstep(0.75, 1.15, bright) * 0.55);
-    col = mix(col, gold, smoothstep(0.95, 1.25, bright) * 0.35);
-    // Subtle per-star variance so the field doesn't band.
-    col *= 0.9 + 0.12 * sin(seed * 41.0);
-    return col;
+    // Keep chroma at high brightness — only a light stellar lift, not whiteout.
+    float hot = smoothstep(0.85, 1.2, bright);
+    base = mix(base, mix(base, gold, 0.5), hot * 0.4);
+    base *= 0.85 + 0.2 * sin(seed * 51.0);
+    return base;
   }
 
   void main() {
     vec2 p = gl_PointCoord * 2.0 - 1.0;
     float d = length(p);
     if (d > 1.0) discard;
-    float core = exp(-d * d * 4.2);
-    float halo = exp(-d * d * 1.35) * 0.32;
-    float a = (core + halo) * vBright * 0.88;
-    // Soft chromatic halo: cooler rim, warmer core (tiny lens / star feel).
+    float core = exp(-d * d * 3.6);
+    float halo = exp(-d * d * 1.15) * 0.4;
+    // Lower energy so additive stacks don't blow to white before color reads.
+    float a = (core * 0.9 + halo * 0.35) * clamp(vBright, 0.0, 1.15) * 0.42;
     vec3 col = celestialColor(vSeed, vBright);
-    vec3 rim = mix(col, vec3(0.45, 0.55, 1.0), 0.35);
-    col = mix(rim, col, core);
-    gl_FragColor = vec4(col, a);
+    // Cool rim / warm core for a star-like disc without killing hue.
+    vec3 rim = col * vec3(0.75, 0.8, 1.15);
+    col = mix(rim, col * 1.15, core);
+    // CRITICAL: AdditiveBlending uses One,One — RGB is added as-is.
+    // Premultiply by intensity or every particle dumps full white-ish color.
+    gl_FragColor = vec4(col * a, a);
   }
 `;
 
@@ -872,8 +874,9 @@ export default function SimulationEnsembleRender() {
     scene.add(rim);
 
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // Milder tone map so celestial chroma isn't crushed to grey-blue.
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 0.92;
     renderer.setClearColor(0x000000, 0);
     renderer.domElement.className = 'hermes-render-canvas';
     renderer.domElement.dataset.simulationRender = 'glass-cube-gpu';
