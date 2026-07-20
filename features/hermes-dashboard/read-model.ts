@@ -315,10 +315,18 @@ const tradePnlFormatter = new Intl.NumberFormat('en-US', {
 // Real fills from the Hermes stream, rendered in the activity feed. This is a
 // protected account surface, so per-trade detail is in-contract here.
 function getTradeEventActivity(events: HermesRealizedTradeEvent[]) {
-  return events.map((event) => ({
-    timestamp: event.closedAt,
-    summary: `Closed ${event.symbol} ${event.side === 'LONG' ? 'long' : 'short'} · ${tradePnlFormatter.format(event.netPnl)} net`,
-  }));
+  return events.map((event) => {
+    // Same double-count guard as the public ledger: KuCoin realized is already fee-net.
+    const reconstructed =
+      Math.round((event.realizedPnl - Math.abs(event.fees) - Math.abs(event.funding)) * 100) / 100;
+    const closePnl =
+      Math.abs(reconstructed - event.netPnl) < 0.02 ? event.realizedPnl : event.netPnl;
+
+    return {
+      timestamp: event.closedAt,
+      summary: `Closed ${event.symbol} ${event.side === 'LONG' ? 'long' : 'short'} · ${tradePnlFormatter.format(closePnl)}`,
+    };
+  });
 }
 
 async function getAccountMoneyState(accountId: string): Promise<AccountMoneyState> {
