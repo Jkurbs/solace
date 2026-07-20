@@ -393,19 +393,52 @@ const pointFragment = `
   varying float vBright;
   varying float vSeed;
 
+  // Celestial spectrum inside the cube: nebula → stellar → rare gold cores.
+  // Seed picks a spectral family; brightness lifts cool dust into starlight.
+  vec3 celestialColor(float seed, float bright) {
+    float t = fract(seed * 7.13 + seed * seed * 3.1);
+    // Deep space families (restrained — not a rainbow party).
+    vec3 indigo = vec3(0.28, 0.34, 0.92);   // cool B-star / ion
+    vec3 violet = vec3(0.55, 0.32, 0.95);   // nebula violet
+    vec3 azure  = vec3(0.32, 0.72, 1.00);   // stellar blue
+    vec3 teal   = vec3(0.28, 0.88, 0.82);   // cyan nebula
+    vec3 rose   = vec3(0.92, 0.42, 0.72);   // H-alpha whisper (rare)
+    vec3 gold   = vec3(1.00, 0.88, 0.58);   // warm core / path climax
+    vec3 white  = vec3(0.92, 0.96, 1.00);
+
+    vec3 base;
+    if (t < 0.28) {
+      base = mix(indigo, azure, t / 0.28);
+    } else if (t < 0.55) {
+      base = mix(azure, teal, (t - 0.28) / 0.27);
+    } else if (t < 0.78) {
+      base = mix(violet, indigo, (t - 0.55) / 0.23);
+    } else if (t < 0.92) {
+      base = mix(teal, rose, (t - 0.78) / 0.14);
+    } else {
+      base = mix(rose, gold, (t - 0.92) / 0.08);
+    }
+
+    // Dim particles stay deep nebula; bright ones go stellar / white-hot.
+    vec3 col = mix(base * 0.55, base, smoothstep(0.15, 0.7, bright));
+    col = mix(col, white, smoothstep(0.75, 1.15, bright) * 0.55);
+    col = mix(col, gold, smoothstep(0.95, 1.25, bright) * 0.35);
+    // Subtle per-star variance so the field doesn't band.
+    col *= 0.9 + 0.12 * sin(seed * 41.0);
+    return col;
+  }
+
   void main() {
     vec2 p = gl_PointCoord * 2.0 - 1.0;
     float d = length(p);
     if (d > 1.0) discard;
     float core = exp(-d * d * 4.2);
-    float halo = exp(-d * d * 1.4) * 0.28;
-    float a = (core + halo) * vBright * 0.85;
-    vec3 cold = vec3(0.42, 0.7, 0.98);
-    vec3 mid = vec3(0.72, 0.88, 1.0);
-    vec3 warm = vec3(0.98, 0.9, 0.72);
-    vec3 col = mix(cold, mid, smoothstep(0.25, 0.75, vBright));
-    col = mix(col, warm, smoothstep(0.7, 1.0, vBright) * 0.55);
-    col *= 0.92 + 0.08 * sin(vSeed * 40.0);
+    float halo = exp(-d * d * 1.35) * 0.32;
+    float a = (core + halo) * vBright * 0.88;
+    // Soft chromatic halo: cooler rim, warmer core (tiny lens / star feel).
+    vec3 col = celestialColor(vSeed, vBright);
+    vec3 rim = mix(col, vec3(0.45, 0.55, 1.0), 0.35);
+    col = mix(rim, col, core);
     gl_FragColor = vec4(col, a);
   }
 `;
@@ -917,9 +950,11 @@ export default function SimulationEnsembleRender() {
       mesh.position.set(x, y, z);
       mesh.scale.setScalar(scale);
       mat.uniforms.uIntensity.value = intensity;
-      const cold = new THREE.Color(0.38, 0.62, 0.95);
-      const hot = new THREE.Color(0.95, 0.82, 0.58);
-      mat.uniforms.uColor.value.copy(cold).lerp(hot, warm);
+      // Match particle celestial cast: indigo → violet → soft gold.
+      const nebula = new THREE.Color(0.32, 0.38, 0.92);
+      const stellar = new THREE.Color(0.45, 0.72, 1.0);
+      const gold = new THREE.Color(0.98, 0.86, 0.58);
+      mat.uniforms.uColor.value.copy(nebula).lerp(stellar, 0.45).lerp(gold, warm);
     };
 
     const render = () => {
