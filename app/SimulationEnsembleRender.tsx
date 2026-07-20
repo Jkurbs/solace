@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GPUComputationRenderer } from 'three/addons/misc/GPUComputationRenderer.js';
 
@@ -19,6 +19,15 @@ const GPU_SIZE_MOBILE = 160;
 const TRAJ_POINTS = 128;
 const FILAMENT_COUNT = 3;
 const HAZE_COUNT = 6;
+
+const WORLD_SCENARIOS = [
+  { label: 'Boundary conditions', detail: 'A system learns the limits of its world.' },
+  { label: 'Flow fields', detail: 'Local forces produce stable movement.' },
+  { label: 'Built environment', detail: 'Constraints become a navigable space.' },
+  { label: 'Collective behavior', detail: 'Simple rules compound into coordination.' },
+  { label: 'Ecosystem drift', detail: 'Small changes reshape the whole field.' },
+  { label: 'Recovery paths', detail: 'The system searches for a stable return.' },
+] as const;
 
 function createGlassEnvironment(renderer: THREE.WebGLRenderer) {
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -589,6 +598,7 @@ function fillParticleTextures(
 
 export default function SimulationEnsembleRender() {
   const mountRef = useRef<HTMLDivElement | null>(null);
+  const [scenarioIndex, setScenarioIndex] = useState(0);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -926,8 +936,9 @@ export default function SimulationEnsembleRender() {
       card.addEventListener('pointerleave', onPointerLeave);
     }
 
-    // Cadence: chaos → lock → long hold (readable) → break. More control.
-    // Shapes: sphere · torus · wire cube · double helix · galaxy · infinity
+    // Cadence: disturbance → adaptation → stable world state → release.
+    // Forms suggest boundaries, flow, built space, collective behavior, drift,
+    // and recovery — a general world-modeling loop, not a market visualization.
     const MODE_COUNT = 6;
     const T_CHAOS = 1.8;
     const T_LOCK = 2.4;
@@ -937,6 +948,7 @@ export default function SimulationEnsembleRender() {
     const EPOCH = MODE_COUNT * SLOT;
     const PATH_MODE = 5; // infinity ribbon uses path head lightly
     const GALAXY_MODE = 4;
+    let displayedMode = -1;
 
     const resize = () => {
       const width = Math.max(1, mount.clientWidth);
@@ -1010,6 +1022,11 @@ export default function SimulationEnsembleRender() {
       const local = phase - modeIndex * SLOT;
       const modeA = modeIndex;
 
+      if (modeIndex !== displayedMode) {
+        displayedMode = modeIndex;
+        setScenarioIndex(modeIndex);
+      }
+
       // Explicit four-beat loop (readable formation, not constant soup).
       let freeFall = 0;
       let detonate = 0;
@@ -1043,6 +1060,12 @@ export default function SimulationEnsembleRender() {
         detonate = Math.sin(t * Math.PI) * 0.95;
         freeFall = smoothstep(0.25, 1, t);
       }
+
+      // Hover introduces a gentle disturbance into an otherwise stable field.
+      // It is bounded, so visitors can explore the response without turning
+      // the plate into an uncontrolled spectacle.
+      const hoverPerturbation = pointer.glow * shapeLock * 0.28;
+      detonate = Math.max(detonate, hoverPerturbation);
 
       if (reducedMotion) {
         freeFall = 0;
@@ -1257,5 +1280,17 @@ export default function SimulationEnsembleRender() {
     };
   }, []);
 
-  return <div ref={mountRef} className="hermes-render-host" />;
+  const scenario = WORLD_SCENARIOS[scenarioIndex];
+
+  return (
+    <div className="simulation-ensemble-render" aria-hidden="true">
+      <div ref={mountRef} className="hermes-render-host" />
+      <div className="simulation-ensemble-readout">
+        <span>World model · {String(scenarioIndex + 1).padStart(2, '0')}/06</span>
+        <strong>{scenario.label}</strong>
+        <p>{scenario.detail}</p>
+        <em>Hover to perturb</em>
+      </div>
+    </div>
+  );
 }

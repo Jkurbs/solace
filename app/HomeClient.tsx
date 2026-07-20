@@ -582,12 +582,12 @@ export default function HomeClient({
                   <SimulationEnsembleRender />
                 </div>
                 <div className="inst-card-scrim" aria-hidden="true" />
-                <span className="inst-chip is-idle">Building</span>
+                <span className="inst-chip is-idle">World models · building</span>
               </div>
               <div className="inst-copy">
                 <div className="inst-card-name">
                   <strong>Simulation</strong>
-                  <p>Synthetic environments where hypotheses fail quietly before deployment.</p>
+                  <p>Worlds built to test decisions before they touch the real one.</p>
                 </div>
                 <span className="inst-card-cta">Gate board →</span>
               </div>
