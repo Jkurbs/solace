@@ -9,17 +9,16 @@ import { listHermesLedgerRows, sealHermesLedgerRow } from './store';
 // Two-row path schema: when a new position appears in the pool-mark feed, an
 // OPEN row is sealed immediately — instrument, direction, and size withheld
 // (mechanism stays private) — so the commitment is on the chain before the
-// outcome exists. The close row later references it via `ref`, making the
-// sealed-first property checkable per trade instead of a policy statement.
+// outcome exists. The close row later references it via `ref`.
 //
-// Detection rides the mark cadence (~1–2 min), so an open row is sealed
-// within minutes of the commitment, not at the instant of it. The row's
-// sealed_at is the mark's effective time: honest, slightly late by design.
-//
-// After a close, marks can still list the instrument for a few ticks (exchange
-// lag). Without a cooldown, popOpenPathRef clears tracking and the next stale
-// mark re-seals a ghost open (HYPE: close HMS-T-66284082, then HMS-103 open
-// while marks still showed HYPE-USDT LONG).
+// Failure modes we harden against:
+// 1) Ghost re-open after close: lagging marks still list the symbol → cooldown.
+// 2) Open spam (July 14): same live position sealed every mark because tracking
+//    state did not stick / concurrent ingests both saw empty state → process
+//    mutex, memory cache, re-read before seal, immediate durable write.
+// 3) Premature drop: deleting opens when a mark omits a symbol (flicker or
+//    switch) left chain opens unpaired and allowed re-seals → opens are only
+//    removed on close (popOpenPathRef), never because a mark is missing them.
 const OPEN_PATHS_KEY = 'hermes_open_paths';
 /** Ignore mark-driven re-opens for the same symbol:side after a close. */
 const RECENTLY_CLOSED_TTL_MS = 20 * 60 * 1000;
@@ -120,17 +119,35 @@ function isLegacyOpenState(stored: Record<string, unknown>): stored is OpenPathS
   );
 }
 
-async function readBook(): Promise<OpenPathBook> {
-  const stored = await getRuntimeSnapshot(OPEN_PATHS_KEY).catch(() => null);
+function emptyBook(): OpenPathBook {
+  return { opens: {}, recentlyClosed: {} };
+}
 
+function cloneBook(book: OpenPathBook): OpenPathBook {
+  return {
+    opens: { ...book.opens },
+    recentlyClosed: { ...book.recentlyClosed },
+  };
+}
+
+// Warm-instance cache: July 14 spam pattern was re-sealing every mark because
+// durable state was empty on each tick. Memory covers the common single-region
+// bridge → one Vercel instance path; disk remains source of truth across cold starts.
+let memoryBook: OpenPathBook | null = null;
+
+function isLegacyOpenStateRecord(stored: Record<string, unknown>): boolean {
+  return isLegacyOpenState(stored);
+}
+
+function bookFromStored(stored: unknown): OpenPathBook {
   if (!stored || typeof stored !== 'object' || Array.isArray(stored)) {
-    return { opens: {}, recentlyClosed: {} };
+    return emptyBook();
   }
 
   const record = stored as Record<string, unknown>;
 
-  if (isLegacyOpenState(record)) {
-    return { opens: { ...record }, recentlyClosed: {} };
+  if (isLegacyOpenStateRecord(record)) {
+    return { opens: { ...(record as OpenPathState) }, recentlyClosed: {} };
   }
 
   const opens =
@@ -138,15 +155,56 @@ async function readBook(): Promise<OpenPathBook> {
       ? ({ ...record.opens } as OpenPathState)
       : {};
   const recentlyClosed =
-    record.recentlyClosed && typeof record.recentlyClosed === 'object' && !Array.isArray(record.recentlyClosed)
+    record.recentlyClosed &&
+    typeof record.recentlyClosed === 'object' &&
+    !Array.isArray(record.recentlyClosed)
       ? ({ ...record.recentlyClosed } as Record<string, string>)
       : {};
 
   return { opens, recentlyClosed };
 }
 
-async function writeBook(book: OpenPathBook) {
-  await saveRuntimeSnapshot(OPEN_PATHS_KEY, book as unknown as Json);
+/** Prefer the book that knows more active opens / newer close cooldowns. */
+function mergeBooks(a: OpenPathBook, b: OpenPathBook): OpenPathBook {
+  const opens: OpenPathState = { ...a.opens, ...b.opens };
+  const recentlyClosed: Record<string, string> = { ...a.recentlyClosed };
+
+  for (const [key, closedAt] of Object.entries(b.recentlyClosed)) {
+    const existing = recentlyClosed[key];
+    if (!existing || new Date(closedAt).getTime() > new Date(existing).getTime()) {
+      recentlyClosed[key] = closedAt;
+    }
+  }
+
+  return { opens, recentlyClosed };
+}
+
+async function readBookFromDisk(): Promise<OpenPathBook> {
+  const stored = await getRuntimeSnapshot(OPEN_PATHS_KEY).catch(() => null);
+  return bookFromStored(stored);
+}
+
+async function readBook(): Promise<OpenPathBook> {
+  const disk = await readBookFromDisk();
+  if (!memoryBook) {
+    memoryBook = cloneBook(disk);
+    return cloneBook(memoryBook);
+  }
+
+  const merged = mergeBooks(memoryBook, disk);
+  memoryBook = cloneBook(merged);
+  return cloneBook(merged);
+}
+
+async function writeBook(book: OpenPathBook): Promise<boolean> {
+  memoryBook = cloneBook(book);
+  const ok = await saveRuntimeSnapshot(OPEN_PATHS_KEY, book as unknown as Json);
+  if (!ok) {
+    console.error(
+      '[hermes-ledger] Failed to persist open-path book; memory cache retained to block open spam on this instance.',
+    );
+  }
+  return ok;
 }
 
 function pruneRecentlyClosed(recentlyClosed: Record<string, string>, nowMs: number) {
@@ -176,113 +234,135 @@ function isInCloseCooldown(recentlyClosed: Record<string, string>, key: string, 
   return Number.isFinite(closedMs) && nowMs - closedMs <= RECENTLY_CLOSED_TTL_MS;
 }
 
+// Serialize open/close book mutations on this instance (concurrent mark posts).
+let bookChain: Promise<void> = Promise.resolve();
+
+function withBookLock<T>(fn: () => Promise<T>): Promise<T> {
+  const run = bookChain.then(fn, fn);
+  bookChain = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
 /**
  * Called from the pool-mark ingest after a healthy mark stores. Seals an
  * open row for every position not already tracked. Positions that vanish
- * are NOT closed here — close rows come only from the trade-events feed,
- * which carries the realized result.
+ * are NOT closed here — close rows come only from the trade-events feed.
  */
 export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: string) {
-  try {
-    const positions = parsePublicPositions(rawPayload);
+  return withBookLock(async () => {
+    try {
+      const positions = parsePublicPositions(rawPayload);
 
-    // A degraded mark (positions_source: error) reports no positions; never
-    // treat that as "everything closed", and never seal opens from it.
-    const payload = rawPayload as Record<string, unknown> | null;
+      // A degraded mark (positions_source: error) reports no positions; never
+      // treat that as "everything closed", and never seal opens from it.
+      const payload = rawPayload as Record<string, unknown> | null;
 
-    if (!positions.length || payload?.positions_source === 'error') {
-      return;
-    }
-
-    const book = await readBook();
-    const nowMs = Date.now();
-    let changed = pruneRecentlyClosed(book.recentlyClosed, nowMs);
-    const activeKeys = new Set(positions.map((position) => pathKey(position.symbol, position.side)));
-
-    // Side flips and stale bookkeeping keys must not leave a dead LONG entry
-    // blocking a live SHORT (or vice versa) and re-sealing every mark tick.
-    for (const key of Object.keys(book.opens)) {
-      if (!activeKeys.has(key)) {
-        delete book.opens[key];
-        changed = true;
-      }
-    }
-
-    for (const position of positions) {
-      const key = pathKey(position.symbol, position.side);
-
-      if (book.opens[key]) {
-        continue;
+      if (!positions.length || payload?.positions_source === 'error') {
+        return;
       }
 
-      // Stale mark after a real close: do not mint a ghost open.
-      if (isInCloseCooldown(book.recentlyClosed, key, nowMs)) {
-        continue;
+      // Fresh merge of memory + disk under the lock.
+      const book = await readBook();
+      const nowMs = Date.now();
+      let changed = pruneRecentlyClosed(book.recentlyClosed, nowMs);
+
+      // Do NOT drop opens when a mark omits a symbol. Only popOpenPathRef
+      // (trade close) removes tracking — prevents unpaired opens + re-spam.
+
+      for (const position of positions) {
+        const key = pathKey(position.symbol, position.side);
+
+        if (book.opens[key]) {
+          continue;
+        }
+
+        // Stale mark after a real close: do not mint a ghost open.
+        if (isInCloseCooldown(book.recentlyClosed, key, nowMs)) {
+          continue;
+        }
+
+        // Re-check disk immediately before seal (cross-instance race).
+        const latest = await readBookFromDisk();
+        const merged = mergeBooks(book, latest);
+        book.opens = merged.opens;
+        book.recentlyClosed = merged.recentlyClosed;
+        memoryBook = cloneBook(book);
+
+        if (book.opens[key] || isInCloseCooldown(book.recentlyClosed, key, nowMs)) {
+          continue;
+        }
+
+        const snapshot = await getStoredHermesBriefSnapshot().catch(() => null);
+        const existing = await listHermesLedgerRows(1000);
+        const nextRecordNumber =
+          existing.reduce((max, row) => {
+            const match = row.recordId.match(/^HMS-(\d+)$/);
+
+            return match ? Math.max(max, Number(match[1])) : max;
+          }, 0) + 1;
+        const recordId = `HMS-${String(nextRecordNumber).padStart(3, '0')}`;
+        const sealedAt = effectiveAt ?? new Date().toISOString();
+        const row = await sealHermesLedgerRow({
+          decision: 'Opened a path — instrument private until close',
+          eventType: 'open',
+          note: '',
+          posture: snapshot && snapshot.brief_id !== 'fallback' ? snapshot.posture : 'DEPLOYED',
+          recordId,
+          sealedAt,
+        });
+
+        if (row) {
+          book.opens[key] = { openedAt: sealedAt, recordId: row.recordId };
+          changed = true;
+          // Persist immediately so the next mark (or concurrent request after
+          // this write) sees the open and does not spam another seal.
+          await writeBook(book);
+        }
       }
 
-      const snapshot = await getStoredHermesBriefSnapshot().catch(() => null);
-      const existing = await listHermesLedgerRows(1000);
-      const nextRecordNumber =
-        existing.reduce((max, row) => {
-          const match = row.recordId.match(/^HMS-(\d+)$/);
-
-          return match ? Math.max(max, Number(match[1])) : max;
-        }, 0) + 1;
-      const recordId = `HMS-${String(nextRecordNumber).padStart(3, '0')}`;
-      const sealedAt = effectiveAt ?? new Date().toISOString();
-      const row = await sealHermesLedgerRow({
-        decision: 'Opened a path — instrument private until close',
-        eventType: 'open',
-        note: '',
-        posture: snapshot && snapshot.brief_id !== 'fallback' ? snapshot.posture : 'DEPLOYED',
-        recordId,
-        sealedAt,
-      });
-
-      if (row) {
-        book.opens[key] = { openedAt: sealedAt, recordId: row.recordId };
-        changed = true;
+      if (changed) {
+        // Final write if only cooldown pruning changed.
+        await writeBook(book);
       }
+    } catch (error) {
+      console.warn('[hermes-ledger] Open path tracking failed.', error);
     }
-
-    if (changed) {
-      await writeBook(book);
-    }
-  } catch (error) {
-    console.warn('[hermes-ledger] Open path tracking failed.', error);
-  }
+  });
 }
 
 /**
  * Called from the trade-events ingest when a close seals: returns (and
- * consumes) the open row's record id for the `ref` field. Null for paths
- * opened before the two-row schema existed — those closes are honestly
- * unpaired; the pairing record begins at cutover.
+ * consumes) the open row's record id for the `ref` field.
  *
- * Also arms a cooldown so lagging marks that still list the symbol cannot
+ * Arms a cooldown so lagging marks that still list the symbol cannot
  * immediately re-seal a new open for the same path.
  */
 export async function popOpenPathRef(symbol: string, side: string): Promise<string | null> {
-  try {
-    const book = await readBook();
-    const key = pathKey(symbol, side);
-    const entry = book.opens[key];
-    const closedAt = new Date().toISOString();
+  return withBookLock(async () => {
+    try {
+      const book = await readBook();
+      const key = pathKey(symbol, side);
+      const entry = book.opens[key];
+      const closedAt = new Date().toISOString();
 
-    // Always record the close cooldown, even if we lacked an open entry
-    // (pre-schema or state loss) — still blocks ghost re-opens from stale marks.
-    book.recentlyClosed[key] = closedAt;
-    pruneRecentlyClosed(book.recentlyClosed, Date.now());
+      // Always record the close cooldown, even if we lacked an open entry
+      // (pre-schema or state loss) — still blocks ghost re-opens from stale marks.
+      book.recentlyClosed[key] = closedAt;
+      pruneRecentlyClosed(book.recentlyClosed, Date.now());
 
-    if (entry) {
-      delete book.opens[key];
+      if (entry) {
+        delete book.opens[key];
+      }
+
+      await writeBook(book);
+
+      return entry?.recordId ?? null;
+    } catch (error) {
+      console.warn('[hermes-ledger] Open path ref lookup failed.', error);
+      return null;
     }
-
-    await writeBook(book);
-
-    return entry?.recordId ?? null;
-  } catch (error) {
-    console.warn('[hermes-ledger] Open path ref lookup failed.', error);
-    return null;
-  }
+  });
 }
