@@ -4,9 +4,8 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 // Homepage Autonomy plate: observe → model → act → monitor.
-// Distinct motion vocabulary — a sequential loop that can stand down.
-// Gated: the exit toward the world never fully opens. Cool steel-cyan, not
-// Hermes amber or Simulation celestial.
+// Sequential loop that can stand down; world gate stays nearly closed.
+// Clarity: SDF rail (constant width), distinct station glyphs, smooth token.
 
 const vertexShader = `
   varying vec2 vUv;
@@ -16,6 +15,7 @@ const vertexShader = `
   }
 `;
 
+// Shared loop geometry constants (half-size + corner radius in plate space).
 const fragmentShader = `
   precision highp float;
 
@@ -24,18 +24,14 @@ const fragmentShader = `
   uniform float uTime;
   uniform vec2 uPointer;
   uniform float uPointerGlow;
-  // Token phase 0..1 around the loop; dwells encoded in JS → smooth progress.
   uniform float uToken;
-  // 0..1 how "open" the world gate is (always low while Autonomy is gated).
   uniform float uGate;
-  // Stand-down energy: dims Act station and slows the token visually.
   uniform float uStandDown;
 
-  float hash(vec2 p) {
-    p = fract(p * vec2(123.34, 456.21));
-    p += dot(p, p + 45.32);
-    return fract(p.x * p.y);
-  }
+  const vec2 LOOP_B = vec2(0.32, 0.205);
+  const float LOOP_R = 0.095;
+  const float PI = 3.14159265;
+  const float HALF_PI = 1.5707963;
 
   float hash13(vec3 p) {
     p = fract(p * vec3(443.897, 441.423, 437.195));
@@ -43,80 +39,122 @@ const fragmentShader = `
     return fract((p.x + p.y) * p.z);
   }
 
-  // Rounded rectangle SDF (loop rail path is a rounded rect track).
   float sdRoundBox(vec2 p, vec2 b, float r) {
     vec2 q = abs(p) - b + r;
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
   }
 
-  // Point on rounded-rect centerline parameterized by t in [0,1].
-  // Order: bottom → right → top → left (clockwise from bottom-left of top edge... 
-  // Start at Observe (left-center) going clockwise: left → top → right → bottom.
-  vec2 loopPoint(float t) {
-    // Normalized perimeter of a rounded rect with half-size b and corner radius r.
-    vec2 b = vec2(0.34, 0.22);
-    float r = 0.10;
-    // Straight lengths
-    float hx = 2.0 * (b.x - r);
-    float hy = 2.0 * (b.y - r);
-    float arc = 1.5707963 * r; // quarter circle
-    float perim = 2.0 * hx + 2.0 * hy + 4.0 * arc;
-    float s = fract(t) * perim;
-
-    // Start mid-left, going up (into top-left arc first after half left edge).
-    // Rebuild: start bottom-left going right for cleaner station placement.
-    // Bottom edge L→R
-    if (s < hx) {
-      float u = s / hx;
-      return vec2(mix(-(b.x - r), (b.x - r), u), -b.y);
-    }
-    s -= hx;
-    // Bottom-right arc
-    if (s < arc) {
-      float a = -1.5707963 + (s / arc) * 1.5707963;
-      return vec2(b.x - r, -b.y + r) + r * vec2(cos(a), sin(a));
-    }
-    s -= arc;
-    // Right edge B→T
-    if (s < hy) {
-      float u = s / hy;
-      return vec2(b.x, mix(-(b.y - r), (b.y - r), u));
-    }
-    s -= hy;
-    // Top-right arc
-    if (s < arc) {
-      float a = 0.0 + (s / arc) * 1.5707963;
-      return vec2(b.x - r, b.y - r) + r * vec2(cos(a), sin(a));
-    }
-    s -= arc;
-    // Top edge R→L
-    if (s < hx) {
-      float u = s / hx;
-      return vec2(mix((b.x - r), -(b.x - r), u), b.y);
-    }
-    s -= hx;
-    // Top-left arc
-    if (s < arc) {
-      float a = 1.5707963 + (s / arc) * 1.5707963;
-      return vec2(-(b.x - r), b.y - r) + r * vec2(cos(a), sin(a));
-    }
-    s -= arc;
-    // Left edge T→B
-    if (s < hy) {
-      float u = s / hy;
-      return vec2(-b.x, mix((b.y - r), -(b.y - r), u));
-    }
-    s -= hy;
-    // Bottom-left arc
-    float a = 3.14159265 + (s / arc) * 1.5707963;
-    return vec2(-(b.x - r), -(b.y - r)) + r * vec2(cos(a), sin(a));
+  // Arc length of the rounded-rect centerline.
+  float loopPerim() {
+    float hx = 2.0 * (LOOP_B.x - LOOP_R);
+    float hy = 2.0 * (LOOP_B.y - LOOP_R);
+    float arc = HALF_PI * LOOP_R;
+    return 2.0 * hx + 2.0 * hy + 4.0 * arc;
   }
 
-  float nodeGlow(vec2 w, vec2 c, float rPix, float energy) {
-    float d = length((w - c) * uResolution.xy) / uPixelRatio;
-    float core = exp(-d * d / (rPix * rPix));
-    float halo = exp(-d * d / ((rPix * 4.2) * (rPix * 4.2)));
-    return (core * 1.1 + halo * 0.22) * energy;
+  // Point on centerline, t in [0,1]. Start mid-bottom, go CCW:
+  // bottom mid → right → top → left → bottom mid.
+  // Reparameterized so stations land at clean 0, 0.25, 0.5, 0.75.
+  vec2 loopPoint(float t) {
+    float hx = 2.0 * (LOOP_B.x - LOOP_R);
+    float hy = 2.0 * (LOOP_B.y - LOOP_R);
+    float arc = HALF_PI * LOOP_R;
+    float perim = loopPerim();
+    // Offset so t=0 is bottom-center (Monitor).
+    float s = fract(t + 0.0) * perim;
+    // Start halfway along bottom edge (left half already done conceptually):
+    // Begin at bottom-left corner going right, but shift by hx/2 so t=0 is mid-bottom.
+    s = mod(s + hx * 0.5, perim);
+
+    if (s < hx) {
+      float u = s / hx;
+      return vec2(mix(-(LOOP_B.x - LOOP_R), (LOOP_B.x - LOOP_R), u), -LOOP_B.y);
+    }
+    s -= hx;
+    if (s < arc) {
+      float a = -HALF_PI + (s / arc) * HALF_PI;
+      return vec2(LOOP_B.x - LOOP_R, -LOOP_B.y + LOOP_R) + LOOP_R * vec2(cos(a), sin(a));
+    }
+    s -= arc;
+    if (s < hy) {
+      float u = s / hy;
+      return vec2(LOOP_B.x, mix(-(LOOP_B.y - LOOP_R), (LOOP_B.y - LOOP_R), u));
+    }
+    s -= hy;
+    if (s < arc) {
+      float a = 0.0 + (s / arc) * HALF_PI;
+      return vec2(LOOP_B.x - LOOP_R, LOOP_B.y - LOOP_R) + LOOP_R * vec2(cos(a), sin(a));
+    }
+    s -= arc;
+    if (s < hx) {
+      float u = s / hx;
+      return vec2(mix((LOOP_B.x - LOOP_R), -(LOOP_B.x - LOOP_R), u), LOOP_B.y);
+    }
+    s -= hx;
+    if (s < arc) {
+      float a = HALF_PI + (s / arc) * HALF_PI;
+      return vec2(-(LOOP_B.x - LOOP_R), LOOP_B.y - LOOP_R) + LOOP_R * vec2(cos(a), sin(a));
+    }
+    s -= arc;
+    if (s < hy) {
+      float u = s / hy;
+      return vec2(-LOOP_B.x, mix((LOOP_B.y - LOOP_R), -(LOOP_B.y - LOOP_R), u));
+    }
+    s -= hy;
+    float a = PI + (s / arc) * HALF_PI;
+    return vec2(-(LOOP_B.x - LOOP_R), -(LOOP_B.y - LOOP_R)) + LOOP_R * vec2(cos(a), sin(a));
+  }
+
+  // Exact station slots after mid-bottom offset: Monitor, Act, Model, Observe.
+  // t = 0 bottom, ~0.25 right, ~0.5 top, ~0.75 left.
+  vec2 stationMonitor() { return loopPoint(0.0); }
+  vec2 stationAct() { return loopPoint(0.25); }
+  vec2 stationModel() { return loopPoint(0.5); }
+  vec2 stationObserve() { return loopPoint(0.75); }
+
+  float pixDist(vec2 a, vec2 b) {
+    return length((a - b) * uResolution.xy) / uPixelRatio;
+  }
+
+  // Soft disc + ring for a station.
+  vec3 drawStation(vec2 p, vec2 c, vec3 col, float energy, int kind) {
+    float d = pixDist(p, c);
+    float core = exp(-d * d / (4.5 * 4.5));
+    float body = exp(-d * d / (9.0 * 9.0));
+    float halo = exp(-d * d / (22.0 * 22.0));
+    float ring = exp(-pow(d - 11.0, 2.0) / 2.8);
+
+    // Glyphs: 0 observe (double ring), 1 model (diamond-ish cross), 2 act (solid + chevron), 3 monitor (square ring)
+    float glyph = 0.0;
+    vec2 q = (p - c) * uResolution.xy / uPixelRatio;
+    if (kind == 0) {
+      // Observe — concentric rings (eye).
+      glyph = exp(-pow(length(q) - 5.5, 2.0) / 1.8);
+      glyph += exp(-pow(length(q) - 2.2, 2.0) / 1.2) * 0.8;
+    } else if (kind == 1) {
+      // Model — small diamond.
+      float dia = abs(q.x) + abs(q.y);
+      glyph = exp(-pow(dia - 5.0, 2.0) / 2.2);
+      glyph += exp(-dia * dia / 6.0) * 0.35;
+    } else if (kind == 2) {
+      // Act — filled core + outward chevron.
+      glyph = exp(-length(q) * length(q) / 12.0);
+      float chev = abs(q.y) + q.x * 0.9;
+      glyph += exp(-pow(chev - 4.5, 2.0) / 2.0) * step(0.0, q.x) * 0.7;
+    } else {
+      // Monitor — rounded square ring.
+      float sq = max(abs(q.x), abs(q.y));
+      glyph = exp(-pow(sq - 5.0, 2.0) / 2.0);
+      glyph += exp(-sq * sq / 10.0) * 0.25;
+    }
+
+    vec3 outc = vec3(0.0);
+    outc += col * core * 0.95 * energy;
+    outc += col * body * 0.28 * energy;
+    outc += col * halo * 0.1 * energy;
+    outc += col * ring * 0.55 * energy;
+    outc += col * glyph * 0.85 * energy;
+    return outc;
   }
 
   void main() {
@@ -124,207 +162,206 @@ const fragmentShader = `
     float aspect = uResolution.x / max(uResolution.y, 1.0);
     float mobile = 1.0 - smoothstep(0.94, 1.22, aspect);
 
-    // Composition: loop sits mid-left so copy can live on the right.
     vec2 w = uv;
-    w.x = mix(w.x, 0.08 + w.x * 0.78, mobile * 0.4);
-    w = (w - 0.5) * vec2(1.0, 1.0 / max(aspect * 0.55 + 0.45, 0.75)) + 0.5;
-    // Center the loop slightly left of plate center.
-    vec2 p = w - vec2(0.46, 0.52);
+    w.x = mix(w.x, 0.1 + w.x * 0.8, mobile * 0.35);
+    // Stable aspect so the loop stays circular-ish on all plates.
+    float ax = max(aspect, 0.85);
+    w = (w - vec2(0.47, 0.52)) * vec2(1.0, 1.15 / ax);
+
+    vec2 p = w;
 
     vec2 toPtr = uv - uPointer;
     float prd = length(toPtr * vec2(1.2, 1.0));
-    float probe = exp(-prd * prd / 0.02) * uPointerGlow;
+    float probe = exp(-prd * prd / 0.018) * uPointerGlow;
 
-    // Void — cool steel, not dead black.
-    vec3 color = vec3(0.0025, 0.0038, 0.006);
-    float neb = hash(floor(w * 40.0 + uTime * 0.02));
-    color += vec3(0.01, 0.018, 0.03) * neb * 0.15;
+    // Deep cool void.
+    vec3 color = vec3(0.0018, 0.0028, 0.0045);
 
-    // --- LOOP RAIL ---
-    // Distance to rounded-rect track via sample of nearest point on path.
-    float minD = 1e5;
-    float nearestT = 0.0;
-    for (int i = 0; i < 64; i++) {
-      float tt = float(i) / 64.0;
-      vec2 lp = loopPoint(tt);
-      float d = length((p - lp) * uResolution.xy) / uPixelRatio;
-      if (d < minD) {
-        minD = d;
-        nearestT = tt;
-      }
-    }
+    // --- RAIL (SDF — perfectly smooth constant-width track) ---
+    float dRail = abs(sdRoundBox(p, LOOP_B, LOOP_R));
+    float dPix = dRail * min(uResolution.x, uResolution.y) / uPixelRatio;
 
-    float railCore = exp(-minD * minD / (1.6 * 1.6));
-    float railHalo = exp(-minD * minD / (10.0 * 10.0));
-    float railWide = exp(-minD * minD / (28.0 * 28.0));
-    // Dimmer after Act (token progress) and during stand-down.
-    float railLife = mix(0.55, 1.0, 1.0 - uStandDown * 0.45);
-    vec3 railCol = vec3(0.35, 0.62, 0.78);
-    color += railCol * railCore * 0.55 * railLife;
-    color += railCol * railHalo * 0.12 * railLife;
-    color += vec3(0.15, 0.28, 0.4) * railWide * 0.04;
+    float railLife = mix(1.0, 0.55, uStandDown);
+    // Dual rail for clarity.
+    float railIn = exp(-pow(dPix - 0.0, 2.0) / 1.1);
+    float railMid = exp(-pow(dPix - 2.2, 2.0) / 1.6);
+    float railHalo = exp(-dPix * dPix / (14.0 * 14.0));
+    float railWide = exp(-dPix * dPix / (36.0 * 36.0));
 
-    // Direction ticks (subtle chevrons along the rail).
-    float tick = abs(fract(nearestT * 18.0 + uTime * 0.02) - 0.5);
-    color += vec3(0.45, 0.75, 0.9) * railCore * smoothstep(0.2, 0.02, tick) * 0.25 * railLife;
+    vec3 railCol = mix(vec3(0.38, 0.68, 0.88), vec3(0.28, 0.4, 0.5), uStandDown);
+    color += railCol * railIn * 0.85 * railLife;
+    color += railCol * railMid * 0.4 * railLife;
+    color += railCol * railHalo * 0.14 * railLife;
+    color += vec3(0.12, 0.22, 0.35) * railWide * 0.05;
 
-    // --- FOUR STATIONS ---
-    // Approximate station positions on the loop (Observe L, Model T, Act R, Monitor B).
-    vec2 cObs = loopPoint(0.88);   // left side
-    vec2 cMod = loopPoint(0.12);   // bottom→right region → use top: ~0.38
-    cMod = loopPoint(0.38);
-    vec2 cAct = loopPoint(0.62);   // right
-    vec2 cMon = loopPoint(0.12);   // bottom
+    // Flow ticks — sparse, slow, only on the rail.
+    float ang = atan(p.y, p.x);
+    float tick = abs(fract(ang / (2.0 * PI) * 16.0 - uTime * 0.04) - 0.5);
+    color += vec3(0.55, 0.85, 1.0) * railIn * smoothstep(0.18, 0.04, tick) * 0.28 * railLife;
 
-    // Station energies: pulse when token is near; Act dims on stand-down.
+    // --- STATIONS ---
+    vec2 cMon = stationMonitor();
+    vec2 cAct = stationAct();
+    vec2 cMod = stationModel();
+    vec2 cObs = stationObserve();
+
     float tok = uToken;
-    float nearObs = exp(-pow(min(abs(tok - 0.88), 1.0 - abs(tok - 0.88)) * 8.0, 2.0));
-    float nearMod = exp(-pow(min(abs(tok - 0.38), 1.0 - abs(tok - 0.38)) * 8.0, 2.0));
-    float nearAct = exp(-pow(min(abs(tok - 0.62), 1.0 - abs(tok - 0.62)) * 8.0, 2.0));
-    float nearMon = exp(-pow(min(abs(tok - 0.12), 1.0 - abs(tok - 0.12)) * 8.0, 2.0));
+    // Smooth proximity along the loop parameter.
+    float nearMon = exp(-pow(min(abs(tok - 0.0), 1.0 - abs(tok - 0.0)) * 10.0, 2.0));
+    float nearAct = exp(-pow(min(abs(tok - 0.25), 1.0 - abs(tok - 0.25)) * 10.0, 2.0));
+    float nearMod = exp(-pow(min(abs(tok - 0.5), 1.0 - abs(tok - 0.5)) * 10.0, 2.0));
+    float nearObs = exp(-pow(min(abs(tok - 0.75), 1.0 - abs(tok - 0.75)) * 10.0, 2.0));
 
-    float eObs = 0.35 + 0.65 * nearObs;
-    float eMod = 0.35 + 0.65 * nearMod;
-    float eAct = (0.35 + 0.65 * nearAct) * mix(1.0, 0.28, uStandDown);
-    float eMon = 0.35 + 0.65 * nearMon;
+    float eMon = 0.4 + 0.6 * nearMon;
+    float eAct = (0.4 + 0.6 * nearAct) * mix(1.0, 0.22, uStandDown);
+    float eMod = 0.4 + 0.6 * nearMod;
+    float eObs = 0.4 + 0.6 * nearObs;
 
-    vec3 cool = vec3(0.4, 0.75, 0.95);
-    vec3 actCol = mix(vec3(0.55, 0.82, 0.95), vec3(0.35, 0.42, 0.5), uStandDown);
+    vec3 cool = vec3(0.45, 0.78, 0.98);
+    vec3 actCol = mix(vec3(0.65, 0.88, 1.0), vec3(0.32, 0.38, 0.45), uStandDown);
 
-    color += cool * nodeGlow(p, cObs, 5.5, eObs);
-    color += cool * nodeGlow(p, cMod, 5.5, eMod);
-    color += actCol * nodeGlow(p, cAct, 5.5, eAct);
-    color += cool * nodeGlow(p, cMon, 5.5, eMon);
+    color += drawStation(p, cMon, cool, eMon, 3);
+    color += drawStation(p, cAct, actCol, eAct, 2);
+    color += drawStation(p, cMod, cool, eMod, 1);
+    color += drawStation(p, cObs, cool, eObs, 0);
 
-    // Station rings (thin).
-    float ring = 0.0;
-    ring += exp(-pow(length((p - cObs) * uResolution.xy) / uPixelRatio - 9.0, 2.0) / 2.5) * eObs;
-    ring += exp(-pow(length((p - cMod) * uResolution.xy) / uPixelRatio - 9.0, 2.0) / 2.5) * eMod;
-    ring += exp(-pow(length((p - cAct) * uResolution.xy) / uPixelRatio - 9.0, 2.0) / 2.5) * eAct;
-    ring += exp(-pow(length((p - cMon) * uResolution.xy) / uPixelRatio - 9.0, 2.0) / 2.5) * eMon;
-    color += vec3(0.5, 0.8, 0.95) * ring * 0.35;
-
-    // --- TOKEN ---
+    // --- TOKEN (smooth along centerline) ---
     vec2 tokenP = loopPoint(tok);
-    float td = length((p - tokenP) * uResolution.xy) / uPixelRatio;
-    float breath = 0.85 + 0.15 * sin(uTime * 2.2);
-    float tCore = exp(-td * td / (3.2 * 3.2)) * breath;
-    float tHalo = exp(-td * td / (16.0 * 16.0));
-    float tWide = exp(-td * td / (40.0 * 40.0));
-    vec3 tCol = mix(vec3(0.55, 0.85, 1.0), vec3(0.9, 0.92, 0.75), 1.0 - uStandDown * 0.5);
-    color += tCol * tCore * 1.15;
-    color += tCol * tHalo * 0.35;
-    color += tCol * tWide * 0.08;
+    float td = pixDist(p, tokenP);
+    float breath = 0.88 + 0.12 * sin(uTime * 1.6);
+    float tCore = exp(-td * td / (2.8 * 2.8)) * breath;
+    float tMid = exp(-td * td / (8.0 * 8.0));
+    float tHalo = exp(-td * td / (20.0 * 20.0));
+    float tWide = exp(-td * td / (48.0 * 48.0));
+    vec3 tCol = mix(vec3(0.7, 0.92, 1.0), vec3(0.75, 0.78, 0.7), uStandDown * 0.65);
+    color += tCol * tCore * 1.35;
+    color += tCol * tMid * 0.45;
+    color += tCol * tHalo * 0.2;
+    color += tCol * tWide * 0.07;
 
-    // Token wake along the rail behind it.
+    // Soft wake — denser samples, shorter span, smoother falloff.
     float wake = 0.0;
-    for (int k = 1; k <= 6; k++) {
-      float wt = fract(tok - float(k) * 0.012);
-      vec2 wp = loopPoint(wt);
-      float wd = length((p - wp) * uResolution.xy) / uPixelRatio;
-      wake += exp(-wd * wd / (2.5 * 2.5)) * (1.0 - float(k) / 7.0);
+    for (int k = 1; k <= 10; k++) {
+      float fk = float(k);
+      float wt = fract(tok - fk * 0.0085);
+      float wd = pixDist(p, loopPoint(wt));
+      float fall = exp(-fk * 0.22);
+      wake += exp(-wd * wd / (2.2 * 2.2)) * fall;
     }
-    color += tCol * wake * 0.22 * (1.0 - uStandDown * 0.4);
+    color += tCol * wake * 0.18 * (1.0 - uStandDown * 0.5);
 
-    // --- WORLD GATE (right side — incomplete exit) ---
-    // A vertical shutter just outside the Act station: mostly closed.
-    vec2 gateC = vec2(0.42, 0.0);
-    float gateX = abs(p.x - gateC.x);
-    float gateY = abs(p.y);
-    float gateBar = smoothstep(0.03, 0.0, gateX) * smoothstep(0.28, 0.08, gateY);
-    float teeth = abs(fract(p.y * 22.0) - 0.5);
-    float gateTeeth = gateBar * smoothstep(0.22, 0.05, teeth);
-    float gateOpen = uGate; // low while gated
-    float gateVis = gateBar * (1.0 - gateOpen * 0.7);
-    color += vec3(0.45, 0.55, 0.62) * gateVis * 0.2;
-    color += vec3(0.7, 0.85, 0.95) * gateTeeth * 0.35;
-    // Soft light leaking through the nearly-closed gate.
-    float leak = exp(-gateX * gateX / 0.0012) * exp(-gateY * gateY / 0.06) * (0.08 + gateOpen * 0.5);
-    color += vec3(0.5, 0.72, 0.85) * leak * 0.15;
+    // --- WORLD GATE (outside Act, right) — clean shutter, clearly closed ---
+    vec2 gateCenter = cAct + vec2(0.085, 0.0);
+    float gx = abs(p.x - gateCenter.x);
+    float gy = abs(p.y - gateCenter.y);
+    float bar = smoothstep(0.022, 0.0, gx) * smoothstep(0.2, 0.05, gy);
+    float seam = abs(fract((p.y - gateCenter.y) * 14.0 + 0.5) - 0.5);
+    float teeth = bar * smoothstep(0.2, 0.06, seam);
+    float closed = 1.0 - uGate * 0.65;
+    color += vec3(0.4, 0.52, 0.6) * bar * 0.35 * closed;
+    color += vec3(0.75, 0.9, 1.0) * teeth * 0.45 * closed;
+    // Dim leak only.
+    float leak = exp(-gx * gx / 0.0009) * exp(-gy * gy / 0.035) * (0.05 + uGate * 0.4);
+    color += vec3(0.45, 0.7, 0.88) * leak * 0.12;
 
-    // Stand-down veil — whole loop quiets.
-    color *= mix(1.0, 0.72, uStandDown);
+    // Faint label dots under stations (progress legend without type).
+    // (glyph already communicates)
 
-    // Pointer probe.
-    color *= 1.0 + probe * 0.22;
-    color += vec3(0.4, 0.7, 0.9) * probe * 0.06;
+    color *= mix(1.0, 0.7, uStandDown);
+    color *= 1.0 + probe * 0.18;
+    color += vec3(0.35, 0.65, 0.9) * probe * 0.05;
 
-    // Grade.
-    float leftFade = smoothstep(0.0, 0.2, uv.x);
-    color *= mix(mix(0.4, 0.7, mobile), 1.0, leftFade);
-    float rightFade = smoothstep(1.0, 0.55, uv.x);
-    color *= mix(0.5, 1.0, rightFade);
-    float vert = smoothstep(0.0, 0.12, uv.y) * smoothstep(1.0, 0.82, uv.y);
-    color *= 0.78 + 0.22 * vert;
+    // Grade — keep mass on the left-center.
+    float mass = smoothstep(0.0, 0.18, uv.x) * smoothstep(1.0, 0.52, uv.x);
+    color *= mix(0.45, 1.0, mass);
+    float vert = smoothstep(0.0, 0.1, uv.y) * smoothstep(1.0, 0.85, uv.y);
+    color *= 0.8 + 0.2 * vert;
 
-    color = pow(max(color, 0.0), vec3(0.9));
+    color = pow(max(color, 0.0), vec3(0.92));
     float lum = dot(color, vec3(0.299, 0.587, 0.114));
-    color = mix(color * vec3(0.85, 0.95, 1.15), color, smoothstep(0.0, 0.25, lum));
+    color = mix(color * vec3(0.88, 0.96, 1.12), color, smoothstep(0.0, 0.2, lum));
 
-    float grain = hash13(vec3(gl_FragCoord.xy, uTime * 14.0)) - 0.5;
-    color += grain * 0.008 * smoothstep(0.0, 0.04, lum);
-    color = min(color * 1.05, vec3(1.0));
+    float grain = hash13(vec3(gl_FragCoord.xy, uTime * 12.0)) - 0.5;
+    color += grain * 0.006 * smoothstep(0.0, 0.03, lum);
+    color = min(color, vec3(1.0));
 
     float alphaLum = dot(color, vec3(0.299, 0.587, 0.114));
-    float alpha = clamp(0.16 + alphaLum * 5.8, 0.0, 1.0);
+    float alpha = clamp(0.14 + alphaLum * 6.2, 0.0, 1.0);
     gl_FragColor = vec4(color / max(alpha, 0.02), alpha);
   }
 `;
 
-/** Map raw time → token phase with station dwells + occasional stand-down at Act. */
+function smoothstep(e0: number, e1: number, x: number) {
+  const t = Math.min(Math.max((x - e0) / (e1 - e0), 0), 1);
+  return t * t * (3 - 2 * t);
+}
+
+function smootherstep(e0: number, e1: number, x: number) {
+  const t = Math.min(Math.max((x - e0) / (e1 - e0), 0), 1);
+  return t * t * t * (t * (t * 6 - 15) + 10);
+}
+
+/**
+ * Token motion on path parameter:
+ * Monitor(0) → Act(0.25) → Model(0.5) → Observe(0.75) → Monitor(1/0)
+ * Long dwells, smooth travel, periodic stand-down at Act.
+ */
 function tokenPhase(elapsed: number) {
-  // Segment weights around the loop (must sum to 1).
-  // Bottom travel, Monitor dwell, left travel, Observe dwell, top travel, Model dwell,
-  // right travel, Act dwell (sometimes long = stand-down).
-  const CYCLE = 14.0;
-  const t = (elapsed % CYCLE) / CYCLE;
-
-  // Piecewise ease through stations at fixed perimeter positions:
-  // Mon 0.12, Obs 0.88, Mod 0.38, Act 0.62 — use ordered stops along t.
-  // Order along path starting bottom-left going right:
-  // 0.00–0.12 bottom → Mon(0.12), dwell, left side up to Obs(~0.88 wraps)...
-  // Simpler: keyframe stops in path-t space with holds.
-  const keys = [
-    { t: 0.0, p: 0.0 },
-    { t: 0.08, p: 0.1 }, // approach Monitor
-    { t: 0.18, p: 0.12 }, // dwell Monitor
-    { t: 0.28, p: 0.35 },
-    { t: 0.38, p: 0.38 }, // dwell Model (top)
-    { t: 0.48, p: 0.55 },
-    { t: 0.52, p: 0.62 }, // arrive Act
-    // Stand-down window: hold at Act longer every other cycle.
-    { t: 0.72, p: 0.62 },
-    { t: 0.82, p: 0.85 },
-    { t: 0.9, p: 0.88 }, // dwell Observe
-    { t: 1.0, p: 1.0 },
-  ];
-
-  // Every other cycle, extend Act hold (stand-down).
+  // Full cycle ~18s for a calmer, readable pace.
+  const CYCLE = 18;
   const cycleIndex = Math.floor(elapsed / CYCLE);
   const standDownCycle = cycleIndex % 2 === 1;
+  const u = (elapsed % CYCLE) / CYCLE;
 
-  let phase = t;
-  if (standDownCycle && t >= 0.52 && t < 0.78) {
-    // Linger at Act.
-    return { token: 0.62, standDown: smoothstepLocal(0.52, 0.58, t) * (1 - smoothstepLocal(0.72, 0.78, t)) };
-  }
+  // Timeline in normalized cycle time → path t
+  // Travel segments short; dwells long.
+  // Mon dwell, travel→Act, Act dwell (±stand-down), travel→Mod, Mod dwell,
+  // travel→Obs, Obs dwell, travel→Mon.
+  type Key = { u: number; p: number };
+  const keys: Key[] = standDownCycle
+    ? [
+        { u: 0.0, p: 0.0 },
+        { u: 0.1, p: 0.0 }, // dwell Monitor
+        { u: 0.18, p: 0.25 }, // → Act
+        { u: 0.42, p: 0.25 }, // long stand-down at Act
+        { u: 0.5, p: 0.5 }, // → Model
+        { u: 0.62, p: 0.5 }, // dwell Model
+        { u: 0.7, p: 0.75 }, // → Observe
+        { u: 0.84, p: 0.75 }, // dwell Observe
+        { u: 0.94, p: 1.0 }, // → Monitor
+        { u: 1.0, p: 1.0 },
+      ]
+    : [
+        { u: 0.0, p: 0.0 },
+        { u: 0.12, p: 0.0 },
+        { u: 0.22, p: 0.25 },
+        { u: 0.34, p: 0.25 }, // brief Act (still acts)
+        { u: 0.44, p: 0.5 },
+        { u: 0.58, p: 0.5 },
+        { u: 0.68, p: 0.75 },
+        { u: 0.84, p: 0.75 },
+        { u: 0.94, p: 1.0 },
+        { u: 1.0, p: 1.0 },
+      ];
 
-  // Interpolate keys.
+  let token = 0;
   for (let i = 0; i < keys.length - 1; i++) {
     const a = keys[i];
     const b = keys[i + 1];
-    if (phase >= a.t && phase <= b.t) {
-      const u = (phase - a.t) / Math.max(b.t - a.t, 1e-6);
-      const e = u * u * (3 - 2 * u);
-      return { token: a.p + (b.p - a.p) * e, standDown: 0 };
+    if (u >= a.u && u <= b.u) {
+      const k = smootherstep(a.u, b.u, u);
+      token = a.p + (b.p - a.p) * k;
+      break;
     }
   }
-  return { token: 0, standDown: 0 };
-}
 
-function smoothstepLocal(e0: number, e1: number, x: number) {
-  const t = Math.min(Math.max((x - e0) / (e1 - e0), 0), 1);
-  return t * t * (3 - 2 * t);
+  let standDown = 0;
+  if (standDownCycle) {
+    // Rise into Act hold, hold, ease out.
+    standDown = smoothstep(0.18, 0.26, u) * (1 - smoothstep(0.4, 0.48, u));
+  }
+
+  return { token: token % 1, standDown };
 }
 
 export default function AutonomyLoopRender() {
@@ -341,7 +378,7 @@ export default function AutonomyLoopRender() {
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({
-        antialias: false,
+        antialias: true,
         alpha: true,
         premultipliedAlpha: false,
         powerPreference: 'high-performance',
@@ -359,8 +396,8 @@ export default function AutonomyLoopRender() {
       uTime: { value: 0 },
       uPointer: { value: new THREE.Vector2(0.5, 0.5) },
       uPointerGlow: { value: 0 },
-      uToken: { value: 0.12 },
-      uGate: { value: 0.08 },
+      uToken: { value: 0 },
+      uGate: { value: 0.07 },
       uStandDown: { value: 0 },
     };
     const material = new THREE.ShaderMaterial({
@@ -378,7 +415,12 @@ export default function AutonomyLoopRender() {
     let frameId: number | null = null;
     let startedAt = performance.now();
     let visible = true;
+
+    // Smoothed state for butter-smooth motion.
+    let tokenSmoothed = 0;
     let standDownSmoothed = 0;
+    let tokenTarget = 0;
+    let standDownTarget = 0;
 
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setClearColor(0x000000, 0);
@@ -419,23 +461,33 @@ export default function AutonomyLoopRender() {
       const elapsed = (performance.now() - startedAt) / 1000;
       uniforms.uTime.value = elapsed;
 
-      pointerState.x += (pointerState.tx - pointerState.x) * 0.08;
-      pointerState.y += (pointerState.ty - pointerState.y) * 0.08;
+      pointerState.x += (pointerState.tx - pointerState.x) * 0.07;
+      pointerState.y += (pointerState.ty - pointerState.y) * 0.07;
       pointerState.glow += (pointerState.glowTarget - pointerState.glow) * 0.05;
       uniforms.uPointer.value.set(pointerState.x, pointerState.y);
       uniforms.uPointerGlow.value = pointerState.glow;
 
       if (!reducedMotion) {
-        const { token, standDown } = tokenPhase(elapsed);
-        uniforms.uToken.value = token;
-        standDownSmoothed += (standDown - standDownSmoothed) * 0.04;
+        const phase = tokenPhase(elapsed);
+        tokenTarget = phase.token;
+        standDownTarget = phase.standDown;
+
+        // Shortest-path lerp on the circle so wrap-around stays smooth.
+        let delta = tokenTarget - tokenSmoothed;
+        if (delta > 0.5) delta -= 1;
+        if (delta < -0.5) delta += 1;
+        // Critically damped-ish: snappier when traveling, stickier when dwelling.
+        const travel = Math.abs(delta) > 0.002 ? 0.1 : 0.06;
+        tokenSmoothed = (tokenSmoothed + delta * travel + 1) % 1;
+        standDownSmoothed += (standDownTarget - standDownSmoothed) * 0.045;
+
+        uniforms.uToken.value = tokenSmoothed;
         uniforms.uStandDown.value = standDownSmoothed;
-        // Gate stays almost closed — Autonomy is not open.
-        uniforms.uGate.value = 0.06 + 0.04 * Math.sin(elapsed * 0.15);
+        uniforms.uGate.value = 0.05 + 0.03 * Math.sin(elapsed * 0.12);
       } else {
-        uniforms.uToken.value = 0.38;
-        uniforms.uStandDown.value = 0.55;
-        uniforms.uGate.value = 0.08;
+        uniforms.uToken.value = 0.5;
+        uniforms.uStandDown.value = 0.6;
+        uniforms.uGate.value = 0.06;
       }
 
       renderer.render(scene, camera);
@@ -471,7 +523,7 @@ export default function AutonomyLoopRender() {
     visibilityObserver.observe(mount);
 
     if (reducedMotion) {
-      startedAt -= 8_000;
+      startedAt -= 10_000;
       render();
     } else {
       animate();
