@@ -534,8 +534,8 @@ export default function HomeClient({
                   <Link href="/hermes" className="inst-card-cta">
                     Explore →
                   </Link>
-                  <Link href="/brief" className="inst-card-cta inst-card-cta-brief">
-                    Brief →
+                  <Link href="/trust" className="inst-card-cta inst-card-cta-ledger">
+                    Decision ledger →
                   </Link>
                 </div>
               </div>
