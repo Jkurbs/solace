@@ -1210,15 +1210,22 @@ h2 {
     position: absolute;
     top: 1.25rem;
     right: 1.25rem;
+    /* Leave room for the status pill so metrics never slide under it on
+       mid-width Oracle columns (span 5 ≈ 400–520px). */
+    left: 11rem;
     z-index: 2;
     display: flex;
-    gap: clamp(0.9rem, 1.8vw, 1.5rem);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: clamp(0.75rem, 1.5vw, 1.35rem);
+    max-width: none;
   }
 
   .inst-card-metrics span {
     display: grid;
     gap: 0.28rem;
     text-align: right;
+    min-width: 0;
   }
 
   .inst-card-metrics em {
@@ -1422,24 +1429,42 @@ h2 {
     }
   }
 
+  /* Oracle sits in a 5-col track; under ~1200px the pill + 3 metrics cannot
+     share one row cleanly. Drop metrics under the pill instead. */
+  @media (max-width: 1200px) and (min-width: 901px) {
+    .inst-cell-oracle .inst-card-metrics {
+      top: 3.35rem;
+      left: 1.25rem;
+      right: 1.25rem;
+      justify-content: flex-start;
+      gap: 1rem 1.25rem;
+    }
+
+    .inst-cell-oracle .inst-card-metrics span {
+      text-align: left;
+    }
+  }
+
   @media (max-width: 640px) {
     .inst-card-metrics {
       top: 3.15rem;
       right: 1.1rem;
       left: 1.1rem;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.55rem 1rem;
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+      gap: 0.55rem 0.75rem;
+    }
+
+    .inst-card-metrics span {
+      flex: 1 1 0;
+      text-align: left;
     }
 
     .inst-card-ledger {
       top: auto;
       bottom: 1.15rem;
       right: 1.1rem;
-    }
-
-    .inst-card-metrics span {
-      text-align: left;
     }
 
     .inst-card-metrics em {
