@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { GPUComputationRenderer } from 'three/addons/misc/GPUComputationRenderer.js';
 
+import { getRenderPixelRatio, isMobilePlateViewport } from '@/lib/webgl-dpr';
+
 // Homepage Simulation plate: self-contained glass cube laboratory.
 // Dense GPU particle field (~80k desktop / ~25k mobile) continuously morphs
 // between hypothesis worlds. Collapse beats, path climax, galaxy, volume haze.
@@ -939,12 +941,15 @@ export default function SimulationEnsembleRender() {
     const resize = () => {
       const width = Math.max(1, mount.clientWidth);
       const height = Math.max(1, mount.clientHeight);
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = getRenderPixelRatio(3);
+      const w = Math.max(1, Math.floor(width));
+      const h = Math.max(1, Math.floor(height));
       renderer.setPixelRatio(dpr);
-      renderer.setSize(width, height, false);
-      camera.aspect = width / height;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      pMat.uniforms.uPixelRatio.value = dpr;
+      // Mobile: larger points so the dense field doesn't look mushy at distance.
+      pMat.uniforms.uPixelRatio.value = dpr * (isMobilePlateViewport() ? 1.15 : 1);
 
       const aspect = width / height;
       const dist = aspect < 1 ? 3.35 : 2.85;

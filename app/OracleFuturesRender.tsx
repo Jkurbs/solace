@@ -3,6 +3,8 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
+import { getRenderPixelRatio } from '@/lib/webgl-dpr';
+
 const vertexShader = `
   varying vec2 vUv;
 
@@ -356,11 +358,13 @@ export default function OracleFuturesRender() {
     const resize = () => {
       const width = Math.max(1, mount.clientWidth);
       const height = Math.max(1, mount.clientHeight);
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = getRenderPixelRatio(3);
+      const w = Math.max(1, Math.floor(width));
+      const h = Math.max(1, Math.floor(height));
 
       renderer.setPixelRatio(dpr);
-      renderer.setSize(width, height, false);
-      uniforms.uResolution.value.set(width * dpr, height * dpr);
+      renderer.setSize(w, h, false);
+      uniforms.uResolution.value.set(w * dpr, h * dpr);
       uniforms.uPixelRatio.value = dpr;
     };
 

@@ -3,6 +3,8 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
+import { getRenderPixelRatio } from '@/lib/webgl-dpr';
+
 const vertexShader = `
   varying vec2 vUv;
 
@@ -481,9 +483,13 @@ export default function HermesBlackHoleRender() {
       const width = Math.max(1, mount.clientWidth);
       const height = Math.max(1, mount.clientHeight);
 
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      renderer.setSize(width, height, false);
-      uniforms.uResolution.value.set(width, height);
+      const dpr = getRenderPixelRatio(3);
+      const w = Math.max(1, Math.floor(width));
+      const h = Math.max(1, Math.floor(height));
+      renderer.setPixelRatio(dpr);
+      renderer.setSize(w, h, false);
+      // Drawing-buffer pixels (matches gl_FragCoord / retina).
+      uniforms.uResolution.value.set(w * dpr, h * dpr);
     };
 
     const render = () => {

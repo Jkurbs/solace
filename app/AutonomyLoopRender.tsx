@@ -3,6 +3,8 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
+import { getRenderPixelRatio } from '@/lib/webgl-dpr';
+
 // Homepage Autonomy plate: observe → model → act → monitor.
 // Sequential loop that can stand down; world gate stays nearly closed.
 // Clarity: SDF rail (constant width), distinct station glyphs, smooth token.
@@ -450,10 +452,10 @@ export default function AutonomyLoopRender() {
     const resize = () => {
       const width = Math.max(1, mount.clientWidth);
       const height = Math.max(1, mount.clientHeight);
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = getRenderPixelRatio(3);
       renderer.setPixelRatio(dpr);
-      renderer.setSize(width, height, false);
-      uniforms.uResolution.value.set(width * dpr, height * dpr);
+      renderer.setSize(Math.floor(width), Math.floor(height), false);
+      uniforms.uResolution.value.set(Math.floor(width) * dpr, Math.floor(height) * dpr);
       uniforms.uPixelRatio.value = dpr;
     };
 

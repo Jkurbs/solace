@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
+import { getRenderPixelRatio } from '@/lib/webgl-dpr';
 
 // Variant D of the telemetry design: real posture drives the art's energy.
 // Deployed burns at full brightness; standing down dims to embers. The field
@@ -626,14 +627,16 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
     const resize = () => {
       const width = Math.max(1, mount.clientWidth);
       const height = Math.max(1, mount.clientHeight);
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = getRenderPixelRatio(3);
+      const w = Math.max(1, Math.floor(width));
+      const h = Math.max(1, Math.floor(height));
 
       renderer.setPixelRatio(dpr);
-      renderer.setSize(width, height, false);
+      renderer.setSize(w, h, false);
       // gl_FragCoord is in physical pixels, so the shader needs the drawing
       // buffer size — not CSS pixels — or Retina displays render the whole
       // composition into the bottom-left quadrant.
-      uniforms.uResolution.value.set(width * dpr, height * dpr);
+      uniforms.uResolution.value.set(w * dpr, h * dpr);
       uniforms.uPixelRatio.value = dpr;
     };
 

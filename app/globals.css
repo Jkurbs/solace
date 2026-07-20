@@ -4725,6 +4725,10 @@ h2 {
 
   .hermes-render-canvas {
     display: block;
+    /* Keep WebGL crisp when CSS sizes the canvas; avoid browser blur upscales. */
+    image-rendering: auto;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
 
   /* WebGL canvases mount after hydration; they bloom in slowly enough to read
