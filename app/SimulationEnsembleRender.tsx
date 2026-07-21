@@ -1,687 +1,1281 @@
-// app/simulation-ensemble.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { GPUComputationRenderer } from 'three/addons/misc/GPUComputationRenderer.js';
+
+import { getRenderPixelRatio, isMobilePlateViewport } from '@/lib/webgl-dpr';
+
+// Homepage Simulation plate: self-contained glass cube laboratory.
+// Dense GPU particle field (~80k desktop / ~25k mobile) continuously morphs
+// between hypothesis worlds. Collapse beats, path climax, galaxy, volume haze.
+// Nothing enters or leaves the box.
 
 const CUBE = 1.0;
-const PARTICLES = 1800;
+const HALF = CUBE * 0.5;
+// Texture size → particle count (square). Desktop ~83k, mobile ~26k.
+const GPU_SIZE_DESKTOP = 288;
+const GPU_SIZE_MOBILE = 160;
+const TRAJ_POINTS = 128;
+const FILAMENT_COUNT = 3;
+const HAZE_COUNT = 6;
+
 const WORLD_SCENARIOS = [
-  { label: 'Bull Run', detail: 'Markets surge. Capital deploys across high-beta positions.' },
-  { label: 'Black Swan', detail: 'Sudden collapse. Liquidity vanishes. Correlation goes to 1.' },
-  { label: 'Regime Shift', detail: 'Policy pivots. Rates, currencies, and flows reprice overnight.' },
-  { label: 'Stagnation', detail: 'Growth stalls. Volatility compresses. Opportunity cost rises.' },
-  { label: 'Recovery', detail: 'Confidence returns. Asymmetric setups emerge from the wreckage.' },
-  { label: 'Euphoria', detail: 'Momentum feeds on itself. The system tests its own limits.' },
-];
+  { label: 'Boundary conditions', detail: 'A system learns the limits of its world.' },
+  { label: 'Flow fields', detail: 'Local forces produce stable movement.' },
+  { label: 'Built environment', detail: 'Constraints become a navigable space.' },
+  { label: 'Collective behavior', detail: 'Simple rules compound into coordination.' },
+  { label: 'Ecosystem drift', detail: 'Small changes reshape the whole field.' },
+  { label: 'Recovery paths', detail: 'The system searches for a stable return.' },
+] as const;
 
-export default function SimulationEnsemble() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [scenarioIndex, setScenarioIndex] = useState(0);
-  const [ready, setReady] = useState(false);
+function createGlassEnvironment(renderer: THREE.WebGLRenderer) {
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  pmrem.compileEquirectangularShader();
 
-  useEffect(() => {
-    if (!containerRef.current) return;
+  const envScene = new THREE.Scene();
+  envScene.background = new THREE.Color(0x010204);
 
-    const container = containerRef.current;
-    const w = container.offsetWidth;
-    const h = container.offsetHeight;
+  const panels: THREE.Mesh[] = [];
+  const addPanel = (
+    color: number,
+    position: [number, number, number],
+    scale: [number, number],
+    rotation: [number, number, number] = [0, 0, 0],
+  ) => {
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }),
+    );
+    mesh.position.set(position[0], position[1], position[2]);
+    mesh.scale.set(scale[0], scale[1], 1);
+    mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+    envScene.add(mesh);
+    panels.push(mesh);
+  };
 
-    // Renderer with tone mapping for bloom prep
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(w, h);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.toneMapping = THREE.ReinhardToneMapping;
-    renderer.toneMappingExposure = 1.2;
-    container.appendChild(renderer.domElement);
+  addPanel(0xffffff, [1.2, 2.6, 2.0], [5.5, 0.35], [-0.7, 0.25, 0]);
+  addPanel(0x6a9ad4, [-2.8, 0.6, 0.4], [1.4, 3.2], [0, 1.1, 0]);
+  addPanel(0xb8a078, [2.2, 0.2, -2.4], [2.2, 1.6], [0.2, -0.5, 0]);
+  addPanel(0x1a2838, [0, -2.4, 0.5], [6, 6], [-Math.PI / 2, 0, 0]);
+  addPanel(0xe8f2ff, [0.6, 1.8, 2.4], [0.5, 0.5], [-0.4, 0.1, 0]);
 
-    const scene = new THREE.Scene();
+  const envMap = pmrem.fromScene(envScene, 0.04).texture;
+  for (const mesh of panels) {
+    mesh.geometry.dispose();
+    (mesh.material as THREE.Material).dispose();
+  }
+  pmrem.dispose();
+  return envMap;
+}
 
-    const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
-    camera.position.set(0, 0, 3.2);
+function createGlassMaterial(envMap: THREE.Texture, opts?: { thickness?: number; transmission?: number }) {
+  return new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(0xe8f1fa),
+    metalness: 0,
+    roughness: 0.04,
+    transmission: opts?.transmission ?? 1,
+    thickness: opts?.thickness ?? 0.55,
+    ior: 1.5,
+    reflectivity: 0.5,
+    transparent: true,
+    opacity: 1,
+    depthWrite: false,
+    side: THREE.FrontSide,
+    envMap,
+    envMapIntensity: 1.15,
+    clearcoat: 1,
+    clearcoatRoughness: 0.06,
+    attenuationColor: new THREE.Color(0x6f9cc8),
+    attenuationDistance: 1.35,
+    specularIntensity: 1,
+    specularColor: new THREE.Color(0xf2f7ff),
+  });
+}
 
-    // Post-processing (Bloom)
-    let composer: any;
-    try {
-      const { EffectComposer } = require('three/addons/postprocessing/EffectComposer.js');
-      const { RenderPass } = require('three/addons/postprocessing/RenderPass.js');
-      const { UnrealBloomPass } = require('three/addons/postprocessing/UnrealBloomPass.js');
-      composer = new EffectComposer(renderer);
-      composer.addPass(new RenderPass(scene, camera));
-      const bloom = new UnrealBloomPass(
-        new THREE.Vector2(w, h),
-        0.5,   // strength
-        0.4,   // radius
-        0.85,  // threshold
-      );
-      composer.addPass(bloom);
-    } catch {
-      // Fallback if addons not available
-      composer = null;
+// Shared GLSL for formation targets (used by velocity compute).
+const formationGlsl = `
+const float CUBE = 1.0;
+const float HALF = 0.5;
+
+float hash11(float p) {
+  p = fract(p * 0.1031);
+  p *= p + 33.33;
+  p *= p + p;
+  return fract(p);
+}
+
+vec3 clampInside(vec3 v, float pad) {
+  float lim = HALF - pad;
+  return clamp(v, vec3(-lim), vec3(lim));
+}
+
+vec3 trajPoint(float t, float phase) {
+  float angle = t * 3.14159265 * 1.6 + phase * 0.4;
+  return clampInside(vec3(
+    sin(angle * 1.1) * 0.28,
+    (t - 0.5) * CUBE * 0.72,
+    cos(angle * 0.9) * 0.24
+  ), 0.08);
+}
+
+// Iconic formations (readable at a glance while held):
+// 0 sphere shell · 1 torus · 2 wire cube · 3 double helix · 4 galaxy · 5 infinity
+vec3 targetFor(float mode, float seed, float u, float t) {
+  float s1 = seed;
+  float s2 = fract(seed * 1.6180339887);
+  float s3 = fract(seed * 2.718281828);
+  float TAU = 6.2831853;
+  vec3 outp = vec3(0.0);
+
+  if (mode < 0.5) {
+    // Hollow sphere shell — clear ball of possibilities.
+    float th = s1 * TAU;
+    float ph = acos(clamp(s2 * 2.0 - 1.0, -1.0, 1.0));
+    float r = HALF * 0.68 * (0.96 + s3 * 0.06);
+    outp = vec3(
+      r * sin(ph) * cos(th),
+      r * cos(ph),
+      r * sin(ph) * sin(th)
+    );
+  } else if (mode < 1.5) {
+    // Torus / ring — slow spin so it reads as a solid object.
+    float R = 0.30;
+    float rr = 0.105;
+    float uu = s1 * TAU + t * 0.12;
+    float vv = s2 * TAU;
+    float cx = (R + rr * cos(vv)) * cos(uu);
+    float cy = rr * sin(vv);
+    float cz = (R + rr * cos(vv)) * sin(uu);
+    // Tilt for 3D read.
+    float tilt = 0.55;
+    outp = vec3(cx, cy * cos(tilt) - cz * sin(tilt), cy * sin(tilt) + cz * cos(tilt));
+  } else if (mode < 2.5) {
+    // Wireframe cube — particles on the 12 edges only.
+    float edge = floor(s1 * 12.0);
+    float along = s2;
+    float e = HALF * 0.62;
+    // Edge endpoints as min/max corners along one axis.
+    // edges 0-3 bottom square, 4-7 top, 8-11 verticals
+    if (edge < 4.0) {
+      float k = edge;
+      if (k < 0.5) outp = vec3(mix(-e, e, along), -e, -e);
+      else if (k < 1.5) outp = vec3(e, -e, mix(-e, e, along));
+      else if (k < 2.5) outp = vec3(mix(e, -e, along), -e, e);
+      else outp = vec3(-e, -e, mix(e, -e, along));
+    } else if (edge < 8.0) {
+      float k = edge - 4.0;
+      if (k < 0.5) outp = vec3(mix(-e, e, along), e, -e);
+      else if (k < 1.5) outp = vec3(e, e, mix(-e, e, along));
+      else if (k < 2.5) outp = vec3(mix(e, -e, along), e, e);
+      else outp = vec3(-e, e, mix(e, -e, along));
+    } else {
+      float k = edge - 8.0;
+      if (k < 0.5) outp = vec3(-e, mix(-e, e, along), -e);
+      else if (k < 1.5) outp = vec3(e, mix(-e, e, along), -e);
+      else if (k < 2.5) outp = vec3(e, mix(-e, e, along), e);
+      else outp = vec3(-e, mix(-e, e, along), e);
+    }
+    // Tiny thickness so edges aren't infinitely thin.
+    outp += (vec3(s1, s2, s3) - 0.5) * 0.012;
+  } else if (mode < 3.5) {
+    // Double helix — two clear strands + occasional rungs.
+    float y = (s1 - 0.5) * 0.82;
+    float strand = step(0.5, s2);
+    float ang = y * 9.0 + t * 0.22 + strand * 3.14159265;
+    float rad = 0.155;
+    if (s3 > 0.82) {
+      // Base-pair rung between strands.
+      float a0 = y * 9.0 + t * 0.22;
+      vec3 p0 = vec3(cos(a0) * rad, y, sin(a0) * rad);
+      vec3 p1 = vec3(cos(a0 + 3.14159265) * rad, y, sin(a0 + 3.14159265) * rad);
+      outp = mix(p0, p1, s2);
+    } else {
+      outp = vec3(cos(ang) * rad, y, sin(ang) * rad);
+    }
+  } else if (mode < 4.5) {
+    // Spiral galaxy — tight arms, bright core, thin disk.
+    float arms = 2.0;
+    float maxR = HALF * 0.78;
+    float spin = t * 0.1;
+    if (s3 < 0.12) {
+      float br = pow(s2, 0.45) * 0.07;
+      float ba = s1 * TAU + spin * 1.2;
+      outp = vec3(cos(ba) * br, (s3 - 0.06) * 0.12, sin(ba) * br);
+    } else {
+      float arm = floor(s1 * arms);
+      float radius = pow(0.02 + s2 * 0.98, 0.55) * maxR;
+      float wind = 3.4;
+      float armPhase = (arm / arms) * TAU;
+      float theta = armPhase + log(1.0 + radius * 11.0) * wind + spin
+                 + (s3 - 0.5) * (0.05 + radius * 0.12);
+      float diskH = (s1 - 0.5) * (0.012 + (1.0 - radius / maxR) * 0.03);
+      float x = cos(theta) * radius;
+      float y = diskH;
+      float z = sin(theta) * radius;
+      float tilt = 0.48;
+      outp = vec3(x, y * cos(tilt) - z * sin(tilt), y * sin(tilt) + z * cos(tilt));
+    }
+  } else {
+    // Infinity (lemniscate) ribbon — unmistakable symbol of open possibility.
+    float th = s1 * TAU + t * 0.1;
+    float sc = 0.34;
+    float den = 1.0 + sin(th) * sin(th);
+    float x = sc * cos(th) / den;
+    float z = sc * sin(th) * cos(th) / den;
+    float y = (s2 - 0.5) * 0.05 + sin(th * 2.0) * 0.02 * s3;
+    // Thin ribbon thickness.
+    float nx = -sin(th);
+    float nz = cos(th) * cos(th) - sin(th) * sin(th);
+    float nlen = max(length(vec2(nx, nz)), 1e-4);
+    outp = vec3(x, y, z) + vec3(nx, 0.0, nz) / nlen * ((s3 - 0.5) * 0.04);
+  }
+
+  // Whisper of life only — keep silhouettes sharp during hold.
+  float morph = 0.0035;
+  outp.x += sin(t * 0.4 + seed * 11.0) * morph;
+  outp.y += cos(t * 0.35 + seed * 9.0) * morph;
+  outp.z += sin(t * 0.3 + seed * 7.0) * morph;
+
+  return clampInside(outp, 0.04);
+}
+
+vec3 scatterTarget(float seed, float t) {
+  float s1 = seed;
+  float s2 = fract(seed * 1.6180339887);
+  float s3 = fract(seed * 2.718281828);
+  float a = s1 * 6.2831853 + t * 0.7;
+  float b = s2 * 6.2831853 - t * 0.45;
+  float r = (0.2 + s3 * 0.75) * HALF * 0.95;
+  return clampInside(vec3(
+    sin(a) * cos(b) * r,
+    (s2 * 2.0 - 1.0) * HALF * 0.88 + sin(t * 1.1 + s1 * 8.0) * 0.04,
+    cos(a) * cos(b) * r
+  ), 0.04);
+}
+`;
+
+const velocityShader = `
+  uniform float uTime;
+  uniform float uDt;
+  uniform float uModeA;
+  uniform float uShape;      // 0 = chaos, 1 = fully locked to formation
+  uniform float uShapeLock;  // extra snap during hold
+  uniform float uDetonate;
+  uniform float uFreeFall;
+  uniform float uInPath;
+  uniform float uInGalaxy;
+  uniform float uTrajFray;
+  uniform float uTrajPhase;
+  uniform float uIndexScale;
+
+  ${formationGlsl}
+
+  void main() {
+    vec2 uv = gl_FragCoord.xy / resolution.xy;
+    vec4 posSample = texture2D(texturePosition, uv);
+    vec4 velSample = texture2D(textureVelocity, uv);
+    vec3 p = posSample.xyz;
+    vec3 v = velSample.xyz;
+    float seed = posSample.w;
+    float idx = (gl_FragCoord.x - 0.5) + (gl_FragCoord.y - 0.5) * resolution.x;
+    float u = idx * uIndexScale;
+
+    // Cadence: chaos scatter ↔ formation target. Shape holds when uShapeLock is high.
+    vec3 form = targetFor(uModeA, seed, u, uTime);
+    vec3 chaos = scatterTarget(seed, uTime * 1.15 + uModeA * 4.2);
+    vec3 target = mix(chaos, form, clamp(uShape, 0.0, 1.0));
+
+    if (uDetonate > 0.001) {
+      float burst = 1.0 + uDetonate * (0.85 + seed * 0.55);
+      target *= burst;
+      target += vec3(seed - 0.5, fract(seed * 1.7) - 0.5, fract(seed * 2.3) - 0.5) * uDetonate * 0.35;
+      target = clampInside(target, 0.04);
+    }
+    if (uFreeFall > 0.001) {
+      target = mix(target, chaos, uFreeFall);
+    }
+    if (uInPath > 0.02 && uShape > 0.35) {
+      float pathT = clamp((p.y / (CUBE * 0.72) + 0.5) * 0.85 + seed * 0.12, 0.0, 1.0);
+      vec3 corridor = trajPoint(pathT, uTrajPhase);
+      float magnet = uInPath * uShape * (0.6 + (1.0 - uTrajFray) * 0.4);
+      target = mix(target, corridor, magnet);
+      if (uTrajFray > 0.05) {
+        float splay = uTrajFray * (0.1 + seed * 0.14);
+        target += vec3(seed - 0.5, fract(seed * 1.3) - 0.5, fract(seed * 2.1) - 0.5) * splay * vec3(2.2, 1.0, 2.2);
+      }
+      target = clampInside(target, 0.05);
     }
 
-    // Environment map for reflections
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    const envScene = new THREE.Scene();
-    envScene.background = new THREE.Color(0x020408);
-    const envLight = new THREE.DirectionalLight(0xffffff, 2);
-    envLight.position.set(1, 1, 1);
-    envScene.add(envLight);
-    const envMap = pmrem.fromScene(envScene).texture;
+    // Stronger hold snap so icons stay sharp; chaos stays wild.
+    float aMul = 0.5
+      + uShape * 1.25
+      + uShapeLock * 2.1
+      + uInGalaxy * 0.3
+      + uInPath * 0.35
+      - uFreeFall * 0.4
+      - uDetonate * 0.15;
+    float nMul = max(0.03,
+      0.18
+      + uFreeFall * 1.4
+      + uDetonate * 0.95
+      - uShape * 0.65
+      - uShapeLock * 1.05
+      - uInGalaxy * 0.2
+      - uInPath * 0.2);
+    float attract = 11.0 * max(aMul, 0.2);
+    float drag = exp(-(2.6 + uShapeLock * 3.4) * uDt);
 
-    // World group
+    v += (target - p) * attract * uDt;
+    v *= drag;
+    v += vec3(
+      sin(uTime * 1.1 + seed * 20.0),
+      cos(uTime * 0.85 + seed * 17.0),
+      sin(uTime * 0.7 + seed * 13.0)
+    ) * 0.22 * nMul * uDt;
+
+    if (uDetonate > 0.15) {
+      v += p * uDetonate * 0.55 * uDt * 10.0;
+      v += vec3(
+        sin(seed * 40.0 + uTime * 8.0),
+        cos(seed * 31.0 - uTime * 7.0),
+        sin(seed * 23.0 + uTime * 9.0)
+      ) * uDetonate * 0.45 * uDt * 12.0;
+    }
+
+    gl_FragColor = vec4(v, 1.0);
+  }
+`;
+
+const positionShader = `
+  uniform float uDt;
+
+  ${formationGlsl}
+
+  void main() {
+    vec2 uv = gl_FragCoord.xy / resolution.xy;
+    vec4 posSample = texture2D(texturePosition, uv);
+    vec4 velSample = texture2D(textureVelocity, uv);
+    vec3 p = posSample.xyz;
+    vec3 v = velSample.xyz;
+    float seed = posSample.w;
+
+    p += v;
+
+    float lim = HALF - 0.03;
+    if (p.x > lim || p.x < -lim) { p.x = clamp(p.x, -lim, lim); }
+    if (p.y > lim || p.y < -lim) { p.y = clamp(p.y, -lim, lim); }
+    if (p.z > lim || p.z < -lim) { p.z = clamp(p.z, -lim, lim); }
+
+    gl_FragColor = vec4(p, seed);
+  }
+`;
+
+const pointVertex = `
+  attribute vec2 aRef;
+  attribute float aSeed;
+  attribute vec3 aColor;
+  uniform sampler2D texturePosition;
+  uniform float uPixelRatio;
+  uniform float uTime;
+  uniform float uTrajFade;
+  uniform float uTrajFray;
+  uniform float uTrajPhase;
+  uniform float uInGalaxy;
+  uniform float uDetonate;
+  uniform float uFreeFall;
+  uniform float uInPath;
+  varying float vBright;
+  varying vec3 vColor;
+
+  ${formationGlsl}
+
+  void main() {
+    vec4 posSample = texture2D(texturePosition, aRef);
+    vec3 pos = posSample.xyz;
+    vColor = aColor;
+
+    float b = 0.22 + aSeed * 0.45;
+    b *= 0.88 + 0.12 * ((pos.z + HALF) / CUBE);
+    b *= 0.92 + 0.08 * ((pos.y + HALF) / CUBE);
+
+    if (uTrajFade > 0.04) {
+      float pathT = clamp(pos.y / (CUBE * 0.72) + 0.5, 0.0, 1.0);
+      vec3 corridor = trajPoint(pathT, uTrajPhase);
+      float dist2 = dot(pos - corridor, pos - corridor);
+      b += exp(-dist2 / 0.015) * 0.75 * uTrajFade * (1.0 - uTrajFray * 0.5);
+      b += exp(-dist2 / 0.06) * 0.2 * uTrajFade;
+    }
+    if (uInGalaxy > 0.02) {
+      float coreR2 = pos.x * pos.x + pos.y * pos.y * 1.4 + pos.z * pos.z;
+      b += exp(-coreR2 / 0.012) * 0.75 * uInGalaxy;
+      b += exp(-coreR2 / 0.08) * 0.2 * uInGalaxy;
+      if (coreR2 > 0.22) b *= 1.0 - 0.2 * uInGalaxy;
+    }
+    b += uDetonate * 0.2 + uFreeFall * 0.06;
+    vBright = min(b, 1.25);
+
+    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+    float size = mix(0.008, 0.02, aSeed);
+    float tw = 0.85 + 0.15 * sin(uTime * (0.5 + aSeed * 1.2) + aSeed * 12.0);
+    gl_PointSize = size * uPixelRatio * tw * (220.0 / max(-mv.z, 0.001));
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+
+const pointFragment = `
+  precision highp float;
+  varying float vBright;
+  varying vec3 vColor;
+
+  void main() {
+    vec2 p = gl_PointCoord * 2.0 - 1.0;
+    float d = length(p);
+    if (d > 1.0) discard;
+    float core = exp(-d * d * 3.2);
+    float halo = exp(-d * d * 1.05) * 0.45;
+    float a = (core + halo) * clamp(vBright, 0.15, 1.2) * 0.75;
+    // Vertex color is already a high-chroma celestial family.
+    // SRC_ALPHA, ONE additive: pass unpremultiplied RGB; GPU multiplies by a.
+    vec3 col = vColor * (0.65 + 0.55 * core);
+    // Slight gold lift only at extreme brightness (path / core), keeps hue.
+    col = mix(col, vec3(1.0, 0.78, 0.35), smoothstep(0.95, 1.25, vBright) * 0.25);
+    gl_FragColor = vec4(col, a);
+  }
+`;
+
+/** High-chroma celestial families for vertex colors (visible under additive stack). */
+function celestialRgb(seed: number): [number, number, number] {
+  const t = seed - Math.floor(seed);
+  if (t < 0.2) return [0.35, 0.25, 1.0]; // indigo
+  if (t < 0.4) return [0.2, 0.65, 1.0]; // azure
+  if (t < 0.58) return [0.78, 0.22, 1.0]; // violet
+  if (t < 0.74) return [0.15, 0.95, 0.8]; // teal
+  if (t < 0.9) return [1.0, 0.28, 0.55]; // rose
+  return [1.0, 0.75, 0.2]; // gold
+}
+
+const hazeVertex = `
+  varying vec3 vNormal;
+  varying vec3 vView;
+  void main() {
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    vNormal = normalize(normalMatrix * normal);
+    vView = normalize(-mv.xyz);
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+
+const hazeFragment = `
+  precision highp float;
+  varying vec3 vNormal;
+  varying vec3 vView;
+  uniform vec3 uColor;
+  uniform float uIntensity;
+
+  void main() {
+    float ndv = max(dot(normalize(vNormal), normalize(vView)), 0.0);
+    float body = pow(ndv, 1.6);
+    float rim = pow(1.0 - ndv, 2.8) * 0.35;
+    float a = (body * 0.55 + rim) * uIntensity;
+    vec3 col = uColor * (0.65 + body * 0.9);
+    gl_FragColor = vec4(col, a);
+  }
+`;
+
+const trajVertex = `
+  attribute float aAlong;
+  attribute float aFil;
+  varying float vAlong;
+  varying float vFil;
+  void main() {
+    vAlong = aAlong;
+    vFil = aFil;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const trajFragment = `
+  precision highp float;
+  varying float vAlong;
+  varying float vFil;
+  uniform float uFade;
+  uniform float uPulse;
+  uniform float uFray;
+
+  void main() {
+    float life = smoothstep(0.0, 0.06, vAlong) * (1.0 - smoothstep(0.9, 1.0, vAlong));
+    life *= 1.0 - uFray * smoothstep(0.35, 1.0, vAlong) * 0.85;
+    float head = exp(-pow(vAlong - uPulse, 2.0) / 0.008);
+    float spine = 1.0 - vFil * 0.28;
+    vec3 col = mix(vec3(0.42, 0.72, 0.98), vec3(1.0, 0.93, 0.78), head * 0.9 + (1.0 - vFil) * 0.15);
+    float a = (0.22 * life * spine + 0.72 * head * spine) * uFade;
+    a *= mix(1.0, 0.55, vFil);
+    gl_FragColor = vec4(col, a);
+  }
+`;
+
+function mulberry32(seed: number) {
+  return function () {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function smoothstep(edge0: number, edge1: number, x: number) {
+  const t = Math.min(Math.max((x - edge0) / (edge1 - edge0), 0), 1);
+  return t * t * (3 - 2 * t);
+}
+
+const _pathTmp = new THREE.Vector3();
+const _pathTmp2 = new THREE.Vector3();
+const _tmp = new THREE.Vector3();
+
+function trajPoint(t: number, phase: number, out: THREE.Vector3) {
+  const angle = t * Math.PI * 1.6 + phase * 0.4;
+  out.set(
+    Math.sin(angle * 1.1) * 0.28,
+    (t - 0.5) * CUBE * 0.72,
+    Math.cos(angle * 0.9) * 0.24,
+  );
+  const lim = HALF - 0.08;
+  out.x = Math.min(Math.max(out.x, -lim), lim);
+  out.y = Math.min(Math.max(out.y, -lim), lim);
+  out.z = Math.min(Math.max(out.z, -lim), lim);
+  return out;
+}
+
+function trajFilament(t: number, phase: number, fil: number, fray: number, out: THREE.Vector3) {
+  trajPoint(t, phase, out);
+  const angle = t * Math.PI * 1.6 + phase * 0.4;
+  const tx = -Math.cos(angle * 1.1);
+  const tz = Math.sin(angle * 0.9);
+  const tLen = Math.hypot(tx, 0.15, tz) || 1;
+  let bx = -tz / tLen;
+  let bz = tx / tLen;
+  const bLen = Math.hypot(bx, bz) || 1;
+  bx /= bLen;
+  bz /= bLen;
+  const amp = (0.012 + fil * 0.014) * (1 + fray * 3.5 * t);
+  const wave = Math.sin(t * 14.0 + fil * 2.1 + phase) * amp;
+  const wave2 = Math.cos(t * 9.0 - fil * 1.7) * amp * 0.45;
+  out.x += bx * wave + (tx / tLen) * wave2 * 0.3;
+  out.y += 0.15 * wave2 * 0.2;
+  out.z += bz * wave + (tz / tLen) * wave2 * 0.3;
+  return out;
+}
+
+function fillParticleTextures(
+  posTex: THREE.DataTexture,
+  velTex: THREE.DataTexture,
+  size: number,
+  rand: () => number,
+) {
+  const pos = posTex.image.data as Float32Array;
+  const vel = velTex.image.data as Float32Array;
+  const n = size * size;
+  for (let i = 0; i < n; i++) {
+    const i4 = i * 4;
+    const seed = rand();
+    const a = rand() * Math.PI * 2;
+    const b = rand() * Math.PI * 2;
+    const r = Math.pow(0.15 + rand() * 0.85, 0.55) * HALF * 0.9;
+    pos[i4] = Math.sin(a) * Math.cos(b) * r;
+    pos[i4 + 1] = (rand() * 2 - 1) * HALF * 0.85;
+    pos[i4 + 2] = Math.cos(a) * Math.cos(b) * r * 0.9;
+    pos[i4 + 3] = seed;
+    vel[i4] = 0;
+    vel[i4 + 1] = 0;
+    vel[i4 + 2] = 0;
+    vel[i4 + 3] = 1;
+  }
+  posTex.needsUpdate = true;
+  velTex.needsUpdate = true;
+}
+
+export default function SimulationEnsembleRender() {
+  const mountRef = useRef<HTMLDivElement | null>(null);
+  const [scenarioIndex, setScenarioIndex] = useState(0);
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return undefined;
+
+    while (mount.firstChild) {
+      mount.removeChild(mount.firstChild);
+    }
+
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        premultipliedAlpha: false,
+        powerPreference: 'high-performance',
+      });
+    } catch {
+      return undefined;
+    }
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isMobile = window.matchMedia('(max-width: 900px)').matches;
+    const gpuSize = isMobile ? GPU_SIZE_MOBILE : GPU_SIZE_DESKTOP;
+    const particleCount = gpuSize * gpuSize;
+    const rand = mulberry32(20260722);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 20);
+    camera.position.set(1.55, 1.05, 2.05);
+    camera.lookAt(0, 0.02, 0);
+
+    const envMap = createGlassEnvironment(renderer);
+    scene.environment = envMap;
+
     const world = new THREE.Group();
     scene.add(world);
 
-    // Shell group (glass cube)
+    // --- Glass shell ---
     const shell = new THREE.Group();
     world.add(shell);
 
-    // Glass cube
-    const glassGeo = new THREE.BoxGeometry(CUBE, CUBE, CUBE);
-    const glassMat = new THREE.MeshPhysicalMaterial({
-      color: 0x050a14,
-      metalness: 0.05,
-      roughness: 0.08,
-      transmission: 0.92,
-      thickness: 0.6,
-      ior: 1.52,
-      transparent: true,
-      opacity: 0.35,
-      side: THREE.DoubleSide,
-      envMap,
-      envMapIntensity: 0.6,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.05,
-    });
-    const glass = new THREE.Mesh(glassGeo, glassMat);
-    glass.renderOrder = 3;
-    shell.add(glass);
+    const boxGeo = new THREE.BoxGeometry(CUBE, CUBE, CUBE);
+    const outerGlassGeo = new THREE.BoxGeometry(CUBE, CUBE, CUBE);
+    const innerGlassGeo = new THREE.BoxGeometry(CUBE * 0.965, CUBE * 0.965, CUBE * 0.965);
 
-    // Inner glow plane
-    const glowGeo = new THREE.PlaneGeometry(CUBE * 0.85, CUBE * 0.85);
-    const glowMat = new THREE.MeshBasicMaterial({
-      color: 0x0a1a2e,
-      transparent: true,
-      opacity: 0.12,
-      side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const glow = new THREE.Mesh(glowGeo, glowMat);
-    glow.position.z = 0.01;
-    glow.renderOrder = 1;
-    shell.add(glow);
+    const glassMat = createGlassMaterial(envMap, { thickness: 0.62, transmission: 1 });
+    const glassMesh = new THREE.Mesh(outerGlassGeo, glassMat);
+    glassMesh.renderOrder = 3;
+    shell.add(glassMesh);
 
-    // Specimen label etched into glass
-    const labelCanvas = document.createElement('canvas');
-    labelCanvas.width = 512;
-    labelCanvas.height = 128;
-    const lctx = labelCanvas.getContext('2d')!;
-    lctx.fillStyle = 'rgba(200, 220, 255, 0.12)';
-    lctx.font = '500 22px SF Mono, monospace';
-    lctx.fillText('SIMULATION ENSEMBLE · ACTIVE', 20, 55);
-    lctx.fillStyle = 'rgba(200, 220, 255, 0.08)';
-    lctx.font = '500 16px SF Mono, monospace';
-    lctx.fillText('DECISION MATRIX: UNRESOLVED', 20, 90);
-    const labelTexture = new THREE.CanvasTexture(labelCanvas);
-    const labelMat = new THREE.MeshBasicMaterial({
-      map: labelTexture,
-      transparent: true,
-      opacity: 0.2,
-      side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const labelMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.19), labelMat);
-    labelMesh.position.set(0, -0.38, 0.505);
-    labelMesh.renderOrder = 7;
-    shell.add(labelMesh);
+    const innerGlassMat = createGlassMaterial(envMap, { thickness: 0.18, transmission: 0.92 });
+    innerGlassMat.side = THREE.BackSide;
+    innerGlassMat.envMapIntensity = 0.55;
+    innerGlassMat.roughness = 0.08;
+    innerGlassMat.opacity = 0.55;
+    const innerGlassMesh = new THREE.Mesh(innerGlassGeo, innerGlassMat);
+    innerGlassMesh.renderOrder = 3;
+    shell.add(innerGlassMesh);
 
-    // Crack overlay for stress visualization
-    const crackCanvas = document.createElement('canvas');
-    crackCanvas.width = 512;
-    crackCanvas.height = 512;
-    const cctx = crackCanvas.getContext('2d')!;
-    cctx.strokeStyle = 'rgba(255, 200, 150, 0.3)';
-    cctx.lineWidth = 1.5;
-    for (let i = 0; i < 8; i++) {
-      const x = 256 + (Math.random() - 0.5) * 400;
-      const y = 256 + (Math.random() - 0.5) * 400;
-      cctx.beginPath();
-      cctx.moveTo(x, y);
-      for (let j = 0; j < 5; j++) {
-        cctx.lineTo(x + (Math.random() - 0.5) * 80, y + (Math.random() - 0.5) * 80);
-      }
-      cctx.stroke();
-    }
-    const crackTexture = new THREE.CanvasTexture(crackCanvas);
-    const crackMat = new THREE.MeshBasicMaterial({
-      map: crackTexture,
-      transparent: true,
-      opacity: 0,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    });
-    const crackMesh = new THREE.Mesh(new THREE.BoxGeometry(CUBE * 1.005, CUBE * 1.005, CUBE * 1.005), crackMat);
-    crackMesh.renderOrder = 8;
-    shell.add(crackMesh);
-
-    // Edges with pulse capability
-    const edges = new THREE.EdgesGeometry(glassGeo);
+    const edgesGeo = new THREE.EdgesGeometry(boxGeo, 15);
     const edgeMat = new THREE.LineBasicMaterial({
-      color: new THREE.Color(0x6a9ad4),
+      color: new THREE.Color(0xd0e4f8),
       transparent: true,
-      opacity: 0.45,
-      blending: THREE.AdditiveBlending,
+      opacity: 0.55,
       depthWrite: false,
     });
-    const edgeLines = new THREE.LineSegments(edges, edgeMat);
-    edgeLines.renderOrder = 5;
-    shell.add(edgeLines);
+    const edges = new THREE.LineSegments(edgesGeo, edgeMat);
+    edges.renderOrder = 5;
+    shell.add(edges);
 
-    // Floor reflection
-    const floorGeo = new THREE.PlaneGeometry(5, 5);
-    const floorMat = new THREE.MeshPhysicalMaterial({
-      color: 0x020408,
-      metalness: 0.95,
-      roughness: 0.1,
-      envMap,
-      envMapIntensity: 0.3,
+    const innerEdgesGeo = new THREE.EdgesGeometry(innerGlassGeo, 15);
+    const innerEdgeMat = new THREE.LineBasicMaterial({
+      color: new THREE.Color(0x7aa0c4),
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.22,
+      depthWrite: false,
     });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -1.4;
-    floor.renderOrder = 0;
-    world.add(floor);
+    shell.add(new THREE.LineSegments(innerEdgesGeo, innerEdgeMat));
 
-    // Particles
-    const pos = new Float32Array(PARTICLES * 3);
-    const vel = new Float32Array(PARTICLES * 3);
-    const seed = new Float32Array(PARTICLES);
-    const palette = new Float32Array(PARTICLES * 3);
-    const target = new Float32Array(PARTICLES * 3);
+    const cornerGeo = new THREE.BufferGeometry();
+    const cornerPos = new Float32Array(8 * 3);
+    let ci = 0;
+    for (const x of [-HALF, HALF]) {
+      for (const y of [-HALF, HALF]) {
+        for (const z of [-HALF, HALF]) {
+          cornerPos[ci++] = x;
+          cornerPos[ci++] = y;
+          cornerPos[ci++] = z;
+        }
+      }
+    }
+    cornerGeo.setAttribute('position', new THREE.BufferAttribute(cornerPos, 3));
+    const corners = new THREE.Points(
+      cornerGeo,
+      new THREE.PointsMaterial({
+        color: 0xf2f8ff,
+        size: 0.032,
+        transparent: true,
+        opacity: 0.7,
+        depthWrite: false,
+        sizeAttenuation: true,
+        blending: THREE.AdditiveBlending,
+      }),
+    );
+    corners.renderOrder = 6;
+    shell.add(corners);
 
-    const celestialPalette = [
-      new THREE.Color(0x6a9ad4),
-      new THREE.Color(0x18f2cc),
-      new THREE.Color(0xff4775),
-      new THREE.Color(0xffbf33),
-      new THREE.Color(0x5a7a9a),
-    ];
-
-    for (let i = 0; i < PARTICLES; i++) {
-      seed[i] = Math.random();
-      const x = (Math.random() - 0.5) * CUBE * 0.9;
-      const y = (Math.random() - 0.5) * CUBE * 0.9;
-      const z = (Math.random() - 0.5) * CUBE * 0.9;
-      pos[i * 3] = x;
-      pos[i * 3 + 1] = y;
-      pos[i * 3 + 2] = z;
-      vel[i * 3] = (Math.random() - 0.5) * 0.002;
-      vel[i * 3 + 1] = (Math.random() - 0.5) * 0.002;
-      vel[i * 3 + 2] = (Math.random() - 0.5) * 0.002;
-
-      const color = celestialPalette[Math.floor(Math.random() * celestialPalette.length)];
-      palette[i * 3] = color.r;
-      palette[i * 3 + 1] = color.g;
-      palette[i * 3 + 2] = color.b;
-
-      target[i * 3] = x;
-      target[i * 3 + 1] = y;
-      target[i * 3 + 2] = z;
+    // --- Volume haze ---
+    const hazeGroup = new THREE.Group();
+    world.add(hazeGroup);
+    const hazeSphereGeo = new THREE.SphereGeometry(1, 16, 12);
+    const hazeMeshes: THREE.Mesh[] = [];
+    const hazeMats: THREE.ShaderMaterial[] = [];
+    for (let h = 0; h < HAZE_COUNT; h++) {
+      const mat = new THREE.ShaderMaterial({
+        uniforms: {
+          uColor: { value: new THREE.Color(0.4, 0.65, 0.95) },
+          uIntensity: { value: 0 },
+        },
+        vertexShader: hazeVertex,
+        fragmentShader: hazeFragment,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      const mesh = new THREE.Mesh(hazeSphereGeo, mat);
+      mesh.scale.setScalar(0.12);
+      mesh.visible = false;
+      hazeGroup.add(mesh);
+      hazeMeshes.push(mesh);
+      hazeMats.push(mat);
     }
 
-    const pointGeo = new THREE.BufferGeometry();
-    pointGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    pointGeo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
-    pointGeo.setAttribute('aColor', new THREE.BufferAttribute(palette, 3));
-    pointGeo.setAttribute('aTarget', new THREE.BufferAttribute(target, 3));
+    // --- GPU particle field ---
+    const gpuCompute = new GPUComputationRenderer(gpuSize, gpuSize, renderer);
+    // Prefer half-float on mobile for memory/bandwidth.
+    if (isMobile) {
+      gpuCompute.setDataType(THREE.HalfFloatType);
+    }
 
-    const pointVertex = `
-      attribute float aSeed;
-      attribute vec3 aColor;
-      attribute vec3 aTarget;
-      varying float vBright;
-      varying vec3 vColor;
-      uniform float uTime;
-      uniform float uPixelRatio;
-      uniform float uShapeLock;
-      uniform float uFreeFall;
-      uniform float uDetonate;
-      uniform float uDt;
+    const pos0 = gpuCompute.createTexture();
+    const vel0 = gpuCompute.createTexture();
+    fillParticleTextures(pos0, vel0, gpuSize, rand);
 
-      void main() {
-        vec3 p = position;
-        float seed = aSeed;
+    const velVar = gpuCompute.addVariable('textureVelocity', velocityShader, vel0);
+    const posVar = gpuCompute.addVariable('texturePosition', positionShader, pos0);
+    gpuCompute.setVariableDependencies(velVar, [velVar, posVar]);
+    gpuCompute.setVariableDependencies(posVar, [velVar, posVar]);
 
-        // Formation pull
-        float lock = uShapeLock;
-        float chaos = 1.0 - lock;
-        vec3 attract = aTarget - p;
-        float dist = length(attract);
-        float spring = mix(0.02, 0.55, lock) * smoothstep(0.5, 0.0, dist);
-        p += attract * spring;
+    const velUniforms = velVar.material.uniforms;
+    velUniforms.uTime = { value: 0 };
+    velUniforms.uDt = { value: 0.016 };
+    velUniforms.uModeA = { value: 0 };
+    velUniforms.uShape = { value: 0 };
+    velUniforms.uShapeLock = { value: 0 };
+    velUniforms.uDetonate = { value: 0 };
+    velUniforms.uFreeFall = { value: 1 };
+    velUniforms.uInPath = { value: 0 };
+    velUniforms.uInGalaxy = { value: 0 };
+    velUniforms.uTrajFray = { value: 0 };
+    velUniforms.uTrajPhase = { value: 0 };
+    velUniforms.uIndexScale = { value: 1 / Math.max(particleCount - 1, 1) };
 
-        // Brownian drift
-        float t = uTime;
-        float drift = mix(0.003, 0.0003, lock);
-        p += vec3(
-          sin(t * (0.7 + seed * 0.6) + seed * 10.0),
-          cos(t * (0.5 + seed * 0.8) + seed * 20.0),
-          sin(t * (0.9 + seed * 0.4) + seed * 30.0)
-        ) * drift;
+    posVar.material.uniforms.uDt = { value: 0.016 };
 
-        // Chaos burst
-        float det = uDetonate;
-        if (det > 0.01) {
-          vec3 noise = vec3(
-            sin(seed * 137.0 + t * 3.0),
-            cos(seed * 251.0 + t * 2.5),
-            sin(seed * 389.0 + t * 3.5)
-          );
-          p += noise * det * 0.35;
-        }
-
-        // Soft boundary
-        float limit = 0.48;
-        float edgeDist = max(abs(p.x), max(abs(p.y), abs(p.z)));
-        if (edgeDist > limit) {
-          float push = (edgeDist - limit) * 0.08;
-          p = mix(p, p * (limit / edgeDist), push);
-        }
-
-        vec4 mv = modelViewMatrix * vec4(p, 1.0);
-        gl_Position = projectionMatrix * mv;
-
-        // Decision temperature coloring
-        float temp = uFreeFall * 0.5 + uDetonate * 0.5;
-        vec3 coldColor = vec3(0.15, 0.95, 0.8);   // teal — resolved
-        vec3 hotColor = vec3(1.0, 0.28, 0.55);    // rose — chaotic
-        vec3 tempColor = mix(coldColor, hotColor, temp);
-        vColor = mix(aColor, tempColor, 0.35);
-
-        // Brightness
-        float tw = 0.85 + 0.15 * sin(uTime * (0.5 + seed * 1.2) + seed * 12.0);
-        float distFade = smoothstep(4.0, 1.5, -mv.z);
-        float size = mix(0.012, 0.028, seed);
-        gl_PointSize = size * uPixelRatio * tw * (300.0 / max(-mv.z, 0.001)) * distFade;
-
-        vBright = tw * (0.7 + 0.3 * lock);
+    let gpuOk = true;
+    const gpuError = gpuCompute.init();
+    if (gpuError !== null) {
+      // Retry with half float if full float failed.
+      gpuCompute.setDataType(THREE.HalfFloatType);
+      const retry = gpuCompute.init();
+      if (retry !== null) {
+        gpuOk = false;
+        console.warn('Simulation GPU particles unavailable:', retry);
       }
-    `;
+    }
 
-    const pointFragment = `
-      precision highp float;
-      varying float vBright;
-      varying vec3 vColor;
-      uniform float uDetonate;
+    const refs = new Float32Array(particleCount * 2);
+    const seeds = new Float32Array(particleCount);
+    const colors = new Float32Array(particleCount * 3);
+    const posData = pos0.image.data as Float32Array;
+    for (let i = 0; i < particleCount; i++) {
+      const x = (i % gpuSize) / gpuSize;
+      const y = Math.floor(i / gpuSize) / gpuSize;
+      // Sample texel centers.
+      refs[i * 2] = x + 0.5 / gpuSize;
+      refs[i * 2 + 1] = y + 0.5 / gpuSize;
+      const seed = posData[i * 4 + 3];
+      seeds[i] = seed;
+      const [cr, cg, cb] = celestialRgb(seed);
+      colors[i * 3] = cr;
+      colors[i * 3 + 1] = cg;
+      colors[i * 3 + 2] = cb;
+    }
 
-      void main() {
-        vec2 p = gl_PointCoord * 2.0 - 1.0;
-        float d = length(p);
-        if (d > 1.0) discard;
+    const pGeo = new THREE.BufferGeometry();
+    // Dummy positions required by Three; real positions come from texture.
+    pGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(particleCount * 3), 3));
+    pGeo.setAttribute('aRef', new THREE.BufferAttribute(refs, 2));
+    pGeo.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 1));
+    pGeo.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
+    pGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 1.2);
 
-        // Chromatic aberration during detonate
-        float ca = uDetonate * 0.06;
-        float coreR = exp(-d * d * (3.2 - ca));
-        float coreG = exp(-d * d * 3.2);
-        float coreB = exp(-d * d * (3.2 + ca));
-
-        float halo = exp(-d * d * 1.05) * 0.45;
-        float a = (coreG + halo) * clamp(vBright, 0.15, 1.2) * 0.75;
-
-        vec3 col = vColor * (0.65 + 0.55 * coreG);
-        col = mix(col, vec3(1.0, 0.78, 0.35), smoothstep(0.95, 1.25, vBright) * 0.25);
-
-        // Apply RGB split
-        col.r *= (0.92 + coreR * 0.15);
-        col.b *= (0.92 + coreB * 0.15);
-
-        gl_FragColor = vec4(col, a);
-      }
-    `;
-
-    const pointUniforms = {
-      uTime: { value: 0 },
-      uPixelRatio: { value: renderer.getPixelRatio() },
-      uShapeLock: { value: 0 },
-      uFreeFall: { value: 0 },
-      uDetonate: { value: 0 },
-      uDt: { value: 0.016 },
-    };
-
-    const pointMat = new THREE.ShaderMaterial({
+    const pMat = new THREE.ShaderMaterial({
+      uniforms: {
+        texturePosition: { value: null as THREE.Texture | null },
+        uPixelRatio: { value: 1 },
+        uTime: { value: 0 },
+        uTrajFade: { value: 0 },
+        uTrajFray: { value: 0 },
+        uTrajPhase: { value: 0 },
+        uInGalaxy: { value: 0 },
+        uDetonate: { value: 0 },
+        uFreeFall: { value: 0 },
+        uInPath: { value: 0 },
+      },
       vertexShader: pointVertex,
       fragmentShader: pointFragment,
-      uniforms: pointUniforms,
+      transparent: true,
+      depthWrite: false,
+      // Explicit additive that multiplies by fragment alpha (not One,One).
+      blending: THREE.CustomBlending,
+      blendEquation: THREE.AddEquation,
+      blendSrc: THREE.SrcAlphaFactor,
+      blendDst: THREE.OneFactor,
+      blendSrcAlpha: THREE.OneFactor,
+      blendDstAlpha: THREE.OneFactor,
+      toneMapped: false,
+    });
+    const points = new THREE.Points(pGeo, pMat);
+    points.frustumCulled = false;
+    // Draw after glass shell so transmission/clearcoat cannot grey the field out.
+    points.renderOrder = 4;
+    if (gpuOk) world.add(points);
+
+    // --- Trajectory filaments ---
+    const trajVertCount = TRAJ_POINTS * FILAMENT_COUNT;
+    const trajPositions = new Float32Array(trajVertCount * 3);
+    const trajAlong = new Float32Array(trajVertCount);
+    const trajFil = new Float32Array(trajVertCount);
+    const trajIndices: number[] = [];
+    for (let f = 0; f < FILAMENT_COUNT; f++) {
+      for (let i = 0; i < TRAJ_POINTS; i++) {
+        const idx = f * TRAJ_POINTS + i;
+        trajAlong[idx] = i / (TRAJ_POINTS - 1);
+        trajFil[idx] = f / Math.max(FILAMENT_COUNT - 1, 1);
+        trajFilament(trajAlong[idx], 0, f, 0, _tmp);
+        trajPositions[idx * 3] = _tmp.x;
+        trajPositions[idx * 3 + 1] = _tmp.y;
+        trajPositions[idx * 3 + 2] = _tmp.z;
+        if (i < TRAJ_POINTS - 1) trajIndices.push(idx, idx + 1);
+      }
+    }
+    const trajGeo = new THREE.BufferGeometry();
+    trajGeo.setAttribute('position', new THREE.BufferAttribute(trajPositions, 3));
+    trajGeo.setAttribute('aAlong', new THREE.BufferAttribute(trajAlong, 1));
+    trajGeo.setAttribute('aFil', new THREE.BufferAttribute(trajFil, 1));
+    trajGeo.setIndex(trajIndices);
+    const trajMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uFade: { value: 0 },
+        uPulse: { value: 0 },
+        uFray: { value: 0 },
+      },
+      vertexShader: trajVertex,
+      fragmentShader: trajFragment,
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
+    const trajectory = new THREE.LineSegments(trajGeo, trajMat);
+    trajectory.renderOrder = 2;
+    world.add(trajectory);
 
-    const points = new THREE.Points(pointGeo, pointMat);
-    points.renderOrder = 4;
-    world.add(points);
+    const headGeo = new THREE.BufferGeometry();
+    headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3));
+    const headMat = new THREE.PointsMaterial({
+      color: 0xfff0d0,
+      size: 0.055,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      sizeAttenuation: true,
+      blending: THREE.AdditiveBlending,
+    });
+    const headPoint = new THREE.Points(headGeo, headMat);
+    headPoint.renderOrder = 2;
+    world.add(headPoint);
 
-    // Leaked particles (outside cube)
-    const leakCount = 150;
-    const leakPos = new Float32Array(leakCount * 3);
-    const leakVel = new Float32Array(leakCount * 3);
-    const leakLife = new Float32Array(leakCount);
-    const leakSeed = new Float32Array(leakCount);
+    scene.add(new THREE.AmbientLight(0x6a88aa, 0.28));
+    const key = new THREE.DirectionalLight(0xf2f7ff, 1.35);
+    key.position.set(2.4, 3.2, 2.8);
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(0x6a9ad4, 0.45);
+    fill.position.set(-2.2, 0.8, 1.2);
+    scene.add(fill);
+    const rim = new THREE.DirectionalLight(0xb8c4d8, 0.35);
+    rim.position.set(-0.5, 1.2, -2.6);
+    scene.add(rim);
 
-    for (let i = 0; i < leakCount; i++) {
-      leakLife[i] = 0;
-      leakSeed[i] = Math.random();
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // Milder tone map so celestial chroma isn't crushed to grey-blue.
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.92;
+    renderer.setClearColor(0x000000, 0);
+    renderer.domElement.className = 'hermes-render-canvas';
+    renderer.domElement.dataset.simulationRender = 'glass-cube-gpu';
+    renderer.domElement.dataset.particleCount = String(particleCount);
+    mount.appendChild(renderer.domElement);
+
+    let frameId: number | null = null;
+    let startedAt = performance.now();
+    let visible = true;
+    let lastT = performance.now();
+
+    const pointer = { x: 0, y: 0, tx: 0, ty: 0, glow: 0, glowTarget: 0 };
+    const card = mount.closest('.inst-card');
+
+    const onPointerMove = (event: PointerEvent) => {
+      const rect = mount.getBoundingClientRect();
+      if (rect.width < 1 || rect.height < 1) return;
+      pointer.tx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.ty = -(((event.clientY - rect.top) / rect.height) * 2 - 1);
+      pointer.glowTarget = 1;
+    };
+    const onPointerLeave = () => {
+      pointer.glowTarget = 0;
+      pointer.tx = 0;
+      pointer.ty = 0;
+    };
+
+    if (card && !reducedMotion) {
+      card.addEventListener('pointermove', onPointerMove as EventListener);
+      card.addEventListener('pointerleave', onPointerLeave);
     }
 
-    const leakGeo = new THREE.BufferGeometry();
-    leakGeo.setAttribute('position', new THREE.BufferAttribute(leakPos, 3));
-    leakGeo.setAttribute('aLife', new THREE.BufferAttribute(leakLife, 1));
-    leakGeo.setAttribute('aSeed', new THREE.BufferAttribute(leakSeed, 1));
+    // Cadence: disturbance → adaptation → stable world state → release.
+    // Forms suggest boundaries, flow, built space, collective behavior, drift,
+    // and recovery — a general world-modeling loop, not a market visualization.
+    const MODE_COUNT = 6;
+    const T_CHAOS = 1.8;
+    const T_LOCK = 2.4;
+    const T_HOLD = 7.0;
+    const T_BREAK = 2.0;
+    const SLOT = T_CHAOS + T_LOCK + T_HOLD + T_BREAK;
+    const EPOCH = MODE_COUNT * SLOT;
+    const PATH_MODE = 5; // infinity ribbon uses path head lightly
+    const GALAXY_MODE = 4;
+    let displayedMode = -1;
 
-    const leakMat = new THREE.ShaderMaterial({
-      vertexShader: `
-        attribute float aLife;
-        attribute float aSeed;
-        varying float vLife;
-        varying float vSeed;
-        uniform float uPixelRatio;
-        void main() {
-          vLife = aLife;
-          vSeed = aSeed;
-          vec4 mv = modelViewMatrix * vec4(position, 1.0);
-          gl_Position = projectionMatrix * mv;
-          float size = 0.008 * uPixelRatio * (200.0 / max(-mv.z, 0.001));
-          gl_PointSize = size * aLife;
+    const resize = () => {
+      const width = Math.max(1, mount.clientWidth);
+      const height = Math.max(1, mount.clientHeight);
+      const dpr = getRenderPixelRatio(3);
+      const w = Math.max(1, Math.floor(width));
+      const h = Math.max(1, Math.floor(height));
+      renderer.setPixelRatio(dpr);
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      // Mobile: larger points so the dense field doesn't look mushy at distance.
+      pMat.uniforms.uPixelRatio.value = dpr * (isMobilePlateViewport() ? 1.15 : 1);
+
+      const aspect = width / height;
+      const dist = aspect < 1 ? 3.35 : 2.85;
+      camera.position.set(dist * 0.72, dist * 0.48, dist * 0.95);
+      camera.lookAt(aspect < 1.1 ? 0 : -0.05, 0.02, 0);
+    };
+
+    const setHaze = (
+      index: number,
+      x: number,
+      y: number,
+      z: number,
+      scale: number,
+      intensity: number,
+      warm = 0,
+    ) => {
+      if (index >= HAZE_COUNT) return;
+      const mesh = hazeMeshes[index];
+      const mat = hazeMats[index];
+      if (intensity < 0.02) {
+        mesh.visible = false;
+        mat.uniforms.uIntensity.value = 0;
+        return;
+      }
+      mesh.visible = true;
+      mesh.position.set(x, y, z);
+      mesh.scale.setScalar(scale);
+      mat.uniforms.uIntensity.value = intensity;
+      // Match particle celestial cast: indigo → violet → soft gold.
+      const nebula = new THREE.Color(0.32, 0.38, 0.92);
+      const stellar = new THREE.Color(0.45, 0.72, 1.0);
+      const gold = new THREE.Color(0.98, 0.86, 0.58);
+      mat.uniforms.uColor.value.copy(nebula).lerp(stellar, 0.45).lerp(gold, warm);
+    };
+
+    const render = () => {
+      const now = performance.now();
+      const dt = Math.min((now - lastT) / 1000, 0.05);
+      lastT = now;
+      const elapsed = (now - startedAt) / 1000;
+
+      pointer.x += (pointer.tx - pointer.x) * 0.06;
+      pointer.y += (pointer.ty - pointer.y) * 0.06;
+      pointer.glow += (pointer.glowTarget - pointer.glow) * 0.05;
+
+      if (!reducedMotion) {
+        world.rotation.y = elapsed * 0.045 + pointer.x * 0.18 * pointer.glow;
+        world.rotation.x = 0.22 + Math.sin(elapsed * 0.11) * 0.03 + pointer.y * 0.1 * pointer.glow;
+        world.rotation.z = Math.sin(elapsed * 0.07) * 0.02;
+      } else {
+        world.rotation.y = 0.55;
+        world.rotation.x = 0.25;
+      }
+
+      // Reduced motion: freeze mid-hold on galaxy.
+      const phase = reducedMotion ? T_CHAOS + T_LOCK + T_HOLD * 0.5 : elapsed % EPOCH;
+      const modeIndex = Math.floor(phase / SLOT) % MODE_COUNT;
+      const local = phase - modeIndex * SLOT;
+      const modeA = modeIndex;
+
+      if (modeIndex !== displayedMode) {
+        displayedMode = modeIndex;
+        setScenarioIndex(modeIndex);
+      }
+
+      // Explicit four-beat loop (readable formation, not constant soup).
+      let freeFall = 0;
+      let detonate = 0;
+      let shape = 0;
+      let shapeLock = 0;
+      if (local < T_CHAOS) {
+        // Out of control.
+        const t = local / T_CHAOS;
+        freeFall = 1;
+        shape = 0;
+        shapeLock = 0;
+        detonate = t < 0.2 ? (1 - t / 0.2) * 0.25 : 0;
+      } else if (local < T_CHAOS + T_LOCK) {
+        // Snap into shape.
+        const t = smoothstep(0, 1, (local - T_CHAOS) / T_LOCK);
+        freeFall = 1 - t;
+        shape = t;
+        shapeLock = t * t;
+        detonate = 0;
+      } else if (local < T_CHAOS + T_LOCK + T_HOLD) {
+        // Keep the shape — calm, readable structure.
+        freeFall = 0;
+        detonate = 0;
+        shape = 1;
+        shapeLock = 1;
+      } else {
+        // Break down → back to chaos.
+        const t = smoothstep(0, 1, (local - T_CHAOS - T_LOCK - T_HOLD) / T_BREAK);
+        shape = 1 - t;
+        shapeLock = Math.max(0, 1 - t * 1.4);
+        detonate = Math.sin(t * Math.PI) * 0.95;
+        freeFall = smoothstep(0.25, 1, t);
+      }
+
+      // Hover introduces a gentle disturbance into an otherwise stable field.
+      // It is bounded, so visitors can explore the response without turning
+      // the plate into an uncontrolled spectacle.
+      const hoverPerturbation = pointer.glow * shapeLock * 0.28;
+      detonate = Math.max(detonate, hoverPerturbation);
+
+      if (reducedMotion) {
+        freeFall = 0;
+        detonate = 0;
+        shape = 1;
+        shapeLock = 1;
+      }
+
+      // Infinity is the silhouette — no competing path line.
+      let trajFade = 0;
+      let trajFray = 0;
+      trajMat.uniforms.uFade.value = trajFade * (1 - freeFall * 0.55);
+      trajMat.uniforms.uPulse.value = (elapsed * 0.14) % 1;
+      trajMat.uniforms.uFray.value = reducedMotion ? 0 : trajFray;
+
+      const inGalaxy = modeA === GALAXY_MODE ? shape : 0;
+      const inPath = modeA === PATH_MODE ? shape : 0;
+
+      const trajPhase = Math.floor(elapsed / EPOCH) * 0.7;
+      for (let f = 0; f < FILAMENT_COUNT; f++) {
+        for (let i = 0; i < TRAJ_POINTS; i++) {
+          const idx = f * TRAJ_POINTS + i;
+          const tt = i / (TRAJ_POINTS - 1);
+          trajFilament(tt, trajPhase, f, trajFray, _tmp);
+          trajPositions[idx * 3] = _tmp.x;
+          trajPositions[idx * 3 + 1] = _tmp.y;
+          trajPositions[idx * 3 + 2] = _tmp.z;
         }
-      `,
-      fragmentShader: `
-        precision highp float;
-        varying float vLife;
-        varying float vSeed;
-        void main() {
-          vec2 p = gl_PointCoord * 2.0 - 1.0;
-          if (length(p) > 1.0) discard;
-          float core = exp(-length(p) * length(p) * 4.0);
-          vec3 col = mix(vec3(1.0, 0.3, 0.2), vec3(1.0, 0.6, 0.3), vSeed);
-          gl_FragColor = vec4(col, core * vLife * 0.7);
-        }
-      `,
-      uniforms: {
-        uPixelRatio: { value: renderer.getPixelRatio() },
-      },
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
+      }
+      trajGeo.attributes.position.needsUpdate = true;
+
+      const pulse = trajMat.uniforms.uPulse.value as number;
+      trajPoint(pulse, trajPhase, _tmp);
+      const headArr = headGeo.attributes.position.array as Float32Array;
+      headArr[0] = _tmp.x;
+      headArr[1] = _tmp.y;
+      headArr[2] = _tmp.z;
+      headGeo.attributes.position.needsUpdate = true;
+      headMat.opacity = trajFade * (0.55 + 0.45 * (1 - trajFray));
+      headMat.size = 0.04 + trajFade * 0.035;
+
+      // Soft volume under each icon while held.
+      for (let h = 0; h < HAZE_COUNT; h++) setHaze(h, 0, 0, 0, 0.1, 0);
+      const hazeBoost = shape * shapeLock * (1 - freeFall * 0.7) * (1 - detonate * 0.35);
+      if (modeA === 0) {
+        // Sphere shell glow
+        setHaze(0, 0, 0, 0, 0.55, 0.12 * hazeBoost, 0.08);
+      }
+      if (modeA === 1) {
+        // Torus core
+        setHaze(0, 0, 0, 0, 0.28, 0.18 * hazeBoost, 0.15);
+      }
+      if (modeA === 2) {
+        // Cube interior
+        setHaze(0, 0, 0, 0, 0.42, 0.1 * hazeBoost, 0.05);
+      }
+      if (modeA === 3) {
+        // Helix spine
+        setHaze(0, 0, 0.15, 0, 0.14, 0.16 * hazeBoost, 0.2);
+        setHaze(1, 0, -0.15, 0, 0.14, 0.16 * hazeBoost, 0.2);
+      }
+      if (inGalaxy > 0.02) {
+        setHaze(0, 0, 0, 0, 0.14, 0.4 * inGalaxy * hazeBoost, 0.55);
+        setHaze(1, 0.14, 0.02, 0.08, 0.2, 0.14 * inGalaxy * hazeBoost, 0.2);
+        setHaze(2, -0.14, -0.02, -0.08, 0.2, 0.14 * inGalaxy * hazeBoost, 0.15);
+      }
+      if (inPath > 0.02) {
+        // Infinity lobes
+        setHaze(0, 0.2, 0, 0, 0.16, 0.2 * inPath * hazeBoost, 0.35);
+        setHaze(1, -0.2, 0, 0, 0.16, 0.2 * inPath * hazeBoost, 0.35);
+        setHaze(2, 0, 0, 0, 0.1, 0.14 * inPath * hazeBoost, 0.25);
+      }
+      if (detonate > 0.05) {
+        setHaze(5, 0, 0, 0, 0.38 + detonate * 0.25, 0.2 * detonate, 0.4);
+      }
+
+      // GPU sim step
+      const step = Math.min(dt, 0.033);
+      if (gpuOk && !reducedMotion) {
+        velUniforms.uTime.value = elapsed;
+        velUniforms.uDt.value = step;
+        velUniforms.uModeA.value = modeA;
+        velUniforms.uShape.value = shape;
+        velUniforms.uShapeLock.value = shapeLock;
+        velUniforms.uDetonate.value = detonate;
+        velUniforms.uFreeFall.value = freeFall;
+        velUniforms.uInPath.value = inPath;
+        velUniforms.uInGalaxy.value = inGalaxy;
+        velUniforms.uTrajFray.value = trajFray;
+        velUniforms.uTrajPhase.value = trajPhase;
+        posVar.material.uniforms.uDt.value = step;
+        gpuCompute.compute();
+        pMat.uniforms.texturePosition.value = gpuCompute.getCurrentRenderTarget(posVar).texture;
+      } else if (gpuOk) {
+        velUniforms.uShape.value = 1;
+        velUniforms.uShapeLock.value = 1;
+        velUniforms.uFreeFall.value = 0;
+        velUniforms.uDetonate.value = 0;
+        pMat.uniforms.texturePosition.value = gpuCompute.getCurrentRenderTarget(posVar).texture;
+      }
+
+      pMat.uniforms.uTime.value = elapsed;
+      pMat.uniforms.uTrajFade.value = trajFade;
+      pMat.uniforms.uTrajFray.value = trajFray;
+      pMat.uniforms.uTrajPhase.value = trajPhase;
+      pMat.uniforms.uInGalaxy.value = inGalaxy;
+      pMat.uniforms.uDetonate.value = detonate;
+      pMat.uniforms.uFreeFall.value = freeFall;
+      pMat.uniforms.uInPath.value = inPath;
+
+      const interiorHeat = trajFade * 0.55 + detonate * 0.35 + inGalaxy * 0.15;
+      glassMat.roughness = 0.03 + 0.02 * Math.sin(elapsed * 0.2) + pointer.glow * 0.01;
+      glassMat.envMapIntensity = 1.05 + pointer.glow * 0.25 + interiorHeat * 0.45;
+      glassMat.clearcoatRoughness = 0.05 + (1 - interiorHeat) * 0.04;
+      innerGlassMat.envMapIntensity = 0.5 + pointer.glow * 0.12 + interiorHeat * 0.2;
+      edgeMat.opacity = 0.48 + 0.12 * pointer.glow + 0.18 * trajFade + 0.1 * detonate;
+      (corners.material as THREE.PointsMaterial).opacity =
+        0.55 + 0.25 * pointer.glow + 0.2 * trajFade + 0.15 * detonate;
+
+      renderer.render(scene, camera);
+    };
+
+    const animate = () => {
+      render();
+      frameId = visible ? window.requestAnimationFrame(animate) : null;
+    };
+
+    const resizeObserver = new ResizeObserver(() => {
+      resize();
+      render();
     });
 
-    const leaks = new THREE.Points(leakGeo, leakMat);
-    leaks.renderOrder = 9;
-    scene.add(leaks);
-
-    // Pointer glow
-    const pointer = { x: 0, y: 0, glow: 0 };
-    const onMove = (e: MouseEvent) => {
-      const rect = container.getBoundingClientRect();
-      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      pointer.glow = 1;
-    };
-    container.addEventListener('mousemove', onMove);
-
-    // Simulation state
-    let scenarioIdx = 0;
-    let shapeLock = 0;
-    let freeFall = 0;
-    let detonate = 0;
-    let trajFade = 0;
-    let lastTime = performance.now();
-
-    // Formation targets
-    const setFormation = (idx: number) => {
-      scenarioIdx = idx;
-      const scenario = WORLD_SCENARIOS[idx];
-
-      for (let i = 0; i < PARTICLES; i++) {
-        const s = seed[i];
-        let tx: number, ty: number, tz: number;
-
-        switch (scenario.label) {
-          case 'Bull Run':
-            tx = (s - 0.5) * CUBE * 0.85;
-            ty = (s * s - 0.25) * CUBE * 0.6;
-            tz = Math.sin(s * Math.PI * 2) * 0.15;
-            break;
-          case 'Black Swan':
-            tx = (Math.random() - 0.5) * CUBE * 0.9;
-            ty = (Math.random() - 0.5) * CUBE * 0.9;
-            tz = (Math.random() - 0.5) * CUBE * 0.9;
-            break;
-          case 'Regime Shift':
-            tx = (s - 0.5) * CUBE * 0.9;
-            ty = Math.sin(s * Math.PI * 3) * 0.25;
-            tz = (s - 0.5) * 0.3;
-            break;
-          case 'Stagnation':
-            tx = Math.cos(s * Math.PI * 2) * 0.35;
-            ty = Math.sin(s * Math.PI * 2) * 0.35;
-            tz = (s - 0.5) * 0.1;
-            break;
-          case 'Recovery':
-            tx = (s - 0.5) * CUBE * 0.7;
-            ty = Math.abs(s - 0.5) * CUBE * 0.5;
-            tz = Math.sin(s * Math.PI * 4) * 0.2;
-            break;
-          case 'Euphoria':
-            tx = (s - 0.5) * CUBE * 0.95;
-            ty = (s * s - 0.25) * CUBE * 0.8;
-            tz = Math.cos(s * Math.PI * 3) * 0.25;
-            break;
-          default:
-            tx = (s - 0.5) * CUBE * 0.8;
-            ty = (s - 0.5) * CUBE * 0.8;
-            tz = (s - 0.5) * CUBE * 0.8;
-        }
-
-        target[i * 3] = tx;
-        target[i * 3 + 1] = ty;
-        target[i * 3 + 2] = tz;
-      }
-
-      pointGeo.attributes.aTarget.needsUpdate = true;
-      setScenarioIndex(idx);
-    };
-
-    // Cycle formations
-    const cycle = () => {
-      setFormation((scenarioIdx + 1) % WORLD_SCENARIOS.length);
-    };
-
-    const cycleInterval = setInterval(cycle, 10000);
-    setFormation(0);
-
-    // Resize
-    const onResize = () => {
-      const nw = container.offsetWidth;
-      const nh = container.offsetHeight;
-      camera.aspect = nw / nh;
-      camera.updateProjectionMatrix();
-      renderer.setSize(nw, nh);
-      if (composer) composer.setSize(nw, nh);
-    };
-    window.addEventListener('resize', onResize);
-
-    // Render loop
-    const animate = () => {
-      requestAnimationFrame(animate);
-
-      const now = performance.now();
-      const dt = Math.min((now - lastTime) / 1000, 0.05);
-      lastTime = now;
-      const elapsed = now / 1000;
-
-      // Phase logic
-      const cycleProgress = (now % 10000) / 10000;
-      const holdEnd = 0.72;
-      const chaosStart = 0.78;
-
-      if (cycleProgress < holdEnd) {
-        shapeLock = THREE.MathUtils.lerp(shapeLock, 1, 0.04);
-        freeFall = THREE.MathUtils.lerp(freeFall, 0, 0.06);
-        detonate = THREE.MathUtils.lerp(detonate, 0, 0.08);
-        trajFade = THREE.MathUtils.lerp(trajFade, 1, 0.03);
-      } else if (cycleProgress < chaosStart) {
-        shapeLock = THREE.MathUtils.lerp(shapeLock, 0, 0.15);
-        freeFall = THREE.MathUtils.lerp(freeFall, 1, 0.2);
-        detonate = THREE.MathUtils.lerp(detonate, 0, 0.1);
-        trajFade = THREE.MathUtils.lerp(trajFade, 0, 0.1);
-      } else {
-        shapeLock = THREE.MathUtils.lerp(shapeLock, 0, 0.08);
-        freeFall = THREE.MathUtils.lerp(freeFall, 0.3, 0.05);
-        detonate = THREE.MathUtils.lerp(detonate, 1, 0.12);
-        trajFade = THREE.MathUtils.lerp(trajFade, 0, 0.05);
-      }
-
-      // Pointer glow decay
-      pointer.glow = THREE.MathUtils.lerp(pointer.glow, 0, 0.05);
-
-      // World rotation
-      world.rotation.y = Math.sin(elapsed * 0.12) * 0.15;
-      world.rotation.x = Math.cos(elapsed * 0.08) * 0.08;
-
-      // Camera breathing
-      const targetDist = 3.2 + shapeLock * 0.3 - detonate * 0.4;
-      const currentDist = camera.position.length();
-      camera.position.normalize().multiplyScalar(
-        THREE.MathUtils.lerp(currentDist, targetDist, 0.02)
-      );
-
-      // Shell rotation (independent)
-      shell.rotation.y = elapsed * 0.15;
-      shell.rotation.z = Math.sin(elapsed * 0.1) * 0.03;
-
-      // Edge pulse
-      const edgePulse = 0.45 + 0.15 * Math.sin(elapsed * 0.8) * shapeLock + 0.2 * trajFade;
-      edgeMat.opacity = edgePulse + 0.3 * pointer.glow;
-      const edgeHue = 0.58 + 0.05 * Math.sin(elapsed * 0.3);
-      edgeMat.color.setHSL(edgeHue, 0.4, 0.82 + 0.1 * Math.sin(elapsed * 0.5));
-
-      // Crack stress visualization
-      crackMat.opacity = detonate * 0.25 * (0.7 + 0.3 * Math.sin(elapsed * 18));
-
-      // Glow shift
-      glowMat.opacity = 0.1 + shapeLock * 0.06 + detonate * 0.04;
-
-      // Update particle uniforms
-      pointUniforms.uTime.value = elapsed;
-      pointUniforms.uShapeLock.value = shapeLock;
-      pointUniforms.uFreeFall.value = freeFall;
-      pointUniforms.uDetonate.value = detonate;
-      pointUniforms.uDt.value = dt;
-
-      // Update particle positions from simulation
-      const positions = pointGeo.attributes.position.array as Float32Array;
-      for (let i = 0; i < PARTICLES; i++) {
-        const ix = i * 3;
-        const px = positions[ix];
-        const py = positions[ix + 1];
-        const pz = positions[ix + 2];
-
-        // Velocity integration
-        positions[ix] += vel[ix];
-        positions[ix + 1] += vel[ix + 1];
-        positions[ix + 2] += vel[ix + 2];
-
-        // Damping
-        vel[ix] *= 0.98;
-        vel[ix + 1] *= 0.98;
-        vel[ix + 2] *= 0.98;
-
-        // Formation attraction
-        const tx = target[ix];
-        const ty = target[ix + 1];
-        const tz = target[ix + 2];
-        const attractX = (tx - px) * 0.02 * shapeLock;
-        const attractY = (ty - py) * 0.02 * shapeLock;
-        const attractZ = (tz - pz) * 0.02 * shapeLock;
-
-        vel[ix] += attractX;
-        vel[ix + 1] += attractY;
-        vel[ix + 2] += attractZ;
-      }
-      pointGeo.attributes.position.needsUpdate = true;
-
-      // Leak particles
-      const leakPositions = leakGeo.attributes.position.array as Float32Array;
-      const leakLifes = leakGeo.attributes.aLife.array as Float32Array;
-
-      // Spawn leaks during detonate
-      if (detonate > 0.2 && Math.random() < detonate * 0.08) {
-        for (let i = 0; i < leakCount; i++) {
-          if (leakLifes[i] <= 0) {
-            // Spawn from cube edge
-            const edge = Math.floor(Math.random() * 12);
-            const side = Math.floor(edge / 2);
-            const sign = edge % 2 === 0 ? 1 : -1;
-            const half = CUBE * 0.5;
-            if (side === 0) {
-              leakPositions[i * 3] = sign * half;
-              leakPositions[i * 3 + 1] = (Math.random() - 0.5) * CUBE;
-              leakPositions[i * 3 + 2] = (Math.random() - 0.5) * CUBE;
-            } else if (side === 1) {
-              leakPositions[i * 3] = (Math.random() - 0.5) * CUBE;
-              leakPositions[i * 3 + 1] = sign * half;
-              leakPositions[i * 3 + 2] = (Math.random() - 0.5) * CUBE;
-            } else {
-              leakPositions[i * 3] = (Math.random() - 0.5) * CUBE;
-              leakPositions[i * 3 + 1] = (Math.random() - 0.5) * CUBE;
-              leakPositions[i * 3 + 2] = sign * half;
-            }
-            leakVel[i * 3] = (Math.random() - 0.5) * 0.01;
-            leakVel[i * 3 + 1] = (Math.random() - 0.5) * 0.01;
-            leakVel[i * 3 + 2] = sign * 0.02 + (Math.random() - 0.5) * 0.01;
-            leakLifes[i] = 1.0;
-            break;
+    const visibilityObserver = new IntersectionObserver(
+      (entries) => {
+        const nowVisible = entries.some((entry) => entry.isIntersecting);
+        if (nowVisible && !visible) {
+          visible = true;
+          lastT = performance.now();
+          if (!reducedMotion && frameId === null) {
+            frameId = window.requestAnimationFrame(animate);
           }
+        } else if (!nowVisible) {
+          visible = false;
         }
-      }
+      },
+      { rootMargin: '120px' },
+    );
 
-      // Update leaks
-      for (let i = 0; i < leakCount; i++) {
-        if (leakLifes[i] > 0) {
-          leakPositions[i * 3] += leakVel[i * 3];
-          leakPositions[i * 3 + 1] += leakVel[i * 3 + 1];
-          leakPositions[i * 3 + 2] += leakVel[i * 3 + 2];
-          leakLifes[i] -= dt * 0.4;
-          if (leakLifes[i] < 0) leakLifes[i] = 0;
-        }
-      }
-      leakGeo.attributes.position.needsUpdate = true;
-      leakGeo.attributes.aLife.needsUpdate = true;
+    resize();
+    resizeObserver.observe(mount);
+    visibilityObserver.observe(mount);
 
-      // Render
-      if (composer) {
-        composer.render();
-      } else {
-        renderer.render(scene, camera);
-      }
-    };
+    // Warm up one compute so the first paint has positions.
+    if (gpuOk) {
+      velUniforms.uTime.value = 0;
+      velUniforms.uDt.value = 0.016;
+      gpuCompute.compute();
+      pMat.uniforms.texturePosition.value = gpuCompute.getCurrentRenderTarget(posVar).texture;
+    }
 
-    animate();
-    setReady(true);
+    if (reducedMotion) {
+      startedAt -= 22_000;
+      render();
+    } else {
+      animate();
+    }
+
+    window.requestAnimationFrame(() => {
+      renderer.domElement.classList.add('is-ready');
+    });
 
     return () => {
-      clearInterval(cycleInterval);
-      window.removeEventListener('resize', onResize);
-      container.removeEventListener('mousemove', onMove);
-      renderer.dispose();
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      if (card) {
+        card.removeEventListener('pointermove', onPointerMove as EventListener);
+        card.removeEventListener('pointerleave', onPointerLeave);
+      }
+      resizeObserver.disconnect();
+      visibilityObserver.disconnect();
+      try {
+        boxGeo.dispose();
+        outerGlassGeo.dispose();
+        innerGlassGeo.dispose();
+        edgesGeo.dispose();
+        innerEdgesGeo.dispose();
+        edgeMat.dispose();
+        innerEdgeMat.dispose();
+        glassMat.dispose();
+        innerGlassMat.dispose();
+        cornerGeo.dispose();
+        (corners.material as THREE.Material).dispose();
+        hazeSphereGeo.dispose();
+        for (const mat of hazeMats) mat.dispose();
+        pGeo.dispose();
+        pMat.dispose();
+        trajGeo.dispose();
+        trajMat.dispose();
+        headGeo.dispose();
+        headMat.dispose();
+        pos0.dispose();
+        vel0.dispose();
+        envMap.dispose();
+        scene.environment = null;
+        renderer.dispose();
+        if (renderer.domElement.parentNode) {
+          renderer.domElement.parentNode.removeChild(renderer.domElement);
+        }
+        while (mount.firstChild) mount.removeChild(mount.firstChild);
+      } catch {
+        // swallow HMR disposal races
       }
     };
   }, []);
@@ -689,42 +1283,13 @@ export default function SimulationEnsemble() {
   const scenario = WORLD_SCENARIOS[scenarioIndex];
 
   return (
-    <div className="simulation-ensemble">
-      <div className="simulation-ensemble-canvas" ref={containerRef} />
+    <div className="simulation-ensemble-render" aria-hidden="true">
+      <div ref={mountRef} className="hermes-render-host" />
       <div className="simulation-ensemble-readout">
-        <div className="readout-header">
-          <span className="readout-status-light" data-status={ready ? 'locked' : 'resolving'} />
-          <span className="readout-id">SIM-{String(scenarioIndex + 1).padStart(3, '0')}</span>
-        </div>
-
-        <div className="readout-formation">
-          <span className="readout-label">FORMATION</span>
-          <strong>{scenario.label.toUpperCase()}</strong>
-        </div>
-
-        <div className="readout-metrics">
-          <div className="metric">
-            <span>STABILITY</span>
-            <div className="metric-bar">
-              <div className="metric-fill" style={{ width: `${(scenarioIndex % 2 === 0 ? 0.85 : 0.3) * 100}%` }} />
-            </div>
-          </div>
-          <div className="metric">
-            <span>ENTROPY</span>
-            <div className="metric-bar">
-              <div className="metric-fill metric-fill-entropy" style={{ width: `${(scenarioIndex % 2 === 0 ? 0.2 : 0.75) * 100}%` }} />
-            </div>
-          </div>
-        </div>
-
-        <p className="readout-detail">{scenario.detail}</p>
-
-        <div className="readout-footer">
-          <span>{scenarioIndex % 2 === 0 ? 'CONTAINED' : 'BRANCHING...'}</span>
-          <span className="readout-timestamp">
-            {new Date().toISOString().slice(11, 19)}Z
-          </span>
-        </div>
+        <span>World model · {String(scenarioIndex + 1).padStart(2, '0')}/06</span>
+        <strong>{scenario.label}</strong>
+        <p>{scenario.detail}</p>
+        <em>Hover to perturb</em>
       </div>
     </div>
   );
