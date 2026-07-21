@@ -9,7 +9,7 @@ import SkyBackground from './SkyBackground';
 import Mark from './Mark';
 import ThemeToggle from './ThemeToggle';
 import NotePlate from './NotePlate';
-import { getAutonomyGateHeadline, getGateBoardHeadline } from '@/features/gates/conditions';
+import { gateDomains, getAutonomyGateHeadline } from '@/features/gates/conditions';
 
 import { calibration } from './calibration';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
@@ -105,7 +105,7 @@ const footerSystems: Array<{ name: string; status: string; href?: string; hint?:
     name: 'Simulation',
     status: 'Building',
     href: '/gates#simulation',
-    hint: 'Synthetic environments where hypotheses fail quietly before deployment.',
+    hint: 'World models for testing decisions before they touch the real one.',
   },
   {
     name: 'Autonomy',
@@ -116,7 +116,9 @@ const footerSystems: Array<{ name: string; status: string; href?: string; hint?:
 ];
 
 const autonomyGateHeadline = getAutonomyGateHeadline();
-const gateBoardHeadline = getGateBoardHeadline();
+const nextSimulationCondition = gateDomains
+  .find((domain) => domain.id === 'simulation')
+  ?.conditions.find((condition) => condition.status !== 'met');
 
 const homepageQuestions = [
   {
@@ -466,12 +468,13 @@ export default function HomeClient({
               Systems for reading complexity.
             </motion.h1>
             <motion.p variants={fade} className="hero-body mt-7 max-w-2xl text-lg leading-8 text-muted md:text-xl">
-              Solace builds instruments for disciplined capital allocation under uncertainty.
+              Solace builds systems that observe complexity, model possible worlds, and test decisions before they
+              touch the real one. Hermes is the first live instrument.
             </motion.p>
             <motion.div variants={fade} className="hero-actions mt-9">
               <div className="hero-actions-row">
-                <Link href="/hermes" className="hermes-product-button hermes-product-button-dark min-h-[2.75rem]">
-                  Explore Hermes
+                <Link href="#instruments" className="hermes-product-button hermes-product-button-dark min-h-[2.75rem]">
+                  Explore instruments
                 </Link>
                 <Link href="/brief" className="primary-link">
                   Read the brief
@@ -560,7 +563,7 @@ export default function HomeClient({
                     <strong>{calibration.brier.toFixed(2)}</strong>
                   </span>
                   <span>
-                    <em>As of</em>
+                    <em>Sample through</em>
                     <strong>{calibration.asOf}</strong>
                   </span>
                 </div>
@@ -597,6 +600,15 @@ export default function HomeClient({
           <motion.div className="inst-cell inst-cell-auto" {...cardReveal(3)}>
             <Link href="/gates#autonomy" className="inst-card">
               <div className="inst-platter">
+                <div className="autonomy-field" aria-hidden="true">
+                  <span className="autonomy-field-axis is-x" />
+                  <span className="autonomy-field-axis is-y" />
+                  <span className="autonomy-field-orbit is-one" />
+                  <span className="autonomy-field-orbit is-two" />
+                  <span className="autonomy-field-node is-origin" />
+                  <span className="autonomy-field-node is-target" />
+                  <span className="autonomy-field-label">Permission boundary</span>
+                </div>
                 <div className="inst-card-scrim" aria-hidden="true" />
                 <span className="inst-chip is-idle">{autonomyGateHeadline}</span>
               </div>
@@ -604,8 +616,7 @@ export default function HomeClient({
                 <div className="inst-card-name">
                   <strong>Autonomy</strong>
                   <p>
-                    Read the structure, act, stand down: the same discipline, extended beyond markets.
-                    Domains are earned, not declared.
+                    A system earns the right to act in the world only after its models, safeguards, and record hold.
                   </p>
                 </div>
                 <span className="inst-card-cta">Gate board →</span>
@@ -616,16 +627,50 @@ export default function HomeClient({
           <motion.div className="inst-gates-strip" {...cardReveal(4)}>
             <Link href="/gates" className="inst-gates-strip-link" aria-label="View public gate board">
               <span>
-                <strong>Simulation and Autonomy</strong> stay gated — conditions and progress are public
+                <strong>Current simulation work:</strong>{' '}
+                {nextSimulationCondition
+                  ? `${nextSimulationCondition.label} — ${nextSimulationCondition.note}`
+                  : 'Gate conditions and progress are public.'}
               </span>
-              <span>{gateBoardHeadline} · Gate board →</span>
+              <span>See the gate board →</span>
             </Link>
           </motion.div>
         </div>
       </section>
 
+      <section className="research-loop-wrap px-5 md:px-10">
+        <motion.div className="research-loop mx-auto max-w-7xl" {...cardReveal(5)}>
+          <div className="research-loop-intro">
+            <p className="section-kicker">How the instruments connect</p>
+            <h2>Observe. Model. Test. Earn the right to act.</h2>
+          </div>
+          <ol className="research-loop-steps">
+            <li>
+              <span>01</span>
+              <strong>Observe</strong>
+              <p>Hermes and Oracle turn reality into an accountable record.</p>
+            </li>
+            <li>
+              <span>02</span>
+              <strong>Model</strong>
+              <p>Simulation builds possible worlds from constraints and feedback.</p>
+            </li>
+            <li>
+              <span>03</span>
+              <strong>Test</strong>
+              <p>Decisions meet disturbance before they meet the real world.</p>
+            </li>
+            <li>
+              <span>04</span>
+              <strong>Act</strong>
+              <p>Autonomy remains gated until the evidence is strong enough.</p>
+            </li>
+          </ol>
+        </motion.div>
+      </section>
+
       <section id="ledger" className="home-vault-wrap px-5 md:px-10 scroll-mt-24">
-        <motion.div className="home-vault mx-auto max-w-7xl" {...cardReveal(5)}>
+        <motion.div className="home-vault mx-auto max-w-7xl" {...cardReveal(6)}>
           <Link href="/trust" className="home-vault-card" aria-label="Open the Hermes decision ledger">
             <div className="home-vault-copy">
               <p className="section-kicker">Public record</p>

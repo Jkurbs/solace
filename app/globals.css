@@ -999,6 +999,99 @@ h2 {
     min-height: clamp(18rem, 32vw, 24rem);
   }
 
+  .autonomy-field {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 59% 44%, rgba(147, 179, 207, 0.14), transparent 22%),
+      linear-gradient(135deg, rgba(24, 37, 48, 0.76), rgba(2, 4, 7, 0.1) 54%, rgba(139, 116, 75, 0.11));
+  }
+
+  .autonomy-field::before {
+    position: absolute;
+    inset: 0;
+    content: '';
+    opacity: 0.25;
+    background-image: linear-gradient(rgba(188, 211, 233, 0.22) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(188, 211, 233, 0.22) 1px, transparent 1px);
+    background-size: 2.3rem 2.3rem;
+    mask-image: linear-gradient(105deg, transparent 4%, black 35%, black 76%, transparent 100%);
+  }
+
+  .autonomy-field-axis,
+  .autonomy-field-orbit {
+    position: absolute;
+    display: block;
+    border-color: rgba(187, 215, 236, 0.32);
+  }
+
+  .autonomy-field-axis.is-x {
+    top: 48%;
+    right: 8%;
+    left: 8%;
+    border-top: 1px solid rgba(187, 215, 236, 0.28);
+  }
+
+  .autonomy-field-axis.is-y {
+    top: 14%;
+    bottom: 14%;
+    left: 59%;
+    border-left: 1px solid rgba(187, 215, 236, 0.28);
+  }
+
+  .autonomy-field-orbit {
+    top: 50%;
+    left: 59%;
+    width: 18rem;
+    height: 7rem;
+    border: 1px solid rgba(187, 215, 236, 0.32);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) rotate(-24deg);
+  }
+
+  .autonomy-field-orbit.is-two {
+    width: 11rem;
+    height: 14rem;
+    transform: translate(-50%, -50%) rotate(35deg);
+    border-color: rgba(203, 173, 122, 0.25);
+  }
+
+  .autonomy-field-node {
+    position: absolute;
+    z-index: 1;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #dcecff;
+    box-shadow: 0 0 1.4rem rgba(174, 211, 246, 0.9);
+  }
+
+  .autonomy-field-node.is-origin {
+    top: calc(48% - 0.25rem);
+    left: calc(59% - 0.25rem);
+  }
+
+  .autonomy-field-node.is-target {
+    top: 25%;
+    right: 18%;
+    width: 0.38rem;
+    height: 0.38rem;
+    background: #d6b77a;
+    box-shadow: 0 0 1.1rem rgba(214, 183, 122, 0.76);
+  }
+
+  .autonomy-field-label {
+    position: absolute;
+    top: 25%;
+    right: 1.8rem;
+    color: rgba(215, 229, 242, 0.48);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.52rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
   .inst-cell-hermes {
     position: relative;
   }
@@ -1603,6 +1696,90 @@ h2 {
     flex-wrap: wrap;
     align-items: center;
     gap: 0.85rem 1.1rem;
+  }
+
+  /* --- HOMEPAGE RESEARCH LOOP --- */
+  .research-loop-wrap {
+    padding-top: clamp(1rem, 3vw, 2rem);
+  }
+
+  .research-loop {
+    display: grid;
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.5fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: start;
+    padding: clamp(1.7rem, 3.5vw, 2.6rem);
+    border-top: 1px solid rgba(250, 250, 250, 0.13);
+    border-bottom: 1px solid rgba(250, 250, 250, 0.13);
+  }
+
+  .research-loop-intro h2 {
+    max-width: 13ch;
+    margin: 0.8rem 0 0;
+    color: var(--foreground);
+    font-family: var(--font-display), Georgia, serif;
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+  }
+
+  .research-loop-steps {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .research-loop-steps li {
+    min-width: 0;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(250, 250, 250, 0.23);
+  }
+
+  .research-loop-steps span,
+  .research-loop-steps strong,
+  .research-loop-steps p {
+    display: block;
+  }
+
+  .research-loop-steps span {
+    color: rgba(211, 181, 133, 0.78);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.57rem;
+    letter-spacing: 0.14em;
+  }
+
+  .research-loop-steps strong {
+    margin-top: 0.65rem;
+    color: rgba(250, 250, 250, 0.92);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .research-loop-steps p {
+    margin: 0.45rem 0 0;
+    color: rgba(250, 250, 250, 0.5);
+    font-size: 0.77rem;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 760px) {
+    .research-loop {
+      grid-template-columns: 1fr;
+      gap: 1.8rem;
+    }
+
+    .research-loop-steps {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.3rem 0.9rem;
+    }
+
+    .autonomy-field-label {
+      right: 1rem;
+    }
   }
 
   /* --- HOMEPAGE LEDGER VAULT (process-first public record) --- */
