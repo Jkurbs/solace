@@ -24,8 +24,8 @@ export const metadata: Metadata = {
   description: 'Public record of Hermes decisions before outcomes are known.',
 };
 
-// Live overlay polls client-side; keep the shell dynamic so first paint isn't build-stale.
-export const dynamic = 'force-dynamic';
+// Live overlay polls client-side; short ISR is enough for the sealed shell.
+export const revalidate = 60;
 
 const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',

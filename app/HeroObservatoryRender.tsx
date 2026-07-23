@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 import { getRenderPixelRatio } from '@/lib/webgl-dpr';
+import { isWebglPaused, subscribeWebglPause } from '@/lib/webgl-lifecycle';
 
 const vertexShader = `
   varying vec2 vUv;
@@ -243,7 +244,10 @@ export default function HeroObservatoryRender() {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let frameId: number | null = null;
     let startedAt = performance.now();
-    let visible = true;
+    let inView = true;
+    let pageVisible = typeof document !== 'undefined' ? !document.hidden : true;
+
+    const canRun = () => inView && pageVisible && !isWebglPaused() && !reducedMotion;
 
     scene.add(mesh);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -270,9 +274,25 @@ export default function HeroObservatoryRender() {
       renderer.render(scene, camera);
     };
 
+    const stopLoop = () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+        frameId = null;
+      }
+    };
+
+    const tryStartLoop = () => {
+      if (!canRun() || frameId !== null) return;
+      frameId = window.requestAnimationFrame(animate);
+    };
+
     const animate = () => {
+      if (!canRun()) {
+        frameId = null;
+        return;
+      }
       render();
-      frameId = visible ? window.requestAnimationFrame(animate) : null;
+      frameId = window.requestAnimationFrame(animate);
     };
 
     const resizeObserver = new ResizeObserver(() => {
@@ -282,18 +302,25 @@ export default function HeroObservatoryRender() {
 
     const visibilityObserver = new IntersectionObserver(
       (entries) => {
-        const nowVisible = entries.some((entry) => entry.isIntersecting);
-        if (nowVisible && !visible) {
-          visible = true;
-          if (!reducedMotion && frameId === null) {
-            frameId = window.requestAnimationFrame(animate);
-          }
-        } else if (!nowVisible) {
-          visible = false;
-        }
+        inView = entries.some((entry) => entry.isIntersecting);
+        if (inView) tryStartLoop();
+        else stopLoop();
       },
-      { rootMargin: '120px' }
+      { rootMargin: '120px' },
     );
+
+    const onDocVisibility = () => {
+      pageVisible = !document.hidden;
+      if (pageVisible) tryStartLoop();
+      else stopLoop();
+    };
+
+    const unsubPause = subscribeWebglPause((paused) => {
+      if (paused) stopLoop();
+      else tryStartLoop();
+    });
+
+    document.addEventListener('visibilitychange', onDocVisibility);
 
     resize();
     resizeObserver.observe(mount);
@@ -303,7 +330,7 @@ export default function HeroObservatoryRender() {
       startedAt -= 8400;
       render();
     } else {
-      animate();
+      tryStartLoop();
     }
 
     // First frame is painted at opacity 0; the class swap runs the CSS fade-in.
@@ -312,9 +339,9 @@ export default function HeroObservatoryRender() {
     });
 
     return () => {
-      if (frameId !== null) {
-        window.cancelAnimationFrame(frameId);
-      }
+      stopLoop();
+      unsubPause();
+      document.removeEventListener('visibilitychange', onDocVisibility);
 
       resizeObserver.disconnect();
       visibilityObserver.disconnect();

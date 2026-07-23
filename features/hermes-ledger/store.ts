@@ -196,6 +196,56 @@ export async function listHermesLedgerRows(limit = 50): Promise<HermesLedgerRow[
   }
 }
 
+/**
+ * Lean ledger read for homepage vault metrics. Selects only the columns the
+ * process scoreboard needs — much cheaper than listHermesLedgerRows(1000) with `*`.
+ */
+export async function listHermesLedgerProcessRows(limit = 1500): Promise<HermesLedgerRow[]> {
+  if (!isSupabaseDataClientConfigured()) {
+    return [];
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    const { data, error } = await supabase
+      .from('hermes_decision_ledger')
+      .select(
+        'record_id, sealed_at, decision, posture, note, outcome, pnl, resolved_at, row_class, event_type, ref',
+      )
+      .order('created_at', { ascending: true })
+      .limit(limit);
+
+    if (error) {
+      if (!isMissingLedgerTable(error.message)) {
+        console.warn('[hermes-ledger] Process list failed.', error.message);
+      }
+
+      return [];
+    }
+
+    return (data ?? []).map((row) => ({
+      decision: row.decision,
+      eventType: (row.event_type as HermesLedgerEventType | null) ?? null,
+      hermesVersion: null,
+      note: row.note,
+      outcome: row.outcome,
+      pnl: row.pnl === null || row.pnl === undefined ? null : Math.round(Number(row.pnl) * 100) / 100,
+      posture: row.posture,
+      prevHash: null,
+      recordId: row.record_id,
+      ref: row.ref,
+      resolutionHash: null,
+      resolvedAt: row.resolved_at,
+      rowClass: (row.row_class as HermesLedgerRowClass | null) ?? null,
+      rowHash: null,
+      sealedAt: row.sealed_at,
+    }));
+  } catch (error) {
+    console.warn('[hermes-ledger] Process list failed.', error);
+    return [];
+  }
+}
+
 export async function sealHermesLedgerRow(input: {
   recordId: string;
   sealedAt?: string;

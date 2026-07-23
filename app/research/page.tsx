@@ -19,7 +19,8 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = 'force-dynamic';
+// Latest article can lag a minute; prefer cache over a cold Supabase hit on every tap.
+export const revalidate = 60;
 
 const fallbackArticle: ArticleRecord = {
   author: 'Solace Research',

@@ -485,6 +485,108 @@ h2 {
     color: var(--foreground);
   }
 
+  /* Instant feedback while the next route streams in (loading.tsx). */
+  .page-loading-shell {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    background: #000000;
+    color: rgba(250, 250, 250, 0.88);
+  }
+
+  .page-loading-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 80;
+    height: 2px;
+    width: 38%;
+    background: linear-gradient(90deg, transparent, rgba(214, 208, 196, 0.95), rgba(250, 250, 250, 0.55));
+    animation: page-loading-bar 1.1s ease-in-out infinite;
+  }
+
+  @keyframes page-loading-bar {
+    0% {
+      transform: translateX(-120%);
+      opacity: 0.35;
+    }
+    45% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(280%);
+      opacity: 0.2;
+    }
+  }
+
+  .page-loading-inner {
+    display: grid;
+    gap: 1.1rem;
+    align-content: start;
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: 5.5rem 1.35rem 3rem;
+  }
+
+  .page-loading-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: var(--font-plex), monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(250, 250, 250, 0.78);
+  }
+
+  .page-loading-label {
+    margin: 0;
+    color: rgba(250, 250, 250, 0.42);
+    font-family: var(--font-plex), monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .page-loading-skeleton {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .page-loading-skeleton span {
+    display: block;
+    height: 0.7rem;
+    border-radius: 999px;
+    background: rgba(250, 250, 250, 0.06);
+    animation: page-loading-pulse 1.4s ease-in-out infinite;
+  }
+
+  .page-loading-skeleton span:nth-child(1) {
+    width: min(18rem, 72%);
+  }
+
+  .page-loading-skeleton span:nth-child(2) {
+    width: min(28rem, 92%);
+    animation-delay: 0.12s;
+  }
+
+  .page-loading-skeleton span:nth-child(3) {
+    width: min(14rem, 55%);
+    animation-delay: 0.24s;
+  }
+
+  @keyframes page-loading-pulse {
+    0%,
+    100% {
+      opacity: 0.45;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
   /* Homepage: absolute black floor. Body is #0a0a0a by default, which reads as
      a white/gray glow against true black sections — pin everything to #000. */
   html:has(.home-shell),

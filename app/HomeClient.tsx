@@ -10,6 +10,7 @@ import Mark from './Mark';
 import ThemeToggle from './ThemeToggle';
 import NotePlate from './NotePlate';
 import { gateDomains, getAutonomyGateHeadline } from '@/features/gates/conditions';
+import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
 import { calibration } from './calibration';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
@@ -408,6 +409,33 @@ export default function HomeClient({
   const reduceMotion = useReducedMotion();
   // reducedMotion users skip entrance; everyone else gets the title-card stagger.
   const heroInitial = reduceMotion ? false : 'hidden';
+
+  // Pause WebGL as soon as the user commits to leaving — the page stays mounted
+  // until the next route streams in, and particle loops otherwise steal the main thread.
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button !== 0 && event.pointerType !== 'touch') return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const anchor = target.closest('a[href]');
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      if (!isInAppNavigationAnchor(anchor)) return;
+      setWebglPaused(true);
+    };
+
+    const onPageShow = () => setWebglPaused(false);
+
+    document.addEventListener('pointerdown', onPointerDown, true);
+    window.addEventListener('pageshow', onPageShow);
+    setWebglPaused(false);
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      window.removeEventListener('pageshow', onPageShow);
+      setWebglPaused(false);
+    };
+  }, []);
 
   return (
     <main className="home-shell relative min-h-screen overflow-x-hidden text-foreground">

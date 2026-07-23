@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { GPUComputationRenderer } from 'three/addons/misc/GPUComputationRenderer.js';
 
 import { getRenderPixelRatio, isMobilePlateViewport } from '@/lib/webgl-dpr';
+import { isWebglPaused, subscribeWebglPause } from '@/lib/webgl-lifecycle';
 
 // Homepage Simulation plate: self-contained glass cube laboratory.
 // Dense GPU particle field morphs through a short ensemble of hypothesis
@@ -789,8 +790,11 @@ export default function SimulationEnsembleRender() {
 
     let frameId: number | null = null;
     let startedAt = performance.now();
-    let visible = true;
+    let inView = true;
+    let pageVisible = typeof document !== 'undefined' ? !document.hidden : true;
     let lastT = performance.now();
+
+    const canRun = () => inView && pageVisible && !isWebglPaused() && !reducedMotion;
 
     const pointer = { x: 0, y: 0, tx: 0, ty: 0, glow: 0, glowTarget: 0 };
     const card = mount.closest('.inst-card');
@@ -1029,9 +1033,26 @@ export default function SimulationEnsembleRender() {
       renderer.render(scene, camera);
     };
 
+    const stopLoop = () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+        frameId = null;
+      }
+    };
+
+    const tryStartLoop = () => {
+      if (!canRun() || frameId !== null) return;
+      lastT = performance.now();
+      frameId = window.requestAnimationFrame(animate);
+    };
+
     const animate = () => {
+      if (!canRun()) {
+        frameId = null;
+        return;
+      }
       render();
-      frameId = visible ? window.requestAnimationFrame(animate) : null;
+      frameId = window.requestAnimationFrame(animate);
     };
 
     const resizeObserver = new ResizeObserver(() => {
@@ -1041,19 +1062,25 @@ export default function SimulationEnsembleRender() {
 
     const visibilityObserver = new IntersectionObserver(
       (entries) => {
-        const nowVisible = entries.some((entry) => entry.isIntersecting);
-        if (nowVisible && !visible) {
-          visible = true;
-          lastT = performance.now();
-          if (!reducedMotion && frameId === null) {
-            frameId = window.requestAnimationFrame(animate);
-          }
-        } else if (!nowVisible) {
-          visible = false;
-        }
+        inView = entries.some((entry) => entry.isIntersecting);
+        if (inView) tryStartLoop();
+        else stopLoop();
       },
       { rootMargin: '120px' },
     );
+
+    const onDocVisibility = () => {
+      pageVisible = !document.hidden;
+      if (pageVisible) tryStartLoop();
+      else stopLoop();
+    };
+
+    const unsubPause = subscribeWebglPause((paused) => {
+      if (paused) stopLoop();
+      else tryStartLoop();
+    });
+
+    document.addEventListener('visibilitychange', onDocVisibility);
 
     resize();
     resizeObserver.observe(mount);
@@ -1086,7 +1113,9 @@ export default function SimulationEnsembleRender() {
     });
 
     return () => {
-      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      stopLoop();
+      unsubPause();
+      document.removeEventListener('visibilitychange', onDocVisibility);
       if (card) {
         card.removeEventListener('pointermove', onPointerMove as EventListener);
         card.removeEventListener('pointerleave', onPointerLeave);
