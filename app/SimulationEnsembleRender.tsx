@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { GPUComputationRenderer } from 'three/addons/misc/GPUComputationRenderer.js';
 
@@ -22,29 +22,8 @@ const HAZE_COUNT = 6;
 // Formation ids in targetFor: 0 sphere · 1 torus · 2 wire cube · 5 infinity
 // (helix/galaxy kept in the shader as dormant options; main loop stays tight.)
 const MODE_SEQUENCE = [2, 1, 0, 5] as const;
-
-const WORLD_SCENARIOS = [
-  {
-    label: 'Market geometry',
-    detail: 'A structured space the decision engine can stress.',
-    verdict: 'reject' as const,
-  },
-  {
-    label: 'Dynamics locked',
-    detail: 'Local forces settle into stable, testable motion.',
-    verdict: 'pass' as const,
-  },
-  {
-    label: 'Constraint surface',
-    detail: 'What the synthetic world will not allow.',
-    verdict: 'reject' as const,
-  },
-  {
-    label: 'Surviving path',
-    detail: 'One trajectory holds after the rest fail.',
-    verdict: 'pass' as const,
-  },
-] as const;
+// Break beat per mode: reject (cool burst) or pass (soft gold dissolve).
+const MODE_VERDICTS = ['reject', 'pass', 'reject', 'pass'] as const;
 
 function createGlassEnvironment(renderer: THREE.WebGLRenderer) {
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -543,8 +522,6 @@ function fillParticleTextures(
 
 export default function SimulationEnsembleRender() {
   const mountRef = useRef<HTMLDivElement | null>(null);
-  const [scenarioIndex, setScenarioIndex] = useState(0);
-  const [beatHint, setBeatHint] = useState('Hover to stress');
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -846,8 +823,6 @@ export default function SimulationEnsembleRender() {
     const SLOT = T_CHAOS + T_LOCK + T_HOLD + T_BREAK;
     const EPOCH = MODE_COUNT * SLOT;
     const PATH_MODE = 5; // infinity formation id
-    let displayedMode = -1;
-    let displayedHint = '';
 
     // First paint mid-hold on market geometry (wire cube) — strongest lab read.
     const START_OFFSET = 0 * SLOT + T_CHAOS + T_LOCK + T_HOLD * 0.35;
@@ -924,8 +899,7 @@ export default function SimulationEnsembleRender() {
       const modeIndex = Math.floor(phase / SLOT) % MODE_COUNT;
       const local = phase - modeIndex * SLOT;
       const modeA = MODE_SEQUENCE[modeIndex];
-      const scenario = WORLD_SCENARIOS[modeIndex];
-      const rejects = scenario.verdict === 'reject';
+      const rejects = MODE_VERDICTS[modeIndex] === 'reject';
 
       // Explicit four-beat loop (readable formation, not constant soup).
       let freeFall = 0;
@@ -933,7 +907,6 @@ export default function SimulationEnsembleRender() {
       let shape = 0;
       let shapeLock = 0;
       let verdict = 0;
-      let hint = 'Hover to stress';
 
       if (local < T_CHAOS) {
         const t = local / T_CHAOS;
@@ -941,20 +914,17 @@ export default function SimulationEnsembleRender() {
         shape = 0;
         shapeLock = 0;
         detonate = t < 0.22 ? (1 - t / 0.22) * 0.28 : 0;
-        hint = 'Hypotheses scatter';
       } else if (local < T_CHAOS + T_LOCK) {
         const t = smoothstep(0, 1, (local - T_CHAOS) / T_LOCK);
         freeFall = 1 - t;
         shape = t;
         shapeLock = t * t;
         detonate = 0;
-        hint = 'Locking scenario';
       } else if (local < T_CHAOS + T_LOCK + T_HOLD) {
         freeFall = 0;
         detonate = 0;
         shape = 1;
         shapeLock = 1;
-        hint = pointer.glow > 0.2 ? 'Stressing field' : 'Hover to stress';
       } else {
         // Break: reject (hard cool burst) or pass (soft gold dissolve).
         const t = smoothstep(0, 1, (local - T_CHAOS - T_LOCK - T_HOLD) / T_BREAK);
@@ -964,12 +934,10 @@ export default function SimulationEnsembleRender() {
           detonate = Math.sin(t * Math.PI) * 1.15;
           freeFall = smoothstep(0.12, 1, t);
           verdict = -smoothstep(0.05, 0.45, t) * (1 - smoothstep(0.75, 1, t));
-          hint = 'Scenario rejected';
         } else {
           detonate = Math.sin(t * Math.PI) * 0.32;
           freeFall = smoothstep(0.35, 1, t) * 0.55;
           verdict = smoothstep(0.0, 0.35, t) * (1 - smoothstep(0.7, 1, t));
-          hint = 'Path held';
         }
       }
 
@@ -986,16 +954,6 @@ export default function SimulationEnsembleRender() {
         shape = 1;
         shapeLock = 1;
         verdict = 0;
-        hint = 'World model held';
-      }
-
-      if (modeIndex !== displayedMode) {
-        displayedMode = modeIndex;
-        setScenarioIndex(modeIndex);
-      }
-      if (hint !== displayedHint) {
-        displayedHint = hint;
-        setBeatHint(hint);
       }
 
       const inPath = modeA === PATH_MODE ? shape : 0;
@@ -1166,17 +1124,9 @@ export default function SimulationEnsembleRender() {
     };
   }, []);
 
-  const scenario = WORLD_SCENARIOS[scenarioIndex];
-
   return (
     <div className="simulation-ensemble-render" aria-hidden="true">
       <div ref={mountRef} className="hermes-render-host" />
-      <div className="simulation-ensemble-readout">
-        <span>World model · {String(scenarioIndex + 1).padStart(2, '0')}/04</span>
-        <strong>{scenario.label}</strong>
-        <p>{scenario.detail}</p>
-        <em>{beatHint}</em>
-      </div>
     </div>
   );
 }

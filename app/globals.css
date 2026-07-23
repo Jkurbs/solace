@@ -1234,12 +1234,6 @@ h2 {
     height: 100%;
   }
 
-  /* Metrics strip sits top-right like Oracle; keep readout clear of it. */
-  .inst-cell-sim .simulation-ensemble-readout {
-    top: 5.4rem;
-    max-width: min(13.5rem, 44%);
-  }
-
   @media (max-width: 1200px) and (min-width: 901px) {
     .inst-cell-sim .inst-card-metrics {
       top: 3.35rem;
@@ -1252,49 +1246,6 @@ h2 {
     .inst-cell-sim .inst-card-metrics span {
       text-align: left;
     }
-
-    .inst-cell-sim .simulation-ensemble-readout {
-      top: 6.1rem;
-    }
-  }
-
-  .simulation-ensemble-readout {
-    position: absolute;
-    z-index: 2;
-    top: 4.5rem;
-    left: 1.3rem;
-    max-width: min(14rem, 48%);
-    color: rgba(235, 244, 255, 0.82);
-    font-family: var(--font-plex), monospace;
-    pointer-events: none;
-  }
-
-  .simulation-ensemble-readout span,
-  .simulation-ensemble-readout em {
-    display: block;
-    color: rgba(184, 207, 232, 0.58);
-    font-size: 0.54rem;
-    letter-spacing: 0.14em;
-    line-height: 1.45;
-    text-transform: uppercase;
-  }
-
-  .simulation-ensemble-readout strong {
-    display: block;
-    margin-top: 0.38rem;
-    color: rgba(246, 250, 255, 0.94);
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-  }
-
-  .simulation-ensemble-readout p {
-    margin: 0.3rem 0 0.5rem;
-    color: rgba(215, 229, 245, 0.66);
-    font-family: var(--font-geist), sans-serif;
-    font-size: 0.69rem;
-    letter-spacing: normal;
-    line-height: 1.45;
   }
 
   .inst-cell-sim .inst-card {
