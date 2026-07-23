@@ -5,7 +5,7 @@ import * as THREE from 'three';
 
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
 import { getRenderPixelRatio } from '@/lib/webgl-dpr';
-import { isWebglPaused, subscribeWebglPause } from '@/lib/webgl-lifecycle';
+import { isWebglPaused, observeWebglMountVisibility, subscribeWebglPause } from '@/lib/webgl-lifecycle';
 
 // Variant D of the telemetry design: real posture drives the art's energy.
 // Deployed burns at full brightness; standing down dims to embers. The field
@@ -730,14 +730,12 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
     });
 
     // Pause the loop while the section is offscreen, tab hidden, or nav pending.
-    const visibilityObserver = new IntersectionObserver(
-      (entries) => {
-        inView = entries.some((entry) => entry.isIntersecting);
-        if (inView) tryStartLoop();
-        else stopLoop();
-      },
-      { rootMargin: '120px' },
-    );
+    // Out-of-view is debounced — scroll thrashing was killing in-view rAF loops.
+    const visibilityWatch = observeWebglMountVisibility(mount, (visible) => {
+      inView = visible;
+      if (visible) tryStartLoop();
+      else stopLoop();
+    });
 
     const onDocVisibility = () => {
       pageVisible = !document.hidden;
@@ -754,7 +752,6 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
 
     resize();
     resizeObserver.observe(mount);
-    visibilityObserver.observe(mount);
 
     if (reducedMotion) {
       startedAt -= 8400;
@@ -779,7 +776,7 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       }
 
       resizeObserver.disconnect();
-      visibilityObserver.disconnect();
+      visibilityWatch.disconnect();
 
       try {
         geometry.dispose();

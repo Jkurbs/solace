@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { GPUComputationRenderer } from 'three/addons/misc/GPUComputationRenderer.js';
 
 import { getRenderPixelRatio, isMobilePlateViewport } from '@/lib/webgl-dpr';
-import { isWebglPaused, subscribeWebglPause } from '@/lib/webgl-lifecycle';
+import { isWebglPaused, observeWebglMountVisibility, subscribeWebglPause } from '@/lib/webgl-lifecycle';
 
 // Homepage Simulation plate: self-contained glass cube laboratory.
 // Dense GPU particle field morphs through a short ensemble of hypothesis
@@ -1060,14 +1060,11 @@ export default function SimulationEnsembleRender() {
       render();
     });
 
-    const visibilityObserver = new IntersectionObserver(
-      (entries) => {
-        inView = entries.some((entry) => entry.isIntersecting);
-        if (inView) tryStartLoop();
-        else stopLoop();
-      },
-      { rootMargin: '120px' },
-    );
+    const visibilityWatch = observeWebglMountVisibility(mount, (visible) => {
+      inView = visible;
+      if (visible) tryStartLoop();
+      else stopLoop();
+    });
 
     const onDocVisibility = () => {
       pageVisible = !document.hidden;
@@ -1084,7 +1081,6 @@ export default function SimulationEnsembleRender() {
 
     resize();
     resizeObserver.observe(mount);
-    visibilityObserver.observe(mount);
 
     // Warm up so first paint locks the start formation (wire cube).
     if (gpuOk) {
@@ -1121,7 +1117,7 @@ export default function SimulationEnsembleRender() {
         card.removeEventListener('pointerleave', onPointerLeave);
       }
       resizeObserver.disconnect();
-      visibilityObserver.disconnect();
+      visibilityWatch.disconnect();
       try {
         boxGeo.dispose();
         outerGlassGeo.dispose();

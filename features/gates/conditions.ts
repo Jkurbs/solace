@@ -167,7 +167,8 @@ export const gateDomains: GateDomain[] = [
 export const gateStatusLabels: Record<GateStatus, string> = {
   met: 'Met',
   partial: 'Partial',
-  not_met: 'Open',
+  // "Open" was easy to misread as unlocked/available; status means the condition is not met yet.
+  not_met: 'Not met',
 };
 
 export function summarizeGateDomain(domain: GateDomain) {

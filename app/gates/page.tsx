@@ -8,8 +8,11 @@ import {
   gatesLastUpdated,
   gatesVersion,
   gateStatusLabels,
-  getTotalGateProgress,
   summarizeAllGates,
+  summarizeGateDomain,
+  type GateCondition,
+  type GateDomain,
+  type GateStatus,
 } from '@/features/gates/conditions';
 
 import Mark from '../Mark';
@@ -32,9 +35,87 @@ function formatUpdatedAt(value: string) {
   return Number.isNaN(parsed.getTime()) ? value : updatedFormatter.format(parsed);
 }
 
+function boardCounts() {
+  return gateDomains.reduce(
+    (totals, domain) => {
+      const summary = summarizeGateDomain(domain);
+      return {
+        met: totals.met + summary.met,
+        partial: totals.partial + summary.partial,
+        open: totals.open + summary.not_met,
+        total: totals.total + summary.total,
+      };
+    },
+    { met: 0, partial: 0, open: 0, total: 0 },
+  );
+}
+
+function currentDomain(): GateDomain | undefined {
+  return gateDomains.find((domain) => domain.phase.toLowerCase() !== 'gated') ?? gateDomains[0];
+}
+
+function nextCondition(domain: GateDomain | undefined): GateCondition | undefined {
+  if (!domain) return undefined;
+  return (
+    domain.conditions.find((c) => c.status === 'not_met') ??
+    domain.conditions.find((c) => c.status === 'partial')
+  );
+}
+
+function statusClass(status: GateStatus) {
+  return status.replace('_', '-');
+}
+
+function ConditionCard({
+  condition,
+  index,
+}: {
+  condition: GateCondition;
+  index: number;
+}) {
+  return (
+    <article id={condition.id} className={`gates-condition is-${statusClass(condition.status)} scroll-mt-28`}>
+      <header className="gates-condition-head">
+        <span className="gates-condition-index">{String(index + 1).padStart(2, '0')}</span>
+        <h3 className="gates-condition-label">{condition.label}</h3>
+        <span className={`gates-status is-${statusClass(condition.status)}`}>
+          {gateStatusLabels[condition.status]}
+        </span>
+      </header>
+
+      <p className="gates-condition-definition">{condition.definition}</p>
+
+      <div className="gates-condition-foot">
+        <p className="gates-condition-note">
+          <span className="gates-condition-note-label">Latest mark</span>
+          {condition.note}
+        </p>
+        {condition.evidence ? (
+          <Link href={condition.evidence.href} className="gates-check-link">
+            Check · {condition.evidence.label}
+          </Link>
+        ) : (
+          <span className="gates-check-empty">No public check yet</span>
+        )}
+      </div>
+
+      {condition.dependsOn ? (
+        <p className="gates-condition-depends">
+          Depends on{' '}
+          <Link href={`#${condition.dependsOn}`} className="text-link">
+            {condition.dependsOn === 'sim-proof' ? 'Simulation · Load-bearing proof' : condition.dependsOn}
+          </Link>
+        </p>
+      ) : null}
+    </article>
+  );
+}
+
 export default function GatesPage() {
   const domainSummaries = summarizeAllGates();
-  const boardProgress = getTotalGateProgress();
+  const counts = boardCounts();
+  const working = currentDomain();
+  const next = nextCondition(working);
 
   return (
     <main className="hx-page gates-page">
@@ -59,12 +140,44 @@ export default function GatesPage() {
         <p className="section-kicker">Earned, not declared</p>
         <h1 className="gates-title">Gate board</h1>
         <p className="gates-dek">
-          Simulation and Autonomy do not open until these conditions clear. This sheet says where each one stands
-          today.
+          Simulation and Autonomy stay closed until their conditions clear. Status is hand-marked — not auto-scored.
         </p>
+
+        <dl className="gates-scoreline" aria-label="Board progress">
+          <div>
+            <dt>Met</dt>
+            <dd>{counts.met}</dd>
+          </div>
+          <div>
+            <dt>Partial</dt>
+            <dd>{counts.partial}</dd>
+          </div>
+          <div>
+            <dt>Not met</dt>
+            <dd>{counts.open}</dd>
+          </div>
+          <div>
+            <dt>Total</dt>
+            <dd>{counts.total}</dd>
+          </div>
+        </dl>
+
+        {working && next ? (
+          <div className="gates-focus">
+            <p className="gates-focus-kicker">Working gate</p>
+            <p className="gates-focus-line">
+              <strong>{working.name}</strong>
+              <span aria-hidden="true"> · </span>
+              <span>
+                next up is <Link href={`#${next.id}`}>{next.label}</Link>
+              </span>
+            </p>
+            <p className="gates-focus-note">{next.note}</p>
+          </div>
+        ) : null}
+
         <p className="gates-meta">
-          v{gatesVersion} · Updated {formatUpdatedAt(gatesLastUpdated)} · {boardProgress.met} of{' '}
-          {boardProgress.total} cleared
+          v{gatesVersion} · Updated {formatUpdatedAt(gatesLastUpdated)} · Hand-marked public board
         </p>
       </section>
 
@@ -81,98 +194,37 @@ export default function GatesPage() {
             </li>
           ))}
         </ol>
+        <p className="gates-ladder-caption">
+          Cleared → working → locked. Autonomy does not open until Simulation is load-bearing.
+        </p>
       </section>
 
-      <section className="hx-shell gates-sheet-section">
-        <div className="gates-sheet">
-          <div className="gates-sheet-toolbar">
-            <div>
-              <p>Board</p>
-              <h2>Gate conditions</h2>
-            </div>
-            <span>Public view</span>
-          </div>
-
-          <div className="gates-sheet-meta">
-            <div className="gates-sheet-meta-cell">
-              <span>Markets</span>
-              <strong>Live</strong>
-            </div>
-            {domainSummaries.map(({ domain, summary }) => (
-              <div key={domain.id} className="gates-sheet-meta-cell">
-                <span>{domain.name}</span>
-                <strong>
-                  {domain.phase} · {summary.met}/{summary.total} cleared
-                </strong>
+      <section className="hx-shell gates-sheet-section" aria-label="Gate conditions">
+        {domainSummaries.map(({ domain, summary }) => (
+          <section key={domain.id} id={domain.id} className="gates-domain scroll-mt-28">
+            <header className="gates-domain-head">
+              <div className="gates-domain-titles">
+                <p className="gates-domain-kicker">
+                  {domain.phase}
+                  <span aria-hidden="true"> · </span>
+                  {summary.met}/{summary.total} met
+                  {summary.partial > 0 ? ` · ${summary.partial} partial` : ''}
+                </p>
+                <h2 className="gates-domain-name">{domain.name}</h2>
+                <p className="gates-domain-summary">{domain.summary}</p>
               </div>
-            ))}
-            <div className="gates-sheet-meta-cell">
-              <span>Board</span>
-              <strong>
-                {boardProgress.met}/{boardProgress.total} cleared
-              </strong>
+            </header>
+
+            <div className="gates-condition-list">
+              {domain.conditions.map((condition, index) => (
+                <ConditionCard key={condition.id} condition={condition} index={index} />
+              ))}
             </div>
-          </div>
-
-          <div className="gates-table-wrap">
-            <table className="gates-table">
-              <thead>
-                <tr>
-                  <th className="gates-col-num">#</th>
-                  <th className="gates-col-condition">Condition</th>
-                  <th className="gates-col-status">Status</th>
-                  <th className="gates-col-check">Check</th>
-                </tr>
-              </thead>
-              <tbody>
-                {gateDomains.map((domain) => {
-                  const summary = domainSummaries.find((entry) => entry.domain.id === domain.id)?.summary;
-
-                  return [
-                    <tr key={`${domain.id}-section`} id={domain.id} className="gates-section-row scroll-mt-28">
-                      <td colSpan={4}>
-                        <span>{domain.name}</span>
-                        <span className="gates-section-phase">{domain.phase}</span>
-                        <span className="gates-section-count">
-                          {summary ? `${summary.met}/${summary.total} cleared` : null}
-                        </span>
-                        <span className="gates-section-summary">{domain.summary}</span>
-                      </td>
-                    </tr>,
-                    ...domain.conditions.map((condition, index) => (
-                      <tr key={condition.id} id={condition.id} className="scroll-mt-28">
-                        <td className="gates-row-num">{String(index + 1).padStart(2, '0')}</td>
-                        <td>
-                          <strong className="gates-condition-label">{condition.label}</strong>
-                          <p className="gates-condition-definition">{condition.definition}</p>
-                          <p className="gates-condition-note">{condition.note}</p>
-                        </td>
-                        <td>
-                          <span className={`gates-status is-${condition.status.replace('_', '-')}`}>
-                            {gateStatusLabels[condition.status]}
-                          </span>
-                        </td>
-                        <td>
-                          {condition.evidence ? (
-                            <Link href={condition.evidence.href} className="gates-check-link">
-                              {condition.evidence.label} →
-                            </Link>
-                          ) : (
-                            <span className="gates-check-empty">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    )),
-                  ];
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          </section>
+        ))}
 
         <p className="gates-sheet-note">
-          We update a row when something actually changes. The Check column points to where you can verify it. Full
-          definitions are in{' '}
+          We update a row when something actually changes. Full definitions live in{' '}
           <Link href="/brief#section-07" className="text-link">
             brief §07
           </Link>
@@ -186,24 +238,15 @@ export default function GatesPage() {
             <p>History</p>
             <h2>Board revisions</h2>
           </div>
-          <table className="gates-changelog-table">
-            <thead>
-              <tr>
-                <th>Version</th>
-                <th>Date</th>
-                <th>Note</th>
-              </tr>
-            </thead>
-            <tbody>
-              {gateRevisions.map((revision) => (
-                <tr key={revision.version}>
-                  <td>v{revision.version}</td>
-                  <td>{revision.date}</td>
-                  <td>{revision.note}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ul className="gates-changelog-list">
+            {gateRevisions.map((revision) => (
+              <li key={revision.version}>
+                <span className="gates-changelog-version">v{revision.version}</span>
+                <span className="gates-changelog-date">{revision.date}</span>
+                <span className="gates-changelog-note">{revision.note}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 

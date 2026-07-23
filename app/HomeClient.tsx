@@ -9,6 +9,7 @@ import SkyBackground from './SkyBackground';
 import Mark from './Mark';
 import ThemeToggle from './ThemeToggle';
 import NotePlate from './NotePlate';
+import { gloryaEvaluatedNeeds } from '@/features/glorya/evaluated-needs';
 import { gateDomains, getAutonomyGateHeadline } from '@/features/gates/conditions';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
@@ -30,6 +31,10 @@ const OracleFuturesRender = dynamic(() => import('./OracleFuturesRender'), {
 });
 
 const SimulationEnsembleRender = dynamic(() => import('./SimulationEnsembleRender'), {
+  ssr: false,
+});
+
+const GloryaNeedField = dynamic(() => import('./GloryaNeedField'), {
   ssr: false,
 });
 
@@ -410,11 +415,14 @@ export default function HomeClient({
   // reducedMotion users skip entrance; everyone else gets the title-card stagger.
   const heroInitial = reduceMotion ? false : 'hidden';
 
-  // Pause WebGL as soon as the user commits to leaving — the page stays mounted
-  // until the next route streams in, and particle loops otherwise steal the main thread.
+  // Pause WebGL when the user actually navigates away — not on touch-scroll.
+  // pointerdown was wrong: the Hermes card is a full-plate <Link>, so the first
+  // finger contact while scrolling fired setWebglPaused(true) and froze every
+  // plate for the rest of the session (pageshow never runs on soft nav cancel).
   useEffect(() => {
-    const onPointerDown = (event: PointerEvent) => {
-      if (event.button !== 0 && event.pointerType !== 'touch') return;
+    const onClickCapture = (event: MouseEvent) => {
+      if (event.defaultPrevented) return;
+      if (event.button !== 0) return;
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const target = event.target;
       if (!(target instanceof Element)) return;
@@ -425,14 +433,20 @@ export default function HomeClient({
     };
 
     const onPageShow = () => setWebglPaused(false);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') setWebglPaused(false);
+    };
 
-    document.addEventListener('pointerdown', onPointerDown, true);
+    // click = activation (tap or mouse), not scroll. Capture so we run before Next.
+    document.addEventListener('click', onClickCapture, true);
     window.addEventListener('pageshow', onPageShow);
+    document.addEventListener('visibilitychange', onVisibility);
     setWebglPaused(false);
 
     return () => {
-      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('click', onClickCapture, true);
       window.removeEventListener('pageshow', onPageShow);
+      document.removeEventListener('visibilitychange', onVisibility);
       setWebglPaused(false);
     };
   }, []);
@@ -685,7 +699,51 @@ export default function HomeClient({
             </Link>
           </motion.div>
 
-          <motion.div className="inst-gates-strip" {...cardReveal(4)}>
+          <motion.div id="glorya" className="inst-cell inst-cell-glorya scroll-mt-24" {...cardReveal(4)}>
+            <div className="inst-card inst-card-glorya">
+              <Link href="/glorya" className="inst-card-fill" aria-label="Explore Glorya">
+                <div className="inst-platter">
+                  <div className="inst-card-render" aria-hidden="true">
+                    <GloryaNeedField needs={gloryaEvaluatedNeeds} compact />
+                  </div>
+                  <div className="inst-card-scrim" aria-hidden="true" />
+                  <span className="inst-chip is-glorya">Designed · evaluating</span>
+                  <div className="inst-card-metrics">
+                    <span>
+                      <em>Status</em>
+                      <strong>Dormant</strong>
+                    </span>
+                    <span title="Live capital waits for Solace cumulative revenue gate.">
+                      <em>Gate</em>
+                      <strong>$1M rev</strong>
+                    </span>
+                    <span>
+                      <em>Allocations</em>
+                      <strong>0</strong>
+                    </span>
+                  </div>
+                </div>
+              </Link>
+              <div className="inst-copy">
+                <Link href="/glorya" className="inst-card-name">
+                  <em className="inst-card-kicker">Instrument design</em>
+                  <strong className="glorya-home-wordmark">Glorya</strong>
+                  <p>
+                    Solace’s humanitarian instrument: capital only when need is verified and a real delivery
+                    path exists — partners, access, regime, timing. Evaluating only; no live disbursements
+                    until the revenue gate.
+                  </p>
+                </Link>
+                <div className="inst-card-ctas">
+                  <Link href="/glorya" className="inst-card-cta">
+                    View instrument →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div className="inst-gates-strip" {...cardReveal(5)}>
             <Link href="/gates" className="inst-gates-strip-link" aria-label="View public gate board">
               <span>
                 <strong>Current simulation work:</strong>{' '}
@@ -700,7 +758,7 @@ export default function HomeClient({
       </section>
 
       <section className="research-loop-wrap px-5 md:px-10">
-        <motion.div className="research-loop mx-auto max-w-7xl" {...cardReveal(5)}>
+        <motion.div className="research-loop mx-auto max-w-7xl" {...cardReveal(6)}>
           <div className="research-loop-intro">
             <p className="section-kicker">How the instruments connect</p>
             <h2>Observe. Model. Test. Earn the right to act.</h2>
@@ -731,7 +789,7 @@ export default function HomeClient({
       </section>
 
       <section id="ledger" className="home-vault-wrap px-5 md:px-10 scroll-mt-24">
-        <motion.div className="home-vault mx-auto max-w-7xl" {...cardReveal(6)}>
+        <motion.div className="home-vault mx-auto max-w-7xl" {...cardReveal(7)}>
           <Link href="/trust" className="home-vault-card" aria-label="Open the Hermes decision ledger">
             <div className="home-vault-copy">
               <p className="section-kicker">Public record</p>

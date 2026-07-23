@@ -14,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/trust`, priority: 0.8 },
     { url: `${BASE}/gates`, priority: 0.8 },
     { url: `${BASE}/oracle`, priority: 0.7 },
+    { url: `${BASE}/glorya`, priority: 0.7 },
     { url: `${BASE}/brief/v0-1`, priority: 0.3 },
     { url: `${BASE}/brief/v0-2`, priority: 0.3 },
     { url: `${BASE}/terms`, priority: 0.2 },

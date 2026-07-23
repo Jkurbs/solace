@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 import { getRenderPixelRatio } from '@/lib/webgl-dpr';
-import { isWebglPaused, subscribeWebglPause } from '@/lib/webgl-lifecycle';
+import { isWebglPaused, observeWebglMountVisibility, subscribeWebglPause } from '@/lib/webgl-lifecycle';
 
 const vertexShader = `
   varying vec2 vUv;
@@ -300,14 +300,11 @@ export default function HeroObservatoryRender() {
       render();
     });
 
-    const visibilityObserver = new IntersectionObserver(
-      (entries) => {
-        inView = entries.some((entry) => entry.isIntersecting);
-        if (inView) tryStartLoop();
-        else stopLoop();
-      },
-      { rootMargin: '120px' },
-    );
+    const visibilityWatch = observeWebglMountVisibility(mount, (visible) => {
+      inView = visible;
+      if (visible) tryStartLoop();
+      else stopLoop();
+    });
 
     const onDocVisibility = () => {
       pageVisible = !document.hidden;
@@ -324,7 +321,6 @@ export default function HeroObservatoryRender() {
 
     resize();
     resizeObserver.observe(mount);
-    visibilityObserver.observe(mount);
 
     if (reducedMotion) {
       startedAt -= 8400;
@@ -344,7 +340,7 @@ export default function HeroObservatoryRender() {
       document.removeEventListener('visibilitychange', onDocVisibility);
 
       resizeObserver.disconnect();
-      visibilityObserver.disconnect();
+      visibilityWatch.disconnect();
 
       try {
         geometry.dispose();
