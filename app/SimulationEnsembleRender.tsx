@@ -7,26 +7,43 @@ import { GPUComputationRenderer } from 'three/addons/misc/GPUComputationRenderer
 import { getRenderPixelRatio, isMobilePlateViewport } from '@/lib/webgl-dpr';
 
 // Homepage Simulation plate: self-contained glass cube laboratory.
-// Dense GPU particle field (~80k desktop / ~25k mobile) continuously morphs
-// between hypothesis worlds. Collapse beats, path climax, galaxy, volume haze.
+// Dense GPU particle field morphs through a short ensemble of hypothesis
+// worlds. Each cycle: chaos → lock → hold → reject-or-pass break.
 // Nothing enters or leaves the box.
 
 const CUBE = 1.0;
 const HALF = CUBE * 0.5;
-// Texture size → particle count (square). Desktop ~83k, mobile ~26k.
-const GPU_SIZE_DESKTOP = 288;
-const GPU_SIZE_MOBILE = 160;
-const TRAJ_POINTS = 128;
-const FILAMENT_COUNT = 3;
+// Texture size → particle count (square). Desktop ~65k, mobile ~20k.
+const GPU_SIZE_DESKTOP = 256;
+const GPU_SIZE_MOBILE = 144;
+const GPU_SIZE_LOW = 128;
 const HAZE_COUNT = 6;
 
+// Formation ids in targetFor: 0 sphere · 1 torus · 2 wire cube · 5 infinity
+// (helix/galaxy kept in the shader as dormant options; main loop stays tight.)
+const MODE_SEQUENCE = [2, 1, 0, 5] as const;
+
 const WORLD_SCENARIOS = [
-  { label: 'Boundary conditions', detail: 'A system learns the limits of its world.' },
-  { label: 'Flow fields', detail: 'Local forces produce stable movement.' },
-  { label: 'Built environment', detail: 'Constraints become a navigable space.' },
-  { label: 'Collective behavior', detail: 'Simple rules compound into coordination.' },
-  { label: 'Ecosystem drift', detail: 'Small changes reshape the whole field.' },
-  { label: 'Recovery paths', detail: 'The system searches for a stable return.' },
+  {
+    label: 'Market geometry',
+    detail: 'A structured space the decision engine can stress.',
+    verdict: 'reject' as const,
+  },
+  {
+    label: 'Dynamics locked',
+    detail: 'Local forces settle into stable, testable motion.',
+    verdict: 'pass' as const,
+  },
+  {
+    label: 'Constraint surface',
+    detail: 'What the synthetic world will not allow.',
+    verdict: 'reject' as const,
+  },
+  {
+    label: 'Surviving path',
+    detail: 'One trajectory holds after the rest fail.',
+    verdict: 'pass' as const,
+  },
 ] as const;
 
 function createGlassEnvironment(renderer: THREE.WebGLRenderer) {
@@ -378,15 +395,13 @@ const pointVertex = `
   uniform sampler2D texturePosition;
   uniform float uPixelRatio;
   uniform float uTime;
-  uniform float uTrajFade;
-  uniform float uTrajFray;
-  uniform float uTrajPhase;
-  uniform float uInGalaxy;
   uniform float uDetonate;
   uniform float uFreeFall;
   uniform float uInPath;
+  uniform float uVerdict; // -1 reject · 0 neutral · +1 pass
   varying float vBright;
   varying vec3 vColor;
+  varying float vVerdict;
 
   ${formationGlsl}
 
@@ -394,29 +409,27 @@ const pointVertex = `
     vec4 posSample = texture2D(texturePosition, aRef);
     vec3 pos = posSample.xyz;
     vColor = aColor;
+    vVerdict = uVerdict;
 
     float b = 0.22 + aSeed * 0.45;
     b *= 0.88 + 0.12 * ((pos.z + HALF) / CUBE);
     b *= 0.92 + 0.08 * ((pos.y + HALF) / CUBE);
 
-    if (uTrajFade > 0.04) {
+    // Infinity hold: brighten the ribbon corridor slightly.
+    if (uInPath > 0.02) {
       float pathT = clamp(pos.y / (CUBE * 0.72) + 0.5, 0.0, 1.0);
-      vec3 corridor = trajPoint(pathT, uTrajPhase);
+      vec3 corridor = trajPoint(pathT, 0.0);
       float dist2 = dot(pos - corridor, pos - corridor);
-      b += exp(-dist2 / 0.015) * 0.75 * uTrajFade * (1.0 - uTrajFray * 0.5);
-      b += exp(-dist2 / 0.06) * 0.2 * uTrajFade;
+      b += exp(-dist2 / 0.04) * 0.22 * uInPath;
     }
-    if (uInGalaxy > 0.02) {
-      float coreR2 = pos.x * pos.x + pos.y * pos.y * 1.4 + pos.z * pos.z;
-      b += exp(-coreR2 / 0.012) * 0.75 * uInGalaxy;
-      b += exp(-coreR2 / 0.08) * 0.2 * uInGalaxy;
-      if (coreR2 > 0.22) b *= 1.0 - 0.2 * uInGalaxy;
-    }
-    b += uDetonate * 0.2 + uFreeFall * 0.06;
-    vBright = min(b, 1.25);
+    b += uDetonate * 0.22 + uFreeFall * 0.06;
+    // Pass holds warm; reject breaks cool and spike bright.
+    b += max(uVerdict, 0.0) * 0.08;
+    b += max(-uVerdict, 0.0) * uDetonate * 0.12;
+    vBright = min(b, 1.3);
 
     vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-    float size = mix(0.008, 0.02, aSeed);
+    float size = mix(0.009, 0.022, aSeed);
     float tw = 0.85 + 0.15 * sin(uTime * (0.5 + aSeed * 1.2) + aSeed * 12.0);
     gl_PointSize = size * uPixelRatio * tw * (220.0 / max(-mv.z, 0.001));
     gl_Position = projectionMatrix * mv;
@@ -427,6 +440,7 @@ const pointFragment = `
   precision highp float;
   varying float vBright;
   varying vec3 vColor;
+  varying float vVerdict;
 
   void main() {
     vec2 p = gl_PointCoord * 2.0 - 1.0;
@@ -434,12 +448,13 @@ const pointFragment = `
     if (d > 1.0) discard;
     float core = exp(-d * d * 3.2);
     float halo = exp(-d * d * 1.05) * 0.45;
-    float a = (core + halo) * clamp(vBright, 0.15, 1.2) * 0.75;
-    // Vertex color is already a high-chroma celestial family.
-    // SRC_ALPHA, ONE additive: pass unpremultiplied RGB; GPU multiplies by a.
+    float a = (core + halo) * clamp(vBright, 0.15, 1.25) * 0.75;
     vec3 col = vColor * (0.65 + 0.55 * core);
-    // Slight gold lift only at extreme brightness (path / core), keeps hue.
-    col = mix(col, vec3(1.0, 0.78, 0.35), smoothstep(0.95, 1.25, vBright) * 0.25);
+    // Pass: gold lift. Reject: cool rose/slate shift.
+    col = mix(col, vec3(1.0, 0.78, 0.35), smoothstep(0.9, 1.25, vBright) * 0.22);
+    col = mix(col, vec3(1.0, 0.82, 0.42), max(vVerdict, 0.0) * 0.35);
+    col = mix(col, vec3(0.55, 0.42, 0.95), max(-vVerdict, 0.0) * 0.4);
+    col = mix(col, vec3(0.95, 0.35, 0.48), max(-vVerdict, 0.0) * 0.25 * core);
     gl_FragColor = vec4(col, a);
   }
 `;
@@ -483,38 +498,6 @@ const hazeFragment = `
   }
 `;
 
-const trajVertex = `
-  attribute float aAlong;
-  attribute float aFil;
-  varying float vAlong;
-  varying float vFil;
-  void main() {
-    vAlong = aAlong;
-    vFil = aFil;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-const trajFragment = `
-  precision highp float;
-  varying float vAlong;
-  varying float vFil;
-  uniform float uFade;
-  uniform float uPulse;
-  uniform float uFray;
-
-  void main() {
-    float life = smoothstep(0.0, 0.06, vAlong) * (1.0 - smoothstep(0.9, 1.0, vAlong));
-    life *= 1.0 - uFray * smoothstep(0.35, 1.0, vAlong) * 0.85;
-    float head = exp(-pow(vAlong - uPulse, 2.0) / 0.008);
-    float spine = 1.0 - vFil * 0.28;
-    vec3 col = mix(vec3(0.42, 0.72, 0.98), vec3(1.0, 0.93, 0.78), head * 0.9 + (1.0 - vFil) * 0.15);
-    float a = (0.22 * life * spine + 0.72 * head * spine) * uFade;
-    a *= mix(1.0, 0.55, vFil);
-    gl_FragColor = vec4(col, a);
-  }
-`;
-
 function mulberry32(seed: number) {
   return function () {
     seed |= 0;
@@ -528,44 +511,6 @@ function mulberry32(seed: number) {
 function smoothstep(edge0: number, edge1: number, x: number) {
   const t = Math.min(Math.max((x - edge0) / (edge1 - edge0), 0), 1);
   return t * t * (3 - 2 * t);
-}
-
-const _pathTmp = new THREE.Vector3();
-const _pathTmp2 = new THREE.Vector3();
-const _tmp = new THREE.Vector3();
-
-function trajPoint(t: number, phase: number, out: THREE.Vector3) {
-  const angle = t * Math.PI * 1.6 + phase * 0.4;
-  out.set(
-    Math.sin(angle * 1.1) * 0.28,
-    (t - 0.5) * CUBE * 0.72,
-    Math.cos(angle * 0.9) * 0.24,
-  );
-  const lim = HALF - 0.08;
-  out.x = Math.min(Math.max(out.x, -lim), lim);
-  out.y = Math.min(Math.max(out.y, -lim), lim);
-  out.z = Math.min(Math.max(out.z, -lim), lim);
-  return out;
-}
-
-function trajFilament(t: number, phase: number, fil: number, fray: number, out: THREE.Vector3) {
-  trajPoint(t, phase, out);
-  const angle = t * Math.PI * 1.6 + phase * 0.4;
-  const tx = -Math.cos(angle * 1.1);
-  const tz = Math.sin(angle * 0.9);
-  const tLen = Math.hypot(tx, 0.15, tz) || 1;
-  let bx = -tz / tLen;
-  let bz = tx / tLen;
-  const bLen = Math.hypot(bx, bz) || 1;
-  bx /= bLen;
-  bz /= bLen;
-  const amp = (0.012 + fil * 0.014) * (1 + fray * 3.5 * t);
-  const wave = Math.sin(t * 14.0 + fil * 2.1 + phase) * amp;
-  const wave2 = Math.cos(t * 9.0 - fil * 1.7) * amp * 0.45;
-  out.x += bx * wave + (tx / tLen) * wave2 * 0.3;
-  out.y += 0.15 * wave2 * 0.2;
-  out.z += bz * wave + (tz / tLen) * wave2 * 0.3;
-  return out;
 }
 
 function fillParticleTextures(
@@ -599,6 +544,7 @@ function fillParticleTextures(
 export default function SimulationEnsembleRender() {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const [scenarioIndex, setScenarioIndex] = useState(0);
+  const [beatHint, setBeatHint] = useState('Hover to stress');
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -622,7 +568,18 @@ export default function SimulationEnsembleRender() {
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.matchMedia('(max-width: 900px)').matches;
-    const gpuSize = isMobile ? GPU_SIZE_MOBILE : GPU_SIZE_DESKTOP;
+    const lowEnd =
+      typeof navigator !== 'undefined' &&
+      typeof navigator.hardwareConcurrency === 'number' &&
+      navigator.hardwareConcurrency > 0 &&
+      navigator.hardwareConcurrency <= 4;
+    const gpuSize = isMobile
+      ? lowEnd
+        ? GPU_SIZE_LOW
+        : GPU_SIZE_MOBILE
+      : lowEnd
+        ? GPU_SIZE_MOBILE
+        : GPU_SIZE_DESKTOP;
     const particleCount = gpuSize * gpuSize;
     const rand = mulberry32(20260722);
 
@@ -808,13 +765,10 @@ export default function SimulationEnsembleRender() {
         texturePosition: { value: null as THREE.Texture | null },
         uPixelRatio: { value: 1 },
         uTime: { value: 0 },
-        uTrajFade: { value: 0 },
-        uTrajFray: { value: 0 },
-        uTrajPhase: { value: 0 },
-        uInGalaxy: { value: 0 },
         uDetonate: { value: 0 },
         uFreeFall: { value: 0 },
         uInPath: { value: 0 },
+        uVerdict: { value: 0 },
       },
       vertexShader: pointVertex,
       fragmentShader: pointFragment,
@@ -834,60 +788,6 @@ export default function SimulationEnsembleRender() {
     // Draw after glass shell so transmission/clearcoat cannot grey the field out.
     points.renderOrder = 4;
     if (gpuOk) world.add(points);
-
-    // --- Trajectory filaments ---
-    const trajVertCount = TRAJ_POINTS * FILAMENT_COUNT;
-    const trajPositions = new Float32Array(trajVertCount * 3);
-    const trajAlong = new Float32Array(trajVertCount);
-    const trajFil = new Float32Array(trajVertCount);
-    const trajIndices: number[] = [];
-    for (let f = 0; f < FILAMENT_COUNT; f++) {
-      for (let i = 0; i < TRAJ_POINTS; i++) {
-        const idx = f * TRAJ_POINTS + i;
-        trajAlong[idx] = i / (TRAJ_POINTS - 1);
-        trajFil[idx] = f / Math.max(FILAMENT_COUNT - 1, 1);
-        trajFilament(trajAlong[idx], 0, f, 0, _tmp);
-        trajPositions[idx * 3] = _tmp.x;
-        trajPositions[idx * 3 + 1] = _tmp.y;
-        trajPositions[idx * 3 + 2] = _tmp.z;
-        if (i < TRAJ_POINTS - 1) trajIndices.push(idx, idx + 1);
-      }
-    }
-    const trajGeo = new THREE.BufferGeometry();
-    trajGeo.setAttribute('position', new THREE.BufferAttribute(trajPositions, 3));
-    trajGeo.setAttribute('aAlong', new THREE.BufferAttribute(trajAlong, 1));
-    trajGeo.setAttribute('aFil', new THREE.BufferAttribute(trajFil, 1));
-    trajGeo.setIndex(trajIndices);
-    const trajMat = new THREE.ShaderMaterial({
-      uniforms: {
-        uFade: { value: 0 },
-        uPulse: { value: 0 },
-        uFray: { value: 0 },
-      },
-      vertexShader: trajVertex,
-      fragmentShader: trajFragment,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-    const trajectory = new THREE.LineSegments(trajGeo, trajMat);
-    trajectory.renderOrder = 2;
-    world.add(trajectory);
-
-    const headGeo = new THREE.BufferGeometry();
-    headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3));
-    const headMat = new THREE.PointsMaterial({
-      color: 0xfff0d0,
-      size: 0.055,
-      transparent: true,
-      opacity: 0,
-      depthWrite: false,
-      sizeAttenuation: true,
-      blending: THREE.AdditiveBlending,
-    });
-    const headPoint = new THREE.Points(headGeo, headMat);
-    headPoint.renderOrder = 2;
-    world.add(headPoint);
 
     scene.add(new THREE.AmbientLight(0x6a88aa, 0.28));
     const key = new THREE.DirectionalLight(0xf2f7ff, 1.35);
@@ -936,19 +836,22 @@ export default function SimulationEnsembleRender() {
       card.addEventListener('pointerleave', onPointerLeave);
     }
 
-    // Cadence: disturbance → adaptation → stable world state → release.
-    // Forms suggest boundaries, flow, built space, collective behavior, drift,
-    // and recovery — a general world-modeling loop, not a market visualization.
-    const MODE_COUNT = 6;
-    const T_CHAOS = 1.8;
-    const T_LOCK = 2.4;
-    const T_HOLD = 7.0;
-    const T_BREAK = 2.0;
+    // Cadence: disturbance → lock → hold → reject-or-pass release.
+    // Four short silhouettes; full ensemble ~36s (was ~80s).
+    const MODE_COUNT = MODE_SEQUENCE.length;
+    const T_CHAOS = 1.35;
+    const T_LOCK = 1.85;
+    const T_HOLD = 4.4;
+    const T_BREAK = 1.55;
     const SLOT = T_CHAOS + T_LOCK + T_HOLD + T_BREAK;
     const EPOCH = MODE_COUNT * SLOT;
-    const PATH_MODE = 5; // infinity ribbon uses path head lightly
-    const GALAXY_MODE = 4;
+    const PATH_MODE = 5; // infinity formation id
     let displayedMode = -1;
+    let displayedHint = '';
+
+    // First paint mid-hold on market geometry (wire cube) — strongest lab read.
+    const START_OFFSET = 0 * SLOT + T_CHAOS + T_LOCK + T_HOLD * 0.35;
+    startedAt = performance.now() - START_OFFSET * 1000;
 
     const resize = () => {
       const width = Math.max(1, mount.clientWidth);
@@ -1016,130 +919,108 @@ export default function SimulationEnsembleRender() {
         world.rotation.x = 0.25;
       }
 
-      // Reduced motion: freeze mid-hold on galaxy.
-      const phase = reducedMotion ? T_CHAOS + T_LOCK + T_HOLD * 0.5 : elapsed % EPOCH;
+      // Reduced motion: freeze mid-hold on market geometry (wire cube).
+      const phase = reducedMotion ? T_CHAOS + T_LOCK + T_HOLD * 0.45 : elapsed % EPOCH;
       const modeIndex = Math.floor(phase / SLOT) % MODE_COUNT;
       const local = phase - modeIndex * SLOT;
-      const modeA = modeIndex;
-
-      if (modeIndex !== displayedMode) {
-        displayedMode = modeIndex;
-        setScenarioIndex(modeIndex);
-      }
+      const modeA = MODE_SEQUENCE[modeIndex];
+      const scenario = WORLD_SCENARIOS[modeIndex];
+      const rejects = scenario.verdict === 'reject';
 
       // Explicit four-beat loop (readable formation, not constant soup).
       let freeFall = 0;
       let detonate = 0;
       let shape = 0;
       let shapeLock = 0;
+      let verdict = 0;
+      let hint = 'Hover to stress';
+
       if (local < T_CHAOS) {
-        // Out of control.
         const t = local / T_CHAOS;
         freeFall = 1;
         shape = 0;
         shapeLock = 0;
-        detonate = t < 0.2 ? (1 - t / 0.2) * 0.25 : 0;
+        detonate = t < 0.22 ? (1 - t / 0.22) * 0.28 : 0;
+        hint = 'Hypotheses scatter';
       } else if (local < T_CHAOS + T_LOCK) {
-        // Snap into shape.
         const t = smoothstep(0, 1, (local - T_CHAOS) / T_LOCK);
         freeFall = 1 - t;
         shape = t;
         shapeLock = t * t;
         detonate = 0;
+        hint = 'Locking scenario';
       } else if (local < T_CHAOS + T_LOCK + T_HOLD) {
-        // Keep the shape — calm, readable structure.
         freeFall = 0;
         detonate = 0;
         shape = 1;
         shapeLock = 1;
+        hint = pointer.glow > 0.2 ? 'Stressing field' : 'Hover to stress';
       } else {
-        // Break down → back to chaos.
+        // Break: reject (hard cool burst) or pass (soft gold dissolve).
         const t = smoothstep(0, 1, (local - T_CHAOS - T_LOCK - T_HOLD) / T_BREAK);
         shape = 1 - t;
-        shapeLock = Math.max(0, 1 - t * 1.4);
-        detonate = Math.sin(t * Math.PI) * 0.95;
-        freeFall = smoothstep(0.25, 1, t);
+        shapeLock = Math.max(0, 1 - t * (rejects ? 1.55 : 1.15));
+        if (rejects) {
+          detonate = Math.sin(t * Math.PI) * 1.15;
+          freeFall = smoothstep(0.12, 1, t);
+          verdict = -smoothstep(0.05, 0.45, t) * (1 - smoothstep(0.75, 1, t));
+          hint = 'Scenario rejected';
+        } else {
+          detonate = Math.sin(t * Math.PI) * 0.32;
+          freeFall = smoothstep(0.35, 1, t) * 0.55;
+          verdict = smoothstep(0.0, 0.35, t) * (1 - smoothstep(0.7, 1, t));
+          hint = 'Path held';
+        }
       }
 
-      // Hover introduces a gentle disturbance into an otherwise stable field.
-      // It is bounded, so visitors can explore the response without turning
-      // the plate into an uncontrolled spectacle.
-      const hoverPerturbation = pointer.glow * shapeLock * 0.28;
+      // Hover: bounded stress on a held world — teaches robustness, not a toy.
+      const hoverPerturbation = pointer.glow * shapeLock * 0.32;
       detonate = Math.max(detonate, hoverPerturbation);
+      if (pointer.glow > 0.35 && shapeLock > 0.8) {
+        verdict = Math.min(verdict, -pointer.glow * 0.25);
+      }
 
       if (reducedMotion) {
         freeFall = 0;
         detonate = 0;
         shape = 1;
         shapeLock = 1;
+        verdict = 0;
+        hint = 'World model held';
       }
 
-      // Infinity is the silhouette — no competing path line.
-      let trajFade = 0;
-      let trajFray = 0;
-      trajMat.uniforms.uFade.value = trajFade * (1 - freeFall * 0.55);
-      trajMat.uniforms.uPulse.value = (elapsed * 0.14) % 1;
-      trajMat.uniforms.uFray.value = reducedMotion ? 0 : trajFray;
+      if (modeIndex !== displayedMode) {
+        displayedMode = modeIndex;
+        setScenarioIndex(modeIndex);
+      }
+      if (hint !== displayedHint) {
+        displayedHint = hint;
+        setBeatHint(hint);
+      }
 
-      const inGalaxy = modeA === GALAXY_MODE ? shape : 0;
       const inPath = modeA === PATH_MODE ? shape : 0;
-
-      const trajPhase = Math.floor(elapsed / EPOCH) * 0.7;
-      for (let f = 0; f < FILAMENT_COUNT; f++) {
-        for (let i = 0; i < TRAJ_POINTS; i++) {
-          const idx = f * TRAJ_POINTS + i;
-          const tt = i / (TRAJ_POINTS - 1);
-          trajFilament(tt, trajPhase, f, trajFray, _tmp);
-          trajPositions[idx * 3] = _tmp.x;
-          trajPositions[idx * 3 + 1] = _tmp.y;
-          trajPositions[idx * 3 + 2] = _tmp.z;
-        }
-      }
-      trajGeo.attributes.position.needsUpdate = true;
-
-      const pulse = trajMat.uniforms.uPulse.value as number;
-      trajPoint(pulse, trajPhase, _tmp);
-      const headArr = headGeo.attributes.position.array as Float32Array;
-      headArr[0] = _tmp.x;
-      headArr[1] = _tmp.y;
-      headArr[2] = _tmp.z;
-      headGeo.attributes.position.needsUpdate = true;
-      headMat.opacity = trajFade * (0.55 + 0.45 * (1 - trajFray));
-      headMat.size = 0.04 + trajFade * 0.035;
+      const inGalaxy = 0;
 
       // Soft volume under each icon while held.
       for (let h = 0; h < HAZE_COUNT; h++) setHaze(h, 0, 0, 0, 0.1, 0);
       const hazeBoost = shape * shapeLock * (1 - freeFall * 0.7) * (1 - detonate * 0.35);
       if (modeA === 0) {
-        // Sphere shell glow
         setHaze(0, 0, 0, 0, 0.55, 0.12 * hazeBoost, 0.08);
       }
       if (modeA === 1) {
-        // Torus core
         setHaze(0, 0, 0, 0, 0.28, 0.18 * hazeBoost, 0.15);
       }
       if (modeA === 2) {
-        // Cube interior
         setHaze(0, 0, 0, 0, 0.42, 0.1 * hazeBoost, 0.05);
       }
-      if (modeA === 3) {
-        // Helix spine
-        setHaze(0, 0, 0.15, 0, 0.14, 0.16 * hazeBoost, 0.2);
-        setHaze(1, 0, -0.15, 0, 0.14, 0.16 * hazeBoost, 0.2);
-      }
-      if (inGalaxy > 0.02) {
-        setHaze(0, 0, 0, 0, 0.14, 0.4 * inGalaxy * hazeBoost, 0.55);
-        setHaze(1, 0.14, 0.02, 0.08, 0.2, 0.14 * inGalaxy * hazeBoost, 0.2);
-        setHaze(2, -0.14, -0.02, -0.08, 0.2, 0.14 * inGalaxy * hazeBoost, 0.15);
-      }
       if (inPath > 0.02) {
-        // Infinity lobes
-        setHaze(0, 0.2, 0, 0, 0.16, 0.2 * inPath * hazeBoost, 0.35);
-        setHaze(1, -0.2, 0, 0, 0.16, 0.2 * inPath * hazeBoost, 0.35);
-        setHaze(2, 0, 0, 0, 0.1, 0.14 * inPath * hazeBoost, 0.25);
+        setHaze(0, 0.2, 0, 0, 0.16, 0.2 * inPath * hazeBoost, 0.4);
+        setHaze(1, -0.2, 0, 0, 0.16, 0.2 * inPath * hazeBoost, 0.4);
+        setHaze(2, 0, 0, 0, 0.1, 0.14 * inPath * hazeBoost, 0.3);
       }
       if (detonate > 0.05) {
-        setHaze(5, 0, 0, 0, 0.38 + detonate * 0.25, 0.2 * detonate, 0.4);
+        const warm = rejects ? 0.05 : 0.55;
+        setHaze(5, 0, 0, 0, 0.38 + detonate * 0.28, 0.22 * detonate, warm);
       }
 
       // GPU sim step
@@ -1154,36 +1035,38 @@ export default function SimulationEnsembleRender() {
         velUniforms.uFreeFall.value = freeFall;
         velUniforms.uInPath.value = inPath;
         velUniforms.uInGalaxy.value = inGalaxy;
-        velUniforms.uTrajFray.value = trajFray;
-        velUniforms.uTrajPhase.value = trajPhase;
+        velUniforms.uTrajFray.value = 0;
+        velUniforms.uTrajPhase.value = 0;
         posVar.material.uniforms.uDt.value = step;
         gpuCompute.compute();
         pMat.uniforms.texturePosition.value = gpuCompute.getCurrentRenderTarget(posVar).texture;
       } else if (gpuOk) {
+        velUniforms.uModeA.value = MODE_SEQUENCE[0];
         velUniforms.uShape.value = 1;
         velUniforms.uShapeLock.value = 1;
         velUniforms.uFreeFall.value = 0;
         velUniforms.uDetonate.value = 0;
+        // One compute so reduced-motion freezes on the start formation.
+        if (pMat.uniforms.texturePosition.value === null) {
+          gpuCompute.compute();
+        }
         pMat.uniforms.texturePosition.value = gpuCompute.getCurrentRenderTarget(posVar).texture;
       }
 
       pMat.uniforms.uTime.value = elapsed;
-      pMat.uniforms.uTrajFade.value = trajFade;
-      pMat.uniforms.uTrajFray.value = trajFray;
-      pMat.uniforms.uTrajPhase.value = trajPhase;
-      pMat.uniforms.uInGalaxy.value = inGalaxy;
       pMat.uniforms.uDetonate.value = detonate;
       pMat.uniforms.uFreeFall.value = freeFall;
       pMat.uniforms.uInPath.value = inPath;
+      pMat.uniforms.uVerdict.value = verdict;
 
-      const interiorHeat = trajFade * 0.55 + detonate * 0.35 + inGalaxy * 0.15;
+      const interiorHeat = detonate * 0.35 + Math.max(verdict, 0) * 0.25 + inPath * 0.12;
       glassMat.roughness = 0.03 + 0.02 * Math.sin(elapsed * 0.2) + pointer.glow * 0.01;
       glassMat.envMapIntensity = 1.05 + pointer.glow * 0.25 + interiorHeat * 0.45;
       glassMat.clearcoatRoughness = 0.05 + (1 - interiorHeat) * 0.04;
       innerGlassMat.envMapIntensity = 0.5 + pointer.glow * 0.12 + interiorHeat * 0.2;
-      edgeMat.opacity = 0.48 + 0.12 * pointer.glow + 0.18 * trajFade + 0.1 * detonate;
+      edgeMat.opacity = 0.48 + 0.12 * pointer.glow + 0.1 * detonate + Math.max(verdict, 0) * 0.12;
       (corners.material as THREE.PointsMaterial).opacity =
-        0.55 + 0.25 * pointer.glow + 0.2 * trajFade + 0.15 * detonate;
+        0.55 + 0.25 * pointer.glow + 0.15 * detonate + Math.max(verdict, 0) * 0.15;
 
       renderer.render(scene, camera);
     };
@@ -1218,16 +1101,23 @@ export default function SimulationEnsembleRender() {
     resizeObserver.observe(mount);
     visibilityObserver.observe(mount);
 
-    // Warm up one compute so the first paint has positions.
+    // Warm up so first paint locks the start formation (wire cube).
     if (gpuOk) {
-      velUniforms.uTime.value = 0;
+      velUniforms.uTime.value = START_OFFSET;
       velUniforms.uDt.value = 0.016;
-      gpuCompute.compute();
+      velUniforms.uModeA.value = MODE_SEQUENCE[0];
+      velUniforms.uShape.value = 1;
+      velUniforms.uShapeLock.value = 1;
+      velUniforms.uFreeFall.value = 0;
+      velUniforms.uDetonate.value = 0;
+      // Settle particles toward the formation target before the first frame.
+      for (let i = 0; i < 28; i++) {
+        gpuCompute.compute();
+      }
       pMat.uniforms.texturePosition.value = gpuCompute.getCurrentRenderTarget(posVar).texture;
     }
 
     if (reducedMotion) {
-      startedAt -= 22_000;
       render();
     } else {
       animate();
@@ -1261,10 +1151,6 @@ export default function SimulationEnsembleRender() {
         for (const mat of hazeMats) mat.dispose();
         pGeo.dispose();
         pMat.dispose();
-        trajGeo.dispose();
-        trajMat.dispose();
-        headGeo.dispose();
-        headMat.dispose();
         pos0.dispose();
         vel0.dispose();
         envMap.dispose();
@@ -1286,10 +1172,10 @@ export default function SimulationEnsembleRender() {
     <div className="simulation-ensemble-render" aria-hidden="true">
       <div ref={mountRef} className="hermes-render-host" />
       <div className="simulation-ensemble-readout">
-        <span>World model · {String(scenarioIndex + 1).padStart(2, '0')}/06</span>
+        <span>World model · {String(scenarioIndex + 1).padStart(2, '0')}/04</span>
         <strong>{scenario.label}</strong>
         <p>{scenario.detail}</p>
-        <em>Hover to perturb</em>
+        <em>{beatHint}</em>
       </div>
     </div>
   );

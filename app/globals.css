@@ -1234,6 +1234,30 @@ h2 {
     height: 100%;
   }
 
+  /* Metrics strip sits top-right like Oracle; keep readout clear of it. */
+  .inst-cell-sim .simulation-ensemble-readout {
+    top: 5.4rem;
+    max-width: min(13.5rem, 44%);
+  }
+
+  @media (max-width: 1200px) and (min-width: 901px) {
+    .inst-cell-sim .inst-card-metrics {
+      top: 3.35rem;
+      left: 1.25rem;
+      right: 1.25rem;
+      justify-content: flex-start;
+      gap: 1rem 1.25rem;
+    }
+
+    .inst-cell-sim .inst-card-metrics span {
+      text-align: left;
+    }
+
+    .inst-cell-sim .simulation-ensemble-readout {
+      top: 6.1rem;
+    }
+  }
+
   .simulation-ensemble-readout {
     position: absolute;
     z-index: 2;

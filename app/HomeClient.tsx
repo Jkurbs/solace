@@ -105,7 +105,7 @@ const footerSystems: Array<{ name: string; status: string; href?: string; hint?:
     name: 'Simulation',
     status: 'Building',
     href: '/gates#simulation',
-    hint: 'World models for testing decisions before they touch the real one.',
+    hint: 'Synthetic worlds. Same decision engine. Failures stay off the wire.',
   },
   {
     name: 'Autonomy',
@@ -116,9 +116,28 @@ const footerSystems: Array<{ name: string; status: string; href?: string; hint?:
 ];
 
 const autonomyGateHeadline = getAutonomyGateHeadline();
-const nextSimulationCondition = gateDomains
-  .find((domain) => domain.id === 'simulation')
-  ?.conditions.find((condition) => condition.status !== 'met');
+const simulationDomain = gateDomains.find((domain) => domain.id === 'simulation');
+const nextSimulationCondition = simulationDomain?.conditions.find(
+  (condition) => condition.status !== 'met',
+);
+
+function gateStatusShort(status: 'met' | 'partial' | 'not_met'): string {
+  if (status === 'met') return 'Met';
+  if (status === 'partial') return 'Partial';
+  return '—';
+}
+
+const simulationMetrics = (() => {
+  const conditions = simulationDomain?.conditions ?? [];
+  const met = conditions.filter((c) => c.status === 'met').length;
+  const parity = conditions.find((c) => c.id === 'sim-parity');
+  const harness = conditions.find((c) => c.id === 'sim-harness');
+  return {
+    conditionsLabel: `${met}/${conditions.length || 4}`,
+    parity: parity ? gateStatusShort(parity.status) : '—',
+    harness: harness ? gateStatusShort(harness.status) : '—',
+  };
+})();
 
 const homepageQuestions = [
   {
@@ -586,11 +605,25 @@ export default function HomeClient({
                 </div>
                 <div className="inst-card-scrim" aria-hidden="true" />
                 <span className="inst-chip is-idle">World models · building</span>
+                <div className="inst-card-metrics">
+                  <span>
+                    <em>Conditions</em>
+                    <strong>{simulationMetrics.conditionsLabel}</strong>
+                  </span>
+                  <span title="Simulation runs the same gated decision engine as live.">
+                    <em>Parity</em>
+                    <strong>{simulationMetrics.parity}</strong>
+                  </span>
+                  <span title="Nothing deploys without passing automated simulation checks first.">
+                    <em>Harness</em>
+                    <strong>{simulationMetrics.harness}</strong>
+                  </span>
+                </div>
               </div>
               <div className="inst-copy">
                 <div className="inst-card-name">
                   <strong>Simulation</strong>
-                  <p>Worlds built to test decisions before they touch the real one.</p>
+                  <p>Synthetic worlds. Same decision engine. Failures stay off the wire.</p>
                 </div>
                 <span className="inst-card-cta">Gate board →</span>
               </div>
