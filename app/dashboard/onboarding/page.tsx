@@ -216,7 +216,11 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             </div>
             <div className="grid grid-cols-[1.5rem_1fr] gap-3">
               <span className="font-mono text-neutral-400 dark:text-neutral-600">05</span>
-              <span>Enter dashboard</span>
+              <span>Complete identity verification (required before capital)</span>
+            </div>
+            <div className="grid grid-cols-[1.5rem_1fr] gap-3">
+              <span className="font-mono text-neutral-400 dark:text-neutral-600">06</span>
+              <span>Add capital when ready</span>
             </div>
           </div>
         </div>

@@ -82,6 +82,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Approved account could not be found. Open your invite link again or contact Solace.' }, { status: 404 });
   }
 
+  if (onboarding?.identityVerification?.status !== 'VERIFIED') {
+    return NextResponse.json(
+      {
+        message:
+          'Identity verification is required before deposits — including simulation. Complete verification from the dashboard, then try again.',
+      },
+      { status: 403 },
+    );
+  }
+
   const hasRequestedAmount = body ? Object.prototype.hasOwnProperty.call(body, 'amount') : false;
   const requestedAmount = hasRequestedAmount ? parseDepositAmount(body?.amount) : null;
 

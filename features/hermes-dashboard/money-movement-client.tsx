@@ -328,7 +328,12 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
                 </Button>
                 {setupIncomplete ? (
                   <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
-                    Complete onboarding before deposits open.
+                    {data.account.identityVerification.status !== 'VERIFIED'
+                      ? 'Identity verification is required before deposits open — even in simulation.'
+                      : 'Complete setup (profile and capital intent) before deposits open.'}{' '}
+                    <Link href="/dashboard" className="font-medium text-neutral-800 underline-offset-2 hover:underline dark:text-neutral-200">
+                      Return to dashboard
+                    </Link>
                   </p>
                 ) : (
                   <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
