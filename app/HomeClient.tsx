@@ -10,7 +10,7 @@ import Mark from './Mark';
 import ThemeToggle from './ThemeToggle';
 import NotePlate from './NotePlate';
 import { gloryaEvaluatedNeeds } from '@/features/glorya/evaluated-needs';
-import { gateDomains, getAutonomyGateHeadline } from '@/features/gates/conditions';
+import { gateDomains } from '@/features/gates/conditions';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
 import { calibration } from './calibration';
@@ -114,14 +114,13 @@ const footerSystems: Array<{ name: string; status: string; href?: string; hint?:
     hint: 'Synthetic worlds. Same decision engine. Failures stay off the wire.',
   },
   {
-    name: 'Autonomy',
-    status: 'Gated',
-    href: '/gates#autonomy',
-    hint: 'Beyond markets. Four conditions have to clear first.',
+    name: 'Glorya',
+    status: 'Evaluating',
+    href: '#glorya',
+    hint: 'Humanitarian capital. Evaluating only until the revenue gate.',
   },
 ];
 
-const autonomyGateHeadline = getAutonomyGateHeadline();
 const simulationDomain = gateDomains.find((domain) => domain.id === 'simulation');
 const nextSimulationCondition = simulationDomain?.conditions.find(
   (condition) => condition.status !== 'met',
@@ -557,7 +556,7 @@ export default function HomeClient({
         >
           <span>Markets · Live</span>
           <span>Simulation · Building</span>
-          <span>Autonomy · Gated</span>
+          <span>Glorya · Evaluating</span>
         </motion.div>
       </section>
       )}
@@ -672,34 +671,7 @@ export default function HomeClient({
             </Link>
           </motion.div>
 
-          <motion.div className="inst-cell inst-cell-auto" {...cardReveal(3)}>
-            <Link href="/gates#autonomy" className="inst-card">
-              <div className="inst-platter">
-                <div className="autonomy-field" aria-hidden="true">
-                  <span className="autonomy-field-axis is-x" />
-                  <span className="autonomy-field-axis is-y" />
-                  <span className="autonomy-field-orbit is-one" />
-                  <span className="autonomy-field-orbit is-two" />
-                  <span className="autonomy-field-node is-origin" />
-                  <span className="autonomy-field-node is-target" />
-                  <span className="autonomy-field-label">Permission boundary</span>
-                </div>
-                <div className="inst-card-scrim" aria-hidden="true" />
-                <span className="inst-chip is-idle">{autonomyGateHeadline}</span>
-              </div>
-              <div className="inst-copy">
-                <div className="inst-card-name">
-                  <strong>Autonomy</strong>
-                  <p>
-                    A system earns the right to act in the world only after its models, safeguards, and record hold.
-                  </p>
-                </div>
-                <span className="inst-card-cta">Gate board →</span>
-              </div>
-            </Link>
-          </motion.div>
-
-          <motion.div id="glorya" className="inst-cell inst-cell-glorya scroll-mt-24" {...cardReveal(4)}>
+          <motion.div id="glorya" className="inst-cell inst-cell-glorya scroll-mt-24" {...cardReveal(3)}>
             <div className="inst-card inst-card-glorya">
               <Link href="/glorya" className="inst-card-fill" aria-label="Explore Glorya">
                 <div className="inst-platter">
@@ -711,7 +683,7 @@ export default function HomeClient({
                   <div className="inst-card-metrics">
                     <span>
                       <em>Status</em>
-                      <strong>Dormant</strong>
+                      <strong>Evaluating</strong>
                     </span>
                     <span title="Live capital waits for Solace cumulative revenue gate.">
                       <em>Gate</em>
@@ -782,7 +754,7 @@ export default function HomeClient({
             <li>
               <span>04</span>
               <strong>Act</strong>
-              <p>Autonomy remains gated until the evidence is strong enough.</p>
+              <p>Capital moves only when gates, evidence, and the public record allow it.</p>
             </li>
           </ol>
         </motion.div>
