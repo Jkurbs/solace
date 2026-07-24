@@ -70,14 +70,12 @@ export default function GloryaPage() {
             </span>
           </div>
           <p className="glorya-globe-hint is-desktop">Drag to rotate · hover a city</p>
-          <p className="glorya-globe-hint is-mobile">
-            Scroll for more · long-press globe to rotate · tap a city
-          </p>
+          <p className="glorya-globe-hint is-mobile">Drag to rotate · tap a city</p>
         </div>
         <div className="glorya-stage-globe">
           <GloryaNeedField needs={needs} />
           <a href="#glorya-body" className="glorya-scroll-cue">
-            <span className="glorya-scroll-cue-label">Scroll for process &amp; ledger</span>
+            <span className="glorya-scroll-cue-label">Tap to scroll</span>
             <span className="glorya-scroll-cue-chevrons" aria-hidden="true">
               <i />
               <i />

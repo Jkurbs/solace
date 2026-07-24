@@ -12874,27 +12874,17 @@ html[data-theme='light'] .home-shell .home-vault-card {
   width: 100%;
   height: 100%;
   opacity: 0;
-  transition: opacity 0.7s ease, box-shadow 0.2s ease;
+  transition: opacity 0.7s ease;
   cursor: grab;
-  /* Full page: pan-y so mobile can scroll the page; rotate arms on long-press. */
-  touch-action: pan-y;
+  touch-action: none;
 }
 
 .glorya-globe-canvas.is-ready {
   opacity: 1;
 }
 
-.glorya-globe-canvas:active,
-.glorya-globe-canvas.is-rotate-armed {
+.glorya-globe-canvas:active {
   cursor: grabbing;
-}
-
-.glorya-globe-canvas.is-rotate-armed {
-  touch-action: none;
-}
-
-.glorya-field.is-rotate-armed {
-  box-shadow: inset 0 0 0 1px rgba(196, 166, 232, 0.28);
 }
 
 .glorya-field.is-compact .glorya-globe-canvas {
@@ -13127,25 +13117,27 @@ html[data-theme='light'] .home-shell .home-vault-card {
   width: min(17rem, calc(100% - 2.5rem));
 }
 
-/* Mobile: affordance that more content exists below the stage */
+/* Mobile: clear tap target over the globe to reach content below */
 .glorya-scroll-cue {
   display: none;
   position: absolute;
-  z-index: 3;
+  z-index: 4;
+  top: 0.9rem;
   left: 50%;
-  bottom: 0.85rem;
   transform: translateX(-50%);
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.85rem 0.55rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 0.3rem;
+  padding: 0.55rem 1rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
-  background: rgba(8, 10, 14, 0.72);
-  backdrop-filter: blur(8px);
-  color: #c8c8c2;
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
+  background: rgba(8, 10, 14, 0.78);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0.35rem 1.25rem rgba(0, 0, 0, 0.35);
+  color: #ecece6;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-decoration: none;
   text-transform: uppercase;
   white-space: nowrap;
@@ -13154,9 +13146,13 @@ html[data-theme='light'] .home-shell .home-vault-card {
 
 .glorya-scroll-cue:hover,
 .glorya-scroll-cue:focus-visible {
-  color: #ecece6;
-  border-color: rgba(196, 166, 232, 0.35);
+  color: #f8f8f4;
+  border-color: rgba(196, 166, 232, 0.4);
   outline: none;
+}
+
+.glorya-scroll-cue:active {
+  transform: translateX(-50%) scale(0.98);
 }
 
 .glorya-scroll-cue-chevrons {
@@ -13219,7 +13215,6 @@ html[data-theme='light'] .home-shell .home-vault-card {
   .glorya-stage-globe {
     order: 2;
     margin-left: 0;
-    /* Leave room so the next section peeks and scroll feels possible */
     min-height: clamp(22rem, 58vh, 34rem);
   }
 
@@ -13241,7 +13236,7 @@ html[data-theme='light'] .home-shell .home-vault-card {
 
   .glorya-stage .glorya-field-readout {
     right: 1rem;
-    bottom: 3.25rem;
+    bottom: 1rem;
   }
 }
 

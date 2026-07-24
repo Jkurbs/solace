@@ -63,7 +63,7 @@ export default function GloryaScrollNudge() {
     };
 
     const onPointerDown = (event: PointerEvent) => {
-      // Tapping the explicit scroll cue means they found the affordance.
+      // "Tap to scroll" means they found the affordance — don't auto-nudge later.
       const target = event.target;
       if (target instanceof Element && target.closest('.glorya-scroll-cue')) {
         cleanup();
