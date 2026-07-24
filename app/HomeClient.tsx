@@ -165,6 +165,11 @@ const homepageQuestions = [
       'Hermes updates from fresh market readings and only shows public-safe posture, timing, and capital-state summaries.',
   },
   {
+    question: 'What is Glorya?',
+    answer:
+      'Glorya is an instrument for allocating humanitarian capital only when intervention can change the outcome. It is evaluating only for now — no live capital until its revenue gate clears.',
+  },
+  {
     question: 'What is Oracle?',
     answer: 'Oracle is the calibration layer: it scores probability calls against what actually happened.',
   },
