@@ -16,7 +16,7 @@ export type GateCondition = {
 };
 
 export type GateDomain = {
-  id: 'simulation' | 'autonomy';
+  id: 'glorya' | 'simulation' | 'autonomy';
   name: string;
   phase: string;
   summary: string;
@@ -37,8 +37,8 @@ export type GateRevision = {
   note: string;
 };
 
-export const gatesLastUpdated = '2026-07-13';
-export const gatesVersion = '0.2';
+export const gatesLastUpdated = '2026-07-23';
+export const gatesVersion = '0.3';
 
 export const gateLadder: GateLadderStage[] = [
   {
@@ -47,6 +47,13 @@ export const gateLadder: GateLadderStage[] = [
     phase: 'Live',
     href: '/hermes',
     state: 'cleared',
+  },
+  {
+    id: 'glorya',
+    name: 'Glorya',
+    phase: 'Evaluating',
+    href: '#glorya',
+    state: 'current',
   },
   {
     id: 'simulation',
@@ -66,6 +73,11 @@ export const gateLadder: GateLadderStage[] = [
 
 export const gateRevisions: GateRevision[] = [
   {
+    version: '0.3',
+    date: 'July 23, 2026',
+    note: 'Glorya domain and ladder stage. Revenue gate public.',
+  },
+  {
     version: '0.2',
     date: 'July 13, 2026',
     note: 'Ladder and single sheet layout.',
@@ -78,6 +90,51 @@ export const gateRevisions: GateRevision[] = [
 ];
 
 export const gateDomains: GateDomain[] = [
+  {
+    id: 'glorya',
+    name: 'Glorya',
+    phase: 'Evaluating',
+    summary:
+      'Humanitarian capital. Designed and evaluating; no live allocations until the revenue gate and path integrity clear.',
+    conditions: [
+      {
+        id: 'glorya-revenue',
+        label: 'Revenue gate',
+        definition:
+          'Solace reaches $1M cumulative revenue before Glorya can move live capital. Presence and evaluation are allowed; disbursements are not.',
+        status: 'not_met',
+        note: 'Not met. Instrument dormant for live capital.',
+        evidence: { href: '/glorya', label: 'Glorya' },
+      },
+      {
+        id: 'glorya-need-layer',
+        label: 'Need evaluation layer',
+        definition:
+          'A public, checkable process for selecting places where need is severe enough and verifiable — not rumor or headline alone.',
+        status: 'partial',
+        note: 'Design layer of evaluated places is public. Sources and thresholds still illustrative.',
+        evidence: { href: '/glorya', label: 'Glorya field' },
+      },
+      {
+        id: 'glorya-path',
+        label: 'Path integrity',
+        definition:
+          'Before commitment, partners, access, regime, and timing must all hold so capital can become delivery — not theater.',
+        status: 'not_met',
+        note: 'Framework designed. No live path reviews or allocations yet.',
+        evidence: { href: '/brief#section-05', label: 'Brief §05' },
+      },
+      {
+        id: 'glorya-ledger',
+        label: 'Sealed ledger ready',
+        definition:
+          'Each disbursement seals a public row (place, amount, need, partner, predicted vs actual, hash chain). The sheet stays empty until the first real move.',
+        status: 'not_met',
+        note: 'Empty by design. First seal is first disbursement after the revenue gate.',
+        evidence: { href: '/glorya', label: 'Glorya ledger' },
+      },
+    ],
+  },
   {
     id: 'simulation',
     name: 'Simulation',

@@ -6,7 +6,7 @@ import Mark from '../../Mark';
 export const metadata: Metadata = {
   title: 'Solace — Technical Brief V0.3 (Archived)',
   description:
-    'Archived version. What Solace builds, how it is disciplined, and how it can be checked. V0.3, July 2026. Superseded by V0.4.',
+    'Archived version. What Solace builds, how it is disciplined, and how it can be checked. V0.3, July 2026. Superseded by later briefs.',
 };
 
 // Archived verbatim from Technical Brief V0.3 (July 2026). Do not edit the
@@ -109,9 +109,9 @@ export default function BriefV03Page() {
 
       <article className="mx-auto max-w-4xl px-5 pb-24 pt-36 md:px-8">
         <p className="inline-block border border-[#b8955a]/50 bg-[#b8955a]/10 px-3 py-1.5 font-mono text-[0.62rem] uppercase tracking-[0.2em] text-[#8a6d3b]">
-          Archived version — superseded by{' '}
+          Archived version — superseded by later briefs; current is{' '}
           <Link href="/brief" className="underline underline-offset-2">
-            V0.4
+            V0.5
           </Link>
           . Preserved verbatim for the public version history.
         </p>

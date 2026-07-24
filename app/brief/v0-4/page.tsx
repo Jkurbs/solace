@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import Mark from '../Mark';
+import Mark from '../../Mark';
 
 export const metadata: Metadata = {
-  title: 'Solace — Technical Brief',
+  title: 'Solace — Technical Brief V0.4 (Archived)',
   description:
-    'What Solace builds, how it is disciplined, and how it can be checked. V0.5, July 2026. No performance claims.',
+    'Archived version. What Solace builds, how it is disciplined, and how it can be checked. V0.4, July 2026. Superseded by V0.5.',
 };
 
 const gate = [
@@ -14,13 +14,6 @@ const gate = [
   { label: 'Capital threshold', status: 'Holding — figure to be published' },
   { label: 'Oracle calibration proven', status: 'Keeping score' },
   { label: 'Simulation load-bearing', status: 'Not begun' },
-];
-
-const gloryaGates = [
-  { label: 'Revenue gate ($1M cumulative)', status: 'Not met' },
-  { label: 'Need evaluation layer', status: 'Design layer only' },
-  { label: 'Path integrity (partners, access, regime, timing)', status: 'Designed · not live' },
-  { label: 'First sealed Glorya ledger row', status: 'Empty until first disbursement' },
 ];
 
 type BriefSection = {
@@ -46,8 +39,8 @@ const sections: BriefSection[] = [
     number: '02',
     title: 'The observatory',
     body: [
-      'Three instruments sit on the board. Hermes reads market structure and acts on it. The Oracle holds questions about real events open and weighs futures until the world resolves them. Glorya is the humanitarian instrument: capital aimed at verified need, only when a real delivery path can carry it. Hermes and the Oracle operate today. Glorya is designed and evaluating; it holds no live capital until its revenue gate clears.',
-      'They share one discipline: signal must earn action, and most of the time the correct action is none. Live instruments log decisions as they are made. Nothing in a sealed record is written retroactively.',
+      'Two instruments operate today. Hermes reads market structure and acts on it. The Oracle holds questions about real events open and weighs futures until the world resolves them. They share one discipline: signal must earn action, and most of the time the correct action is none.',
+      'Both instruments log their decisions as they are made. Nothing in the record is written retroactively.',
     ],
   },
   {
@@ -69,32 +62,14 @@ const sections: BriefSection[] = [
   },
   {
     number: '05',
-    title: 'Glorya — the need-path instrument',
-    body: [
-      'Glorya is Solace’s humanitarian instrument. It does not fund a place because it appears on a map. It evaluates whether need is verified and severe enough, and whether capital can actually become help: a partner who can deliver, access to the people in need, a workable regime, and the right window. Hermes asks whether markets can carry a trade; Glorya asks whether the path to the field can carry an intervention. The method is the same: gates before money moves, evidence over story, stand down when the chain is broken.',
-      'Glorya is designed and evaluating. Evaluated places on the public field are a design layer: illustrative coordinates and notes, not offers, transfers, or impact claims. There are no active allocations and no sealed ledger rows. The first live seal is the first real disbursement.',
-      'Live capital waits on a hard revenue gate: Solace must reach $1M cumulative revenue before Glorya can move capital. Until that gate clears, the instrument stays dormant by design — presence and process, not theater.',
-    ],
-    list: [
-      'Need — is the need severe enough and verifiable, not rumor or headline alone?',
-      'Path — do partners and access exist so money can become delivery?',
-      'Regime and timing — can the environment and the window support a successful intervention now?',
-    ],
-    after: [
-      'Deploy only when need and path both pass. Most evaluations result in no allocation. The public Glorya page holds the process scoreboard, empty ledger, and evaluated-places layer; the gate board tracks the revenue and readiness conditions.',
-    ],
-  },
-  {
-    number: '06',
     title: 'Risk discipline',
     body: [
       'Hermes currently allocates founder capital only: no outside capital is at risk while access opens in stages. As approved users come online, they fund Hermes by depositing capital directly into Solace through the account dashboard: deposits are recorded to the user’s Solace account, pass through settlement and treasury controls, and become eligible for Hermes allocation only after onboarding, identity, and risk checks are complete.',
       'Risk is governed in layers: posture (how boldly capital is routed, from preservation to velocity), sizing that scales with field depth, hard drawdown guards, and kill switches that halt the system entirely. Money movement stays separate from signal generation: deposits, withdrawals, account value, and available balance remain visible through Solace account rails. Standing down is treated as a position, and the system takes it often.',
-      'Glorya does not yet allocate capital. When it does, disbursements will be gated the same way decisions are: only after need and path clear, under the revenue gate, with a sealed public row for each move.',
     ],
   },
   {
-    number: '07',
+    number: '06',
     title: 'Verification',
     body: [
       'A system that manages capital should be checkable by the people who trust it. Solace commits to the following, in order of arrival:',
@@ -104,19 +79,18 @@ const sections: BriefSection[] = [
       'While Hermes runs founder capital only, the public decision ledger shows each decision’s outcome and PnL in full: wins, losses, and waits. Every row is hashed and chained to the row before it when it is sealed, so any later edit to the record is mathematically detectable: integrity that can be recomputed, not taken on faith. The only money at risk is the founder’s own, and the sample is labeled for what it is: young. Disclosure for any future outside capital will be defined with counsel and stated here before it applies.',
       'Published Oracle calibration reports once the resolved-question sample crosses the disclosure threshold.',
       'A regime log recording when and why Hermes stood down.',
-      'A Glorya decision ledger that stays empty until the first sealed disbursement after the revenue gate, then records place, amount, need, partner, predicted and actual outcomes, and a hash chain comparable to Hermes.',
       'Once a public ledger has enough resolved rows to be meaningful, an independent reviewer, named and with their own verifiable background, will be given access to the private record to confirm it matches what’s published. Who that reviewer is, and what they confirmed, will be public.',
     ],
     after: [
-      'The standard is simple: claims that can be checked, published when they can be checked. Anything not yet checkable is labeled with its honest status. That includes this founder’s track record, which does not yet exist in a form worth calling a track record; Hermes, the Oracle, and eventually Glorya are the mechanism by which it will.',
+      'The standard is simple: claims that can be checked, published when they can be checked. Anything not yet checkable is labeled with its honest status. That includes this founder’s track record, which does not yet exist in a form worth calling a track record; Hermes and the Oracle are the mechanism by which it will.',
     ],
   },
   {
-    number: '08',
+    number: '07',
     title: 'Horizon',
     body: [
       'Everything in this brief describes what Solace does now. This section describes what it’s for, stated at a distance, on purpose.',
-      'The instruments Solace builds are not specific to financial markets. Hermes reads structure, timing, and regime to decide when a system should act and when it should stand down. Markets are where that loop is tested first, because they compress feedback into days instead of years and because they fund the work. Glorya is the first non-market instrument on that same loop: need, path, and restraint applied to humanitarian capital. The longer aim is instruments that make the same kind of disciplined, checkable decisions wherever timing, resource allocation, and uncertainty matter and outcomes can be verified against reality. This is a multi-year horizon, named now so the gate conditions below have a destination, not a near-term roadmap item.',
+      'The instruments Solace builds are not specific to financial markets. Hermes reads structure, timing, and regime to decide when a system should act and when it should stand down. Markets are where that loop is tested first, because they compress feedback into days instead of years and because they fund the work. The longer aim is instruments that make the same kind of disciplined, checkable decisions in systems beyond finance: wherever timing, resource allocation, and uncertainty matter and outcomes can be verified against reality. This is a multi-year horizon, named now so the gate conditions below have a destination, not a near-term roadmap item.',
       'Domains are earned, not declared. Expansion beyond markets is gated on the conditions below, and this board is the public record of their status. Each gate is defined so it can be checked, not just claimed:',
     ],
     list: [
@@ -126,11 +100,11 @@ const sections: BriefSection[] = [
       'Simulation load-bearing — synthetic environments are trusted to catch a failure before deployment, demonstrated by at least one documented case where simulation caught something live testing would have missed.',
     ],
     after: [
-      'Until every gate clears, Solace’s core operating claim remains markets-first. Glorya may still evaluate and design under its own revenue gate; live Glorya capital does not rewrite that horizon. That’s not a hedge; it’s the actual current scope.',
+      'Until every gate clears, Solace is a markets company. That’s not a hedge; it’s the actual current scope.',
     ],
   },
   {
-    number: '09',
+    number: '08',
     title: 'Disclosures',
     body: [
       'This document describes systems under active development. It is not an offer of advisory services, not investment advice, and contains no performance claims. Access to any Solace instrument is subject to eligibility and applicable regulation. This brief is versioned; later versions supersede earlier ones, and the version history will remain public.',
@@ -151,25 +125,33 @@ export default function BriefPage() {
             Solace
           </Link>
           <Link
-            href="/"
+            href="/brief"
             className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-[#6b6354] transition-colors hover:text-[#13110c]"
           >
-            Home
+            Current brief
           </Link>
         </div>
       </header>
 
       <article className="mx-auto max-w-4xl px-5 pb-24 pt-36 md:px-8">
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.24em] text-[#7c7468]">
+        <p className="inline-block border border-[#b8955a]/50 bg-[#b8955a]/10 px-3 py-1.5 font-mono text-[0.62rem] uppercase tracking-[0.2em] text-[#8a6d3b]">
+          Archived version — superseded by{' '}
+          <Link href="/brief" className="underline underline-offset-2">
+            V0.5
+          </Link>
+          . Preserved verbatim for the public version history.
+        </p>
+
+        <p className="mt-8 font-mono text-[0.65rem] uppercase tracking-[0.24em] text-[#7c7468]">
           Solace Technical Brief
         </p>
         <h1 className="mt-5 max-w-2xl font-serif text-5xl font-medium leading-tight text-[#13110c] md:text-7xl">
           What we build, and how to check it.
         </h1>
         <p className="mt-6 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-[#6b6354]">
-          V0.5 · July 2026 · Supersedes{' '}
-          <Link href="/brief/v0-4" className="brief-author-link">
-            V0.4
+          V0.4 · July 2026 · Supersedes{' '}
+          <Link href="/brief/v0-3" className="brief-author-link">
+            V0.3
           </Link>{' '}
           · No performance claims
         </p>
@@ -266,28 +248,7 @@ export default function BriefPage() {
                     </ul>
                   ) : null}
 
-                  {section.number === '05' && (
-                    <div className="gate-board" aria-label="Glorya gate conditions">
-                      <p className="gate-board-title">
-                        Glorya readiness ·{' '}
-                        <Link href="/gates#glorya" className="text-link">
-                          full board →
-                        </Link>
-                      </p>
-                      <ul>
-                        {gloryaGates.map((condition, index) => (
-                          <li key={condition.label}>
-                            <span className="gate-index">{String(index + 1).padStart(2, '0')}</span>
-                            <span>{condition.label}</span>
-                            <span className="gate-leader" aria-hidden="true" />
-                            <span className="gate-status">{condition.status}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {section.number === '08' && (
+                  {section.number === '07' && (
                     <div className="gate-board" aria-label="Autonomy gate conditions">
                       <p className="gate-board-title">
                         Gate conditions — domains are earned ·{' '}
@@ -316,15 +277,7 @@ export default function BriefPage() {
                     </div>
                   ) : null}
 
-                  {section.number === '05' && (
-                    <p className="mt-5 font-mono text-xs uppercase tracking-[0.16em]">
-                      <Link href="/glorya" className="brief-author-link">
-                        View the Glorya instrument →
-                      </Link>
-                    </p>
-                  )}
-
-                  {section.number === '07' && (
+                  {section.number === '06' && (
                     <p className="mt-5 font-mono text-xs uppercase tracking-[0.16em]">
                       <Link href="/trust" className="brief-author-link">
                         View the public decision ledger →
@@ -339,13 +292,13 @@ export default function BriefPage() {
 
         <div className="mt-20 flex flex-col gap-3 border-t border-black/10 pt-6 md:flex-row md:items-center md:justify-between">
           <p className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-[#6b6354]">
-            © 2026 Solace · Technical Brief V0.5
+            © 2026 Solace · Technical Brief V0.4 · Archived
           </p>
           <Link
-            href="/"
+            href="/brief"
             className="font-mono text-xs uppercase tracking-[0.18em] text-[#6b6354] transition-colors hover:text-[#13110c]"
           >
-            Return home
+            Read the current brief
           </Link>
         </div>
       </article>

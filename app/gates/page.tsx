@@ -20,7 +20,7 @@ import ThemeToggle from '../ThemeToggle';
 
 export const metadata: Metadata = {
   title: 'Solace — Gate Board',
-  description: 'Where Simulation and Autonomy stand. Eight conditions, public status.',
+  description: 'Where Glorya, Simulation, and Autonomy stand. Public conditions, hand-marked status.',
 };
 
 const updatedFormatter = new Intl.DateTimeFormat('en-US', {
@@ -103,7 +103,11 @@ function ConditionCard({
         <p className="gates-condition-depends">
           Depends on{' '}
           <Link href={`#${condition.dependsOn}`} className="text-link">
-            {condition.dependsOn === 'sim-proof' ? 'Simulation · Load-bearing proof' : condition.dependsOn}
+            {condition.dependsOn === 'sim-proof'
+              ? 'Simulation · Load-bearing proof'
+              : condition.dependsOn === 'glorya-revenue'
+                ? 'Glorya · Revenue gate'
+                : condition.dependsOn}
           </Link>
         </p>
       ) : null}
@@ -126,8 +130,8 @@ export default function GatesPage() {
             Solace
           </Link>
           <div className="gates-header-actions">
-            <Link href="/brief#section-07" className="hx-btn hx-btn-secondary hx-btn-sm">
-              Brief §07
+            <Link href="/brief#section-08" className="hx-btn hx-btn-secondary hx-btn-sm">
+              Brief §08
             </Link>
             <Link href="/trust" className="hx-btn hx-btn-primary hx-btn-sm">
               Ledger
@@ -140,7 +144,8 @@ export default function GatesPage() {
         <p className="section-kicker">Earned, not declared</p>
         <h1 className="gates-title">Gate board</h1>
         <p className="gates-dek">
-          Simulation and Autonomy stay closed until their conditions clear. Status is hand-marked — not auto-scored.
+          Glorya evaluates under a revenue gate. Simulation and Autonomy stay closed until their conditions clear.
+          Status is hand-marked — not auto-scored.
         </p>
 
         <dl className="gates-scoreline" aria-label="Board progress">
@@ -195,7 +200,8 @@ export default function GatesPage() {
           ))}
         </ol>
         <p className="gates-ladder-caption">
-          Cleared → working → locked. Autonomy does not open until Simulation is load-bearing.
+          Markets live · Glorya evaluating · Simulation building · Autonomy locked until Simulation is
+          load-bearing.
         </p>
       </section>
 
@@ -224,9 +230,13 @@ export default function GatesPage() {
         ))}
 
         <p className="gates-sheet-note">
-          We update a row when something actually changes. Full definitions live in{' '}
-          <Link href="/brief#section-07" className="text-link">
-            brief §07
+          We update a row when something actually changes. Glorya definitions live in{' '}
+          <Link href="/brief#section-05" className="text-link">
+            brief §05
+          </Link>
+          ; horizon gates in{' '}
+          <Link href="/brief#section-08" className="text-link">
+            brief §08
           </Link>
           .
         </p>

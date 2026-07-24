@@ -64,7 +64,7 @@ export default function StandDownSection() {
           <p className="hx-stand-note">
             The brief commits to a regime log — a public record of when and why Hermes stood down — as part of
             verification.{' '}
-            <Link href="/brief#section-06" className="text-link">
+            <Link href="/brief#section-07" className="text-link">
               Read the commitment
             </Link>
           </p>
