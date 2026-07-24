@@ -202,12 +202,9 @@ function Header() {
           <Link href="/trust">
             Trust
           </Link>
-          <Link href="/hermes">
-            Hermes
-          </Link>
-          <Link href="/oracle">
-            Oracle
-          </Link>
+          <a href="#instruments">
+            Instruments
+          </a>
         </nav>
 
         <div className="site-actions">
@@ -244,12 +241,20 @@ function Header() {
         <Link href="/trust" onClick={() => setMenuOpen(false)}>
           Trust
         </Link>
-        <Link href="/hermes" onClick={() => setMenuOpen(false)}>
-          Hermes
-        </Link>
-        <Link href="/oracle" onClick={() => setMenuOpen(false)}>
-          Oracle
-        </Link>
+        <div className="site-menu-section" role="group" aria-label="Instruments">
+          <a href="#instruments" className="site-menu-section-label" onClick={() => setMenuOpen(false)}>
+            Instruments
+          </a>
+          <Link href="/hermes" onClick={() => setMenuOpen(false)}>
+            Hermes
+          </Link>
+          <Link href="/glorya" onClick={() => setMenuOpen(false)}>
+            Glorya
+          </Link>
+          <Link href="/oracle" onClick={() => setMenuOpen(false)}>
+            Oracle
+          </Link>
+        </div>
         <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
           Login
         </Link>
