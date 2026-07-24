@@ -117,7 +117,7 @@ const footerSystems: Array<{ name: string; status: string; href?: string; hint?:
     name: 'Glorya',
     status: 'Evaluating',
     href: '#glorya',
-    hint: 'Humanitarian capital. Evaluating only until the revenue gate.',
+    hint: 'Humanitarian capital only when intervention can change the outcome.',
   },
 ];
 
@@ -701,9 +701,8 @@ export default function HomeClient({
                   <em className="inst-card-kicker">Instrument design</em>
                   <strong className="glorya-home-wordmark">Glorya</strong>
                   <p>
-                    Solace’s humanitarian instrument: capital only when need is verified and a real delivery
-                    path exists — partners, access, regime, timing. Evaluating only; no live disbursements
-                    until the revenue gate.
+                    Glorya is an instrument for allocating humanitarian capital only when intervention can
+                    change the outcome.
                   </p>
                 </Link>
                 <div className="inst-card-ctas">

@@ -12,7 +12,7 @@ import GloryaScrollNudge from './GloryaScrollNudge';
 export const metadata: Metadata = {
   title: 'Solace — Glorya',
   description:
-    'Glorya is Solace’s humanitarian instrument: capital only when need is verified and a real delivery path exists. Evaluating; dormant until the revenue gate. No live allocations.',
+    'Glorya is an instrument for allocating humanitarian capital only when intervention can change the outcome.',
 };
 
 const percentFormatter = new Intl.NumberFormat('en-US', {
@@ -55,11 +55,8 @@ export default function GloryaPage() {
             <span className="glorya-status-pill">Evaluating</span>
           </p>
           <p className="glorya-dek">
-            Glorya is Solace’s humanitarian instrument. It does not fund a place because it appears on a map.
-            It funds only when need is verified and money can actually become help: a partner who can deliver,
-            access to the people in need, a workable environment, and the right window. Like Hermes in markets,
-            stand down is the default. This field shows evaluations only. No live capital until the $1M
-            revenue gate.
+            Glorya is an instrument for allocating humanitarian capital only when intervention can change the
+            outcome.
           </p>
           <div className="glorya-globe-legend">
             <span>
