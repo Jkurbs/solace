@@ -7,6 +7,7 @@ import { gloryaPlaceLabel } from '@/features/glorya/types';
 import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
 import GloryaNeedField from '../GloryaNeedField';
+import GloryaScrollNudge from './GloryaScrollNudge';
 
 export const metadata: Metadata = {
   title: 'Solace — Glorya',
@@ -25,6 +26,7 @@ export default function GloryaPage() {
 
   return (
     <main className="glorya-page">
+      <GloryaScrollNudge />
       <header className="glorya-header">
         <div className="glorya-header-inner">
           <Link href="/" className="glorya-brand">
@@ -56,7 +58,7 @@ export default function GloryaPage() {
             Glorya is Solace’s humanitarian instrument. It does not fund a place because it appears on a map.
             It funds only when need is verified and money can actually become help: a partner who can deliver,
             access to the people in need, a workable environment, and the right window. Like Hermes in markets,
-            stand down is the default. This field shows evaluations only — no live capital until the $1M
+            stand down is the default. This field shows evaluations only. No live capital until the $1M
             revenue gate.
           </p>
           <div className="glorya-globe-legend">
@@ -67,14 +69,24 @@ export default function GloryaPage() {
               <i className="glorya-legend-dot is-standdown" /> Standing down
             </span>
           </div>
-          <p className="glorya-globe-hint">Drag to rotate · hover a city</p>
+          <p className="glorya-globe-hint is-desktop">Drag to rotate · hover a city</p>
+          <p className="glorya-globe-hint is-mobile">
+            Scroll for more · long-press globe to rotate · tap a city
+          </p>
         </div>
         <div className="glorya-stage-globe">
           <GloryaNeedField needs={needs} />
+          <a href="#glorya-body" className="glorya-scroll-cue">
+            <span className="glorya-scroll-cue-label">Scroll for process &amp; ledger</span>
+            <span className="glorya-scroll-cue-chevrons" aria-hidden="true">
+              <i />
+              <i />
+            </span>
+          </a>
         </div>
       </section>
 
-      <section className="glorya-scoreboard" aria-label="Process scoreboard">
+      <section id="glorya-body" className="glorya-scoreboard" aria-label="Process scoreboard">
         <div className="glorya-scoreboard-head">
           <p className="section-kicker">Process</p>
           <h2>Evaluation scoreboard</h2>

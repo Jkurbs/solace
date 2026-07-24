@@ -242,6 +242,8 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
       let dragging = false;
       let lastX = 0;
       let lastY = 0;
+      let downX = 0;
+      let downY = 0;
       let velX = 0;
       let velY = 0;
       let autoSpin = reducedMotion ? 0 : 0.085;
@@ -249,8 +251,61 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
       root.rotation.x = targetRot.x;
       root.rotation.y = targetRot.y;
       let hoverId: string | null = null;
+      // Touch: free page scroll by default; long-press arms rotate (desktop still drag-to-rotate).
+      let longPressTimer: number | null = null;
+      let activePointerId: number | null = null;
+      const LONG_PRESS_MS = 420;
+      const MOVE_CANCEL_PX = 12;
+      const fieldEl = mount.closest('.glorya-field');
 
       const canRun = () => inView && pageVisible && !isWebglPaused() && !reducedMotion;
+
+      const isTouchLike = (event: PointerEvent) =>
+        event.pointerType === 'touch' ||
+        (event.pointerType !== 'mouse' && window.matchMedia('(pointer: coarse)').matches);
+
+      const clearLongPress = () => {
+        if (longPressTimer !== null) {
+          window.clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+      };
+
+      const setRotateMode = (on: boolean) => {
+        fieldEl?.classList.toggle('is-rotate-armed', on);
+        renderer.domElement.classList.toggle('is-rotate-armed', on);
+        // Keep CSS and inline in sync so mid-gesture arming stops page pan.
+        renderer.domElement.style.touchAction = on ? 'none' : 'pan-y';
+      };
+
+      const endDrag = (pointerId?: number) => {
+        clearLongPress();
+        dragging = false;
+        setRotateMode(false);
+        const id = pointerId ?? activePointerId;
+        activePointerId = null;
+        if (id === null) return;
+        try {
+          if (renderer.domElement.hasPointerCapture(id)) {
+            renderer.domElement.releasePointerCapture(id);
+          }
+        } catch {
+          // ignore
+        }
+      };
+
+      const beginRotate = (pointerId: number) => {
+        dragging = true;
+        autoSpin = 0;
+        velX = 0;
+        velY = 0;
+        setRotateMode(true);
+        try {
+          renderer.domElement.setPointerCapture(pointerId);
+        } catch {
+          // ignore
+        }
+      };
 
       const resize = () => {
         const w = Math.max(1, mount.clientWidth);
@@ -292,16 +347,41 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
 
       const onPointerDown = (event: PointerEvent) => {
         if (event.button !== 0) return;
-        dragging = true;
+        activePointerId = event.pointerId;
         lastX = event.clientX;
         lastY = event.clientY;
+        downX = event.clientX;
+        downY = event.clientY;
         velX = 0;
         velY = 0;
-        autoSpin = 0;
-        renderer.domElement.setPointerCapture(event.pointerId);
+
+        // Mouse / pen: immediate drag-to-rotate.
+        if (!isTouchLike(event)) {
+          beginRotate(event.pointerId);
+          return;
+        }
+
+        // Touch: do not capture — page scroll stays free until long-press arms rotate.
+        clearLongPress();
+        dragging = false;
+        setRotateMode(false);
+        longPressTimer = window.setTimeout(() => {
+          longPressTimer = null;
+          if (activePointerId !== event.pointerId) return;
+          beginRotate(event.pointerId);
+        }, LONG_PRESS_MS);
       };
 
       const onPointerMove = (event: PointerEvent) => {
+        // Finger moved before long-press → user is scrolling; cancel arming.
+        if (longPressTimer !== null && !dragging) {
+          const dist = Math.hypot(event.clientX - downX, event.clientY - downY);
+          if (dist > MOVE_CANCEL_PX) {
+            clearLongPress();
+          }
+          return;
+        }
+
         if (dragging) {
           const dx = event.clientX - lastX;
           const dy = event.clientY - lastY;
@@ -313,21 +393,28 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
           targetRot.x = Math.max(-0.55, Math.min(0.55, targetRot.x + velY));
           return;
         }
-        pick(event.clientX, event.clientY);
-      };
-
-      const onPointerUp = (event: PointerEvent) => {
-        dragging = false;
-        try {
-          renderer.domElement.releasePointerCapture(event.pointerId);
-        } catch {
-          // ignore
+        if (event.pointerType === 'mouse') {
+          pick(event.clientX, event.clientY);
         }
       };
 
+      const onPointerUp = (event: PointerEvent) => {
+        // Quick tap (no rotate) can still select a city on touch.
+        if (!dragging && event.pointerType === 'touch') {
+          pick(event.clientX, event.clientY);
+        }
+        endDrag(event.pointerId);
+      };
+
       const onPointerLeave = () => {
-        dragging = false;
-        setHover(null);
+        // Only end mouse hover leave; touch leave often fires mid-gesture.
+        if (activePointerId === null || !dragging) {
+          setHover(null);
+        }
+      };
+
+      const onPointerCancel = (event: PointerEvent) => {
+        endDrag(event.pointerId);
       };
 
       const stopLoop = () => {
@@ -397,10 +484,12 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
       });
 
       if (!compact) {
+        // pan-y so vertical page scroll works over the globe until rotate is armed.
+        renderer.domElement.style.touchAction = 'pan-y';
         renderer.domElement.addEventListener('pointerdown', onPointerDown);
         renderer.domElement.addEventListener('pointermove', onPointerMove);
         renderer.domElement.addEventListener('pointerup', onPointerUp);
-        renderer.domElement.addEventListener('pointercancel', onPointerUp);
+        renderer.domElement.addEventListener('pointercancel', onPointerCancel);
         renderer.domElement.addEventListener('pointerleave', onPointerLeave);
       }
 
@@ -420,6 +509,8 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
 
       cleanupScene = () => {
         stopLoop();
+        clearLongPress();
+        setRotateMode(false);
         unsubPause();
         visibilityWatch.disconnect();
         resizeObserver.disconnect();
@@ -428,7 +519,7 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
           renderer.domElement.removeEventListener('pointerdown', onPointerDown);
           renderer.domElement.removeEventListener('pointermove', onPointerMove);
           renderer.domElement.removeEventListener('pointerup', onPointerUp);
-          renderer.domElement.removeEventListener('pointercancel', onPointerUp);
+          renderer.domElement.removeEventListener('pointercancel', onPointerCancel);
           renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
         }
         landGeo.dispose();

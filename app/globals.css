@@ -12874,17 +12874,27 @@ html[data-theme='light'] .home-shell .home-vault-card {
   width: 100%;
   height: 100%;
   opacity: 0;
-  transition: opacity 0.7s ease;
+  transition: opacity 0.7s ease, box-shadow 0.2s ease;
   cursor: grab;
-  touch-action: none;
+  /* Full page: pan-y so mobile can scroll the page; rotate arms on long-press. */
+  touch-action: pan-y;
 }
 
 .glorya-globe-canvas.is-ready {
   opacity: 1;
 }
 
-.glorya-globe-canvas:active {
+.glorya-globe-canvas:active,
+.glorya-globe-canvas.is-rotate-armed {
   cursor: grabbing;
+}
+
+.glorya-globe-canvas.is-rotate-armed {
+  touch-action: none;
+}
+
+.glorya-field.is-rotate-armed {
+  box-shadow: inset 0 0 0 1px rgba(196, 166, 232, 0.28);
 }
 
 .glorya-field.is-compact .glorya-globe-canvas {
@@ -13105,12 +13115,92 @@ html[data-theme='light'] .home-shell .home-vault-card {
   letter-spacing: 0.02em;
 }
 
+.glorya-globe-hint.is-mobile {
+  display: none;
+}
+
 /* Hover card sits in the globe pane, not over the copy */
 .glorya-stage .glorya-field-readout {
   right: 1.25rem;
   bottom: 1.25rem;
   left: auto;
   width: min(17rem, calc(100% - 2.5rem));
+}
+
+/* Mobile: affordance that more content exists below the stage */
+.glorya-scroll-cue {
+  display: none;
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: 0.85rem;
+  transform: translateX(-50%);
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(8, 10, 14, 0.72);
+  backdrop-filter: blur(8px);
+  color: #c8c8c2;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.glorya-scroll-cue:hover,
+.glorya-scroll-cue:focus-visible {
+  color: #ecece6;
+  border-color: rgba(196, 166, 232, 0.35);
+  outline: none;
+}
+
+.glorya-scroll-cue-chevrons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  line-height: 0;
+}
+
+.glorya-scroll-cue-chevrons i {
+  display: block;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-top: -0.12rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.55;
+  animation: glorya-scroll-cue-bob 1.5s ease-in-out infinite;
+}
+
+.glorya-scroll-cue-chevrons i:last-child {
+  opacity: 0.9;
+  animation-delay: 0.18s;
+}
+
+@keyframes glorya-scroll-cue-bob {
+  0%,
+  100% {
+    transform: rotate(45deg) translate(0, 0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: rotate(45deg) translate(0.08rem, 0.08rem);
+    opacity: 0.95;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glorya-scroll-cue-chevrons i {
+    animation: none;
+    opacity: 0.75;
+  }
 }
 
 @media (max-width: 900px) {
@@ -13129,16 +13219,29 @@ html[data-theme='light'] .home-shell .home-vault-card {
   .glorya-stage-globe {
     order: 2;
     margin-left: 0;
-    min-height: clamp(28rem, 90vw, 40rem);
+    /* Leave room so the next section peeks and scroll feels possible */
+    min-height: clamp(22rem, 58vh, 34rem);
   }
 
   .glorya-dek {
     max-width: none;
   }
 
+  .glorya-globe-hint.is-desktop {
+    display: none;
+  }
+
+  .glorya-globe-hint.is-mobile {
+    display: block;
+  }
+
+  .glorya-scroll-cue {
+    display: flex;
+  }
+
   .glorya-stage .glorya-field-readout {
     right: 1rem;
-    bottom: 1rem;
+    bottom: 3.25rem;
   }
 }
 
@@ -13167,6 +13270,10 @@ html[data-theme='light'] .home-shell .home-vault-card {
 .glorya-evaluations {
   padding: 2rem 0 2.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glorya-scoreboard {
+  scroll-margin-top: 4.5rem;
 }
 
 .glorya-scoreboard-head h2,
