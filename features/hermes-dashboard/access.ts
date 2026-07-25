@@ -12,6 +12,23 @@ function normalizeEmail(email: string | undefined) {
   return email?.trim().toLowerCase() ?? '';
 }
 
+/**
+ * Local development only: skip magic-link so the dashboard is browsable on localhost.
+ * Active when `next dev` is running (NODE_ENV=development). Never on production builds.
+ * Opt out with HERMES_DASHBOARD_LOCAL_BYPASS=0.
+ */
+export function isLocalDashboardBypass() {
+  if (process.env.HERMES_DASHBOARD_LOCAL_BYPASS === '0') {
+    return false;
+  }
+
+  if (process.env.HERMES_DASHBOARD_LOCAL_BYPASS === '1') {
+    return process.env.NODE_ENV !== 'production';
+  }
+
+  return process.env.NODE_ENV === 'development';
+}
+
 async function getAuthenticatedEmail() {
   if (!isSupabaseServerConfigured()) {
     return null;
@@ -52,6 +69,10 @@ export async function getDashboardAccountBundle() {
 }
 
 export async function hasDashboardAccess() {
+  if (isLocalDashboardBypass()) {
+    return true;
+  }
+
   return Boolean(await getDashboardAccountBundle());
 }
 

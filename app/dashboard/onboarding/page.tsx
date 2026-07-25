@@ -393,7 +393,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             type="submit"
             className="mt-8 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-neutral-950 px-4 text-sm font-semibold text-neutral-50 transition-colors hover:bg-neutral-800 dark:bg-neutral-50 dark:text-neutral-950 dark:hover:bg-neutral-200"
           >
-            {setupAlreadyComplete ? 'Open dashboard' : 'Continue to dashboard'}
+            {setupAlreadyComplete ? 'Confirm and enter dashboard' : 'Confirm and continue'}
             <ArrowRight size={16} aria-hidden="true" />
           </button>
         </form>

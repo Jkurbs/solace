@@ -31,7 +31,7 @@ function getStatusMessage(status: AuthStatus, email?: string) {
     case 'failed':
       return {
         tone: 'error' as const,
-        text: 'We could not start the sign-in flow. Try again or contact Solace.',
+        text: 'That sign-in link could not be completed. Request a fresh link. If it still fails, open it in the browser where you asked for the email — or contact Solace.',
       };
     case 'expired':
       return {

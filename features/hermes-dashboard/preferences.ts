@@ -11,6 +11,7 @@ import {
   updateAccountRiskProfile,
 } from '@/features/accounts/store';
 
+import { isLocalDashboardBypass } from './access';
 import { accountTypeValues, intendedDepositRangeValues, riskProfileValues, sourceOfFundsValues } from './contract';
 import type {
   AccountReview,
@@ -60,10 +61,44 @@ export async function getStoredRiskProfile(accountId?: string | null) {
   const cookieStore = await cookies();
   const riskProfile = cookieStore.get(riskProfileCookieName)?.value as RiskProfile | undefined;
 
-  return riskProfile && riskProfiles.has(riskProfile) ? riskProfile : null;
+  if (riskProfile && riskProfiles.has(riskProfile)) {
+    return riskProfile;
+  }
+
+  // Local dev default so the dashboard has a coherent posture without cookies.
+  if (isLocalDashboardBypass() && !accountId) {
+    return 'Balanced' as RiskProfile;
+  }
+
+  return null;
 }
 
 export async function getDashboardOnboardingState(accountId?: string | null): Promise<DashboardOnboardingState> {
+  // Localhost / next dev: full synthetic setup so access works without magic-link,
+  // without lying that setup is "recorded" while review/intent are empty.
+  if (isLocalDashboardBypass() && !accountId) {
+    return {
+      accountReview: {
+        accountType: 'Individual',
+        country: 'United States',
+        identityConsent: true,
+        intendedDepositRange: '$10k-$25k',
+        legalNameProvided: true,
+        profileConfirmed: true,
+        region: 'Local',
+        riskAcknowledged: true,
+        sourceOfFunds: 'Employment income',
+        status: 'SUBMITTED',
+      },
+      complete: true,
+      depositIntentAmount: 10_000,
+      identityVerification: {
+        provider: 'stripe_identity',
+        status: 'READY',
+      },
+    };
+  }
+
   if (accountId) {
     const persistedOnboarding = await getAccountOnboarding(accountId);
 
