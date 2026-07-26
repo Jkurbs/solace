@@ -361,7 +361,7 @@ function Hero() {
             <Link href="/trust" className="hx-btn hx-btn-secondary">
               View the decision ledger
             </Link>
-            <Link href="/hermes/market" className="hx-btn hx-btn-secondary">
+            <Link href="/docs/api" className="hx-btn hx-btn-secondary">
               Market API
             </Link>
           </div>

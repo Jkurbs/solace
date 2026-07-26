@@ -14051,6 +14051,12 @@ html[data-theme='light'] .glorya-globe-legend {
   max-height: 22rem;
 }
 
+.hm-inline-code {
+  color: rgba(214, 208, 196, 0.88);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.9em;
+}
+
 .hm-fields {
   padding-bottom: 2rem;
 }

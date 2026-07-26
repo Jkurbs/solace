@@ -14,6 +14,7 @@ import { gateDomains } from '@/features/gates/conditions';
 import type { HermesPublicMarketRead } from '@/features/hermes-market/types';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
 import { hermesBetaVersionLabel } from '@/features/hermes-version';
+import { DOCS_API_APP_PATH, DOCS_API_URL, HERMES_MARKET_API_PATH, HERMES_MARKET_API_URL } from '@/lib/docs';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 import type { PlateTint } from '@/lib/note-plate';
 
@@ -252,7 +253,7 @@ function Header() {
           <Link href="/hermes" onClick={() => setMenuOpen(false)}>
             Hermes
           </Link>
-          <Link href="/hermes/market" onClick={() => setMenuOpen(false)}>
+          <Link href={DOCS_API_APP_PATH} onClick={() => setMenuOpen(false)}>
             Market API
           </Link>
           <Link href="/glorya" onClick={() => setMenuOpen(false)}>
@@ -616,7 +617,7 @@ export default function HomeClient({
                   <Link href="/hermes" className="inst-card-cta">
                     Explore →
                   </Link>
-                  <Link href="/hermes/market" className="inst-card-cta">
+                  <Link href={DOCS_API_APP_PATH} className="inst-card-cta">
                     Market API →
                   </Link>
                   <Link href="/trust" className="inst-card-cta inst-card-cta-ledger">
@@ -762,10 +763,10 @@ export default function HomeClient({
               </p>
               <p className="home-market-summary">{hermesMarket.summary}</p>
               <div className="home-market-actions">
-                <Link href="/hermes/market" className="hermes-product-button hermes-product-button-dark min-h-[2.5rem]">
-                  Open Market API
+                <Link href={DOCS_API_APP_PATH} className="hermes-product-button hermes-product-button-dark min-h-[2.5rem]">
+                  Open docs.solace.fyi/api
                 </Link>
-                <code className="home-market-endpoint">GET /api/hermes/market</code>
+                <code className="home-market-endpoint">GET {HERMES_MARKET_API_PATH}</code>
               </div>
             </div>
             <div className="home-market-panel">
@@ -776,7 +777,7 @@ export default function HomeClient({
                 >
                   {hermesMarket.pulse}
                 </span>
-                <span className="home-market-asof">Public read</span>
+                <span className="home-market-asof">{DOCS_API_URL.replace('https://', '')}</span>
               </div>
               <dl className="home-market-metrics">
                 <div>
@@ -802,7 +803,7 @@ export default function HomeClient({
                 </div>
               </dl>
               <pre className="home-market-curl">
-                <code>curl -sS https://solace.fyi/api/hermes/market</code>
+                <code>curl -sS {HERMES_MARKET_API_URL}</code>
               </pre>
             </div>
           </motion.div>

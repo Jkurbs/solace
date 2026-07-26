@@ -7,6 +7,7 @@ import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { HermesPublicMarketRead } from '@/features/hermes-market/types';
+import { DOCS_API_APP_PATH, HERMES_MARKET_API_PATH, HERMES_MARKET_API_URL } from '@/lib/docs';
 import { cn } from '@/lib/utils';
 
 export const hermesPublicMarketQueryKey = ['hermes-public-market'] as const;
@@ -86,7 +87,7 @@ export function PublicMarketReadCard() {
       ? `${data.capital.deployed_paths} active · ${data.capital.paths_under_review} under review`
       : data.capital.active;
 
-  const curl = `curl -sS https://solace.fyi/api/hermes/market`;
+  const curl = `curl -sS ${HERMES_MARKET_API_URL}`;
 
   return (
     <Card>
@@ -132,7 +133,7 @@ export function PublicMarketReadCard() {
 
         <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2.5 dark:border-neutral-800 dark:bg-neutral-900/60">
           <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.12em] text-neutral-500 dark:text-neutral-400">
-            GET /api/hermes/market
+            GET {HERMES_MARKET_API_PATH}
           </p>
           <code className="mt-1 block overflow-x-auto font-mono text-xs text-neutral-700 dark:text-neutral-300">
             {curl}
@@ -141,8 +142,8 @@ export function PublicMarketReadCard() {
 
         <div className="flex flex-wrap items-center gap-3">
           <Button asChild variant="secondary" size="sm">
-            <Link href="/hermes/market">
-              Open Market API
+            <Link href={DOCS_API_APP_PATH}>
+              Open docs.solace.fyi/api
               <ArrowRight size={14} aria-hidden="true" />
             </Link>
           </Button>
