@@ -14,7 +14,7 @@ import { gateDomains } from '@/features/gates/conditions';
 import type { HermesPublicMarketRead } from '@/features/hermes-market/types';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
 import { hermesBetaVersionLabel } from '@/features/hermes-version';
-import { DOCS_API_APP_PATH, DOCS_API_URL, HERMES_MARKET_API_PATH, HERMES_MARKET_API_URL } from '@/lib/docs';
+import { DOCS_API_URL, HERMES_MARKET_API_PATH, HERMES_MARKET_API_URL } from '@/lib/docs';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 import type { PlateTint } from '@/lib/note-plate';
 
@@ -253,9 +253,9 @@ function Header() {
           <Link href="/hermes" onClick={() => setMenuOpen(false)}>
             Hermes
           </Link>
-          <Link href={DOCS_API_APP_PATH} onClick={() => setMenuOpen(false)}>
+          <a href={DOCS_API_URL} onClick={() => setMenuOpen(false)}>
             Market API
-          </Link>
+          </a>
           <Link href="/glorya" onClick={() => setMenuOpen(false)}>
             Glorya
           </Link>
@@ -617,9 +617,9 @@ export default function HomeClient({
                   <Link href="/hermes" className="inst-card-cta">
                     Explore →
                   </Link>
-                  <Link href={DOCS_API_APP_PATH} className="inst-card-cta">
+                  <a href={DOCS_API_URL} className="inst-card-cta">
                     Market API →
-                  </Link>
+                  </a>
                   <Link href="/trust" className="inst-card-cta inst-card-cta-ledger">
                     Decision ledger →
                   </Link>
@@ -763,9 +763,9 @@ export default function HomeClient({
               </p>
               <p className="home-market-summary">{hermesMarket.summary}</p>
               <div className="home-market-actions">
-                <Link href={DOCS_API_APP_PATH} className="hermes-product-button hermes-product-button-dark min-h-[2.5rem]">
+                <a href={DOCS_API_URL} className="hermes-product-button hermes-product-button-dark min-h-[2.5rem]">
                   Open docs.solace.fyi/api
-                </Link>
+                </a>
                 <code className="home-market-endpoint">GET {HERMES_MARKET_API_PATH}</code>
               </div>
             </div>

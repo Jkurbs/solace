@@ -12,6 +12,8 @@ import {
   useTransform,
 } from 'framer-motion';
 
+import { DOCS_API_URL } from '@/lib/docs';
+
 import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
 import HermesBoardArt, { HermesBoardMobileArt, type HermesBoardFocus } from './HermesBoardArt';
@@ -361,9 +363,9 @@ function Hero() {
             <Link href="/trust" className="hx-btn hx-btn-secondary">
               View the decision ledger
             </Link>
-            <Link href="/docs/api" className="hx-btn hx-btn-secondary">
+            <a href={DOCS_API_URL} className="hx-btn hx-btn-secondary">
               Market API
-            </Link>
+            </a>
           </div>
         </Reveal>
         <Reveal delay={0.28}>

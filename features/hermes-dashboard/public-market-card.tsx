@@ -1,13 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { HermesPublicMarketRead } from '@/features/hermes-market/types';
-import { DOCS_API_APP_PATH, HERMES_MARKET_API_PATH, HERMES_MARKET_API_URL } from '@/lib/docs';
+import { DOCS_API_URL, HERMES_MARKET_API_PATH, HERMES_MARKET_API_URL } from '@/lib/docs';
 import { cn } from '@/lib/utils';
 
 export const hermesPublicMarketQueryKey = ['hermes-public-market'] as const;
@@ -142,10 +141,10 @@ export function PublicMarketReadCard() {
 
         <div className="flex flex-wrap items-center gap-3">
           <Button asChild variant="secondary" size="sm">
-            <Link href={DOCS_API_APP_PATH}>
+            <a href={DOCS_API_URL}>
               Open docs.solace.fyi/api
               <ArrowRight size={14} aria-hidden="true" />
-            </Link>
+            </a>
           </Button>
           <p className="text-xs leading-5 text-neutral-500 dark:text-neutral-400">
             Public-safe only — not signals, not trades.
