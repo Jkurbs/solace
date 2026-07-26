@@ -187,7 +187,7 @@ export const gateDomains: GateDomain[] = [
           'One full bull-and-bear cycle in the markets Hermes trades. Years, not months.',
         status: 'not_met',
         note: 'Neither of two complete.',
-        evidence: { href: '/trust', label: 'Ledger' },
+        evidence: { href: '/observatory/hermes/ledger', label: 'Ledger' },
       },
       {
         id: 'auto-capital',
@@ -196,7 +196,7 @@ export const gateDomains: GateDomain[] = [
           'Enough verified capital under management, held through a full drawdown, before scale. The number gets published when it is set.',
         status: 'partial',
         note: 'Founder capital only. Threshold not published yet.',
-        evidence: { href: '/trust', label: 'Ledger' },
+        evidence: { href: '/observatory/hermes/ledger', label: 'Ledger' },
       },
       {
         id: 'auto-oracle',

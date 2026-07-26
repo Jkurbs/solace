@@ -133,7 +133,7 @@ export default function GatesPage() {
             <Link href="/brief#section-08" className="hx-btn hx-btn-secondary hx-btn-sm">
               Brief §08
             </Link>
-            <Link href="/trust" className="hx-btn hx-btn-primary hx-btn-sm">
+            <Link href="/observatory/hermes/ledger" className="hx-btn hx-btn-primary hx-btn-sm">
               Ledger
             </Link>
           </div>

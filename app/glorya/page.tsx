@@ -37,7 +37,7 @@ export default function GloryaPage() {
             <Link href="/hermes" className="glorya-link">
               Hermes
             </Link>
-            <Link href="/trust" className="glorya-link">
+            <Link href="/observatory/hermes/ledger" className="glorya-link">
               Ledger
             </Link>
             <Link href="/#instruments" className="glorya-link">

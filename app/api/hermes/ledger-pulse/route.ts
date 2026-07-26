@@ -7,7 +7,7 @@ import { hermesVersion } from '@/features/hermes-version';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Lightweight pulse for /trust: client polls for live PnL and structural
+// Lightweight pulse for the Hermes decision ledger page: client polls for live PnL and structural
 // ledger changes (new rows, chain head).
 export async function GET() {
   const [pulse, exposure] = await Promise.all([

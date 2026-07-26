@@ -55,7 +55,7 @@ export default async function DocsApiPage() {
             <a href="https://solace.fyi/hermes" className="hm-link">
               Hermes
             </a>
-            <a href="https://solace.fyi/trust" className="hm-link">
+            <a href="https://solace.fyi/observatory/hermes/ledger" className="hm-link">
               Ledger
             </a>
             <a href="https://solace.fyi" className="hm-link">
@@ -220,7 +220,7 @@ export default async function DocsApiPage() {
       <footer className="hm-foot">
         <p>
           Hermes · Market API · {market.version} · docs.solace.fyi/api ·{' '}
-          <a href="https://solace.fyi/trust" className="hm-link">
+          <a href="https://solace.fyi/observatory/hermes/ledger" className="hm-link">
             Decision ledger
           </a>
         </p>

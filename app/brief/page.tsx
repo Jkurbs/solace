@@ -326,7 +326,7 @@ export default function BriefPage() {
 
                   {section.number === '07' && (
                     <p className="mt-5 font-mono text-xs uppercase tracking-[0.16em]">
-                      <Link href="/trust" className="brief-author-link">
+                      <Link href="/observatory/hermes/ledger" className="brief-author-link">
                         View the public decision ledger →
                       </Link>
                     </p>

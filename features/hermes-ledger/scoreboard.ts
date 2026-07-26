@@ -1,6 +1,6 @@
 import type { HermesLedgerRow } from './store';
 
-// Process-first scoreboard for /trust. Integrity metrics lead; performance
+// Process-first scoreboard for the Hermes decision ledger (Observatory). Integrity metrics lead; performance
 // metrics are optional and only computed on sealed (non-backfill) decisions.
 //
 // "Open paths" means live exchange exposure (same source as the LIVE row), not

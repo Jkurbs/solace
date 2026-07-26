@@ -204,7 +204,7 @@ Implementation:
 
 - User dashboard: `app/dashboard/*`, `features/hermes-dashboard/*`
 - Access / sign-in: `app/dashboard/DashboardAccessGate.tsx`, `app/api/dashboard/access/route.ts`
-- Public trust (process-first honesty): `app/trust/*`
+- Public Hermes ledger (process-first honesty): `/observatory/hermes/ledger` · components in `app/trust/*`
 - Operator console is **not** the empathy bar for end users — do not copy ops chrome into user home
 
 ---

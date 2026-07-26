@@ -14,6 +14,7 @@ import { gateDomains } from '@/features/gates/conditions';
 import type { HermesPublicMarketRead } from '@/features/hermes-market/types';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
 import { hermesBetaVersionLabel } from '@/features/hermes-version';
+import { OBSERVATORY_HERMES_LEDGER_PATH, OBSERVATORY_PATH } from '@/features/observatory/paths';
 import { DOCS_API_URL, HERMES_MARKET_API_PATH, HERMES_MARKET_API_URL } from '@/lib/docs';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 import type { PlateTint } from '@/lib/note-plate';
@@ -201,8 +202,8 @@ function Header() {
           <Link href="/news">
             News
           </Link>
-          <Link href="/trust">
-            Trust
+          <Link href={OBSERVATORY_PATH}>
+            Observatory
           </Link>
           <a href="#instruments">
             Instruments
@@ -243,8 +244,8 @@ function Header() {
         <Link href="/news" onClick={() => setMenuOpen(false)}>
           News
         </Link>
-        <Link href="/trust" onClick={() => setMenuOpen(false)}>
-          Trust
+        <Link href={OBSERVATORY_PATH} onClick={() => setMenuOpen(false)}>
+          Observatory
         </Link>
         <div className="site-menu-section" role="group" aria-label="Instruments">
           <a href="#instruments" className="site-menu-section-label" onClick={() => setMenuOpen(false)}>
@@ -620,7 +621,7 @@ export default function HomeClient({
                   <a href={DOCS_API_URL} className="inst-card-cta">
                     Market API →
                   </a>
-                  <Link href="/trust" className="inst-card-cta inst-card-cta-ledger">
+                  <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="inst-card-cta inst-card-cta-ledger">
                     Decision ledger →
                   </Link>
                 </div>
@@ -738,14 +739,14 @@ export default function HomeClient({
           </motion.div>
 
           <motion.div className="inst-gates-strip" {...cardReveal(5)}>
-            <Link href="/gates" className="inst-gates-strip-link" aria-label="View public gate board">
+            <Link href="/observatory" className="inst-gates-strip-link" aria-label="Open the public Observatory">
               <span>
-                <strong>Current simulation work:</strong>{' '}
+                <strong>Observatory:</strong> status, state, and recent activity across instruments —
                 {nextSimulationCondition
-                  ? `${nextSimulationCondition.label} — ${nextSimulationCondition.note}`
-                  : 'Gate conditions and progress are public.'}
+                  ? ` simulation next: ${nextSimulationCondition.label}.`
+                  : ' live Hermes plus honest snapshots for the rest.'}
               </span>
-              <span>See the gate board →</span>
+              <span>Open observatory →</span>
             </Link>
           </motion.div>
         </div>
@@ -843,7 +844,7 @@ export default function HomeClient({
 
       <section id="ledger" className="home-vault-wrap px-5 md:px-10 scroll-mt-24">
         <motion.div className="home-vault mx-auto max-w-7xl" {...cardReveal(7)}>
-          <Link href="/trust" className="home-vault-card" aria-label="Open the Hermes decision ledger">
+          <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="home-vault-card" aria-label="Open the Hermes decision ledger">
             <div className="home-vault-copy">
               <p className="section-kicker">Public record</p>
               <h2>Decision ledger</h2>
@@ -1117,7 +1118,10 @@ export default function HomeClient({
                     <Link href="/news">News</Link>
                   </li>
                   <li>
-                    <Link href="/trust">Decision ledger</Link>
+                    <Link href={OBSERVATORY_PATH}>Observatory</Link>
+                  </li>
+                  <li>
+                    <Link href={OBSERVATORY_HERMES_LEDGER_PATH}>Decision ledger</Link>
                   </li>
                   <li>
                     <Link href="/gates">Gate conditions</Link>

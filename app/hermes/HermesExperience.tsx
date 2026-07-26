@@ -12,6 +12,7 @@ import {
   useTransform,
 } from 'framer-motion';
 
+import { OBSERVATORY_HERMES_LEDGER_PATH, OBSERVATORY_PATH } from '@/features/observatory/paths';
 import { DOCS_API_URL } from '@/lib/docs';
 
 import Mark from '../Mark';
@@ -360,7 +361,7 @@ function Hero() {
             <a href="#request-access" className="hx-btn hx-btn-primary">
               Request Beta Access
             </a>
-            <Link href="/trust" className="hx-btn hx-btn-secondary">
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hx-btn hx-btn-secondary">
               View the decision ledger
             </Link>
             <a href={DOCS_API_URL} className="hx-btn hx-btn-secondary">
@@ -522,7 +523,7 @@ export default function HermesExperience() {
               <Link href="/brief" className="hx-btn hx-btn-secondary">
                 Read the full brief
               </Link>
-              <Link href="/trust" className="hx-btn hx-btn-secondary">
+              <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hx-btn hx-btn-secondary">
                 See the decision ledger
               </Link>
               <Link href="/gates" className="hx-btn hx-btn-secondary">
