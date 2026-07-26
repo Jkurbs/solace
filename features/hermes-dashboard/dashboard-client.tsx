@@ -25,6 +25,7 @@ import {
   isRiskProfileAvailableForBeta,
   riskProfileDescriptions,
 } from './contract';
+import { PublicMarketReadCard } from './public-market-card';
 import {
   getHermesDashboardSnapshot,
   hermesDashboardQueryKey,
@@ -969,6 +970,8 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             </div>
           </CardContent>
         </Card>
+
+        <PublicMarketReadCard />
 
         <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
           <Card>
