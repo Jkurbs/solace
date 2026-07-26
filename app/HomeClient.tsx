@@ -733,6 +733,9 @@ export default function HomeClient({
                   <Link href="/glorya" className="inst-card-cta">
                     View instrument →
                   </Link>
+                  <Link href="/news/introducing-glorya" className="inst-card-cta">
+                    Read the announcement →
+                  </Link>
                 </div>
               </div>
             </div>

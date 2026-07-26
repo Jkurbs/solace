@@ -89,11 +89,13 @@ export default async function Home() {
     : fallbackNote;
 
   // The hero pill announces whichever is fresher: the latest news post or
-  // the latest research note.
+  // the latest research note. Prefer news on a calendar-day basis so a same-day
+  // announcement (e.g. Introducing Glorya) surfaces over an older research stamp.
   const news = getLatestNewsPost();
-  const researchDate = article?.publishedAt ?? '2026-07-01';
+  const researchDay = (article?.publishedAt ?? '2026-07-01').slice(0, 10);
+  const newsDay = news?.date ?? '';
   const pill: HeroPill =
-    news && news.date >= researchDate.slice(0, 10)
+    news && newsDay && newsDay >= researchDay
       ? { tag: 'News', title: news.title, href: `/news/${news.slug}` }
       : { tag: 'Latest research', title: latestNote.title, href: '/research' };
 
