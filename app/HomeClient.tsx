@@ -248,6 +248,9 @@ function Header() {
           <Link href="/hermes" onClick={() => setMenuOpen(false)}>
             Hermes
           </Link>
+          <Link href="/hermes/market" onClick={() => setMenuOpen(false)}>
+            Market API
+          </Link>
           <Link href="/glorya" onClick={() => setMenuOpen(false)}>
             Glorya
           </Link>
@@ -606,6 +609,9 @@ export default function HomeClient({
                 <div className="inst-card-ctas">
                   <Link href="/hermes" className="inst-card-cta">
                     Explore →
+                  </Link>
+                  <Link href="/hermes/market" className="inst-card-cta">
+                    Market API →
                   </Link>
                   <Link href="/trust" className="inst-card-cta inst-card-cta-ledger">
                     Decision ledger →

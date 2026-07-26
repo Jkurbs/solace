@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${BASE}/`, priority: 1 },
     { url: `${BASE}/hermes`, priority: 0.9 },
+    { url: `${BASE}/hermes/market`, priority: 0.75 },
     { url: `${BASE}/brief`, priority: 0.9 },
     { url: `${BASE}/research`, priority: 0.8 },
     { url: `${BASE}/news`, priority: 0.8 },

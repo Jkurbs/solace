@@ -361,6 +361,9 @@ function Hero() {
             <Link href="/trust" className="hx-btn hx-btn-secondary">
               View the decision ledger
             </Link>
+            <Link href="/hermes/market" className="hx-btn hx-btn-secondary">
+              Market API
+            </Link>
           </div>
         </Reveal>
         <Reveal delay={0.28}>
