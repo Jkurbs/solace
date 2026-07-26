@@ -11,12 +11,13 @@ import ThemeToggle from './ThemeToggle';
 import NotePlate from './NotePlate';
 import { gloryaEvaluatedNeeds } from '@/features/glorya/evaluated-needs';
 import { gateDomains } from '@/features/gates/conditions';
-import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
-
-import { calibration } from './calibration';
+import type { HermesPublicMarketRead } from '@/features/hermes-market/types';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
 import { hermesBetaVersionLabel } from '@/features/hermes-version';
+import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 import type { PlateTint } from '@/lib/note-plate';
+
+import { calibration } from './calibration';
 
 const HermesLiquidityFieldRender = dynamic(() => import('./HermesLiquidityFieldRender'), {
   ssr: false,
@@ -204,6 +205,9 @@ function Header() {
           </Link>
           <a href="#instruments">
             Instruments
+          </a>
+          <a href="#market-api">
+            Market API
           </a>
         </nav>
 
@@ -411,12 +415,14 @@ const HERO_VARIANT: 'observatory' | 'quiet' = 'quiet';
 const HOME_LAYOUT: 'sections' | 'cards' = 'cards';
 
 export default function HomeClient({
+  hermesMarket,
   hermesTelemetry,
   latestNote,
   ledgerVault,
   newsItems,
   pill,
 }: {
+  hermesMarket: HermesPublicMarketRead | null;
   hermesTelemetry: HermesTelemetry | null;
   latestNote: LatestNote;
   ledgerVault: LedgerVaultSummary;
@@ -743,6 +749,65 @@ export default function HomeClient({
           </motion.div>
         </div>
       </section>
+
+      {hermesMarket ? (
+        <section id="market-api" className="home-market-wrap px-5 md:px-10 scroll-mt-24">
+          <motion.div className="home-market mx-auto max-w-7xl" {...cardReveal(5.5)}>
+            <div className="home-market-copy">
+              <p className="section-kicker">Public API · {hermesMarket.version}</p>
+              <h2>How Hermes sees the market.</h2>
+              <p>
+                A public-safe market read — posture, outlook, and environment. Not trades. Not signals. Available as
+                JSON for anyone to inspect.
+              </p>
+              <p className="home-market-summary">{hermesMarket.summary}</p>
+              <div className="home-market-actions">
+                <Link href="/hermes/market" className="hermes-product-button hermes-product-button-dark min-h-[2.5rem]">
+                  Open Market API
+                </Link>
+                <code className="home-market-endpoint">GET /api/hermes/market</code>
+              </div>
+            </div>
+            <div className="home-market-panel">
+              <div className="home-market-panel-head">
+                <span
+                  className={`home-market-pulse is-${hermesMarket.pulse.toLowerCase()}`}
+                  title={`As of ${hermesMarket.as_of}`}
+                >
+                  {hermesMarket.pulse}
+                </span>
+                <span className="home-market-asof">Public read</span>
+              </div>
+              <dl className="home-market-metrics">
+                <div>
+                  <dt>Posture</dt>
+                  <dd>{hermesMarket.posture}</dd>
+                </div>
+                <div>
+                  <dt>Outlook</dt>
+                  <dd>{hermesMarket.outlook}</dd>
+                </div>
+                <div>
+                  <dt>Environment</dt>
+                  <dd>{hermesMarket.environment}</dd>
+                </div>
+                <div>
+                  <dt>Capital</dt>
+                  <dd>
+                    {hermesMarket.capital.active}
+                    {hermesMarket.capital.paths_under_review > 0
+                      ? ` · ${hermesMarket.capital.deployed_paths}/${hermesMarket.capital.paths_under_review}`
+                      : null}
+                  </dd>
+                </div>
+              </dl>
+              <pre className="home-market-curl">
+                <code>curl -sS https://solace.fyi/api/hermes/market</code>
+              </pre>
+            </div>
+          </motion.div>
+        </section>
+      ) : null}
 
       <section className="research-loop-wrap px-5 md:px-10">
         <motion.div className="research-loop mx-auto max-w-7xl" {...cardReveal(6)}>

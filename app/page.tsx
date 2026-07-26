@@ -3,6 +3,7 @@ import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/s
 import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
 import { computeLedgerScoreboard } from '@/features/hermes-ledger/scoreboard';
 import { listHermesLedgerProcessRows } from '@/features/hermes-ledger/store';
+import { getHermesPublicMarketRead } from '@/features/hermes-market/read';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { getLatestNewsPost, newsPosts } from '@/features/news/posts';
 
@@ -67,9 +68,10 @@ const fallbackNote: LatestNote = {
 
 export default async function Home() {
   // Lean process columns only for the vault strip — avoid full-row ledger(1000).
-  const [article, hermesTelemetry, ledgerRows, openExposure] = await Promise.all([
+  const [article, hermesTelemetry, hermesMarket, ledgerRows, openExposure] = await Promise.all([
     getLatestPublishedArticle().catch(() => null),
     getHermesTelemetry(),
+    getHermesPublicMarketRead().catch(() => null),
     listHermesLedgerProcessRows(1500).catch(() => []),
     getHermesOpenExposure().catch(() => null),
   ]);
@@ -107,6 +109,7 @@ export default async function Home() {
 
   return (
     <HomeClient
+      hermesMarket={hermesMarket}
       hermesTelemetry={hermesTelemetry}
       latestNote={latestNote}
       ledgerVault={ledgerVault}
