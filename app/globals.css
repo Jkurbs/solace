@@ -14841,3 +14841,101 @@ html[data-theme='light'] .obs-honesty-list strong {
 .faq-item.is-open .faq-item-body {
   border-left-color: rgba(255,255,255,0.2);
 }
+
+
+/* Research aesthetic overrides */
+.home-research {
+  --background: #fafaf9;        /* warm paper white */
+  --foreground: #1c1917;        /* soft ink */
+  --muted: #78716c;             /* warm gray */
+  --border: #e7e5e4;            /* hairline rule */
+}
+
+.dark .home-research {
+  --background: #0c0a09;
+  --foreground: #f5f5f4;
+  --muted: #a8a29e;
+  --border: #292524;
+}
+
+/* Editorial measure */
+.hero-research h1,
+section h2,
+section h3 {
+  text-wrap: balance;
+}
+
+/* Instrument rows */
+.group:hover .font-serif {
+  opacity: 0.7;
+}
+
+/* Header research style */
+.site-header-research {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(var(--background), 0.8);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s;
+}
+.site-header-research.scrolled {
+  border-bottom-color: var(--border);
+}
+.site-header-inner-research {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+.site-wordmark-research {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+}
+.site-nav-research {
+  display: none;
+  gap: 2rem;
+}
+.site-nav-research a {
+  font-size: 0.875rem;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.site-nav-research a:hover {
+  color: var(--foreground);
+}
+@media (min-width: 768px) {
+  .site-nav-research { display: flex; }
+  .site-menu-button { display: none; }
+}
+
+/* Mobile menu */
+.site-menu-panel-research {
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+.site-menu-panel-research a {
+  font-size: 1.125rem;
+  font-family: serif;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+/* FAQ */
+.faq-item-trigger .font-serif {
+  transition: opacity 0.2s;
+}
+
+/* Selection */
+::selection {
+  background: rgba(28, 25, 23, 0.08);
+}
+.dark ::selection {
+  background: rgba(245, 245, 244, 0.15);
+}
