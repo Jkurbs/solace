@@ -260,32 +260,6 @@ export default function HomeClient({
   return (
     <main className="home-research min-h-screen bg-background text-foreground antialiased selection:bg-foreground/10">
       <Header />
-
-      {/* ── Preamble: the founding principle ── */}
-      <section className="preamble px-5 pt-20 pb-12 md:pt-28 md:pb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: easeOut, delay: 0.2 }}
-          className="max-w-2xl mx-auto text-center"
-        >
-          <SealIcon className="w-12 h-12 text-muted mx-auto mb-8" />
-          <p className="text-xs uppercase tracking-[0.3em] text-muted mb-6">Charter</p>
-          <p className="font-serif text-[clamp(1.4rem,3.2vw,2.2rem)] leading-snug text-foreground">
-            Every decision is recorded in a sealed ledger before the outcome is known.
-          </p>
-          <div className="mt-10 flex flex-col items-center gap-3">
-            <div className="w-8 h-px bg-border" />
-            <Link
-              href={OBSERVATORY_HERMES_LEDGER_PATH}
-              className="text-xs uppercase tracking-[0.2em] text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
-            >
-              Inspect the chain
-            </Link>
-          </div>
-        </motion.div>
-      </section>
-
       {/* ── Hero ── */}
       <section className="hero-research relative overflow-hidden px-5 pt-12 pb-20 md:pt-16 md:pb-28 border-t border-border">
         <PrimeRadiantLattice />
@@ -330,6 +304,31 @@ export default function HomeClient({
               Read the brief
             </Link>
           </motion.div>
+        </motion.div>
+      </section>
+
+      {/* ── Preamble: the founding principle ── */}
+      <section className="preamble px-5 pt-20 pb-12 md:pt-28 md:pb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: easeOut, delay: 0.2 }}
+          className="max-w-2xl mx-auto text-center"
+        >
+          <SealIcon className="w-12 h-12 text-muted mx-auto mb-8" />
+          <p className="text-xs uppercase tracking-[0.3em] text-muted mb-6">Charter</p>
+          <p className="font-serif text-[clamp(1.4rem,3.2vw,2.2rem)] leading-snug text-foreground">
+            Every decision is recorded in a sealed ledger before the outcome is known.
+          </p>
+          <div className="mt-10 flex flex-col items-center gap-3">
+            <div className="w-8 h-px bg-border" />
+            <Link
+              href={OBSERVATORY_HERMES_LEDGER_PATH}
+              className="text-xs uppercase tracking-[0.2em] text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
+            >
+              Inspect the chain
+            </Link>
+          </div>
         </motion.div>
       </section>
 
