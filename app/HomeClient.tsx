@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
-import { MotionConfig, motion, useReducedMotion } from 'framer-motion';
+import { MotionConfig, motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 
 import SkyBackground from './SkyBackground';
 import Mark from './Mark';
@@ -182,11 +182,11 @@ const homepageQuestions = [
 const footerSocials = [{ name: 'X @solacefyi', href: 'https://x.com/solacefyi' }];
 const footerEmails = ['hello@solace.fyi', 'support@solace.fyi', 'security@solace.fyi'];
 
-function Header() {
+function Header({ scrolled }: { scrolled: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="site-header">
+    <header className={`site-header${scrolled ? ' is-scrolled' : ''}`}>
       <div className="site-header-inner">
         <Link href="/" className="site-wordmark" aria-label="Solace home">
           <Mark size={20} className="site-mark" />
@@ -217,10 +217,6 @@ function Header() {
         <div className="site-actions">
           <Link href="/dashboard" className="site-action-link site-action-login">
             Login
-          </Link>
-          <span className="site-action-separator" aria-hidden="true" />
-          <Link href="/hermes#request-access" className="site-action-link site-action-primary">
-            Request access
           </Link>
           <button
             type="button"
@@ -433,8 +429,18 @@ export default function HomeClient({
   pill: HeroPill;
 }) {
   const reduceMotion = useReducedMotion();
+  const [scrolled, setScrolled] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
   // reducedMotion users skip entrance; everyone else gets the title-card stagger.
   const heroInitial = reduceMotion ? false : 'hidden';
+
+  // Scroll-aware header
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // Pause WebGL when the user actually navigates away — not on touch-scroll.
   // pointerdown was wrong: the Hermes card is a full-plate <Link>, so the first
@@ -472,14 +478,22 @@ export default function HomeClient({
     };
   }, []);
 
+  const hermesAuraTone = hermesTelemetry ? hermesLiveVoice[hermesTelemetry.posture].tone : undefined;
+
   return (
     <main className="home-shell relative min-h-screen overflow-x-hidden text-foreground">
       <MotionConfig reducedMotion="user">
       {HOME_LAYOUT === 'sections' && <SkyBackground />}
-      <Header />
+      <Header scrolled={scrolled} />
 
       {HERO_VARIANT === 'quiet' ? (
         <section className="hero-quiet relative overflow-hidden px-5 md:px-10">
+          <div className="hero-quiet-aurora" aria-hidden="true">
+            <div className="aurora-blob aurora-blob-1" />
+            <div className="aurora-blob aurora-blob-2" />
+          </div>
+          <div className="hero-quiet-grain" aria-hidden="true" />
+
           <motion.div
             initial={heroInitial}
             animate="show"
@@ -496,7 +510,10 @@ export default function HomeClient({
             <motion.p variants={fade} className="section-kicker mt-8">
               Independent research · Live instruments
             </motion.p>
-            <motion.h1 variants={titleFade} className="hero-quiet-title">
+            <motion.h1
+              variants={titleFade}
+              className="hero-quiet-title font-serif text-[clamp(3rem,7vw,6rem)] font-medium leading-[0.95]"
+            >
               Systems for reading complexity.
             </motion.h1>
             <motion.p variants={fade} className="hero-quiet-body">
@@ -588,9 +605,18 @@ export default function HomeClient({
       {HOME_LAYOUT === 'cards' ? (
       <>
       <section id="instruments" className="inst-wrap px-5 md:px-10">
-        <div className="inst-grid mx-auto max-w-7xl">
-          <motion.div id="hermes" className="inst-cell inst-cell-hermes scroll-mt-24" {...cardReveal(0)}>
+        <div className="inst-grid inst-grid-bento mx-auto max-w-7xl">
+          <motion.div id="hermes" className="inst-cell inst-cell-hermes inst-cell-featured scroll-mt-24" {...cardReveal(0)}>
             <div className="inst-card">
+              {hermesAuraTone && (
+                <div
+                  className="inst-aura"
+                  aria-hidden="true"
+                  style={{
+                    background: `radial-gradient(600px 300px at 50% 0%, ${hermesAuraTone}18, transparent 70%)`,
+                  }}
+                />
+              )}
               <Link href="/hermes" className="inst-card-fill" aria-label="Explore Hermes">
                 <div className="inst-platter">
                   <div className="inst-card-render" aria-hidden="true">
@@ -776,42 +802,52 @@ export default function HomeClient({
                 <code className="home-market-endpoint">GET {HERMES_MARKET_API_PATH}</code>
               </div>
             </div>
-            <div className="home-market-panel">
-              <div className="home-market-panel-head">
-                <span
-                  className={`home-market-pulse is-${hermesMarket.pulse.toLowerCase()}`}
-                  title={`As of ${hermesMarket.as_of}`}
-                >
-                  {hermesMarket.pulse}
-                </span>
-                <span className="home-market-asof">{DOCS_API_URL.replace('https://', '')}</span>
+            <div className="home-market-panel terminal-panel">
+              <div className="terminal-chrome">
+                <div className="terminal-chrome-dots">
+                  <span className="terminal-dot is-red" />
+                  <span className="terminal-dot is-amber" />
+                  <span className="terminal-dot is-green" />
+                </div>
+                <span className="terminal-chrome-title">docs.solace.fyi/api</span>
               </div>
-              <dl className="home-market-metrics">
-                <div>
-                  <dt>Posture</dt>
-                  <dd>{hermesMarket.posture}</dd>
+              <div className="terminal-body">
+                <div className="home-market-panel-head">
+                  <span
+                    className={`home-market-pulse is-${hermesMarket.pulse.toLowerCase()}`}
+                    title={`As of ${hermesMarket.as_of}`}
+                  >
+                    {hermesMarket.pulse}
+                  </span>
+                  <span className="home-market-asof">{DOCS_API_URL.replace('https://', '')}</span>
                 </div>
-                <div>
-                  <dt>Outlook</dt>
-                  <dd>{hermesMarket.outlook}</dd>
-                </div>
-                <div>
-                  <dt>Environment</dt>
-                  <dd>{hermesMarket.environment}</dd>
-                </div>
-                <div>
-                  <dt>Capital</dt>
-                  <dd>
-                    {hermesMarket.capital.active}
-                    {hermesMarket.capital.paths_under_review > 0
-                      ? ` · ${hermesMarket.capital.deployed_paths}/${hermesMarket.capital.paths_under_review}`
-                      : null}
-                  </dd>
-                </div>
-              </dl>
-              <pre className="home-market-curl">
-                <code>curl -sS {HERMES_MARKET_API_URL}</code>
-              </pre>
+                <dl className="home-market-metrics">
+                  <div>
+                    <dt>Posture</dt>
+                    <dd>{hermesMarket.posture}</dd>
+                  </div>
+                  <div>
+                    <dt>Outlook</dt>
+                    <dd>{hermesMarket.outlook}</dd>
+                  </div>
+                  <div>
+                    <dt>Environment</dt>
+                    <dd>{hermesMarket.environment}</dd>
+                  </div>
+                  <div>
+                    <dt>Capital</dt>
+                    <dd>
+                      {hermesMarket.capital.active}
+                      {hermesMarket.capital.paths_under_review > 0
+                        ? ` · ${hermesMarket.capital.deployed_paths}/${hermesMarket.capital.paths_under_review}`
+                        : null}
+                    </dd>
+                  </div>
+                </dl>
+                <pre className="home-market-curl">
+                  <code>curl -sS {HERMES_MARKET_API_URL}</code>
+                </pre>
+              </div>
             </div>
           </motion.div>
         </section>
@@ -824,33 +860,26 @@ export default function HomeClient({
             <h2>Observe. Model. Test. Earn the right to act.</h2>
           </div>
           <ol className="research-loop-steps">
-            <li>
-              <span>01</span>
-              <strong>Observe</strong>
-              <p>Hermes and Oracle turn reality into an accountable record.</p>
-            </li>
-            <li>
-              <span>02</span>
-              <strong>Model</strong>
-              <p>Simulation builds possible worlds from constraints and feedback.</p>
-            </li>
-            <li>
-              <span>03</span>
-              <strong>Test</strong>
-              <p>Decisions meet disturbance before they meet the real world.</p>
-            </li>
-            <li>
-              <span>04</span>
-              <strong>Act</strong>
-              <p>Capital moves only when gates, evidence, and the public record allow it.</p>
-            </li>
+            {[
+              { num: '01', title: 'Observe', text: 'Hermes and Oracle turn reality into an accountable record.' },
+              { num: '02', title: 'Model', text: 'Simulation builds possible worlds from constraints and feedback.' },
+              { num: '03', title: 'Test', text: 'Decisions meet disturbance before they meet the real world.' },
+              { num: '04', title: 'Act', text: 'Capital moves only when gates, evidence, and the public record allow it.' },
+            ].map((step, i, arr) => (
+              <li key={step.num} className="research-loop-step">
+                {i < arr.length - 1 && <span className="research-loop-connector" aria-hidden="true" />}
+                <span className="research-loop-num">{step.num}</span>
+                <strong>{step.title}</strong>
+                <p>{step.text}</p>
+              </li>
+            ))}
           </ol>
         </motion.div>
       </section>
 
       <section id="ledger" className="home-vault-wrap px-5 md:px-10 scroll-mt-24">
         <motion.div className="home-vault mx-auto max-w-7xl" {...cardReveal(7)}>
-          <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="home-vault-card" aria-label="Open the Hermes decision ledger">
+          <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="home-vault-card vault-glass" aria-label="Open the Hermes decision ledger">
             <div className="home-vault-copy">
               <p className="section-kicker">Public record</p>
               <h2>Decision ledger</h2>
@@ -859,22 +888,30 @@ export default function HomeClient({
                 first — outcomes second. Founder capital only.
               </p>
             </div>
-            <div className="home-vault-metrics" aria-label="Ledger process metrics">
-              <div>
-                <span>Sealed decisions</span>
-                <strong>{ledgerVault.sealedDecisions}</strong>
+            <div className="home-vault-metrics vault-metrics" aria-label="Ledger process metrics">
+              <div className="vault-metric">
+                <span className="vault-metric-label">Sealed decisions</span>
+                <strong className="vault-metric-value" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {ledgerVault.sealedDecisions}
+                </strong>
               </div>
-              <div>
-                <span>Open paths</span>
-                <strong>{ledgerVault.openPaths === null ? '—' : ledgerVault.openPaths}</strong>
+              <div className="vault-metric">
+                <span className="vault-metric-label">Open paths</span>
+                <strong className="vault-metric-value" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {ledgerVault.openPaths === null ? '—' : ledgerVault.openPaths}
+                </strong>
               </div>
-              <div>
-                <span>Closed</span>
-                <strong>{ledgerVault.closedPaths}</strong>
+              <div className="vault-metric">
+                <span className="vault-metric-label">Closed</span>
+                <strong className="vault-metric-value" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {ledgerVault.closedPaths}
+                </strong>
               </div>
-              <div>
-                <span>Backfilled</span>
-                <strong>{ledgerVault.backfilled}</strong>
+              <div className="vault-metric">
+                <span className="vault-metric-label">Backfilled</span>
+                <strong className="vault-metric-value" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {ledgerVault.backfilled}
+                </strong>
               </div>
             </div>
             <span className="home-vault-cta">Inspect the chain →</span>
@@ -1007,65 +1044,109 @@ export default function HomeClient({
             <h2>What to know first.</h2>
           </motion.div>
           <div className="faq-list">
-            {homepageQuestions.map((item) => (
+            {homepageQuestions.map((item, index) => (
               <motion.div key={item.question} variants={listItem}>
-                <details className="faq-item">
-                  <summary>{item.question}</summary>
-                  <p>{item.answer}</p>
-                </details>
+                <div className={`faq-item${openFaq === index ? ' is-open' : ''}`}>
+                  <button
+                    type="button"
+                    className="faq-item-trigger"
+                    onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                    aria-expanded={openFaq === index}
+                  >
+                    {item.question}
+                    <span className="faq-item-chevron" aria-hidden="true" />
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {openFaq === index && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.35, ease: easeOut }}
+                        className="faq-item-animator"
+                      >
+                        <div className="faq-item-body">
+                          <p>{item.answer}</p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </motion.div>
             ))}
             <motion.div variants={listItem}>
-              <details className="faq-item">
-                <summary>Terms used across this site</summary>
-                <dl className="glossary-list">
-                  <div>
-                    <dt>Instrument</dt>
-                    <dd>A system Solace builds and operates, not a security or financial product.</dd>
-                  </div>
-                  <div>
-                    <dt>Reading</dt>
-                    <dd>Hermes&rsquo;s most recent assessment of market conditions.</dd>
-                  </div>
-                  <div>
-                    <dt>Posture</dt>
-                    <dd>How boldly capital is routed right now, from standing down to fully deployed.</dd>
-                  </div>
-                  <div>
-                    <dt>Regime</dt>
-                    <dd>The market&rsquo;s prevailing character. Hermes acts only while the regime stays in character.</dd>
-                  </div>
-                  <div>
-                    <dt>Liquidity path</dt>
-                    <dd>
-                      Hermes&rsquo;s core abstraction: whether the field between here and a price destination can
-                      carry price at all.
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Calibration · Brier score</dt>
-                    <dd>How closely stated probabilities match reality. Lower is better; 0.25 is a coin flip.</dd>
-                  </div>
-                  <div>
-                    <dt>Gate conditions</dt>
-                    <dd>What has to clear before Solace moves past markets. Status is on the gate board.</dd>
-                  </div>
-                  <div>
-                    <dt>Sealed row</dt>
-                    <dd>
-                      A ledger entry written before its outcome is known, then hashed and chained so it cannot be
-                      quietly edited.
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Backfill</dt>
-                    <dd>
-                      A ledger row recorded after its outcome was already known. Labeled, never hidden; backfilled
-                      rows do not claim the sealed-first guarantee.
-                    </dd>
-                  </div>
-                </dl>
-              </details>
+              <div className={`faq-item${openFaq === homepageQuestions.length ? ' is-open' : ''}`}>
+                <button
+                  type="button"
+                  className="faq-item-trigger"
+                  onClick={() => setOpenFaq(openFaq === homepageQuestions.length ? null : homepageQuestions.length)}
+                  aria-expanded={openFaq === homepageQuestions.length}
+                >
+                  Terms used across this site
+                  <span className="faq-item-chevron" aria-hidden="true" />
+                </button>
+                <AnimatePresence initial={false}>
+                  {openFaq === homepageQuestions.length && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.35, ease: easeOut }}
+                      className="faq-item-animator"
+                    >
+                      <div className="faq-item-body">
+                        <dl className="glossary-list">
+                          <div>
+                            <dt>Instrument</dt>
+                            <dd>A system Solace builds and operates, not a security or financial product.</dd>
+                          </div>
+                          <div>
+                            <dt>Reading</dt>
+                            <dd>Hermes&rsquo;s most recent assessment of market conditions.</dd>
+                          </div>
+                          <div>
+                            <dt>Posture</dt>
+                            <dd>How boldly capital is routed right now, from standing down to fully deployed.</dd>
+                          </div>
+                          <div>
+                            <dt>Regime</dt>
+                            <dd>The market&rsquo;s prevailing character. Hermes acts only while the regime stays in character.</dd>
+                          </div>
+                          <div>
+                            <dt>Liquidity path</dt>
+                            <dd>
+                              Hermes&rsquo;s core abstraction: whether the field between here and a price destination can
+                              carry price at all.
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Calibration · Brier score</dt>
+                            <dd>How closely stated probabilities match reality. Lower is better; 0.25 is a coin flip.</dd>
+                          </div>
+                          <div>
+                            <dt>Gate conditions</dt>
+                            <dd>What has to clear before Solace moves past markets. Status is on the gate board.</dd>
+                          </div>
+                          <div>
+                            <dt>Sealed row</dt>
+                            <dd>
+                              A ledger entry written before its outcome is known, then hashed and chained so it cannot be
+                              quietly edited.
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Backfill</dt>
+                            <dd>
+                              A ledger row recorded after its outcome was already known. Labeled, never hidden; backfilled
+                              rows do not claim the sealed-first guarantee.
+                            </dd>
+                          </div>
+                        </dl>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </motion.div>
           </div>
         </motion.div>
