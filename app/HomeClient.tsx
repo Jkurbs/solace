@@ -152,41 +152,6 @@ function HolographicReveal({ text, className }: { text: string; className?: stri
   );
 }
 
-/* ── Foundation: Spiral section divider ── */
-function SpiralDivider() {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-10% 0px' });
-  const reduceMotion = useReducedMotion();
-
-  const path = useMemo(() => {
-    const steps = 120;
-    let d = '';
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
-      const x = t * 100;
-      const y = 50 + Math.sin(t * Math.PI * 3) * (8 * Math.exp(-t * 2));
-      d += `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
-    }
-    return d;
-  }, []);
-
-  return (
-    <div ref={ref} className="spiral-divider-wrap" aria-hidden="true">
-      <svg viewBox="0 0 100 100" fill="none" preserveAspectRatio="none" className="spiral-divider-svg">
-        <motion.path
-          d={path}
-          stroke="currentColor"
-          strokeWidth="0.35"
-          vectorEffect="non-scaling-stroke"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={isInView && !reduceMotion ? { pathLength: 1, opacity: 1 } : { pathLength: 1, opacity: 1 }}
-          transition={{ duration: 2.4, ease: easeOut }}
-        />
-      </svg>
-    </div>
-  );
-}
-
 /* ── Foundation: Vault seal icon ── */
 function SealIcon({ className }: { className?: string }) {
   return (
@@ -296,8 +261,33 @@ export default function HomeClient({
     <main className="home-research min-h-screen bg-background text-foreground antialiased selection:bg-foreground/10">
       <Header />
 
+      {/* ── Preamble: the founding principle ── */}
+      <section className="preamble px-5 pt-20 pb-12 md:pt-28 md:pb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: easeOut, delay: 0.2 }}
+          className="max-w-2xl mx-auto text-center"
+        >
+          <SealIcon className="w-12 h-12 text-muted mx-auto mb-8" />
+          <p className="text-xs uppercase tracking-[0.3em] text-muted mb-6">Charter</p>
+          <p className="font-serif text-[clamp(1.4rem,3.2vw,2.2rem)] leading-snug text-foreground">
+            Every decision is recorded in a sealed ledger before the outcome is known.
+          </p>
+          <div className="mt-10 flex flex-col items-center gap-3">
+            <div className="w-8 h-px bg-border" />
+            <Link
+              href={OBSERVATORY_HERMES_LEDGER_PATH}
+              className="text-xs uppercase tracking-[0.2em] text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
+            >
+              Inspect the chain
+            </Link>
+          </div>
+        </motion.div>
+      </section>
+
       {/* ── Hero ── */}
-      <section className="hero-research relative overflow-hidden px-5 pt-32 pb-16 md:pt-40 md:pb-20">
+      <section className="hero-research relative overflow-hidden px-5 pt-12 pb-20 md:pt-16 md:pb-28 border-t border-border">
         <PrimeRadiantLattice />
 
         <motion.div
@@ -315,18 +305,18 @@ export default function HomeClient({
 
           <HolographicReveal
             text="Instruments for decision-making under uncertainty."
-            className="font-serif text-[clamp(2.8rem,6.5vw,5.5rem)] font-medium leading-[0.95] tracking-tight"
+            className="font-serif text-[clamp(2.6rem,6vw,5rem)] font-medium leading-[0.95] tracking-tight"
           />
 
           <motion.p
             variants={fade}
-            className="mt-10 text-lg md:text-xl text-muted leading-relaxed max-w-2xl"
+            className="mt-8 text-lg md:text-xl text-muted leading-relaxed max-w-2xl"
           >
             Solace builds systems that read complexity and decide when capital should move
             — and when it shouldn't.
           </motion.p>
 
-          <motion.div variants={fade} className="mt-12 flex items-center gap-10">
+          <motion.div variants={fade} className="mt-10 flex items-center gap-10">
             <Link
               href="/hermes"
               className="text-sm font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
@@ -343,39 +333,8 @@ export default function HomeClient({
         </motion.div>
       </section>
 
-      {/* ── Charter: the founding principle ── */}
-      <section className="charter-section px-5 py-20 md:py-28 border-t border-border">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.9, ease: easeOut }}
-          className="max-w-3xl mx-auto text-center md:text-left"
-        >
-          <SealIcon className="w-8 h-8 text-muted mx-auto md:mx-0 mb-8" />
-          <p className="font-serif text-xl md:text-2xl leading-relaxed text-foreground max-w-2xl">
-            Every decision is recorded in a sealed ledger before the outcome is known.
-          </p>
-          <p className="mt-4 text-sm text-muted">
-            Process first. Outcomes second.{' '}
-            <Link
-              href={OBSERVATORY_HERMES_LEDGER_PATH}
-              className="underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
-            >
-              Inspect the chain
-            </Link>
-            .
-          </p>
-        </motion.div>
-      </section>
-
-      {/* ── Spiral divider ── */}
-      <div className="max-w-3xl mx-auto px-5">
-        <SpiralDivider />
-      </div>
-
       {/* ── Live instruments ── */}
-      <section className="px-5 py-20 md:py-28">
+      <section className="px-5 py-20 md:py-28 border-t border-border">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-12">Live instruments</h2>
 
