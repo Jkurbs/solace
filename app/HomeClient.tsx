@@ -296,8 +296,7 @@ export default function HomeClient({
             variants={fade}
             className="mt-10 text-lg md:text-xl text-muted leading-relaxed max-w-2xl"
           >
-            Solace builds systems that read complexity and decide when capital should move
-            — and when it shouldn't.
+            Solace builds systems that read complexity and decide when capital should move and when it shouldn't.
           </motion.p>
 
           <motion.div variants={fade} className="mt-12 flex items-center gap-10">
@@ -315,6 +314,15 @@ export default function HomeClient({
             </Link>
           </motion.div>
         </motion.div>
+
+      <motion.p variants={fade} className="mt-6 text-sm text-muted">
+        Every decision is recorded in a{' '}
+        <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all">
+          sealed ledger
+        </Link>{' '}
+        before the outcome is known.
+      </motion.p>
+
       </section>
 
       {/* ── Live instruments ── */}
@@ -488,6 +496,11 @@ export default function HomeClient({
                 <li><Link href="/research" className="text-muted hover:text-foreground transition-colors">Notes</Link></li>
                 <li><Link href={OBSERVATORY_PATH} className="text-muted hover:text-foreground transition-colors">Observatory</Link></li>
                 <li><Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="text-muted hover:text-foreground transition-colors">Ledger</Link></li>
+                <li>
+                <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="text-muted hover:text-foreground transition-colors">
+                  Decision ledger
+                </Link>
+                </li>
               </ul>
             </div>
             <div>
