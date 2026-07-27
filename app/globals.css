@@ -14939,3 +14939,77 @@ section h3 {
 .dark ::selection {
   background: rgba(245, 245, 244, 0.15);
 }
+
+
+/* ── Prime Radiant lattice ── */
+.radiant-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 800px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.04;
+}
+
+.radiant-svg {
+  width: 100%;
+  height: 100%;
+  color: currentColor;
+}
+
+.radiant-ring-slow {
+  animation: radiant-rotate 120s linear infinite;
+  transform-origin: center;
+}
+
+.radiant-ring-reverse {
+  animation: radiant-rotate 90s linear infinite reverse;
+  transform-origin: center;
+}
+
+@keyframes radiant-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Subtle chromatic drift on the text during reveal */
+.radiant-text {
+  text-shadow: 0 0 0 transparent;
+}
+
+/* Optional: a very faint scan-line texture on the hero only */
+.hero-research::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.015) 2px,
+    rgba(0,0,0,0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dark .hero-research::after {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.015) 2px,
+    rgba(255,255,255,0.015) 4px
+  );
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .radiant-ring-slow,
+  .radiant-ring-reverse {
+    animation: none;
+  }
+}

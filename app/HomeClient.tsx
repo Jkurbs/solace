@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 
 import Mark from './Mark';
@@ -91,6 +91,85 @@ function ReadingAge({ updatedAt }: { updatedAt: string }) {
     return () => window.clearInterval(interval);
   }, [updatedAt]);
   return <span suppressHydrationWarning>{label}</span>;
+}
+
+/* ── Foundation: Prime Radiant lattice ── */
+function PrimeRadiantLattice() {
+  return (
+    <div className="radiant-container" aria-hidden="true">
+      <svg
+        viewBox="0 0 400 400"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="radiant-svg"
+      >
+        {/* Outer icosahedron wireframe — sparse, mathematical */}
+        <g className="radiant-ring radiant-ring-slow">
+          <path d="M200 40L360 200L200 360L40 200Z" stroke="currentColor" strokeWidth="0.5" />
+          <path d="M200 40L200 360" stroke="currentColor" strokeWidth="0.5" />
+          <path d="M40 200L360 200" stroke="currentColor" strokeWidth="0.5" />
+          <path d="M200 40L280 200L200 280L120 200Z" stroke="currentColor" strokeWidth="0.5" />
+          <circle cx="200" cy="200" r="120" stroke="currentColor" strokeWidth="0.3" opacity="0.5" />
+          <circle cx="200" cy="200" r="80" stroke="currentColor" strokeWidth="0.3" opacity="0.3" />
+          {/* Nodes */}
+          <circle cx="200" cy="40" r="2" fill="currentColor" opacity="0.6" />
+          <circle cx="360" cy="200" r="2" fill="currentColor" opacity="0.6" />
+          <circle cx="200" cy="360" r="2" fill="currentColor" opacity="0.6" />
+          <circle cx="40" cy="200" r="2" fill="currentColor" opacity="0.6" />
+          <circle cx="200" cy="200" r="3" fill="currentColor" opacity="0.8" />
+        </g>
+        {/* Inner counter-rotating structure */}
+        <g className="radiant-ring radiant-ring-reverse">
+          <path d="M200 100L300 200L200 300L100 200Z" stroke="currentColor" strokeWidth="0.5" />
+          <path d="M200 100L200 300" stroke="currentColor" strokeWidth="0.5" />
+          <path d="M100 200L300 200" stroke="currentColor" strokeWidth="0.5" />
+          <circle cx="200" cy="100" r="1.5" fill="currentColor" opacity="0.5" />
+          <circle cx="300" cy="200" r="1.5" fill="currentColor" opacity="0.5" />
+          <circle cx="200" cy="300" r="1.5" fill="currentColor" opacity="0.5" />
+          <circle cx="100" cy="200" r="1.5" fill="currentColor" opacity="0.5" />
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+/* ── Foundation: Holographic word reveal ── */
+function HolographicReveal({ text, className }: { text: string; className?: string }) {
+  const reduceMotion = useReducedMotion();
+  const words = useMemo(() => text.split(' '), [text]);
+
+  if (reduceMotion) {
+    return <h1 className={className}>{text}</h1>;
+  }
+
+  return (
+    <h1 className={className} aria-label={text}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-block overflow-hidden mr-[0.3em]">
+          <motion.span
+            className="inline-block radiant-text"
+            initial={{
+              opacity: 0,
+              y: '110%',
+              filter: 'blur(8px)',
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              filter: 'blur(0px)',
+            }}
+            transition={{
+              duration: 1.2,
+              ease: easeOut,
+              delay: 0.6 + i * 0.08,
+            }}
+          >
+            {word}
+          </motion.span>
+        </span>
+      ))}
+    </h1>
+  );
 }
 
 function Header() {
@@ -191,33 +270,40 @@ export default function HomeClient({
     <main className="home-research min-h-screen bg-background text-foreground antialiased selection:bg-foreground/10">
       <Header />
 
-      {/* ── Hero ── */}
-      <section className="hero-research px-5 pt-28 pb-20 md:pt-36 md:pb-28">
+      {/* ── Hero: Foundation aesthetic ── */}
+      <section className="hero-research relative overflow-hidden px-5 pt-32 pb-24 md:pt-40 md:pb-32">
+        <PrimeRadiantLattice />
+
         <motion.div
           initial={heroInitial}
           animate="show"
           variants={stagger}
-          className="max-w-3xl mx-auto"
+          className="relative z-10 max-w-3xl mx-auto"
         >
-          <motion.h1
+          <motion.p
             variants={fade}
-            className="font-serif text-[clamp(2.8rem,6vw,5rem)] font-medium leading-[0.95] tracking-tight"
+            className="text-xs uppercase tracking-[0.25em] text-muted mb-8"
           >
-            Instruments for decision-making under uncertainty.
-          </motion.h1>
+            Independent research
+          </motion.p>
+
+          <HolographicReveal
+            text="Instruments for decision-making under uncertainty."
+            className="font-serif text-[clamp(2.8rem,6.5vw,5.5rem)] font-medium leading-[0.95] tracking-tight"
+          />
 
           <motion.p
             variants={fade}
-            className="mt-8 text-lg md:text-xl text-muted leading-relaxed max-w-2xl"
+            className="mt-10 text-lg md:text-xl text-muted leading-relaxed max-w-2xl"
           >
-            Solace is an independent research company. We build systems that decide when capital
-            should move — and when it shouldn't.
+            Solace builds systems that read complexity and decide when capital should move
+            — and when it shouldn't.
           </motion.p>
 
-          <motion.div variants={fade} className="mt-10 flex items-center gap-8">
+          <motion.div variants={fade} className="mt-12 flex items-center gap-10">
             <Link
               href="/hermes"
-              className="text-sm font-medium underline underline-offset-4 decoration-foreground/30 hover:decoration-foreground transition-all"
+              className="text-sm font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
             >
               Explore Hermes
             </Link>
@@ -237,7 +323,6 @@ export default function HomeClient({
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-12">Live instruments</h2>
 
           <div className="divide-y divide-border">
-            {/* Hermes */}
             <Link href="/hermes" className="group block py-8 first:pt-0">
               <div className="flex items-baseline justify-between gap-4">
                 <div>
@@ -265,7 +350,6 @@ export default function HomeClient({
               )}
             </Link>
 
-            {/* Oracle */}
             <Link href="/oracle" className="group block py-8">
               <div className="flex items-baseline justify-between gap-4">
                 <div>
@@ -283,7 +367,6 @@ export default function HomeClient({
               </p>
             </Link>
 
-            {/* Simulation */}
             <Link href="/gates#simulation" className="group block py-8">
               <div className="flex items-baseline justify-between gap-4">
                 <div>
@@ -301,7 +384,6 @@ export default function HomeClient({
               </p>
             </Link>
 
-            {/* Glorya */}
             <Link href="/glorya" className="group block py-8">
               <div className="flex items-baseline justify-between gap-4">
                 <div>
@@ -336,7 +418,7 @@ export default function HomeClient({
             <div className="mt-8 flex items-center gap-6">
               <Link
                 href="/research"
-                className="text-sm font-medium underline underline-offset-4 decoration-foreground/30 hover:decoration-foreground transition-all"
+                className="text-sm font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
               >
                 Read the note
               </Link>
