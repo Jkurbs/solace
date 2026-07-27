@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, useMemo } from 'react';
-import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { motion, useReducedMotion, useInView, AnimatePresence } from 'framer-motion';
 
 import Mark from './Mark';
 import ThemeToggle from './ThemeToggle';
@@ -97,13 +97,7 @@ function ReadingAge({ updatedAt }: { updatedAt: string }) {
 function PrimeRadiantLattice() {
   return (
     <div className="radiant-container" aria-hidden="true">
-      <svg
-        viewBox="0 0 400 400"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="radiant-svg"
-      >
-        {/* Outer icosahedron wireframe — sparse, mathematical */}
+      <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" className="radiant-svg">
         <g className="radiant-ring radiant-ring-slow">
           <path d="M200 40L360 200L200 360L40 200Z" stroke="currentColor" strokeWidth="0.5" />
           <path d="M200 40L200 360" stroke="currentColor" strokeWidth="0.5" />
@@ -111,14 +105,12 @@ function PrimeRadiantLattice() {
           <path d="M200 40L280 200L200 280L120 200Z" stroke="currentColor" strokeWidth="0.5" />
           <circle cx="200" cy="200" r="120" stroke="currentColor" strokeWidth="0.3" opacity="0.5" />
           <circle cx="200" cy="200" r="80" stroke="currentColor" strokeWidth="0.3" opacity="0.3" />
-          {/* Nodes */}
           <circle cx="200" cy="40" r="2" fill="currentColor" opacity="0.6" />
           <circle cx="360" cy="200" r="2" fill="currentColor" opacity="0.6" />
           <circle cx="200" cy="360" r="2" fill="currentColor" opacity="0.6" />
           <circle cx="40" cy="200" r="2" fill="currentColor" opacity="0.6" />
           <circle cx="200" cy="200" r="3" fill="currentColor" opacity="0.8" />
         </g>
-        {/* Inner counter-rotating structure */}
         <g className="radiant-ring radiant-ring-reverse">
           <path d="M200 100L300 200L200 300L100 200Z" stroke="currentColor" strokeWidth="0.5" />
           <path d="M200 100L200 300" stroke="currentColor" strokeWidth="0.5" />
@@ -148,27 +140,61 @@ function HolographicReveal({ text, className }: { text: string; className?: stri
         <span key={i} className="inline-block overflow-hidden mr-[0.3em]">
           <motion.span
             className="inline-block radiant-text"
-            initial={{
-              opacity: 0,
-              y: '110%',
-              filter: 'blur(8px)',
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-              filter: 'blur(0px)',
-            }}
-            transition={{
-              duration: 1.2,
-              ease: easeOut,
-              delay: 0.6 + i * 0.08,
-            }}
+            initial={{ opacity: 0, y: '110%', filter: 'blur(8px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 1.2, ease: easeOut, delay: 0.6 + i * 0.08 }}
           >
             {word}
           </motion.span>
         </span>
       ))}
     </h1>
+  );
+}
+
+/* ── Foundation: Spiral section divider ── */
+function SpiralDivider() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-10% 0px' });
+  const reduceMotion = useReducedMotion();
+
+  const path = useMemo(() => {
+    const steps = 120;
+    let d = '';
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const x = t * 100;
+      const y = 50 + Math.sin(t * Math.PI * 3) * (8 * Math.exp(-t * 2));
+      d += `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
+    }
+    return d;
+  }, []);
+
+  return (
+    <div ref={ref} className="spiral-divider-wrap" aria-hidden="true">
+      <svg viewBox="0 0 100 100" fill="none" preserveAspectRatio="none" className="spiral-divider-svg">
+        <motion.path
+          d={path}
+          stroke="currentColor"
+          strokeWidth="0.35"
+          vectorEffect="non-scaling-stroke"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={isInView && !reduceMotion ? { pathLength: 1, opacity: 1 } : { pathLength: 1, opacity: 1 }}
+          transition={{ duration: 2.4, ease: easeOut }}
+        />
+      </svg>
+    </div>
+  );
+}
+
+/* ── Foundation: Vault seal icon ── */
+function SealIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 12 12" fill="none" className={className} aria-hidden="true">
+      <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+      <circle cx="6" cy="6" r="2.5" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
+      <circle cx="6" cy="6" r="0.8" fill="currentColor" opacity="0.5" />
+    </svg>
   );
 }
 
@@ -270,8 +296,8 @@ export default function HomeClient({
     <main className="home-research min-h-screen bg-background text-foreground antialiased selection:bg-foreground/10">
       <Header />
 
-      {/* ── Hero: Foundation aesthetic ── */}
-      <section className="hero-research relative overflow-hidden px-5 pt-32 pb-24 md:pt-40 md:pb-32">
+      {/* ── Hero ── */}
+      <section className="hero-research relative overflow-hidden px-5 pt-32 pb-16 md:pt-40 md:pb-20">
         <PrimeRadiantLattice />
 
         <motion.div
@@ -296,7 +322,8 @@ export default function HomeClient({
             variants={fade}
             className="mt-10 text-lg md:text-xl text-muted leading-relaxed max-w-2xl"
           >
-            Solace builds systems that read complexity and decide when capital should move and when it shouldn't.
+            Solace builds systems that read complexity and decide when capital should move
+            — and when it shouldn't.
           </motion.p>
 
           <motion.div variants={fade} className="mt-12 flex items-center gap-10">
@@ -314,19 +341,41 @@ export default function HomeClient({
             </Link>
           </motion.div>
         </motion.div>
-
-      <motion.p variants={fade} className="mt-6 text-sm text-muted">
-        Every decision is recorded in a{' '}
-        <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all">
-          sealed ledger
-        </Link>{' '}
-        before the outcome is known.
-      </motion.p>
-
       </section>
 
+      {/* ── Charter: the founding principle ── */}
+      <section className="charter-section px-5 py-20 md:py-28 border-t border-border">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.9, ease: easeOut }}
+          className="max-w-3xl mx-auto text-center md:text-left"
+        >
+          <SealIcon className="w-8 h-8 text-muted mx-auto md:mx-0 mb-8" />
+          <p className="font-serif text-xl md:text-2xl leading-relaxed text-foreground max-w-2xl">
+            Every decision is recorded in a sealed ledger before the outcome is known.
+          </p>
+          <p className="mt-4 text-sm text-muted">
+            Process first. Outcomes second.{' '}
+            <Link
+              href={OBSERVATORY_HERMES_LEDGER_PATH}
+              className="underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
+            >
+              Inspect the chain
+            </Link>
+            .
+          </p>
+        </motion.div>
+      </section>
+
+      {/* ── Spiral divider ── */}
+      <div className="max-w-3xl mx-auto px-5">
+        <SpiralDivider />
+      </div>
+
       {/* ── Live instruments ── */}
-      <section className="border-t border-border px-5 py-20 md:py-28">
+      <section className="px-5 py-20 md:py-28">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-12">Live instruments</h2>
 
@@ -485,7 +534,9 @@ export default function HomeClient({
             <p className="mt-3 text-sm text-muted leading-relaxed">
               Independent research company building instruments for decision-making under uncertainty.
             </p>
-            <p className="mt-6 text-xs text-muted">© 2026 Solace</p>
+            <p className="mt-6 text-xs text-muted font-mono tracking-wider uppercase">
+              Era I · The First Instrument · 2026
+            </p>
           </div>
 
           <div className="flex gap-16">
@@ -495,11 +546,7 @@ export default function HomeClient({
                 <li><Link href="/brief" className="text-muted hover:text-foreground transition-colors">Brief</Link></li>
                 <li><Link href="/research" className="text-muted hover:text-foreground transition-colors">Notes</Link></li>
                 <li><Link href={OBSERVATORY_PATH} className="text-muted hover:text-foreground transition-colors">Observatory</Link></li>
-                <li>
-                <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="text-muted hover:text-foreground transition-colors">
-                  Decision ledger
-                </Link>
-                </li>
+                <li><Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="text-muted hover:text-foreground transition-colors">Ledger</Link></li>
               </ul>
             </div>
             <div>
