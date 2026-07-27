@@ -489,7 +489,7 @@ export default function HomeClient({
           <div className="max-w-xs">
             <p className="font-serif text-lg font-medium">Solace</p>
             <p className="mt-3 text-sm text-muted leading-relaxed">
-              Independent research company building instruments for decision-making under uncertainty.
+              Independent research company building instruments for decision making under uncertainty.
             </p>
             <p className="mt-6 text-xs text-muted font-mono tracking-wider uppercase">
               Era I · The First Instrument · 2026
