@@ -278,7 +278,7 @@ export default function HomeClient({
           </motion.p>
 
           <HolographicReveal
-            text="Instruments for decision-making under uncertainty."
+            text="Instruments for decision making under uncertainty."
             className="font-serif text-[clamp(2.6rem,6vw,5rem)] font-medium leading-[0.95] tracking-tight"
           />
 
@@ -286,8 +286,7 @@ export default function HomeClient({
             variants={fade}
             className="mt-8 text-lg md:text-xl text-muted leading-relaxed max-w-2xl"
           >
-            Solace builds systems that read complexity and decide when capital should move
-            — and when it shouldn't.
+            Solace builds systems that read complexity and decide when capital should move and when it shouldn't.
           </motion.p>
 
           <motion.div variants={fade} className="mt-10 flex items-center gap-10">
