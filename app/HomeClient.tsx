@@ -150,7 +150,8 @@ const simulationMetrics = (() => {
 const homepageQuestions = [
   {
     question: 'What is Solace?',
-    answer: 'Solace builds instruments for disciplined capital allocation under uncertainty.',
+    answer:
+      'An independent research company building instruments for disciplined capital allocation under uncertainty. Not a fund, not a product, not a trading bot.',
   },
   {
     question: 'What is Hermes?',
@@ -493,14 +494,15 @@ export default function HomeClient({
               </Link>
             </motion.div>
             <motion.p variants={fade} className="section-kicker mt-8">
-              Independent research observatory
+              Independent research · Live instruments
             </motion.p>
             <motion.h1 variants={titleFade} className="hero-quiet-title">
               Systems for reading complexity.
             </motion.h1>
             <motion.p variants={fade} className="hero-quiet-body">
-              Solace builds instruments for disciplined capital allocation under uncertainty. Capital moves
-              only when structure, regime, and timing agree — and most hours, they do not.
+              We build instruments that decide when capital should move — and when it
+              shouldn't. Capital is deployed only when structure, regime, and timing agree
+              — and most hours, they do not.
             </motion.p>
             <motion.div variants={fade} className="hero-quiet-actions">
               <div className="hero-quiet-actions-row">
@@ -540,7 +542,7 @@ export default function HomeClient({
               </Link>
             </motion.div>
             <motion.p variants={fade} className="section-kicker mt-6">
-              Independent research observatory
+              Independent research · Live instruments
             </motion.p>
             <motion.h1
               variants={titleFade}
@@ -549,8 +551,9 @@ export default function HomeClient({
               Systems for reading complexity.
             </motion.h1>
             <motion.p variants={fade} className="hero-body mt-7 max-w-2xl text-lg leading-8 text-muted md:text-xl">
-              Solace builds systems that observe complexity, model possible worlds, and test decisions before they
-              touch the real one. Hermes is the first live instrument.
+              We build instruments that decide when capital should move — and when it
+              shouldn't. Capital is deployed only when structure, regime, and timing agree
+              — and most hours, they do not.
             </motion.p>
             <motion.div variants={fade} className="hero-actions mt-9">
               <div className="hero-actions-row">
@@ -1077,8 +1080,8 @@ export default function HomeClient({
                 Solace
               </p>
               <p className="footer-brand-dek">
-                Independent research company. Instruments for uncertainty, kept only when they survive
-                contact with the world.
+                Independent research company building instruments for decision-making under
+                uncertainty. Kept only when they survive contact with the world.
               </p>
               <p className="footer-stamp">Founded 2026 · Built for decades</p>
               <p className="footer-stamp">
