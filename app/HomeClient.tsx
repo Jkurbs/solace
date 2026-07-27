@@ -495,7 +495,6 @@ export default function HomeClient({
                 <li><Link href="/brief" className="text-muted hover:text-foreground transition-colors">Brief</Link></li>
                 <li><Link href="/research" className="text-muted hover:text-foreground transition-colors">Notes</Link></li>
                 <li><Link href={OBSERVATORY_PATH} className="text-muted hover:text-foreground transition-colors">Observatory</Link></li>
-                <li><Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="text-muted hover:text-foreground transition-colors">Ledger</Link></li>
                 <li>
                 <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="text-muted hover:text-foreground transition-colors">
                   Decision ledger
