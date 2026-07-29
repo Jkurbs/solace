@@ -64,7 +64,7 @@ export default function DashboardAccessGate({
     <DashboardThemeShell>
       <header className="border-b border-neutral-200 bg-[#f7f5ef]/90 backdrop-blur dark:border-neutral-800 dark:bg-[#0a0a0a]/90">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-neutral-950 dark:text-neutral-50">
+          <Link href="/" className="solace-wordmark text-neutral-950 dark:text-neutral-50">
             <Mark size={22} />
             Solace
           </Link>

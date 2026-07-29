@@ -28,7 +28,7 @@ export default function ConsoleHeader({ pendingAccessCount = 0 }: { pendingAcces
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.2em] text-neutral-50"
+            className="solace-wordmark text-neutral-50"
           >
             <Mark size={18} />
             Solace

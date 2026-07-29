@@ -223,7 +223,7 @@ function Header() {
       <div className={`site-header-inner-research ${homeShell} px-5 md:px-0`}>
         <Link href="/" className="site-wordmark-research" aria-label="Solace home">
           <Mark size={18} className="site-mark" />
-          <span className="font-serif text-lg font-medium tracking-tight">Solace</span>
+          Solace
         </Link>
 
         <nav className="site-nav-research" aria-label="Primary navigation">
@@ -545,7 +545,7 @@ export default function HomeClient({
         <div className="home-research-footer-inner mx-auto max-w-5xl">
           <div className="home-research-footer-grid">
             <div className="home-research-footer-brand">
-              <p className="flex items-center gap-2.5 font-serif text-xl font-medium tracking-tight">
+              <p className="solace-wordmark text-xl">
                 <Mark size={20} className="site-mark" />
                 Solace
               </p>
