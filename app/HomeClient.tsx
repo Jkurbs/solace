@@ -56,6 +56,9 @@ const footerContactChannels = [
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
+/** Editorial shell: a step wider than essay measure; prose stays tighter inside. */
+const homeShell = 'max-w-4xl mx-auto';
+
 const fade = {
   hidden: { opacity: 0, y: 12 },
   show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: easeOut } },
@@ -217,7 +220,7 @@ function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <header className="site-header-research">
-      <div className="site-header-inner-research max-w-3xl mx-auto px-5 md:px-0">
+      <div className={`site-header-inner-research ${homeShell} px-5 md:px-0`}>
         <Link href="/" className="site-wordmark-research" aria-label="Solace home">
           <Mark size={18} className="site-mark" />
           <span className="font-serif text-lg font-medium tracking-tight">Solace</span>
@@ -252,7 +255,7 @@ function Header() {
             exit={{ opacity: 0, height: 0 }}
             className="site-menu-panel-research"
           >
-            <div className="max-w-3xl mx-auto px-5 py-6 flex flex-col gap-4">
+            <div className={`${homeShell} px-5 py-6 flex flex-col gap-4`}>
               <Link href="/brief" onClick={() => setMenuOpen(false)}>Brief</Link>
               <Link href="/research" onClick={() => setMenuOpen(false)}>Research</Link>
               <Link href={OBSERVATORY_PATH} onClick={() => setMenuOpen(false)}>Observatory</Link>
@@ -314,7 +317,7 @@ export default function HomeClient({
           initial={heroInitial}
           animate="show"
           variants={stagger}
-          className="relative z-10 max-w-3xl mx-auto"
+          className={`relative z-10 ${homeShell}`}
         >
           <motion.p
             variants={fade}
@@ -380,7 +383,7 @@ export default function HomeClient({
 
       {/* ── Instruments ── */}
       <section className="px-5 py-20 md:py-28 border-t border-border">
-        <div className="max-w-3xl mx-auto">
+        <div className={homeShell}>
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-12">Instruments</h2>
 
           <div className="divide-y divide-border">
@@ -467,7 +470,7 @@ export default function HomeClient({
 
       {/* ── Latest from the observatory ── */}
       <section className="border-t border-border px-5 py-20 md:py-28">
-        <div className="max-w-3xl mx-auto">
+        <div className={homeShell}>
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-12">Latest from the observatory</h2>
           <article>
             <p className="text-xs uppercase tracking-[0.15em] text-muted mb-4">{featured.kind}</p>
@@ -492,7 +495,7 @@ export default function HomeClient({
 
       {/* ── FAQ ── */}
       <section id="faq" className="border-t border-border px-5 py-20 md:py-28 scroll-mt-24">
-        <div className="max-w-3xl mx-auto">
+        <div className={homeShell}>
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-12">Questions</h2>
           <div className="divide-y divide-border">
             {homepageQuestions.map((item, i) => (
