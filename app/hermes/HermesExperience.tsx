@@ -19,6 +19,13 @@ export type HermesProof = {
   openPaths: number | null;
   closedPaths: number;
   hermesLabel: string;
+  liveUnrealizedPnl: number | null;
+  expectancy: number | null;
+  hitRateLabel: string;
+  sampleSize: number;
+  positive: number;
+  negative: number;
+  standDownRateLabel: string;
 };
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
@@ -33,39 +40,19 @@ const stagger = {
   show: { transition: { staggerChildren: 0.07, delayChildren: 0.08 } },
 };
 
-const capabilities = [
-  {
-    n: '01',
-    title: 'Reads structure',
-    text: 'Hermes compresses liquidity, timing, and regime into one operating read — before capital moves.',
-    detail: 'Posture and market condition, not a trade tip feed.',
-  },
-  {
-    n: '02',
-    title: 'Waits on purpose',
-    text: 'Standing down is first-class. Waiting is competence when the field does not earn deployment.',
-    detail: 'No pressure to always be in a path.',
-  },
-  {
-    n: '03',
-    title: 'Seals first',
-    text: 'Every decision gets a public row before the outcome is known. Wins, losses, and waits alike.',
-    detail: 'Checkable math — not screenshots after the fact.',
-  },
-  {
-    n: '04',
-    title: 'Protects capital',
-    text: 'Risk is layered: posture, sizing, drawdown guards, kill switches. Money movement stays separate from signal.',
-    detail: 'Customer capital is not yet connected.',
-  },
-] as const;
-
 const accessSteps = [
   { n: '01', title: 'Review', text: 'Every request is read. Access opens in stages.' },
   { n: '02', title: 'Profile', text: 'You set the risk bounds Hermes must respect.' },
   { n: '03', title: 'Deposit', text: 'Capital is recorded to your account when rails are ready.' },
   { n: '04', title: 'Allocation', text: 'Hermes may act only after settlement, treasury, and risk checks clear.' },
 ] as const;
+
+const pnlFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  maximumFractionDigits: 2,
+  signDisplay: 'always',
+  style: 'currency',
+});
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -79,9 +66,9 @@ function Header() {
         </Link>
 
         <nav className="hermes-paper-nav" aria-label="Primary">
+          <a href="#profit">Profit</a>
+          <a href="#trust">Trust</a>
           <Link href={OBSERVATORY_HERMES_LEDGER_PATH}>Ledger</Link>
-          <Link href="/brief">Brief</Link>
-          <a href={DOCS_API_URL}>Market API</a>
         </nav>
 
         <div className="hermes-paper-actions">
@@ -111,15 +98,15 @@ function Header() {
             exit={{ opacity: 0, height: 0 }}
             className="hermes-paper-menu"
           >
+            <a href="#profit" onClick={() => setMenuOpen(false)}>
+              Profit
+            </a>
+            <a href="#trust" onClick={() => setMenuOpen(false)}>
+              Trust
+            </a>
             <Link href={OBSERVATORY_HERMES_LEDGER_PATH} onClick={() => setMenuOpen(false)}>
               Ledger
             </Link>
-            <Link href="/brief" onClick={() => setMenuOpen(false)}>
-              Brief
-            </Link>
-            <a href={DOCS_API_URL} onClick={() => setMenuOpen(false)}>
-              Market API
-            </a>
             <a href="#request-access" onClick={() => setMenuOpen(false)}>
               Request access
             </a>
@@ -130,41 +117,126 @@ function Header() {
   );
 }
 
-function ProofStrip({ proof }: { proof: HermesProof }) {
+function TwinPillars({ proof }: { proof: HermesProof }) {
   const openLabel = proof.openPaths === null ? '—' : String(proof.openPaths);
+  const livePnl =
+    proof.liveUnrealizedPnl === null ? '—' : pnlFormatter.format(proof.liveUnrealizedPnl);
+  const expectancy =
+    proof.expectancy === null ? '—' : pnlFormatter.format(proof.expectancy);
+  const liveTone =
+    proof.liveUnrealizedPnl === null
+      ? undefined
+      : proof.liveUnrealizedPnl > 0
+        ? 'is-pos'
+        : proof.liveUnrealizedPnl < 0
+          ? 'is-neg'
+          : undefined;
 
   return (
-    <section className="hermes-paper-proof" aria-label="Public proof">
+    <section className="hermes-pillars" aria-label="Profit and trust">
       <div className="hermes-paper-shell">
-        <p className="hermes-paper-kicker">Built to be checked</p>
-        <h2 className="hermes-paper-section-title">Live facts you can check.</h2>
+        <p className="hermes-paper-kicker">What Hermes is for</p>
+        <h2 className="hermes-paper-section-title hermes-pillars-title">Two things. Only two.</h2>
         <p className="hermes-paper-lede">
-          What is public today — not a pitch deck. Founder capital only; the sample is young and labeled that way.
+          Put capital to work when the field earns it — and leave a sealed record so you never have to take
+          anyone&apos;s word for it.
         </p>
 
-        <div className="hermes-paper-proof-grid">
-          <div className="hermes-paper-proof-cell">
-            <span>Live posture</span>
-            <strong>{proof.posture ?? '—'}</strong>
-            <em>{proof.posture ? proof.postureAge ?? 'Public reading' : 'No fresh public reading'}</em>
-          </div>
-          <div className="hermes-paper-proof-cell">
-            <span>Sealed decisions</span>
-            <strong>{proof.sealedDecisions}</strong>
-            <em>On the public chain</em>
-          </div>
-          <div className="hermes-paper-proof-cell">
-            <span>Open · closed paths</span>
-            <strong>
-              {openLabel} · {proof.closedPaths}
-            </strong>
-            <em>Live marks · close rows</em>
-          </div>
-          <div className="hermes-paper-proof-cell">
-            <span>Capital</span>
-            <strong>Founder only</strong>
-            <em>$0 customer funds · {proof.hermesLabel}</em>
-          </div>
+        <div className="hermes-pillars-grid">
+          {/* ── Profit ── */}
+          <article id="profit" className="hermes-pillar hermes-pillar-profit scroll-mt-28">
+            <p className="hermes-pillar-kicker">01 · Profit</p>
+            <h3>Capital that works when it should — and waits when it shouldn&apos;t.</h3>
+            <p>
+              Hermes allocates founder capital under uncertainty. Outcomes are public on sealed closes. The
+              sample is young; the numbers are real dollars at risk, not a marketing track.
+            </p>
+
+            <div className="hermes-pillar-metrics">
+              <div>
+                <span>Live open PnL</span>
+                <strong className={liveTone}>{livePnl}</strong>
+                <em>
+                  {proof.posture
+                    ? `${proof.posture}${proof.postureAge ? ` · ${proof.postureAge}` : ''}`
+                    : 'No fresh public reading'}
+                </em>
+              </div>
+              <div>
+                <span>Mean sealed close</span>
+                <strong>{expectancy}</strong>
+                <em>
+                  {proof.sampleSize
+                    ? `n=${proof.sampleSize} · founder capital`
+                    : 'No sealed closes with PnL yet'}
+                </em>
+              </div>
+              <div>
+                <span>Directional hit rate</span>
+                <strong>{proof.hitRateLabel}</strong>
+                <em>
+                  {proof.sampleSize
+                    ? `${proof.positive} up · ${proof.negative} down`
+                    : 'After directional outcomes only'}
+                </em>
+              </div>
+              <div>
+                <span>Open · closed paths</span>
+                <strong>
+                  {openLabel} · {proof.closedPaths}
+                </strong>
+                <em>Live marks · close rows on chain</em>
+              </div>
+            </div>
+
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-btn hermes-paper-btn-secondary">
+              See outcomes on the ledger
+              <span aria-hidden="true">→</span>
+            </Link>
+          </article>
+
+          {/* ── Trust ── */}
+          <article id="trust" className="hermes-pillar hermes-pillar-trust scroll-mt-28">
+            <p className="hermes-pillar-kicker">02 · Trust</p>
+            <h3>Every decision sealed before the outcome is known.</h3>
+            <p>
+              Wins, losses, and waits get rows. The chain is hashed and public. You can recompute it yourself —
+              no account, no permission. That is how Hermes earns confidence.
+            </p>
+
+            <div className="hermes-pillar-metrics">
+              <div>
+                <span>Sealed decisions</span>
+                <strong>{proof.sealedDecisions}</strong>
+                <em>On the public chain</em>
+              </div>
+              <div>
+                <span>Standing down</span>
+                <strong>{proof.standDownRateLabel}</strong>
+                <em>Share of decisions that wait</em>
+              </div>
+              <div>
+                <span>Capital at risk</span>
+                <strong>Founder only</strong>
+                <em>$0 customer funds · {proof.hermesLabel}</em>
+              </div>
+              <div>
+                <span>Verifiable</span>
+                <strong>By math</strong>
+                <em>Hash chain · open script</em>
+              </div>
+            </div>
+
+            <div className="hermes-pillar-actions">
+              <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-btn hermes-paper-btn-primary">
+                Inspect the ledger
+                <span aria-hidden="true">→</span>
+              </Link>
+              <Link href={OBSERVATORY_PATH} className="hermes-paper-btn hermes-paper-btn-secondary">
+                Observatory
+              </Link>
+            </div>
+          </article>
         </div>
       </div>
     </section>
@@ -191,107 +263,48 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
             Hermes · The first instrument
           </motion.p>
           <motion.h1 variants={fade} className="hermes-paper-hero-title">
-            Capital that waits until the signal earns it.
+            Profit you can see. Trust you can check.
           </motion.h1>
           <motion.p variants={fade} className="hermes-paper-hero-lede">
-            A live instrument for allocation under uncertainty. Hermes reads liquidity, timing, and regime —
-            standing down until deployment is earned.
+            Hermes puts capital to work under uncertainty — and seals every decision in a public ledger before
+            the outcome is known.
           </motion.p>
           <motion.p variants={fade} className="hermes-paper-status">
             Controlled access · founder capital live · customer capital not yet connected
           </motion.p>
           <motion.div variants={fade} className="hermes-paper-hero-actions">
-            <a href="#request-access" className="hermes-paper-btn hermes-paper-btn-primary">
-              Request access
+            <a href="#profit" className="hermes-paper-btn hermes-paper-btn-primary">
+              See profit
               <span aria-hidden="true">→</span>
             </a>
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-btn hermes-paper-btn-secondary">
-              Inspect the ledger
-            </Link>
+            <a href="#trust" className="hermes-paper-btn hermes-paper-btn-secondary">
+              See trust
+            </a>
+            <a href="#request-access" className="hermes-paper-btn hermes-paper-btn-secondary">
+              Request access
+            </a>
           </motion.div>
         </motion.div>
       </section>
 
-      <ProofStrip proof={proof} />
+      <TwinPillars proof={proof} />
 
       {/* ── Product surface: original sticky scroll dashboard reveal ── */}
       <section className="hermes-paper-surface">
         <div className="hermes-paper-shell">
-          <p className="hermes-paper-kicker">One surface</p>
-          <h2 className="hermes-paper-section-title">Posture, capital, and why it waits or acts.</h2>
+          <p className="hermes-paper-kicker">The surface</p>
+          <h2 className="hermes-paper-section-title">Where profit and process meet.</h2>
           <p className="hermes-paper-lede">
-            Scroll through the same public-safe brief surface — capital, posture, outlook, and decisions —
-            without opening a private terminal.
+            Scroll the illustrative dashboard — capital, posture, outlook, decisions — the same brief Hermes
+            uses in public.
           </p>
         </div>
         <DashboardReveal />
         <div className="hermes-paper-shell">
           <p className="hermes-paper-footnote">
-            Illustrative board art for orientation. Live posture and sealed decisions are on the public ledger
-            and proof strip above.
+            Board art is illustrative. Live PnL, posture, and sealed outcomes are in the pillars and ledger
+            above.
           </p>
-        </div>
-      </section>
-
-      {/* ── Capabilities 01–04 ── */}
-      <section className="hermes-paper-capabilities">
-        <div className="hermes-paper-shell">
-          <p className="hermes-paper-kicker">How Hermes works</p>
-          <h2 className="hermes-paper-section-title">Four disciplines. One instrument.</h2>
-
-          <div className="hermes-paper-cap-list">
-            {capabilities.map((item) => (
-              <article key={item.n} className="hermes-paper-cap">
-                <span className="hermes-paper-cap-n">{item.n}</span>
-                <div>
-                  <h3>{item.title}</h3>
-                  <p>{item.text}</p>
-                  <em>{item.detail}</em>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Trust / ledger ── */}
-      <section className="hermes-paper-trust">
-        <div className="hermes-paper-shell hermes-paper-trust-inner">
-          <div>
-            <p className="hermes-paper-kicker">Protected by process</p>
-            <h2 className="hermes-paper-section-title">Sealed before outcome. Verifiable by math.</h2>
-            <p className="hermes-paper-lede">
-              The decision ledger is Hermes’s deep record inside the Observatory. Every row is hashed and chained.
-              Anyone can recompute it — no account required.
-            </p>
-            <div className="hermes-paper-hero-actions">
-              <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-btn hermes-paper-btn-primary">
-                Open the ledger
-                <span aria-hidden="true">→</span>
-              </Link>
-              <Link href={OBSERVATORY_PATH} className="hermes-paper-btn hermes-paper-btn-secondary">
-                Observatory
-              </Link>
-            </div>
-          </div>
-          <ul className="hermes-paper-trust-points">
-            <li>
-              <strong>Sealed first</strong>
-              <span>Row exists before the outcome.</span>
-            </li>
-            <li>
-              <strong>Everything counts</strong>
-              <span>Waits and losses stay on the chain.</span>
-            </li>
-            <li>
-              <strong>Mechanism private</strong>
-              <span>Sizes and entries stay off the public sheet.</span>
-            </li>
-            <li>
-              <strong>Young sample</strong>
-              <span>A record of decisions, still early.</span>
-            </li>
-          </ul>
         </div>
       </section>
 
@@ -323,28 +336,28 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
           <h2 className="hermes-paper-section-title">Tell us who you are.</h2>
           <p className="hermes-paper-lede">
             Hermes is introduced in stages. Every request is reviewed; if selected, we reach out directly. Until
-            then, the ledger, brief, and public readings stay open.
+            then, profit metrics and the ledger stay public.
           </p>
           <RequestAccessForm />
         </div>
       </section>
 
-      {/* ── Deeper ── */}
+      {/* ── Deeper (quiet) ── */}
       <section className="hermes-paper-deeper">
         <div className="hermes-paper-shell">
-          <p className="hermes-paper-kicker">Go deeper</p>
+          <p className="hermes-paper-kicker">If you want more</p>
           <div className="hermes-paper-deeper-grid">
             <Link href="/brief" className="hermes-paper-deeper-card">
               <strong>Technical brief</strong>
-              <span>Architecture, risk, verification commitments.</span>
+              <span>How Hermes is disciplined and checked.</span>
+            </Link>
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-deeper-card">
+              <strong>Decision ledger</strong>
+              <span>Sealed outcomes and process, in full.</span>
             </Link>
             <Link href="/gates" className="hermes-paper-deeper-card">
               <strong>Gate conditions</strong>
               <span>What must be true before capital moves.</span>
-            </Link>
-            <Link href="/research" className="hermes-paper-deeper-card">
-              <strong>Research notes</strong>
-              <span>The four decisions that govern capital.</span>
             </Link>
             <a href={DOCS_API_URL} className="hermes-paper-deeper-card">
               <strong>Market API</strong>
@@ -356,7 +369,7 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
 
       <footer className="hermes-paper-foot">
         <div className="hermes-paper-shell hermes-paper-foot-inner">
-          <p>Hermes · The first instrument · {proof.hermesLabel}</p>
+          <p>Hermes · Profit · Trust · {proof.hermesLabel}</p>
           <span className="hermes-paper-foot-links">
             <ThemeToggle />
             <Link href="/">Home</Link>

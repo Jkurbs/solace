@@ -15658,6 +15658,148 @@ section h3 {
   }
 }
 
+/* ── Twin pillars: Profit + Trust ── */
+.hermes-pillars {
+  padding: clamp(3rem, 7vw, 5rem) 0;
+  border-bottom: 1px solid var(--border);
+  background: #f5f5f4;
+}
+
+.hermes-pillars-title {
+  max-width: 20rem;
+}
+
+.hermes-pillars-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-top: 2.25rem;
+}
+
+.hermes-pillar {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: clamp(1.4rem, 3vw, 1.85rem);
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--surface, #fff);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.hermes-pillar-kicker {
+  margin: 0 0 0.85rem;
+  color: var(--faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.hermes-pillar h3 {
+  margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.35rem, 2.6vw, 1.75rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.hermes-pillar > p {
+  margin: 0.85rem 0 0;
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.hermes-pillar-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin: 1.5rem 0 1.35rem;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  overflow: hidden;
+  background: #fafaf9;
+}
+
+.hermes-pillar-metrics > div {
+  padding: 0.9rem 0.95rem;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.hermes-pillar-metrics > div:nth-child(2n) {
+  border-right: 0;
+}
+
+.hermes-pillar-metrics > div:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.hermes-pillar-metrics span {
+  display: block;
+  color: var(--faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hermes-pillar-metrics strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.hermes-pillar-metrics strong.is-pos {
+  color: #3d6b4f;
+}
+
+.hermes-pillar-metrics strong.is-neg {
+  color: #b45a52;
+}
+
+.hermes-pillar-metrics em {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--muted);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.58rem;
+  font-style: normal;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.hermes-pillar > .hermes-paper-btn,
+.hermes-pillar-actions {
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+.hermes-pillar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+@media (min-width: 900px) {
+  .hermes-pillars-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: stretch;
+  }
+
+  .hermes-pillar {
+    min-height: 100%;
+  }
+}
+
 /* Product surface — hosts the original hx-pin dashboard walkthrough */
 .hermes-paper-surface {
   padding: clamp(3rem, 7vw, 4.5rem) 0 0;

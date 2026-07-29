@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
 import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
-import { computeLedgerScoreboard } from '@/features/hermes-ledger/scoreboard';
+import { computeLedgerScoreboard, formatPercent } from '@/features/hermes-ledger/scoreboard';
 import { listHermesLedgerProcessRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { hermesVersion } from '@/features/hermes-version';
@@ -12,11 +12,11 @@ import HermesExperience, { type HermesProof } from './HermesExperience';
 export const metadata: Metadata = {
   title: 'Solace — Hermes · Capital Allocation',
   description:
-    'A live instrument for capital allocation under uncertainty. Hermes reads liquidity, timing, and regime — standing down until signal earns deployment.',
+    'Hermes puts capital to work under uncertainty — and seals every decision in a public ledger you can check.',
   openGraph: {
-    title: 'Hermes — the first instrument',
+    title: 'Hermes — profit and trust',
     description:
-      'A live instrument for capital allocation under uncertainty. Standing down until signal earns deployment.',
+      'A live capital instrument with sealed decisions. Founder capital live; outcomes and process are public.',
   },
 };
 
@@ -78,13 +78,22 @@ async function getHermesProof(): Promise<HermesProof> {
       minutes < 1 ? 'just now' : minutes < 60 ? `${minutes}m ago` : `${Math.floor(minutes / 60)}h ago`;
   }
 
+  const { performance, process } = scoreboard;
+
   return {
     posture,
     postureAge,
-    sealedDecisions: scoreboard.process.sealedDecisions,
-    openPaths: scoreboard.process.openPaths,
-    closedPaths: scoreboard.process.closedPaths,
+    sealedDecisions: process.sealedDecisions,
+    openPaths: process.openPaths,
+    closedPaths: process.closedPaths,
     hermesLabel: hermesVersion.label,
+    liveUnrealizedPnl: openExposure?.unrealizedPnl ?? null,
+    expectancy: performance.expectancy,
+    hitRateLabel: formatPercent(performance.hitRate),
+    sampleSize: performance.sampleSize,
+    positive: performance.positive,
+    negative: performance.negative,
+    standDownRateLabel: formatPercent(process.standDownRate),
   };
 }
 
