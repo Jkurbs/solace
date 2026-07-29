@@ -6,7 +6,7 @@ import Mark from '../Mark';
 export const metadata: Metadata = {
   title: 'Solace — Technical Brief',
   description:
-    'What Solace builds, how it is disciplined, and how it can be checked. V0.5, July 2026. No performance claims.',
+    'What Solace builds, how it is disciplined, and how it can be checked. V0.5, July 2026.',
 };
 
 const gate = [
@@ -133,7 +133,7 @@ const sections: BriefSection[] = [
     number: '09',
     title: 'Disclosures',
     body: [
-      'This document describes systems under active development. It is not an offer of advisory services, not investment advice, and contains no performance claims. Access to any Solace instrument is subject to eligibility and applicable regulation. This brief is versioned; later versions supersede earlier ones, and the version history will remain public.',
+      'This document describes systems under active development. It is not an offer of advisory services or investment advice. Access to any Solace instrument is subject to eligibility and applicable regulation. This brief is versioned; later versions supersede earlier ones, and the version history will remain public.',
     ],
   },
 ];
@@ -141,40 +141,29 @@ const sections: BriefSection[] = [
 export default function BriefPage() {
   return (
     <main className="brief-paper relative min-h-screen overflow-x-hidden">
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-black/10 bg-[rgba(247,242,232,0.86)] backdrop-blur-xl">
+      <header className="brief-paper-header fixed inset-x-0 top-0 z-40">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-5 py-4 md:px-8">
-          <Link
-            href="/"
-            className="solace-wordmark text-[#1c1917]"
-          >
+          <Link href="/" className="solace-wordmark">
             <Mark size={20} />
             Solace
           </Link>
-          <Link
-            href="/"
-            className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-[#6b6354] transition-colors hover:text-[#13110c]"
-          >
+          <Link href="/" className="brief-paper-nav">
             Home
           </Link>
         </div>
       </header>
 
       <article className="mx-auto max-w-4xl px-5 pb-24 pt-36 md:px-8">
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.24em] text-[#7c7468]">
-          Solace Technical Brief
-        </p>
-        <h1 className="mt-5 max-w-2xl font-serif text-5xl font-medium leading-tight text-[#13110c] md:text-7xl">
-          What we build, and how to check it.
-        </h1>
-        <p className="mt-6 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-[#6b6354]">
+        <p className="brief-paper-kicker">Solace Technical Brief</p>
+        <h1 className="brief-paper-title mt-5">What we build, and how to check it.</h1>
+        <p className="brief-paper-meta mt-6">
           V0.5 · July 2026 · Supersedes{' '}
           <Link href="/brief/v0-4" className="brief-author-link">
             V0.4
-          </Link>{' '}
-          · No performance claims
+          </Link>
         </p>
 
-        <div id="author" className="mt-10 border-t border-black/10 pt-8">
+        <div id="author" className="brief-paper-rule mt-10 border-t pt-8">
           <div className="flex items-center gap-5">
             <img
               src="/assets/kerby-jean.jpg"
@@ -184,14 +173,14 @@ export default function BriefPage() {
               className="brief-author-photo"
             />
             <div>
-              <p className="font-serif text-xl font-medium text-[#13110c] md:text-2xl">Kerby Jean</p>
-              <p className="mt-1 max-w-xl text-sm leading-6 text-[#4f483c]">
+              <p className="brief-paper-section-title text-xl md:text-2xl">Kerby Jean</p>
+              <p className="mt-1 max-w-xl text-sm leading-6 text-[color:var(--muted)]">
                 Founder. Software engineer, four years building production systems at Apple. Today,
                 every Solace instrument is designed, built, and operated by him end to end.
               </p>
             </div>
           </div>
-          <div className="mt-6 max-w-2xl space-y-4 text-base leading-8 text-[#3f3a30]">
+          <div className="brief-paper-body mt-6 max-w-2xl space-y-4">
             <p>
               I don&rsquo;t have a background in institutional trading, asset management, or quantitative
               finance. I&rsquo;m not going to imply otherwise.
@@ -211,7 +200,7 @@ export default function BriefPage() {
               until it isn&rsquo;t, and if it changes, this brief will say so.
             </p>
           </div>
-          <p className="mt-5 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-[#6b6354]">
+          <p className="brief-paper-meta mt-5">
             <a
               href="https://github.com/Jkurbs"
               target="_blank"
@@ -228,17 +217,17 @@ export default function BriefPage() {
           </p>
         </div>
 
-        <nav className="mt-12 border-t border-black/10 pt-8" aria-label="Brief contents">
-          <p className="font-mono text-[0.62rem] uppercase tracking-[0.2em] text-[#7c7468]">Contents</p>
+        <nav className="brief-paper-rule mt-12 border-t pt-8" aria-label="Brief contents">
+          <p className="brief-paper-kicker">Contents</p>
           <ol className="mt-4 grid gap-x-10 gap-y-2.5 sm:grid-cols-2">
             {sections.map((section) => (
               <li key={section.number}>
                 <a
                   href={`#section-${section.number}`}
-                  className="inline-flex items-baseline gap-3 text-[#4f483c] transition-colors hover:text-[#13110c]"
+                  className="inline-flex items-baseline gap-3 text-[color:var(--brief-body)] transition-colors hover:text-[color:var(--foreground)]"
                 >
-                  <span className="font-mono text-xs text-[#7c7468]">{section.number}</span>
-                  <span className="font-serif text-base">{section.title}</span>
+                  <span className="font-mono text-xs text-[color:var(--muted)]">{section.number}</span>
+                  <span className="brief-paper-section-title text-base">{section.title}</span>
                 </a>
               </li>
             ))}
@@ -247,19 +236,23 @@ export default function BriefPage() {
 
         <div className="mt-16 space-y-14">
           {sections.map((section) => (
-            <section key={section.number} id={`section-${section.number}`} className="border-t border-black/10 pt-8">
+            <section
+              key={section.number}
+              id={`section-${section.number}`}
+              className="brief-paper-rule border-t pt-8"
+            >
               <div className="grid gap-5 md:grid-cols-[6rem_1fr]">
-                <p className="font-mono text-xs text-[#7c7468]">{section.number}</p>
+                <p className="font-mono text-xs text-[color:var(--muted)]">{section.number}</p>
                 <div>
-                  <h2 className="font-serif text-3xl font-medium text-[#13110c] md:text-4xl">{section.title}</h2>
-                  <div className="mt-5 space-y-4 text-base leading-8 text-[#3f3a30]">
+                  <h2 className="brief-paper-section-title text-3xl md:text-4xl">{section.title}</h2>
+                  <div className="brief-paper-body mt-5 space-y-4">
                     {section.body.map((paragraph) => (
                       <p key={paragraph.slice(0, 40)}>{paragraph}</p>
                     ))}
                   </div>
 
                   {section.list ? (
-                    <ul className="mt-5 list-disc space-y-3 pl-5 text-base leading-8 text-[#3f3a30] marker:text-[#b8955a]">
+                    <ul className="brief-list brief-paper-body mt-5 space-y-3">
                       {section.list.map((item) => (
                         <li key={item.slice(0, 40)}>{item}</li>
                       ))}
@@ -309,7 +302,7 @@ export default function BriefPage() {
                   )}
 
                   {section.after ? (
-                    <div className="mt-5 space-y-4 text-base leading-8 text-[#3f3a30]">
+                    <div className="brief-paper-body mt-5 space-y-4">
                       {section.after.map((paragraph) => (
                         <p key={paragraph.slice(0, 40)}>{paragraph}</p>
                       ))}
@@ -337,14 +330,9 @@ export default function BriefPage() {
           ))}
         </div>
 
-        <div className="mt-20 flex flex-col gap-3 border-t border-black/10 pt-6 md:flex-row md:items-center md:justify-between">
-          <p className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-[#6b6354]">
-            © 2026 Solace · Technical Brief V0.5
-          </p>
-          <Link
-            href="/"
-            className="font-mono text-xs uppercase tracking-[0.18em] text-[#6b6354] transition-colors hover:text-[#13110c]"
-          >
+        <div className="brief-paper-rule mt-20 flex flex-col gap-3 border-t pt-6 md:flex-row md:items-center md:justify-between">
+          <p className="brief-paper-foot">© 2026 Solace · Technical Brief V0.5</p>
+          <Link href="/" className="brief-paper-nav">
             Return home
           </Link>
         </div>
