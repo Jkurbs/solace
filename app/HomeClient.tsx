@@ -1,20 +1,58 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, useMemo, useRef } from 'react';
-import { motion, useReducedMotion, useInView, AnimatePresence } from 'framer-motion';
+import { useEffect, useState, useMemo } from 'react';
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 
 import Mark from './Mark';
 import ThemeToggle from './ThemeToggle';
 import { gateDomains } from '@/features/gates/conditions';
-import type { HermesPublicMarketRead } from '@/features/hermes-market/types';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
-import { hermesBetaVersionLabel } from '@/features/hermes-version';
 import { OBSERVATORY_HERMES_LEDGER_PATH, OBSERVATORY_PATH } from '@/features/observatory/paths';
+import { DOCS_API_URL } from '@/lib/docs';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
-import type { PlateTint } from '@/lib/note-plate';
 
 import { calibration } from './calibration';
+
+const footerInstruments = [
+  { name: 'Hermes', status: 'Live', href: '/hermes' },
+  { name: 'Oracle', status: 'Keeping score', href: '/oracle' },
+  { name: 'Simulation', status: 'In progress', href: '/gates#simulation' },
+  { name: 'Glorya', status: 'Evaluating', href: '/glorya' },
+] as const;
+
+const footerContactChannels = [
+  {
+    label: 'Request access',
+    detail: 'Hermes controlled access',
+    href: '/hermes#request-access',
+    external: false,
+  },
+  {
+    label: 'hello@solace.fyi',
+    detail: 'General',
+    href: 'mailto:hello@solace.fyi',
+    external: false,
+  },
+  {
+    label: 'support@solace.fyi',
+    detail: 'Support',
+    href: 'mailto:support@solace.fyi',
+    external: false,
+  },
+  {
+    label: 'security@solace.fyi',
+    detail: 'Security',
+    href: 'mailto:security@solace.fyi',
+    external: false,
+  },
+  {
+    label: 'X @solacefyi',
+    detail: 'Public notes',
+    href: 'https://x.com/solacefyi',
+    external: true,
+  },
+] as const;
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -51,11 +89,23 @@ const homepageQuestions = [
     answer:
       'Not yet. Hermes is in controlled access. Public readings are available; customer capital is not yet connected.',
   },
+  {
+    question: 'How do I request access?',
+    answer:
+      'From the Hermes page, share a short note about who you are and why you’re interested. Every request is reviewed; if selected, we reach out directly. Until then, public readings, the ledger, and research stay open to everyone.',
+  },
 ];
 
 export type LatestNote = { title: string; dek: string; label: string };
-export type HeroPill = { tag: string; title: string; href: string };
-export type NewsItem = { slug: string; title: string; dek: string; label: string; date: string; tint: PlateTint };
+
+export type FeaturedReading = {
+  kind: 'News' | 'Research';
+  title: string;
+  dek: string;
+  label: string;
+  href: string;
+  cta: string;
+};
 
 export type HermesTelemetry = {
   posture: HermesPublicPosture;
@@ -217,14 +267,10 @@ function Header() {
 
 export default function HomeClient({
   hermesTelemetry,
-  latestNote,
+  featured,
 }: {
-  hermesMarket: HermesPublicMarketRead | null;
   hermesTelemetry: HermesTelemetry | null;
-  latestNote: LatestNote;
-  ledgerVault: unknown;
-  newsItems: NewsItem[];
-  pill: HeroPill;
+  featured: FeaturedReading;
 }) {
   const reduceMotion = useReducedMotion();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -286,15 +332,16 @@ export default function HomeClient({
             variants={fade}
             className="mt-8 text-lg md:text-xl text-muted leading-relaxed max-w-2xl"
           >
-            Solace builds systems that read complexity and decide when capital should move and when it shouldn't.
+            Solace builds systems that read complexity and decide when capital should move and when it shouldn&apos;t.
+            Hermes is the first instrument — live, sealed, and still in controlled access.
           </motion.p>
 
-          <motion.div variants={fade} className="mt-10 flex items-center gap-10">
+          <motion.div variants={fade} className="mt-10 flex flex-wrap items-center gap-x-10 gap-y-4">
             <Link
               href="/hermes"
-              className="text-sm font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
+              className="text-sm font-medium text-foreground underline underline-offset-4 decoration-foreground/40 hover:decoration-foreground transition-all"
             >
-              Explore Hermes
+              Meet Hermes
             </Link>
             <Link
               href="/brief"
@@ -331,10 +378,10 @@ export default function HomeClient({
         </motion.div>
       </section>
 
-      {/* ── Live instruments ── */}
+      {/* ── Instruments ── */}
       <section className="px-5 py-20 md:py-28 border-t border-border">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-12">Live instruments</h2>
+          <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-12">Instruments</h2>
 
           <div className="divide-y divide-border">
             <Link href="/hermes" className="group block py-8 first:pt-0">
@@ -391,10 +438,10 @@ export default function HomeClient({
                     Synthetic worlds. Same decision engine. Failures stay off the wire.
                   </p>
                 </div>
-                <span className="text-sm text-muted shrink-0">Building</span>
+                <span className="text-sm text-muted shrink-0">In progress</span>
               </div>
               <p className="mt-4 text-sm text-muted font-mono tabular-nums">
-                {simulationMetrics.met}/{simulationMetrics.total} gate conditions met
+                Gate progress · {simulationMetrics.met} of {simulationMetrics.total} conditions
               </p>
             </Link>
 
@@ -411,32 +458,33 @@ export default function HomeClient({
                 <span className="text-sm text-muted shrink-0">Evaluating</span>
               </div>
               <p className="mt-4 text-sm text-muted font-mono tabular-nums">
-                $1M revenue gate · 0 allocations
+                Waiting on $1M revenue gate · no allocations yet
               </p>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Latest research ── */}
+      {/* ── Latest from the observatory ── */}
       <section className="border-t border-border px-5 py-20 md:py-28">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-12">Latest from the observatory</h2>
           <article>
+            <p className="text-xs uppercase tracking-[0.15em] text-muted mb-4">{featured.kind}</p>
             <h3 className="font-serif text-3xl md:text-4xl font-medium leading-tight">
-              {latestNote.title}
+              {featured.title}
             </h3>
             <p className="mt-4 text-lg text-muted leading-relaxed max-w-2xl">
-              {latestNote.dek}
+              {featured.dek}
             </p>
             <div className="mt-8 flex items-center gap-6">
               <Link
-                href="/research"
+                href={featured.href}
                 className="text-sm font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
               >
-                Read the note
+                {featured.cta}
               </Link>
-              <span className="text-sm text-muted">{latestNote.label}</span>
+              <span className="text-sm text-muted">{featured.label}</span>
             </div>
           </article>
         </div>
@@ -484,42 +532,83 @@ export default function HomeClient({
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-border px-5 py-12 md:py-16">
-        <div className="max-w-3xl mx-auto flex flex-col md:flex-row justify-between gap-12">
-          <div className="max-w-xs">
-            <p className="font-serif text-lg font-medium">Solace</p>
-            <p className="mt-3 text-sm text-muted leading-relaxed">
-              Independent research company building instruments for decision making under uncertainty.
-            </p>
-            <p className="mt-6 text-xs text-muted font-mono tracking-wider uppercase">
-              Era I · The First Instrument · 2026
-            </p>
+      <footer className="home-research-footer border-t border-border px-5 pt-14 pb-10 md:pt-20 md:pb-12">
+        <div className="home-research-footer-inner mx-auto max-w-5xl">
+          <div className="home-research-footer-grid">
+            <div className="home-research-footer-brand">
+              <p className="flex items-center gap-2.5 font-serif text-xl font-medium tracking-tight">
+                <Mark size={20} className="site-mark" />
+                Solace
+              </p>
+              <p className="mt-4 text-sm text-muted leading-relaxed max-w-xs">
+                Independent research company building instruments for decision making under uncertainty.
+                Kept only when they survive contact with the world.
+              </p>
+              <p className="mt-6 text-xs text-muted font-mono tracking-wider uppercase">
+                Era I · The First Instrument · 2026
+              </p>
+              <p className="mt-2 text-xs text-muted">
+                Built by{' '}
+                <Link href="/brief#author" className="underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/50 hover:text-foreground transition-colors">
+                  Kerby Jean
+                </Link>
+              </p>
+            </div>
+
+            <div>
+              <p className="home-research-footer-heading">Research</p>
+              <ul className="home-research-footer-list">
+                <li><Link href="/brief">Technical brief</Link></li>
+                <li><Link href="/research">Research notes</Link></li>
+                <li><Link href="/news">News</Link></li>
+                <li><Link href={OBSERVATORY_PATH}>Observatory</Link></li>
+                <li><Link href={OBSERVATORY_HERMES_LEDGER_PATH}>Decision ledger</Link></li>
+                <li><Link href="/gates">Gate conditions</Link></li>
+                <li><a href={DOCS_API_URL}>Market API</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="home-research-footer-heading">Instruments</p>
+              <ul className="home-research-footer-list home-research-footer-instruments">
+                {footerInstruments.map((instrument) => (
+                  <li key={instrument.name}>
+                    <Link href={instrument.href}>{instrument.name}</Link>
+                    <span className="home-research-footer-status">{instrument.status}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <p className="home-research-footer-heading">Contact</p>
+              <ul className="home-research-footer-list home-research-footer-contact">
+                {footerContactChannels.map((channel) => (
+                  <li key={channel.href}>
+                    <span className="home-research-footer-channel-detail">{channel.detail}</span>
+                    {channel.external ? (
+                      <a href={channel.href} target="_blank" rel="noreferrer">
+                        {channel.label}
+                      </a>
+                    ) : channel.href.startsWith('mailto:') ? (
+                      <a href={channel.href}>{channel.label}</a>
+                    ) : (
+                      <Link href={channel.href}>{channel.label}</Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          <div className="flex gap-16">
-            <div>
-              <p className="text-xs uppercase tracking-[0.15em] text-muted mb-4">Research</p>
-              <ul className="space-y-3 text-sm">
-                <li><Link href="/brief" className="text-muted hover:text-foreground transition-colors">Brief</Link></li>
-                <li><Link href="/research" className="text-muted hover:text-foreground transition-colors">Notes</Link></li>
-                <li><Link href={OBSERVATORY_PATH} className="text-muted hover:text-foreground transition-colors">Observatory</Link></li>
-                <li><Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="text-muted hover:text-foreground transition-colors">Ledger</Link></li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.15em] text-muted mb-4">Instruments</p>
-              <ul className="space-y-3 text-sm">
-                <li><Link href="/hermes" className="text-muted hover:text-foreground transition-colors">Hermes</Link></li>
-                <li><Link href="/oracle" className="text-muted hover:text-foreground transition-colors">Oracle</Link></li>
-                <li><Link href="/glorya" className="text-muted hover:text-foreground transition-colors">Glorya</Link></li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.15em] text-muted mb-4">Connect</p>
-              <ul className="space-y-3 text-sm">
-                <li><a href="https://x.com/solacefyi" target="_blank" rel="noreferrer" className="text-muted hover:text-foreground transition-colors">X @solacefyi</a></li>
-                <li><a href="mailto:hello@solace.fyi" className="text-muted hover:text-foreground transition-colors">hello@solace.fyi</a></li>
-              </ul>
+          <div className="home-research-footer-bottom">
+            <p className="text-xs text-muted">© 2026 Solace. All rights reserved.</p>
+            <div className="home-research-footer-legal">
+              <Link href="/terms">Terms</Link>
+              <Link href="/privacy">Privacy</Link>
+              <a href="mailto:privacy@solace.fyi">privacy@solace.fyi</a>
+              <a href="mailto:legal@solace.fyi">legal@solace.fyi</a>
+              <span className="home-research-footer-motto">Domains are earned</span>
             </div>
           </div>
         </div>

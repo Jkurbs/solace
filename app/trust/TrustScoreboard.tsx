@@ -58,8 +58,8 @@ export default function TrustScoreboard({ scoreboard }: { scoreboard: LedgerScor
           detail={
             process.openPaths === null
               ? 'Live marks unavailable · closed = close rows on chain'
-              : process.unpairedChainOpens > process.openPaths
-                ? `Live exchange paths · ${process.unpairedChainOpens} unpaired open seals still on chain`
+              : process.unpairedChainOpens > (process.openPaths ?? 0)
+                ? `Live exchange · ${process.unpairedChainOpens} historical opens without a close ref (archive, not inventory)`
                 : `Live exchange paths · ${process.pairedOpens} paired opens · ${process.closedPaths} closes`
           }
         />

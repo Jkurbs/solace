@@ -1,13 +1,9 @@
 import { getLatestPublishedArticle } from '@/features/articles/store';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
-import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
-import { computeLedgerScoreboard } from '@/features/hermes-ledger/scoreboard';
-import { listHermesLedgerProcessRows } from '@/features/hermes-ledger/store';
-import { getHermesPublicMarketRead } from '@/features/hermes-market/read';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
-import { getLatestNewsPost, newsPosts } from '@/features/news/posts';
+import { getLatestNewsPost } from '@/features/news/posts';
 
-import HomeClient, { type HeroPill, type HermesTelemetry, type LatestNote, type NewsItem } from './HomeClient';
+import HomeClient, { type FeaturedReading, type HermesTelemetry, type LatestNote } from './HomeClient';
 
 const TELEMETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
@@ -67,56 +63,38 @@ const fallbackNote: LatestNote = {
 };
 
 export default async function Home() {
-  // Lean process columns only for the vault strip — avoid full-row ledger(1000).
-  const [article, hermesTelemetry, hermesMarket, ledgerRows, openExposure] = await Promise.all([
+  const [article, hermesTelemetry] = await Promise.all([
     getLatestPublishedArticle().catch(() => null),
     getHermesTelemetry(),
-    getHermesPublicMarketRead().catch(() => null),
-    listHermesLedgerProcessRows(1500).catch(() => []),
-    getHermesOpenExposure().catch(() => null),
   ]);
-  const scoreboard = computeLedgerScoreboard(ledgerRows, {
-    liveOpenPaths: openExposure ? openExposure.positions.length : null,
-  });
-  const ledgerVault = {
-    backfilled: scoreboard.process.backfilled,
-    closedPaths: scoreboard.process.closedPaths,
-    openPaths: scoreboard.process.openPaths,
-    sealedDecisions: scoreboard.process.sealedDecisions,
-  };
+
   const latestNote: LatestNote = article
     ? { title: article.title, dek: article.dek, label: article.label }
     : fallbackNote;
 
-  // The hero pill announces whichever is fresher: the latest news post or
-  // the latest research note. Prefer news on a calendar-day basis so a same-day
-  // announcement (e.g. Introducing Glorya) surfaces over an older research stamp.
+  // One observatory surface: news wins on a same-or-newer calendar day so
+  // announcements (e.g. Introducing Glorya) are not buried under research.
   const news = getLatestNewsPost();
   const researchDay = (article?.publishedAt ?? '2026-07-01').slice(0, 10);
   const newsDay = news?.date ?? '';
-  const pill: HeroPill =
+  const featured: FeaturedReading =
     news && newsDay && newsDay >= researchDay
-      ? { tag: 'News', title: news.title, href: `/news/${news.slug}` }
-      : { tag: 'Latest research', title: latestNote.title, href: '/research' };
+      ? {
+          kind: 'News',
+          title: news.title,
+          dek: news.dek,
+          label: news.label,
+          href: `/news/${news.slug}`,
+          cta: 'Read the announcement',
+        }
+      : {
+          kind: 'Research',
+          title: latestNote.title,
+          dek: latestNote.dek,
+          label: latestNote.label,
+          href: '/research',
+          cta: 'Read the note',
+        };
 
-  // Body text stays on the server; the strip needs only card metadata.
-  const newsItems: NewsItem[] = newsPosts.slice(0, 4).map((post) => ({
-    slug: post.slug,
-    title: post.title,
-    dek: post.dek,
-    label: post.label,
-    date: post.date,
-    tint: post.tint,
-  }));
-
-  return (
-    <HomeClient
-      hermesMarket={hermesMarket}
-      hermesTelemetry={hermesTelemetry}
-      latestNote={latestNote}
-      ledgerVault={ledgerVault}
-      newsItems={newsItems}
-      pill={pill}
-    />
-  );
+  return <HomeClient hermesTelemetry={hermesTelemetry} featured={featured} />;
 }

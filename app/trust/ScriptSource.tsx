@@ -7,11 +7,15 @@ import { useState } from 'react';
 export default function ScriptSource() {
   const [source, setSource] = useState<string | null>(null);
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const load = async () => {
-    if (source !== null) {
+  const onToggle = async (event: React.SyntheticEvent<HTMLDetailsElement>) => {
+    if (!event.currentTarget.open || source !== null || loading) {
       return;
     }
+
+    setLoading(true);
+    setError(false);
 
     try {
       const response = await fetch('/verify-ledger.mjs', { cache: 'no-store' });
@@ -23,11 +27,13 @@ export default function ScriptSource() {
       setSource(await response.text());
     } catch {
       setError(true);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <details className="trust-verify-source" onToggle={load}>
+    <details className="trust-verify-source" onToggle={onToggle}>
       <summary>Read the script before you run it</summary>
       {source !== null ? (
         <pre>
@@ -35,9 +41,9 @@ export default function ScriptSource() {
         </pre>
       ) : error ? (
         <p className="trust-verify-fail">Source could not be loaded — open /verify-ledger.mjs directly.</p>
-      ) : (
+      ) : loading ? (
         <p className="trust-verify-loading">Loading the served file…</p>
-      )}
+      ) : null}
     </details>
   );
 }
