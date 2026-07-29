@@ -2,7 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Paper light is the site default (same register as the homepage research shell).
+   Opt into dark with html[data-theme='dark']. */
 :root {
+  color-scheme: light;
+  --background: #fafaf9;
+  --surface: #f5f5f4;
+  --card: #ffffff;
+  --border: #e7e5e4;
+  --foreground: #1c1917;
+  --secondary: #57534e;
+  --muted: #78716c;
+  --faint: #a8a29e;
+  --accent: #44403c;
+  --accent-2: #57534e;
+  --success: #3d6b4f;
+  --warning: #a67c52;
+  --info: #6c8aa6;
+  --ink: #1c1917;
+  --line: rgba(28, 25, 23, 0.12);
+  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-grotesk: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-plex: var(--font-geist-mono), "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
   --background: #0a0a0a;
   --surface: #111111;
   --card: #171717;
@@ -18,9 +43,6 @@
   --info: #6c8aa6;
   --ink: #0b0b09;
   --line: rgba(250, 250, 250, 0.1);
-  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-grotesk: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-plex: var(--font-geist-mono), "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
 html {
@@ -37,6 +59,10 @@ body {
 }
 
 ::selection {
+  background: rgba(28, 25, 23, 0.1);
+}
+
+html[data-theme='dark'] ::selection {
   background: rgba(214, 208, 196, 0.28);
 }
 
@@ -15321,4 +15347,643 @@ section h3 {
   .home-research-footer-grid {
     gap: 3rem 3rem;
   }
+}
+/* ═══════════════════════════════════════════════════════════
+   Hermes product page — paper light, X Money rhythm
+   ═══════════════════════════════════════════════════════════ */
+.hermes-paper {
+  --background: #fafaf9;
+  --foreground: #1c1917;
+  --muted: #78716c;
+  --border: #e7e5e4;
+  --surface: #ffffff;
+  --faint: #a8a29e;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.hermes-paper-shell {
+  width: min(100%, 64rem);
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 2rem);
+}
+
+.hermes-paper-kicker {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.hermes-paper-section-title {
+  margin: 0;
+  max-width: 28rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.85rem, 4vw, 2.75rem);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.hermes-paper-lede {
+  max-width: 34rem;
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+/* Header */
+.hermes-paper-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid transparent;
+  background: rgba(250, 250, 249, 0.88);
+  backdrop-filter: blur(12px);
+}
+
+.hermes-paper-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: min(100%, 64rem);
+  margin-inline: auto;
+  padding: 0.9rem clamp(1.25rem, 4vw, 2rem);
+}
+
+.hermes-paper-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--foreground);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.hermes-paper-nav {
+  display: none;
+  gap: 1.75rem;
+}
+
+.hermes-paper-nav a {
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.hermes-paper-nav a:hover {
+  color: var(--foreground);
+}
+
+.hermes-paper-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.hermes-paper-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  padding: 1rem clamp(1.25rem, 4vw, 2rem) 1.25rem;
+}
+
+.hermes-paper-menu a {
+  color: var(--foreground);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.15rem;
+  text-decoration: none;
+}
+
+@media (min-width: 768px) {
+  .hermes-paper-nav {
+    display: flex;
+  }
+
+  .hermes-paper-header .site-menu-button {
+    display: none;
+  }
+}
+
+/* Buttons */
+.hermes-paper-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.65rem;
+  padding: 0 1.25rem;
+  border-radius: 999px;
+  font-family: var(--font-plex), monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease, color 0.2s ease;
+}
+
+.hermes-paper-btn-sm {
+  min-height: 2.15rem;
+  padding: 0 0.9rem;
+  font-size: 0.62rem;
+}
+
+.hermes-paper-btn-primary {
+  border: 1px solid var(--foreground);
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.hermes-paper-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.hermes-paper-btn-secondary {
+  border: 1px solid rgba(28, 25, 23, 0.18);
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.hermes-paper-btn-secondary:hover {
+  border-color: rgba(28, 25, 23, 0.4);
+  background: rgba(28, 25, 23, 0.04);
+}
+
+/* Hero */
+.hermes-paper-hero {
+  padding: clamp(4.5rem, 12vw, 7.5rem) 0 clamp(3.5rem, 8vw, 5rem);
+  border-bottom: 1px solid var(--border);
+}
+
+.hermes-paper-hero-title {
+  margin: 0;
+  max-width: 18ch;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(2.6rem, 7vw, 4.6rem);
+  font-weight: 500;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.hermes-paper-hero-lede {
+  max-width: 36rem;
+  margin: 1.35rem 0 0;
+  color: var(--muted);
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  line-height: 1.6;
+}
+
+.hermes-paper-status {
+  margin: 1.25rem 0 0;
+  color: var(--faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hermes-paper-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+/* Proof strip */
+.hermes-paper-proof {
+  padding: clamp(3.5rem, 8vw, 5.5rem) 0;
+  border-bottom: 1px solid var(--border);
+  background: #f5f5f4;
+}
+
+.hermes-paper-proof-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin-top: 2.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.hermes-paper-proof-cell {
+  padding: 1.15rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.hermes-paper-proof-cell:last-child {
+  border-bottom: 0;
+}
+
+.hermes-paper-proof-cell span {
+  display: block;
+  color: var(--faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hermes-paper-proof-cell strong {
+  display: block;
+  margin-top: 0.45rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.hermes-paper-proof-cell em {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.62rem;
+  font-style: normal;
+  letter-spacing: 0.06em;
+}
+
+@media (min-width: 720px) {
+  .hermes-paper-proof-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hermes-paper-proof-cell {
+    border-right: 1px solid var(--border);
+  }
+
+  .hermes-paper-proof-cell:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .hermes-paper-proof-cell:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hermes-paper-proof-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .hermes-paper-proof-cell {
+    border-bottom: 0;
+    border-right: 1px solid var(--border);
+  }
+
+  .hermes-paper-proof-cell:last-child {
+    border-right: 0;
+  }
+
+  .hermes-paper-proof-cell:nth-child(2n) {
+    border-right: 1px solid var(--border);
+  }
+
+  .hermes-paper-proof-cell:last-child {
+    border-right: 0;
+  }
+}
+
+/* Product surface — hosts the original hx-pin dashboard walkthrough */
+.hermes-paper-surface {
+  padding: clamp(3rem, 7vw, 4.5rem) 0 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.hermes-paper-surface > .hermes-paper-shell:first-child {
+  margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.hermes-paper-surface > .hermes-paper-shell:last-child {
+  padding-top: 0.5rem;
+  padding-bottom: clamp(2.5rem, 6vw, 3.5rem);
+}
+
+/* Soft paper-friendly glow under the sticky reveal (was tuned for pure black pages). */
+.hermes-paper .hx-pin-glow {
+  opacity: 0.45;
+}
+
+.hermes-paper .hx-walk-step strong,
+.hermes-paper .hx-pin-step strong {
+  color: var(--foreground);
+}
+
+.hermes-paper .hx-walk-step p,
+.hermes-paper .hx-pin-step p {
+  color: var(--muted);
+}
+
+.hermes-paper .hx-walk-step span,
+.hermes-paper .hx-pin-step span {
+  color: var(--faint);
+}
+
+.hermes-paper-footnote {
+  margin: 1rem 0 0;
+  color: var(--faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  line-height: 1.55;
+}
+
+/* Capabilities */
+.hermes-paper-capabilities {
+  padding: clamp(3.5rem, 8vw, 5.5rem) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.hermes-paper-cap-list {
+  display: grid;
+  gap: 0;
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.hermes-paper-cap {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  gap: 1rem 1.5rem;
+  padding: 1.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.hermes-paper-cap-n {
+  color: var(--faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+}
+
+.hermes-paper-cap h3 {
+  margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 500;
+}
+
+.hermes-paper-cap p {
+  margin: 0.55rem 0 0;
+  max-width: 36rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.hermes-paper-cap em {
+  display: block;
+  margin-top: 0.55rem;
+  color: var(--faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.7rem;
+  font-style: normal;
+  letter-spacing: 0.06em;
+}
+
+/* Trust */
+.hermes-paper-trust {
+  padding: clamp(3.5rem, 8vw, 5.5rem) 0;
+  border-bottom: 1px solid var(--border);
+  background: #f5f5f4;
+}
+
+.hermes-paper-trust-inner {
+  display: grid;
+  gap: 2.5rem;
+}
+
+.hermes-paper-trust-points {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.hermes-paper-trust-points li {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.hermes-paper-trust-points li:last-child {
+  border-bottom: 0;
+}
+
+.hermes-paper-trust-points strong {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.hermes-paper-trust-points span {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 900px) {
+  .hermes-paper-trust-inner {
+    grid-template-columns: 1.2fr 0.9fr;
+    align-items: start;
+    gap: 3rem;
+  }
+}
+
+/* Access */
+.hermes-paper-access {
+  padding: clamp(3.5rem, 8vw, 5.5rem) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.hermes-paper-access-steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hermes-paper-access-steps li {
+  padding: 1.15rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+}
+
+.hermes-paper-access-steps span {
+  display: block;
+  color: var(--faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+}
+
+.hermes-paper-access-steps strong {
+  display: block;
+  margin-top: 0.4rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.hermes-paper-access-steps p {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 720px) {
+  .hermes-paper-access-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .hermes-paper-access-steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Form */
+.hermes-paper-form {
+  padding: clamp(3.5rem, 8vw, 5.5rem) 0;
+  border-bottom: 1px solid var(--border);
+  background: #f5f5f4;
+}
+
+.hermes-paper-form .hermes-access-form {
+  margin-top: 2rem;
+  max-width: 42rem;
+}
+
+.hermes-paper-form .hermes-access-form h2 {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1.15;
+}
+
+/* Deeper links */
+.hermes-paper-deeper {
+  padding: clamp(3rem, 7vw, 4.5rem) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.hermes-paper-deeper-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.hermes-paper-deeper-card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1.15rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.hermes-paper-deeper-card:hover {
+  border-color: rgba(28, 25, 23, 0.28);
+  background: #fafaf9;
+}
+
+.hermes-paper-deeper-card strong {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.hermes-paper-deeper-card span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+@media (min-width: 720px) {
+  .hermes-paper-deeper-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Footer */
+.hermes-paper-foot {
+  padding: 2rem 0 2.5rem;
+}
+
+.hermes-paper-foot-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hermes-paper-foot p {
+  margin: 0;
+  color: var(--faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hermes-paper-foot-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hermes-paper-foot-links a {
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.hermes-paper-foot-links a:hover {
+  color: var(--foreground);
+}
+
+@media (min-width: 720px) {
+  .hermes-paper-foot-inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+/* Dark preference: keep Hermes paper still paper (product page consistency).
+   Site-wide dark still works via tokens on other pages. */
+html[data-theme='dark'] .hermes-paper {
+  --background: #fafaf9;
+  --foreground: #1c1917;
+  --muted: #78716c;
+  --border: #e7e5e4;
+  --surface: #ffffff;
+  --faint: #a8a29e;
+  color-scheme: light;
 }

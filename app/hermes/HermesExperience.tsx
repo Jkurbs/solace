@@ -1,569 +1,369 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
-import {
-  type MotionValue,
-  motion,
-  useMotionValueEvent,
-  useReducedMotion,
-  useScroll,
-  useSpring,
-  useTransform,
-} from 'framer-motion';
+import { useState } from 'react';
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 
 import { OBSERVATORY_HERMES_LEDGER_PATH, OBSERVATORY_PATH } from '@/features/observatory/paths';
 import { DOCS_API_URL } from '@/lib/docs';
 
 import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
-import HermesBoardArt, { HermesBoardMobileArt, type HermesBoardFocus } from './HermesBoardArt';
+import DashboardReveal from './DashboardReveal';
 import RequestAccessForm from './RequestAccessForm';
-import { EASE, Reveal, useMediaQuery, useWalkthroughStep } from './shared';
-import ProblemSection from './ProblemSection';
-import DecisionGates from './DecisionGates';
-import ScenarioSection from './ScenarioSection';
-import FourDecisions from './FourDecisions';
-import StandDownSection from './StandDownSection';
 
-const sceneSteps = [
-  {
-    kicker: 'Reads',
-    title: 'One live surface.',
-    text: 'Portfolio state, simulation status, and live freshness arrive before any detail.',
-    focus: 'overview',
-  },
-  {
-    kicker: 'Waits',
-    title: 'Posture before action.',
-    text: 'Risk profile, conviction, and exposure show why Hermes is waiting or acting.',
-    focus: 'posture',
-  },
-  {
-    kicker: 'Reads',
-    title: 'The opportunity environment.',
-    text: 'Hermes compresses regime, timing, and deployment conditions into one current read.',
-    focus: 'outlook',
-  },
-  {
-    kicker: 'Shows',
-    title: 'Capital and decisions.',
-    text: 'Allocation and recent activity stay visible while sensitive execution detail remains on protected account surfaces.',
-    focus: 'execution',
-  },
-] satisfies Array<{
-  kicker: string;
-  title: string;
-  text: string;
-  focus: HermesBoardFocus;
-}>;
-
-const walkthroughPanTargets: Record<HermesBoardFocus, string> = {
-  overview: '0%',
-  posture: '-18%',
-  outlook: '-33%',
-  execution: '-50%',
+export type HermesProof = {
+  posture: string | null;
+  postureAge: string | null;
+  sealedDecisions: number;
+  openPaths: number | null;
+  closedPaths: number;
+  hermesLabel: string;
 };
 
-const mobileWalkthroughPanStops = [0, 0.3, 0.58, 0.84, 1];
-const mobileWalkthroughPanValues = [0, -21, -38, -53, -53];
-const mobileWalkthroughFocusCuts = [-10.5, -29.5, -45.5];
+const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
-const impactItems = [
-  'Users understand what Hermes is doing through a clear operating read across posture, capital state, and rationale.',
-  'Posture, capital state, risk level, current action, and decision rationale are visible in one read.',
-  'The public preview uses the same sanitized brief contract that powers public Hermes updates.',
-  'Sensitive signals, exact trades, prices, balances, and user-specific data stay on protected account surfaces. Founder-capital decision outcomes are published to the public ledger.',
-];
+const fade = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: easeOut } },
+};
+
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.08 } },
+};
+
+const capabilities = [
+  {
+    n: '01',
+    title: 'Reads structure',
+    text: 'Hermes compresses liquidity, timing, and regime into one operating read — before capital moves.',
+    detail: 'Posture and market condition, not a trade tip feed.',
+  },
+  {
+    n: '02',
+    title: 'Waits on purpose',
+    text: 'Standing down is first-class. Waiting is competence when the field does not earn deployment.',
+    detail: 'No pressure to always be in a path.',
+  },
+  {
+    n: '03',
+    title: 'Seals first',
+    text: 'Every decision gets a public row before the outcome is known. Wins, losses, and waits alike.',
+    detail: 'Checkable math — not screenshots after the fact.',
+  },
+  {
+    n: '04',
+    title: 'Protects capital',
+    text: 'Risk is layered: posture, sizing, drawdown guards, kill switches. Money movement stays separate from signal.',
+    detail: 'Customer capital is not yet connected.',
+  },
+] as const;
 
 const accessSteps = [
-  {
-    label: '01',
-    value: 'Review',
-    note: 'Access is granted in stages after account review.',
-  },
-  {
-    label: '02',
-    value: 'Profile',
-    note: 'Users select the risk profile Hermes must respect.',
-  },
-  {
-    label: '03',
-    value: 'Deposit',
-    note: 'Capital is deposited directly into Solace and recorded to the user account.',
-  },
-  {
-    label: '04',
-    value: 'Allocation',
-    note: 'Hermes can allocate only after settlement, treasury, and risk checks clear.',
-  },
-];
+  { n: '01', title: 'Review', text: 'Every request is read. Access opens in stages.' },
+  { n: '02', title: 'Profile', text: 'You set the risk bounds Hermes must respect.' },
+  { n: '03', title: 'Deposit', text: 'Capital is recorded to your account when rails are ready.' },
+  { n: '04', title: 'Allocation', text: 'Hermes may act only after settlement, treasury, and risk checks clear.' },
+] as const;
 
-function ScrollProgress() {
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 130, damping: 30, mass: 0.3 });
-
-  return <motion.div className="hx-progress" style={{ scaleX }} aria-hidden="true" />;
-}
-
-function useMobileWalkthroughStep(panValue: MotionValue<number>, enabled: boolean) {
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    if (!enabled) {
-      setStep(0);
-    }
-  }, [enabled]);
-
-  useMotionValueEvent(panValue, 'change', (value) => {
-    if (!enabled) {
-      return;
-    }
-
-    const nextStep =
-      value <= mobileWalkthroughFocusCuts[2]
-        ? 3
-        : value <= mobileWalkthroughFocusCuts[1]
-          ? 2
-          : value <= mobileWalkthroughFocusCuts[0]
-            ? 1
-            : 0;
-
-    setStep((current) => (current === nextStep ? current : nextStep));
-  });
-
-  return step;
-}
-
-function StepRow({ activeStep }: { activeStep: number | 'all' }) {
-  return (
-    <div className="hx-reveal-steps">
-      {sceneSteps.map((item, index) => (
-        <div
-          key={item.title}
-          className={`hx-pin-step${activeStep === 'all' || activeStep === index ? ' is-active' : ''}`}
-        >
-          <span>{item.kicker}</span>
-          <strong>{item.title}</strong>
-          <p>{item.text}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function WalkthroughCopy({ activeStep }: { activeStep: number }) {
-  return (
-    <div className="hx-walk-copy">
-      {sceneSteps.map((item, index) => (
-        <div key={item.title} className={`hx-walk-step${activeStep === index ? ' is-active' : ''}`}>
-          <span>{item.kicker}</span>
-          <strong>{item.title}</strong>
-          <p>{item.text}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function DashboardWindow({
-  animateCompact = false,
-  compact = false,
-  focus,
-  panY,
-  panTarget,
-}: {
-  animateCompact?: boolean;
-  compact?: boolean;
-  focus?: HermesBoardFocus;
-  panY?: MotionValue<string>;
-  panTarget?: string;
-}) {
-  if (compact) {
-    const hasPan = Boolean(panTarget ?? panY);
-
-    return (
-      <div className="hxm-panel">
-        <div className={`hxm-panel-view${hasPan ? '' : ' is-static'}`}>
-          {hasPan ? (
-            <motion.div
-              className="hxm-mobile-pan"
-              animate={panY ? undefined : { y: panTarget }}
-              style={panY ? { y: panY } : undefined}
-              transition={panY ? undefined : { duration: 0.75, ease: EASE }}
-            >
-              <div className="hxm-board-track">
-                <HermesBoardMobileArt focus={focus} />
-              </div>
-            </motion.div>
-          ) : (
-            <div className={`hxm-board-track${animateCompact ? ' is-animated' : ''}`}>
-              <HermesBoardMobileArt focus={focus} />
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
+function Header() {
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="hx-window">
-      <div className="hx-window-bar">
-        <span className="hx-window-dots">
-          <i />
-          <i />
-          <i />
-        </span>
-        <span className="hx-window-url">app.solace.fyi/dashboard · Live</span>
-        <span className="hx-window-spacer" />
-      </div>
-      <div className={`hx-window-view${panTarget ? '' : ' is-static'}`}>
-        {panTarget ? (
-          <motion.div
-            className="hx-board-pan"
-            animate={{ y: panTarget }}
-            transition={{ duration: 0.85, ease: EASE }}
+    <header className="hermes-paper-header">
+      <div className="hermes-paper-header-inner">
+        <Link href="/" className="hermes-paper-brand" aria-label="Solace home">
+          <Mark size={18} className="site-mark" />
+          <span>Solace</span>
+        </Link>
+
+        <nav className="hermes-paper-nav" aria-label="Primary">
+          <Link href={OBSERVATORY_HERMES_LEDGER_PATH}>Ledger</Link>
+          <Link href="/brief">Brief</Link>
+          <a href={DOCS_API_URL}>Market API</a>
+        </nav>
+
+        <div className="hermes-paper-actions">
+          <ThemeToggle />
+          <a href="#request-access" className="hermes-paper-btn hermes-paper-btn-primary hermes-paper-btn-sm">
+            Request access
+          </a>
+          <button
+            type="button"
+            className={`site-menu-button${menuOpen ? ' is-open' : ''}`}
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((o) => !o)}
           >
-            <HermesBoardArt focus={focus} />
-          </motion.div>
-        ) : (
-          <div className="hx-board-pan">
-            <HermesBoardArt focus={focus} />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function DashboardReveal() {
-  const reduce = useReducedMotion();
-  const isCompact = useMediaQuery('(max-width: 860px)');
-  const ref = useRef<HTMLElement | null>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] });
-
-  // Cinematic entry: the dashboard fades, scales, and tilts up into place,
-  // then slowly pans through its sections as the captions advance. Springs
-  // smooth the raw scroll deltas so trackpad/wheel steps don't stutter.
-  const entrySpring = { stiffness: 160, damping: 30, mass: 0.4 };
-  const opacity = useSpring(useTransform(scrollYProgress, [0, 0.08], [0.72, 1]), entrySpring);
-  const scale = useSpring(useTransform(scrollYProgress, [0, 0.16], [0.94, 1]), entrySpring);
-  const rotateX = useSpring(useTransform(scrollYProgress, [0, 0.16], [7, 0]), entrySpring);
-  const lift = useSpring(useTransform(scrollYProgress, [0, 0.16], [34, 0]), entrySpring);
-  const mobilePanProgress = useTransform(scrollYProgress, mobileWalkthroughPanStops, mobileWalkthroughPanValues);
-  const mobilePanSpring = useSpring(mobilePanProgress, { stiffness: 150, damping: 34, mass: 0.3 });
-  const mobilePanY = useTransform(mobilePanSpring, (value) => `${value}%`);
-  const desktopStep = useWalkthroughStep(ref, !reduce && !isCompact);
-  const mobileStep = useMobileWalkthroughStep(mobilePanSpring, !reduce && isCompact);
-  const step = isCompact ? mobileStep : desktopStep;
-  const activeFocus = sceneSteps[step]?.focus ?? sceneSteps[0].focus;
-
-  if (isCompact && reduce) {
-    return (
-      <section className="hx-shell hx-reveal-static">
-        <StepRow activeStep="all" />
-        <div className="hx-pin-static-frame">
-          <DashboardWindow compact />
-        </div>
-      </section>
-    );
-  }
-
-  if (isCompact) {
-    return (
-      <section ref={ref} id="walkthrough" className="hx-mobile-walk">
-        <div className="hx-pin-glow" aria-hidden="true" />
-        <div className="hx-mobile-stage">
-          <div className="hx-mobile-sticky">
-            <DashboardWindow compact focus={activeFocus} panY={mobilePanY} />
-          </div>
-          <WalkthroughCopy activeStep={step} />
-        </div>
-      </section>
-    );
-  }
-
-  if (reduce) {
-    return (
-      <section className="hx-shell hx-reveal-static">
-        <StepRow activeStep="all" />
-        <div className="hx-pin-static-frame">
-          <DashboardWindow />
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section ref={ref} id="walkthrough" className="hx-pin">
-      <div className="hx-pin-glow" aria-hidden="true" />
-      <div className="hx-walk-shell">
-        <WalkthroughCopy activeStep={step} />
-        <div className="hx-walk-stage">
-          <div className="hx-walk-sticky">
-            <div className="hx-pin-stage">
-              <motion.div
-                className="hx-window hx-window-motion"
-                style={{ opacity, scale, rotateX, y: lift, transformPerspective: 1700 }}
-              >
-                <div className="hx-window-bar">
-                  <span className="hx-window-dots">
-                    <i />
-                    <i />
-                    <i />
-                  </span>
-                  <span className="hx-window-url">app.solace.fyi/dashboard · Live</span>
-                  <span className="hx-window-spacer" />
-                </div>
-                <div className="hx-window-view">
-                  <motion.div
-                    className="hx-board-pan"
-                    animate={{ y: walkthroughPanTargets[activeFocus] }}
-                    transition={{ type: 'spring', stiffness: 110, damping: 26, mass: 0.9 }}
-                  >
-                    <HermesBoardArt focus={activeFocus} />
-                  </motion.div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
+            <span />
+            <span />
+            <span />
+          </button>
         </div>
       </div>
-    </section>
-  );
-}
 
-function Hero() {
-  const reduce = useReducedMotion();
-  const ref = useRef<HTMLElement | null>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
-  const opacity = useTransform(scrollYProgress, [0, 0.85], [1, 0.12]);
-  const y = useTransform(scrollYProgress, [0, 1], [0, 60]);
-
-  return (
-    <section ref={ref} className="hx-hero">
-      <div className="hx-hero-glow" aria-hidden="true" />
-      <motion.div className="hx-hero-inner" style={reduce ? undefined : { opacity, y }}>
-        <Reveal>
-          <p className="section-kicker">Hermes by Solace</p>
-        </Reveal>
-        <Reveal delay={0.06}>
-          <h1 className="hx-hero-title">Hermes</h1>
-        </Reveal>
-        <Reveal delay={0.12}>
-          <p className="hx-hero-lede">
-            A live instrument for capital allocation under uncertainty. Hermes reads liquidity, timing, and
-            regime, standing down until signal earns deployment.
-          </p>
-        </Reveal>
-        <Reveal delay={0.18}>
-          <div className="hx-hero-actions">
-            <a href="#request-access" className="hx-btn hx-btn-primary">
-              Request Beta Access
-            </a>
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hx-btn hx-btn-secondary">
-              View the decision ledger
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="hermes-paper-menu"
+          >
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} onClick={() => setMenuOpen(false)}>
+              Ledger
             </Link>
-            <a href={DOCS_API_URL} className="hx-btn hx-btn-secondary">
+            <Link href="/brief" onClick={() => setMenuOpen(false)}>
+              Brief
+            </Link>
+            <a href={DOCS_API_URL} onClick={() => setMenuOpen(false)}>
               Market API
             </a>
+            <a href="#request-access" onClick={() => setMenuOpen(false)}>
+              Request access
+            </a>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
+  );
+}
+
+function ProofStrip({ proof }: { proof: HermesProof }) {
+  const openLabel = proof.openPaths === null ? '—' : String(proof.openPaths);
+
+  return (
+    <section className="hermes-paper-proof" aria-label="Public proof">
+      <div className="hermes-paper-shell">
+        <p className="hermes-paper-kicker">Built to be checked</p>
+        <h2 className="hermes-paper-section-title">Live facts you can check.</h2>
+        <p className="hermes-paper-lede">
+          What is public today — not a pitch deck. Founder capital only; the sample is young and labeled that way.
+        </p>
+
+        <div className="hermes-paper-proof-grid">
+          <div className="hermes-paper-proof-cell">
+            <span>Live posture</span>
+            <strong>{proof.posture ?? '—'}</strong>
+            <em>{proof.posture ? proof.postureAge ?? 'Public reading' : 'No fresh public reading'}</em>
           </div>
-        </Reveal>
-        <Reveal delay={0.28}>
-          <div className="hx-scrollcue">
-            <span>Scroll</span>
-            <span className="hx-scrollcue-rail" aria-hidden="true" />
+          <div className="hermes-paper-proof-cell">
+            <span>Sealed decisions</span>
+            <strong>{proof.sealedDecisions}</strong>
+            <em>On the public chain</em>
           </div>
-        </Reveal>
-      </motion.div>
+          <div className="hermes-paper-proof-cell">
+            <span>Open · closed paths</span>
+            <strong>
+              {openLabel} · {proof.closedPaths}
+            </strong>
+            <em>Live marks · close rows</em>
+          </div>
+          <div className="hermes-paper-proof-cell">
+            <span>Capital</span>
+            <strong>Founder only</strong>
+            <em>$0 customer funds · {proof.hermesLabel}</em>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
 
-const briefHighlights = [
-  {
-    title: 'Thesis',
-    text: 'Individual events resist prediction, but the structure around them — liquidity, timing, regime, probability — can be read, modeled, and acted on with discipline.',
-  },
-  {
-    title: 'Risk discipline',
-    text: 'Risk is governed in layers: posture, sizing that scales with field depth, hard drawdown guards, and kill switches. Money movement stays separate from signal generation.',
-  },
-  {
-    title: 'Verification',
-    text: 'Claims that can be checked, published when they can be checked. Decision trails are recorded at decision time; anything not yet checkable is labeled with its honest status.',
-  },
-];
+export default function HermesExperience({ proof }: { proof: HermesProof }) {
+  const reduceMotion = useReducedMotion();
+  const heroInitial = reduceMotion ? false : 'hidden';
 
-export default function HermesExperience() {
   return (
-    <main className="hx-page">
-      <ScrollProgress />
+    <main className="hermes-paper min-h-screen bg-background text-foreground antialiased">
+      <Header />
 
-      <header className="hx-header">
-        <div className="hx-header-inner">
-          <Link href="/" className="hx-brand">
-            <Mark size={20} />
-            Solace
-          </Link>
-          <a href="#request-access" className="hx-btn hx-btn-primary hx-btn-sm">
-            Request Hermes
-          </a>
+      {/* ── Hero ── */}
+      <section className="hermes-paper-hero">
+        <motion.div
+          className="hermes-paper-shell"
+          initial={heroInitial}
+          animate="show"
+          variants={stagger}
+        >
+          <motion.p variants={fade} className="hermes-paper-kicker">
+            Hermes · The first instrument
+          </motion.p>
+          <motion.h1 variants={fade} className="hermes-paper-hero-title">
+            Capital that waits until the signal earns it.
+          </motion.h1>
+          <motion.p variants={fade} className="hermes-paper-hero-lede">
+            A live instrument for allocation under uncertainty. Hermes reads liquidity, timing, and regime —
+            standing down until deployment is earned.
+          </motion.p>
+          <motion.p variants={fade} className="hermes-paper-status">
+            Controlled access · founder capital live · customer capital not yet connected
+          </motion.p>
+          <motion.div variants={fade} className="hermes-paper-hero-actions">
+            <a href="#request-access" className="hermes-paper-btn hermes-paper-btn-primary">
+              Request access
+              <span aria-hidden="true">→</span>
+            </a>
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-btn hermes-paper-btn-secondary">
+              Inspect the ledger
+            </Link>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      <ProofStrip proof={proof} />
+
+      {/* ── Product surface: original sticky scroll dashboard reveal ── */}
+      <section className="hermes-paper-surface">
+        <div className="hermes-paper-shell">
+          <p className="hermes-paper-kicker">One surface</p>
+          <h2 className="hermes-paper-section-title">Posture, capital, and why it waits or acts.</h2>
+          <p className="hermes-paper-lede">
+            Scroll through the same public-safe brief surface — capital, posture, outlook, and decisions —
+            without opening a private terminal.
+          </p>
         </div>
-      </header>
-
-      <Hero />
-
-      <ProblemSection />
-
-      <DecisionGates />
-
-      <ScenarioSection />
-
-      <section className="hx-shell">
-        <div className="hx-apple-intro">
-          <Reveal>
-            <p className="section-kicker">Designed as an instrument</p>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <h2>Capital moves only when the signal earns it.</h2>
-          </Reveal>
-          <Reveal delay={0.14}>
-            <p>
-              Hermes is a live oversight experience for reading uncertainty, preserving capital, and showing why
-              the system is waiting or acting.
-            </p>
-          </Reveal>
+        <DashboardReveal />
+        <div className="hermes-paper-shell">
+          <p className="hermes-paper-footnote">
+            Illustrative board art for orientation. Live posture and sealed decisions are on the public ledger
+            and proof strip above.
+          </p>
         </div>
       </section>
 
-      <DashboardReveal />
+      {/* ── Capabilities 01–04 ── */}
+      <section className="hermes-paper-capabilities">
+        <div className="hermes-paper-shell">
+          <p className="hermes-paper-kicker">How Hermes works</p>
+          <h2 className="hermes-paper-section-title">Four disciplines. One instrument.</h2>
 
-      <section className="hx-shell">
-        <div className="hx-quote">
-          <Reveal>
-            <p className="section-kicker">In one line</p>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <blockquote>
-              The product should feel like checking on a professional allocator with a clear account record.
-            </blockquote>
-          </Reveal>
-        </div>
-      </section>
-
-      <section className="hx-shell">
-        <div className="hx-impact">
-          <Reveal className="hx-feature-copy">
-            <p className="section-kicker">Impact</p>
-            <h2>A dashboard for live oversight.</h2>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <ol className="hx-impact-list">
-              {impactItems.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ol>
-          </Reveal>
-        </div>
-      </section>
-
-      <FourDecisions />
-
-      <StandDownSection />
-
-      <section className="hx-shell">
-        <div className="hx-access">
-          <Reveal className="hx-feature-copy">
-            <p className="section-kicker">Before capital moves</p>
-            <h2>Access begins with review.</h2>
-            <p>
-              Once approved, users complete onboarding, select a risk profile, and deposit directly into Solace.
-              Capital becomes eligible for Hermes only after account, identity, settlement, treasury, and risk
-              checks are complete.
-            </p>
-          </Reveal>
-          <ol className="hx-access-timeline">
-            {accessSteps.map((step, index) => (
-              <Reveal key={step.label} className="hx-access-tstep" delay={index * 0.09}>
-                <span className="hx-access-tmark" aria-hidden="true" />
-                <div className="hx-access-tbody">
-                  <div className="hx-access-step-row">
-                    <span>{step.label}</span>
-                    <strong>{step.value}</strong>
-                  </div>
-                  <p>{step.note}</p>
+          <div className="hermes-paper-cap-list">
+            {capabilities.map((item) => (
+              <article key={item.n} className="hermes-paper-cap">
+                <span className="hermes-paper-cap-n">{item.n}</span>
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                  <em>{item.detail}</em>
                 </div>
-              </Reveal>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Trust / ledger ── */}
+      <section className="hermes-paper-trust">
+        <div className="hermes-paper-shell hermes-paper-trust-inner">
+          <div>
+            <p className="hermes-paper-kicker">Protected by process</p>
+            <h2 className="hermes-paper-section-title">Sealed before outcome. Verifiable by math.</h2>
+            <p className="hermes-paper-lede">
+              The decision ledger is Hermes’s deep record inside the Observatory. Every row is hashed and chained.
+              Anyone can recompute it — no account required.
+            </p>
+            <div className="hermes-paper-hero-actions">
+              <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-btn hermes-paper-btn-primary">
+                Open the ledger
+                <span aria-hidden="true">→</span>
+              </Link>
+              <Link href={OBSERVATORY_PATH} className="hermes-paper-btn hermes-paper-btn-secondary">
+                Observatory
+              </Link>
+            </div>
+          </div>
+          <ul className="hermes-paper-trust-points">
+            <li>
+              <strong>Sealed first</strong>
+              <span>Row exists before the outcome.</span>
+            </li>
+            <li>
+              <strong>Everything counts</strong>
+              <span>Waits and losses stay on the chain.</span>
+            </li>
+            <li>
+              <strong>Mechanism private</strong>
+              <span>Sizes and entries stay off the public sheet.</span>
+            </li>
+            <li>
+              <strong>Young sample</strong>
+              <span>A record of decisions, still early.</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      {/* ── Access ── */}
+      <section className="hermes-paper-access">
+        <div className="hermes-paper-shell">
+          <p className="hermes-paper-kicker">Before capital moves</p>
+          <h2 className="hermes-paper-section-title">Access begins with review.</h2>
+          <p className="hermes-paper-lede">
+            Once approved, you complete onboarding, set a risk profile, and deposit when rails are ready. Hermes
+            only becomes eligible after checks clear.
+          </p>
+          <ol className="hermes-paper-access-steps">
+            {accessSteps.map((step) => (
+              <li key={step.n}>
+                <span>{step.n}</span>
+                <strong>{step.title}</strong>
+                <p>{step.text}</p>
+              </li>
             ))}
           </ol>
         </div>
       </section>
 
-      <section className="hx-shell">
-        <div className="hx-briefcard">
-          <Reveal className="hx-feature-copy">
-            <p className="section-kicker">Go deeper</p>
-            <h2>The brief says how to check us.</h2>
-            <p>
-              Architecture, risk discipline, and the verification commitments Hermes is held to, written to be
-              checked, not believed.
-            </p>
-          </Reveal>
-          <div className="hx-briefcard-grid">
-            {briefHighlights.map((highlight, index) => (
-              <Reveal key={highlight.title} className="hx-briefcard-item" delay={index * 0.08}>
-                <strong>{highlight.title}</strong>
-                <p>{highlight.text}</p>
-              </Reveal>
-            ))}
-          </div>
-          <Reveal delay={0.12}>
-            <div className="hx-briefcard-actions">
-              <Link href="/brief" className="hx-btn hx-btn-secondary">
-                Read the full brief
-              </Link>
-              <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hx-btn hx-btn-secondary">
-                See the decision ledger
-              </Link>
-              <Link href="/gates" className="hx-btn hx-btn-secondary">
-                Gate conditions
-              </Link>
-              <Link href="/research" className="text-link">
-                Or start with the research
-              </Link>
-            </div>
-          </Reveal>
+      {/* ── Request form ── */}
+      <section id="request-access" className="hermes-paper-form scroll-mt-28">
+        <div className="hermes-paper-shell">
+          <p className="hermes-paper-kicker">Request access</p>
+          <h2 className="hermes-paper-section-title">Tell us who you are.</h2>
+          <p className="hermes-paper-lede">
+            Hermes is introduced in stages. Every request is reviewed; if selected, we reach out directly. Until
+            then, the ledger, brief, and public readings stay open.
+          </p>
+          <RequestAccessForm />
         </div>
       </section>
 
-      <section id="request-access" className="hx-shell hx-form scroll-mt-28">
-        <Reveal className="hx-form-head">
-          <p className="section-kicker">Request access</p>
-          <Link href="/brief" className="text-link">
-            Read the technical brief
-          </Link>
-        </Reveal>
-        <Reveal delay={0.06}>
-          <p className="hx-form-expect">
-            Hermes is introduced in stages. Every request is reviewed; if selected, Solace reaches out directly
-            to begin account review.
-          </p>
-        </Reveal>
-        <RequestAccessForm />
+      {/* ── Deeper ── */}
+      <section className="hermes-paper-deeper">
+        <div className="hermes-paper-shell">
+          <p className="hermes-paper-kicker">Go deeper</p>
+          <div className="hermes-paper-deeper-grid">
+            <Link href="/brief" className="hermes-paper-deeper-card">
+              <strong>Technical brief</strong>
+              <span>Architecture, risk, verification commitments.</span>
+            </Link>
+            <Link href="/gates" className="hermes-paper-deeper-card">
+              <strong>Gate conditions</strong>
+              <span>What must be true before capital moves.</span>
+            </Link>
+            <Link href="/research" className="hermes-paper-deeper-card">
+              <strong>Research notes</strong>
+              <span>The four decisions that govern capital.</span>
+            </Link>
+            <a href={DOCS_API_URL} className="hermes-paper-deeper-card">
+              <strong>Market API</strong>
+              <span>Public market read for builders.</span>
+            </a>
+          </div>
+        </div>
       </section>
 
-      <section className="hx-shell">
-        <div className="hx-foot">
-          <p>Hermes · The first instrument · Live</p>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
+      <footer className="hermes-paper-foot">
+        <div className="hermes-paper-shell hermes-paper-foot-inner">
+          <p>Hermes · The first instrument · {proof.hermesLabel}</p>
+          <span className="hermes-paper-foot-links">
             <ThemeToggle />
-            <Link href="/" className="text-link">
-              Return home
-            </Link>
+            <Link href="/">Home</Link>
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH}>Ledger</Link>
           </span>
         </div>
-      </section>
+      </footer>
     </main>
   );
 }

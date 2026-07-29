@@ -3,15 +3,14 @@
 import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-// Dark is the site's default (the observatory); light is the paper register
-// the brief and scorecard already live in. Choice persists per visitor.
+// Light paper is the site default. Dark is an explicit preference.
 const STORAGE_KEY = 'solace-theme';
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'light'>('light');
 
   useEffect(() => {
-    setTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
+    setTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
   }, []);
 
   const toggle = () => {
@@ -19,10 +18,12 @@ export default function ThemeToggle() {
 
     setTheme(next);
 
-    if (next === 'light') {
-      document.documentElement.dataset.theme = 'light';
+    if (next === 'dark') {
+      document.documentElement.dataset.theme = 'dark';
     } else {
-      delete document.documentElement.dataset.theme;
+      // Light is default — keep dataset.theme='light' so existing light-mode
+      // component overrides (written for data-theme=light) still apply.
+      document.documentElement.dataset.theme = 'light';
     }
 
     try {

@@ -52,12 +52,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <body className="antialiased">
-        {/* Theme boot before first paint: no flash of the wrong mode. */}
+        {/* Theme boot before first paint: light paper default; dark only if chosen. */}
         <script
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{
             __html:
-              "try{if(localStorage.getItem('solace-theme')==='light'){document.documentElement.dataset.theme='light'}}catch(e){}",
+              "try{var t=localStorage.getItem('solace-theme');document.documentElement.dataset.theme=t==='dark'?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}",
           }}
         />
         <script
