@@ -23,9 +23,9 @@ const footerInstruments = [
 
 const footerContactChannels = [
   {
-    label: 'Request access',
-    detail: 'Hermes controlled access',
-    href: '/hermes#request-access',
+    label: 'Enter Hermes',
+    detail: 'Simulation dashboard',
+    href: '/dashboard',
     external: false,
   },
   {
@@ -90,12 +90,12 @@ const homepageQuestions = [
   {
     question: 'Does Hermes manage customer funds?',
     answer:
-      'Not yet. Hermes is in controlled access. Public readings are available; customer capital is not yet connected.',
+      'Not yet. You can observe the public ledger and enter Hermes with simulation capital. Real capital is limited — when you ask to allocate, Solace adds you to the waitlist.',
   },
   {
-    question: 'How do I request access?',
+    question: 'How do I enter Hermes?',
     answer:
-      'From the Hermes page, share a short note about who you are and why you’re interested. Every request is reviewed; if selected, we reach out directly. Until then, public readings, the ledger, and research stay open to everyone.',
+      'Open the dashboard to run simulation capital — no application form. Watch the public ledger anytime. Real capital access is a separate waitlist when you choose to allocate.',
   },
 ];
 
@@ -336,7 +336,7 @@ export default function HomeClient({
             className="mt-8 text-lg md:text-xl text-muted leading-relaxed max-w-2xl"
           >
             Solace builds systems that read complexity and decide when capital should move and when it shouldn&apos;t.
-            Hermes is the first instrument — live, sealed, and still in controlled access.
+            Hermes is the first instrument — live, sealed, and open to observe and simulate.
           </motion.p>
 
           <motion.div variants={fade} className="mt-10 flex flex-wrap items-center gap-3 sm:gap-4">

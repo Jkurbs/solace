@@ -10,7 +10,6 @@ import { DOCS_API_URL } from '@/lib/docs';
 import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
 import DashboardReveal from './DashboardReveal';
-import RequestAccessForm from './RequestAccessForm';
 
 export type HermesProof = {
   posture: string | null;
@@ -40,11 +39,23 @@ const stagger = {
   show: { transition: { staggerChildren: 0.07, delayChildren: 0.08 } },
 };
 
-const accessSteps = [
-  { n: '01', title: 'Review', text: 'Every request is read. Access opens in stages.' },
-  { n: '02', title: 'Profile', text: 'You set the risk bounds Hermes must respect.' },
-  { n: '03', title: 'Deposit', text: 'Capital is recorded to your account when rails are ready.' },
-  { n: '04', title: 'Allocation', text: 'Hermes may act only after settlement, treasury, and risk checks clear.' },
+/** Observe → Simulate → Allocate — no application form to enter the instrument. */
+const pathSteps = [
+  {
+    n: '01',
+    title: 'Observe',
+    text: 'Watch live posture, sealed decisions, and the public ledger. No account required.',
+  },
+  {
+    n: '02',
+    title: 'Simulate',
+    text: 'Enter Hermes with virtual capital. Experience how it waits and deploys — no financial risk.',
+  },
+  {
+    n: '03',
+    title: 'Allocate',
+    text: 'When you ask to put real capital in, Solace adds you to the waitlist. Capacity is limited; we reach out when a seat opens.',
+  },
 ] as const;
 
 const pnlFormatter = new Intl.NumberFormat('en-US', {
@@ -73,9 +84,9 @@ function Header() {
 
         <div className="hermes-paper-actions">
           <ThemeToggle />
-          <a href="#request-access" className="hermes-paper-btn hermes-paper-btn-primary hermes-paper-btn-sm">
-            Request access
-          </a>
+          <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary hermes-paper-btn-sm">
+            Enter Hermes
+          </Link>
           <button
             type="button"
             className={`site-menu-button${menuOpen ? ' is-open' : ''}`}
@@ -107,9 +118,9 @@ function Header() {
             <Link href={OBSERVATORY_HERMES_LEDGER_PATH} onClick={() => setMenuOpen(false)}>
               Ledger
             </Link>
-            <a href="#request-access" onClick={() => setMenuOpen(false)}>
-              Request access
-            </a>
+            <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
+              Enter Hermes
+            </Link>
           </motion.div>
         )}
       </AnimatePresence>
@@ -143,7 +154,6 @@ function TwinPillars({ proof }: { proof: HermesProof }) {
         </p>
 
         <div className="hermes-pillars-grid">
-          {/* ── Profit ── */}
           <article id="profit" className="hermes-pillar hermes-pillar-profit scroll-mt-28">
             <p className="hermes-pillar-kicker">01 · Profit</p>
             <h3>Capital that works when it should — and waits when it shouldn&apos;t.</h3>
@@ -195,7 +205,6 @@ function TwinPillars({ proof }: { proof: HermesProof }) {
             </Link>
           </article>
 
-          {/* ── Trust ── */}
           <article id="trust" className="hermes-pillar hermes-pillar-trust scroll-mt-28">
             <p className="hermes-pillar-kicker">02 · Trust</p>
             <h3>Every decision sealed before the outcome is known.</h3>
@@ -251,7 +260,6 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
     <main className="hermes-paper min-h-screen bg-background text-foreground antialiased">
       <Header />
 
-      {/* ── Hero ── */}
       <section className="hermes-paper-hero">
         <motion.div
           className="hermes-paper-shell"
@@ -266,22 +274,22 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
             Profit you can see. Trust you can check.
           </motion.h1>
           <motion.p variants={fade} className="hermes-paper-hero-lede">
-            Hermes puts capital to work under uncertainty — and seals every decision in a public ledger before
-            the outcome is known.
+            Observe the instrument. Experience it in simulation. Request real capital access only when you are
+            ready — capacity is limited.
           </motion.p>
           <motion.p variants={fade} className="hermes-paper-status">
-            Controlled access · founder capital live · customer capital not yet connected
+            Simulation open · founder capital live on the ledger · real capital by waitlist
           </motion.p>
           <motion.div variants={fade} className="hermes-paper-hero-actions">
-            <a href="#profit" className="hermes-paper-btn hermes-paper-btn-primary">
-              See profit
+            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary">
+              Enter Hermes
               <span aria-hidden="true">→</span>
-            </a>
-            <a href="#trust" className="hermes-paper-btn hermes-paper-btn-secondary">
-              See trust
-            </a>
-            <a href="#request-access" className="hermes-paper-btn hermes-paper-btn-secondary">
-              Request access
+            </Link>
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-btn hermes-paper-btn-secondary">
+              Inspect the ledger
+            </Link>
+            <a href="#path" className="hermes-paper-btn hermes-paper-btn-secondary">
+              How it works
             </a>
           </motion.div>
         </motion.div>
@@ -289,36 +297,35 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
 
       <TwinPillars proof={proof} />
 
-      {/* ── Product surface: original sticky scroll dashboard reveal ── */}
       <section className="hermes-paper-surface">
         <div className="hermes-paper-shell">
           <p className="hermes-paper-kicker">The surface</p>
           <h2 className="hermes-paper-section-title">Where profit and process meet.</h2>
           <p className="hermes-paper-lede">
-            Scroll the illustrative dashboard — capital, posture, outlook, decisions — the same brief Hermes
-            uses in public.
+            Scroll the illustrative dashboard — capital, posture, outlook, decisions — then enter Hermes to run
+            the same loop with simulation capital.
           </p>
         </div>
         <DashboardReveal />
         <div className="hermes-paper-shell">
           <p className="hermes-paper-footnote">
             Board art is illustrative. Live PnL, posture, and sealed outcomes are in the pillars and ledger
-            above.
+            above. Simulation capital never moves real money.
           </p>
         </div>
       </section>
 
-      {/* ── Access ── */}
-      <section className="hermes-paper-access">
+      {/* Observe → Simulate → Allocate */}
+      <section id="path" className="hermes-paper-access scroll-mt-28">
         <div className="hermes-paper-shell">
-          <p className="hermes-paper-kicker">Before capital moves</p>
-          <h2 className="hermes-paper-section-title">Access begins with review.</h2>
+          <p className="hermes-paper-kicker">How you enter</p>
+          <h2 className="hermes-paper-section-title">Observe. Simulate. Allocate when capacity allows.</h2>
           <p className="hermes-paper-lede">
-            Once approved, you complete onboarding, set a risk profile, and deposit when rails are ready. Hermes
-            only becomes eligible after checks clear.
+            No application to start. Real capital is limited — when you choose to allocate, Solace places you on
+            the waitlist and reaches out when a seat is open.
           </p>
           <ol className="hermes-paper-access-steps">
-            {accessSteps.map((step) => (
+            {pathSteps.map((step) => (
               <li key={step.n}>
                 <span>{step.n}</span>
                 <strong>{step.title}</strong>
@@ -326,23 +333,18 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
               </li>
             ))}
           </ol>
+          <div className="hermes-paper-hero-actions" style={{ marginTop: '2rem' }}>
+            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary">
+              Enter Hermes
+              <span aria-hidden="true">→</span>
+            </Link>
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-btn hermes-paper-btn-secondary">
+              Start with the ledger
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* ── Request form ── */}
-      <section id="request-access" className="hermes-paper-form scroll-mt-28">
-        <div className="hermes-paper-shell">
-          <p className="hermes-paper-kicker">Request access</p>
-          <h2 className="hermes-paper-section-title">Tell us who you are.</h2>
-          <p className="hermes-paper-lede">
-            Hermes is introduced in stages. Every request is reviewed; if selected, we reach out directly. Until
-            then, profit metrics and the ledger stay public.
-          </p>
-          <RequestAccessForm />
-        </div>
-      </section>
-
-      {/* ── Deeper (quiet) ── */}
       <section className="hermes-paper-deeper">
         <div className="hermes-paper-shell">
           <p className="hermes-paper-kicker">If you want more</p>
@@ -369,10 +371,11 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
 
       <footer className="hermes-paper-foot">
         <div className="hermes-paper-shell hermes-paper-foot-inner">
-          <p>Hermes · Profit · Trust · {proof.hermesLabel}</p>
+          <p>Hermes · Observe · Simulate · Allocate · {proof.hermesLabel}</p>
           <span className="hermes-paper-foot-links">
             <ThemeToggle />
             <Link href="/">Home</Link>
+            <Link href="/dashboard">Enter Hermes</Link>
             <Link href={OBSERVATORY_HERMES_LEDGER_PATH}>Ledger</Link>
           </span>
         </div>

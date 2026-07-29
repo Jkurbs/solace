@@ -191,8 +191,8 @@ export default async function HermesLedgerPage() {
             <Link href={OBSERVATORY_HERMES_PATH} className="hx-btn hx-btn-secondary hx-btn-sm">
               Hermes
             </Link>
-            <Link href="/hermes#request-access" className="hx-btn hx-btn-primary hx-btn-sm">
-              Request access
+            <Link href="/dashboard" className="hx-btn hx-btn-primary hx-btn-sm">
+              Enter Hermes
             </Link>
           </div>
         </div>

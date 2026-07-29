@@ -28,8 +28,8 @@ export default function NewsPage() {
             <Mark size={20} />
             Solace
           </Link>
-          <Link href="/hermes#request-access" className="hx-btn hx-btn-primary hx-btn-sm">
-            Request access
+          <Link href="/dashboard" className="hx-btn hx-btn-primary hx-btn-sm">
+            Enter Hermes
           </Link>
         </div>
       </header>

@@ -26,7 +26,7 @@ function getStatusMessage(status: AuthStatus, email?: string) {
     case 'denied':
       return {
         tone: 'error' as const,
-        text: 'That email is not attached to an approved Hermes account.',
+        text: 'We could not open Hermes for that email. Try again, or contact Solace if you need help.',
       };
     case 'failed':
       return {
@@ -41,7 +41,7 @@ function getStatusMessage(status: AuthStatus, email?: string) {
     case 'invalid':
       return {
         tone: 'error' as const,
-        text: 'Enter the email address attached to your approved Hermes account.',
+        text: 'Enter a valid email address so we can send a secure sign-in link.',
       };
     default:
       return null;
@@ -85,12 +85,13 @@ export default function DashboardAccessGate({
           method="post"
           className="w-full rounded-lg border border-neutral-200 bg-white p-6 shadow-xl shadow-neutral-900/5 dark:border-neutral-800 dark:bg-[#0d0d0b] dark:shadow-2xl dark:shadow-black/20"
         >
-          <p className="text-sm font-medium uppercase tracking-[0.16em] text-neutral-500">Hermes access</p>
+          <p className="text-sm font-medium uppercase tracking-[0.16em] text-neutral-500">Hermes</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-normal text-neutral-950 dark:text-neutral-50">
             Enter Hermes
           </h1>
           <p className="mt-3 text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-            Use the email attached to your approved Solace account. We will send a secure sign-in link.
+            Sign in with your email to open the dashboard. Simulation capital is available without an application —
+            no real money moves until you request real capital access.
           </p>
 
           <label htmlFor="dashboard-email" className="mt-6 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
