@@ -339,16 +339,19 @@ export default function HomeClient({
             Hermes is the first instrument — live, sealed, and still in controlled access.
           </motion.p>
 
-          <motion.div variants={fade} className="mt-10 flex flex-wrap items-center gap-x-10 gap-y-4">
+          <motion.div variants={fade} className="mt-10 flex flex-wrap items-center gap-3 sm:gap-4">
             <Link
               href="/hermes"
-              className="text-sm font-medium text-foreground underline underline-offset-4 decoration-foreground/40 hover:decoration-foreground transition-all"
+              className="inline-flex items-center gap-2 rounded-full border border-foreground bg-foreground px-5 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-background shadow-sm transition-opacity hover:opacity-90"
             >
               Meet Hermes
+              <span aria-hidden="true" className="text-[0.85em] opacity-70">
+                →
+              </span>
             </Link>
             <Link
               href="/brief"
-              className="text-sm text-muted hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-2 rounded-full border border-foreground/20 bg-background px-5 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-foreground shadow-sm transition-colors hover:border-foreground/45 hover:bg-foreground/[0.04]"
             >
               Read the brief
             </Link>
@@ -369,13 +372,16 @@ export default function HomeClient({
           <p className="font-serif text-[clamp(1.4rem,3.2vw,2.2rem)] leading-snug text-foreground">
             Every decision is recorded in a sealed ledger before the outcome is known.
           </p>
-          <div className="mt-10 flex flex-col items-center gap-3">
+          <div className="mt-10 flex flex-col items-center gap-4">
             <div className="w-8 h-px bg-border" />
             <Link
               href={OBSERVATORY_HERMES_LEDGER_PATH}
-              className="text-xs uppercase tracking-[0.2em] text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
+              className="home-charter-cta inline-flex items-center gap-2 rounded-full border border-foreground/20 bg-background px-5 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-foreground shadow-sm transition-colors hover:border-foreground/45 hover:bg-foreground/[0.04]"
             >
               Inspect the chain
+              <span aria-hidden="true" className="text-[0.85em] opacity-60">
+                →
+              </span>
             </Link>
           </div>
         </motion.div>
