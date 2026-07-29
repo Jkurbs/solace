@@ -1,9 +1,9 @@
-import { getLatestPublishedArticle } from '@/features/articles/store';
+import { listPublishedArticles } from '@/features/articles/store';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
-import { getLatestNewsPost } from '@/features/news/posts';
+import { newsPosts } from '@/features/news/posts';
 
-import HomeClient, { type FeaturedReading, type HermesTelemetry, type LatestNote } from './HomeClient';
+import HomeClient, { type HermesTelemetry, type ResearchItem } from './HomeClient';
 
 const TELEMETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
@@ -52,49 +52,66 @@ async function getHermesTelemetry(): Promise<HermesTelemetry | null> {
   return fresh[0] ?? null;
 }
 
-// Refresh the latest-note strip every 5 minutes without making the page dynamic.
+// Refresh the research strip every 5 minutes without making the page dynamic.
 export const revalidate = 300;
 
-// Mirrors the fallback on /research so the strip is never empty.
-const fallbackNote: LatestNote = {
+const fallbackResearch: ResearchItem = {
+  kind: 'Research',
   title: 'The Four Decisions That Govern Capital',
   dek: 'Every allocation lives inside four decisions. Most market systems only optimize one.',
   label: 'Research note 001 · V0.1 · July 2026',
+  href: '/research',
+  date: '2026-07-01',
+};
+
+const technicalBrief: ResearchItem = {
+  kind: 'Brief',
+  title: 'What we build, and how to check it',
+  dek: 'Architecture, risk discipline, verification commitments, and the gates that must clear before Solace expands.',
+  label: 'Technical brief · V0.5 · July 2026',
+  href: '/brief',
+  date: '2026-07-01',
 };
 
 export default async function Home() {
-  const [article, hermesTelemetry] = await Promise.all([
-    getLatestPublishedArticle().catch(() => null),
+  const [articles, hermesTelemetry] = await Promise.all([
+    listPublishedArticles().catch(() => []),
     getHermesTelemetry(),
   ]);
 
-  const latestNote: LatestNote = article
-    ? { title: article.title, dek: article.dek, label: article.label }
-    : fallbackNote;
+  const researchFromDb: ResearchItem[] = articles.map((article) => ({
+    kind: 'Research' as const,
+    title: article.title,
+    dek: article.dek,
+    label: article.label || 'Research note',
+    href: '/research',
+    date: (article.publishedAt ?? article.updatedAt ?? '2026-07-01').slice(0, 10),
+  }));
 
-  // One observatory surface: news wins on a same-or-newer calendar day so
-  // announcements (e.g. Introducing Glorya) are not buried under research.
-  const news = getLatestNewsPost();
-  const researchDay = (article?.publishedAt ?? '2026-07-01').slice(0, 10);
-  const newsDay = news?.date ?? '';
-  const featured: FeaturedReading =
-    news && newsDay && newsDay >= researchDay
-      ? {
-          kind: 'News',
-          title: news.title,
-          dek: news.dek,
-          label: news.label,
-          href: `/news/${news.slug}`,
-          cta: 'Read the announcement',
-        }
-      : {
-          kind: 'Research',
-          title: latestNote.title,
-          dek: latestNote.dek,
-          label: latestNote.label,
-          href: '/research',
-          cta: 'Read the note',
-        };
+  // If the live store is empty, keep the canonical note so the strip is never hollow.
+  const researchNotes = researchFromDb.length > 0 ? researchFromDb : [fallbackResearch];
 
-  return <HomeClient hermesTelemetry={hermesTelemetry} featured={featured} />;
+  const newsItems: ResearchItem[] = newsPosts.map((post) => ({
+    kind: 'News' as const,
+    title: post.title,
+    dek: post.dek,
+    label: post.label,
+    href: `/news/${post.slug}`,
+    date: post.date,
+  }));
+
+  // Newest first across brief, notes, and news — brief always available.
+  const researchItems = [technicalBrief, ...researchNotes, ...newsItems]
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+    // Prefer a full shelf; cap so the homepage stays scannable.
+    .slice(0, 8);
+
+  // If sort put older brief last among same-day items, ensure we still surface
+  // at least one research note when news floods the top.
+  const hasResearch = researchItems.some((item) => item.kind === 'Research' || item.kind === 'Brief');
+  if (!hasResearch) {
+    researchItems.push(fallbackResearch);
+  }
+
+  return <HomeClient hermesTelemetry={hermesTelemetry} researchItems={researchItems} />;
 }

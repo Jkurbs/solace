@@ -102,12 +102,22 @@ const homepageQuestions = [
 export type LatestNote = { title: string; dek: string; label: string };
 
 export type FeaturedReading = {
-  kind: 'News' | 'Research';
+  kind: 'News' | 'Research' | 'Brief';
   title: string;
   dek: string;
   label: string;
   href: string;
   cta: string;
+};
+
+export type ResearchItem = {
+  kind: 'News' | 'Research' | 'Brief';
+  title: string;
+  dek: string;
+  label: string;
+  href: string;
+  /** ISO date YYYY-MM-DD for ordering. */
+  date: string;
 };
 
 export type HermesTelemetry = {
@@ -270,10 +280,10 @@ function Header() {
 
 export default function HomeClient({
   hermesTelemetry,
-  featured,
+  researchItems,
 }: {
   hermesTelemetry: HermesTelemetry | null;
-  featured: FeaturedReading;
+  researchItems: ResearchItem[];
 }) {
   const reduceMotion = useReducedMotion();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -370,7 +380,7 @@ export default function HomeClient({
           <SealIcon className="w-12 h-12 text-muted mx-auto mb-8" />
           <p className="text-xs uppercase tracking-[0.3em] text-muted mb-6">Charter</p>
           <p className="font-serif text-[clamp(1.4rem,3.2vw,2.2rem)] leading-snug text-foreground">
-            Every decision is recorded in a sealed ledger before the outcome is known.
+            Every decision any live instruments makes is recorded in a sealed ledger before the outcome is known.
           </p>
           <div className="mt-10 flex flex-col items-center gap-4">
             <div className="w-8 h-px bg-border" />
@@ -474,28 +484,63 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── Latest from the observatory ── */}
+      {/* ── Research shelf ── */}
       <section className="border-t border-border px-5 py-20 md:py-28">
         <div className={homeShell}>
-          <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-12">Latest from the observatory</h2>
-          <article>
-            <p className="text-xs uppercase tracking-[0.15em] text-muted mb-4">{featured.kind}</p>
-            <h3 className="font-serif text-3xl md:text-4xl font-medium leading-tight">
-              {featured.title}
-            </h3>
-            <p className="mt-4 text-lg text-muted leading-relaxed max-w-2xl">
-              {featured.dek}
-            </p>
-            <div className="mt-8 flex items-center gap-6">
-              <Link
-                href={featured.href}
-                className="text-sm font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
-              >
-                {featured.cta}
-              </Link>
-              <span className="text-sm text-muted">{featured.label}</span>
+          <div className="flex flex-wrap items-end justify-between gap-4 mb-12">
+            <div>
+              <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">Research</h2>
+              <p className="font-serif text-2xl md:text-3xl font-medium max-w-xl leading-snug">
+                Notes, announcements, and the technical brief.
+              </p>
             </div>
-          </article>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              <Link
+                href="/research"
+                className="text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
+              >
+                All notes
+              </Link>
+              <Link
+                href="/news"
+                className="text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
+              >
+                News
+              </Link>
+              <Link
+                href="/brief"
+                className="text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
+              >
+                Brief
+              </Link>
+            </div>
+          </div>
+
+          <div className="divide-y divide-border border-t border-border">
+            {researchItems.map((item) => (
+              <Link
+                key={`${item.kind}-${item.href}-${item.title}`}
+                href={item.href}
+                className="group block py-8 first:pt-8"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+                  <p className="text-xs uppercase tracking-[0.15em] text-muted">{item.kind}</p>
+                  <span className="text-xs text-muted font-mono tabular-nums">{item.label}</span>
+                </div>
+                <h3 className="mt-3 font-serif text-2xl md:text-3xl font-medium leading-tight group-hover:opacity-70 transition-opacity">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-muted leading-relaxed max-w-2xl">{item.dek}</p>
+                <span className="mt-5 inline-block text-sm font-medium underline underline-offset-4 decoration-foreground/20 group-hover:decoration-foreground/60 transition-all">
+                  {item.kind === 'News'
+                    ? 'Read the announcement'
+                    : item.kind === 'Brief'
+                      ? 'Read the brief'
+                      : 'Read the note'}
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
