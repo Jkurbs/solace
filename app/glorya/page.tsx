@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { gloryaEvaluatedNeeds, gloryaProcessScoreboard } from '@/features/glorya/evaluated-needs';
 import { gloryaPlaceLabel } from '@/features/glorya/types';
+import { OBSERVATORY_GLORYA_LEDGER_PATH } from '@/features/observatory/paths';
 
 import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
@@ -34,10 +35,11 @@ export default function GloryaPage() {
             Solace
           </Link>
           <div className="glorya-header-actions">
+            <ThemeToggle />
             <Link href="/hermes" className="glorya-link">
               Hermes
             </Link>
-            <Link href="/observatory/hermes/ledger" className="glorya-link">
+            <Link href={OBSERVATORY_GLORYA_LEDGER_PATH} className="glorya-link">
               Ledger
             </Link>
             <Link href="/#instruments" className="glorya-link">
@@ -154,6 +156,18 @@ export default function GloryaPage() {
               </tr>
             </tbody>
           </table>
+        </div>
+        <div className="glorya-ledger-cta">
+          <p className="glorya-ledger-cta-kicker">Public record</p>
+          <h3 className="glorya-ledger-cta-title">Inspect Glorya&apos;s own decision ledger</h3>
+          <p className="glorya-ledger-cta-dek">
+            Every sealed disbursement will land here before outcomes are known, hash-chained and checkable, the
+            same discipline as Hermes and Oracle.
+          </p>
+          <Link href={OBSERVATORY_GLORYA_LEDGER_PATH} className="glorya-ledger-cta-link">
+            Open Glorya ledger
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </section>
 
