@@ -59,7 +59,7 @@ export default function ProductShots() {
               without an account.
             </p>
           </div>
-          <div className="hermes-paper-shell">
+          <div className="hermes-product-shot-frame">
             <ProductWindow url="solace.fyi/observatory/hermes/ledger">
               <LedgerBoardArt />
             </ProductWindow>
@@ -86,7 +86,7 @@ export default function ProductShots() {
               doing without becoming the operator.
             </p>
           </div>
-          <div className="hermes-paper-shell">
+          <div className="hermes-product-shot-frame">
             <ProductWindow url="app.solace.fyi/dashboard">
               <HermesBoardArt />
             </ProductWindow>

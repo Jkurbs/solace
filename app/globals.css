@@ -15123,12 +15123,17 @@ section h3 {
   --border: #e7e5e4;
   --surface: #ffffff;
   --faint: #a8a29e;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   background: var(--background);
   color: var(--foreground);
 }
 
 .hermes-paper-shell {
+  box-sizing: border-box;
   width: min(100%, 64rem);
+  max-width: 100%;
   margin-inline: auto;
   padding-inline: clamp(1.25rem, 4vw, 2rem);
 }
@@ -15172,11 +15177,13 @@ section h3 {
 }
 
 .hermes-paper-header-inner {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   width: min(100%, 64rem);
+  max-width: 100%;
   margin-inline: auto;
   padding: 0.9rem clamp(1.25rem, 4vw, 2rem);
 }
@@ -15574,6 +15581,7 @@ section h3 {
 .hermes-product-shots {
   padding: clamp(3rem, 7vw, 5rem) 0 clamp(2.5rem, 6vw, 4rem);
   border-bottom: 1px solid var(--border);
+  overflow-x: clip;
 }
 
 .hermes-product-shots > .hermes-paper-shell:first-child {
@@ -15583,10 +15591,13 @@ section h3 {
 .hermes-product-shots-list {
   display: grid;
   gap: clamp(3.5rem, 9vw, 5.5rem);
+  min-width: 0;
 }
 
 .hermes-product-shot {
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .hermes-product-shot-copy {
@@ -15623,17 +15634,79 @@ section h3 {
   line-height: 1.65;
 }
 
-.hermes-product-window {
-  width: 100%;
-  max-width: none;
+/* Frame stays inside the page width; content may be taller and is cut off vertically. */
+.hermes-product-shot-frame {
+  box-sizing: border-box;
+  width: min(100%, 64rem);
+  max-width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 2rem);
 }
 
-.hermes-product-window-view {
+.hermes-product-window {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.hermes-product-window-view,
+.hermes-paper .hermes-product-window-view {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   height: auto;
   max-height: min(52vh, 28rem);
   overflow: hidden;
   -webkit-mask: linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
   mask: linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
+}
+
+/* Board/ledger art can be wider intrinsically; never expand the page. */
+.hermes-product-window-view .hx-board-art,
+.hermes-product-window-view .hx-ledger-art,
+.hermes-product-window-view .hxm-board {
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+}
+
+.hermes-product-window-view .hx-board-art-nav > div,
+.hermes-product-window-view .hx-board-art .mx-auto {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.hermes-product-window-view .hx-board-art-nav-links {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hermes-product-window-view .hx-board-art-divider.grid-cols-4,
+.hermes-product-window-view .hx-board-art .grid.grid-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.hermes-product-window-view .hx-ledger-art-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.hermes-product-window-view .hx-ledger-art-table th,
+.hermes-product-window-view .hx-ledger-art-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hermes-product-window-view .hx-ledger-art-table td:nth-child(3) {
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .hermes-product-shot-cta {
@@ -15646,6 +15719,17 @@ section h3 {
 
 .hermes-product-shot-cta .hermes-paper-footnote {
   margin: 0;
+}
+
+@media (max-width: 640px) {
+  .hermes-product-window-view .hx-board-art-nav-links,
+  .hermes-product-window-view .hx-board-art-nav-right span:last-child {
+    display: none;
+  }
+
+  .hermes-product-window-view .hx-board-art .grid.grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* Ledger illustration (marketing) */
@@ -16081,6 +16165,9 @@ section h3 {
   --ledger-bg: #fafaf9;
   --ledger-pos: #3d6b4f;
   --ledger-neg: #9f3a3a;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .ledger-doc-intro {
@@ -16246,10 +16333,19 @@ section h3 {
   margin: 0;
   border-top: 1px solid var(--ledger-line);
   border-radius: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ledger-doc-sheet .trust-ledger-table {
-  min-width: 64rem;
+  min-width: min(64rem, 100%);
+}
+
+@media (min-width: 720px) {
+  .ledger-doc-sheet .trust-ledger-table {
+    min-width: 64rem;
+  }
 }
 
 .ledger-doc-sheet .trust-ledger-table th {
