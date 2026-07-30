@@ -16200,9 +16200,15 @@ section h3 {
 
 .ledger-doc-sheet-section {
   padding-bottom: 1.5rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .ledger-doc-sheet {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow: hidden;
   border: 1px solid var(--ledger-line);
   border-radius: 0.65rem;
@@ -16329,27 +16335,66 @@ section h3 {
   letter-spacing: 0.04em;
 }
 
+/* Scroll the table inside the card; never crush columns or widen the page. */
 .ledger-doc-sheet .trust-table-wrap {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   margin: 0;
   border-top: 1px solid var(--ledger-line);
   border-radius: 0;
-  max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .ledger-doc-sheet .trust-ledger-table {
-  min-width: min(64rem, 100%);
-}
-
-@media (min-width: 720px) {
-  .ledger-doc-sheet .trust-ledger-table {
-    min-width: 64rem;
-  }
+  width: max(100%, 64rem);
+  min-width: 64rem;
+  table-layout: fixed;
 }
 
 .ledger-doc-sheet .trust-ledger-table th {
   background: var(--ledger-bg);
+}
+
+/* Column rhythm so fixed layout stays readable when scrolling */
+.ledger-doc-sheet .trust-ledger-table .trust-row-head,
+.ledger-doc-sheet .trust-ledger-table .trust-row-number {
+  width: 3.2rem;
+}
+
+.ledger-doc-sheet .trust-ledger-table th:nth-child(2),
+.ledger-doc-sheet .trust-ledger-table td:nth-child(2) {
+  width: 11rem;
+}
+
+.ledger-doc-sheet .trust-ledger-table th:nth-child(3),
+.ledger-doc-sheet .trust-ledger-table td:nth-child(3) {
+  width: 18rem;
+}
+
+.ledger-doc-sheet .trust-ledger-table th:nth-child(4),
+.ledger-doc-sheet .trust-ledger-table td:nth-child(4) {
+  width: 8rem;
+}
+
+.ledger-doc-sheet .trust-ledger-table th:nth-child(5),
+.ledger-doc-sheet .trust-ledger-table td:nth-child(5) {
+  width: 7rem;
+}
+
+.ledger-doc-sheet .trust-ledger-table th:nth-child(6),
+.ledger-doc-sheet .trust-ledger-table td:nth-child(6) {
+  width: 7.5rem;
+}
+
+.ledger-doc-sheet .trust-ledger-table th:nth-child(7),
+.ledger-doc-sheet .trust-ledger-table td:nth-child(7) {
+  width: auto;
 }
 
 .ledger-doc-disclosure {
