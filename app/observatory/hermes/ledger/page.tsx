@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
 import { correctSealedClosePnls } from '@/features/hermes-ledger/close-pnl';
 import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
-import { computeLedgerScoreboard } from '@/features/hermes-ledger/scoreboard';
+import { computeLedgerScoreboard, formatPercent } from '@/features/hermes-ledger/scoreboard';
 import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
 import { hermesVersion } from '@/features/hermes-version';
 import { getRecentHermesRealizedTradeEvents } from '@/features/ledger/hermes-realized-trades';
@@ -111,7 +111,7 @@ const howToRead = [
   ],
   [
     'Process before performance',
-    'The scoreboard above the sheet leads with sealed decisions, live open paths vs closes, standing-down rate, and backfills. Open paths come from the same live marks as the LIVE row, not from historical open seals still unpaired on the chain. Outcome metrics stay behind a toggle so the page does not read as a trading log.',
+    'The document head leads with sealed decisions, standing-down rate, and capital honesty. Open paths and live marks sit in the process strip. Outcome metrics stay behind a toggle so the page does not read as a trading log.',
   ],
   [
     'Verifiable by math',
@@ -144,6 +144,7 @@ export default async function HermesLedgerPage() {
     // the pile of unpaired historical open seals on the chain.
     liveOpenPaths: openExposure ? openExposure.positions.length : null,
   });
+  const processMetrics = scoreboard.process;
   const livePosture =
     briefSnapshot && briefSnapshot.brief_id !== 'fallback' ? formatConstant(briefSnapshot.posture) : '--';
   // Chain order assigns the row numbers; display is newest-first with the
@@ -183,58 +184,48 @@ export default async function HermesLedgerPage() {
         }))
         .reverse()
     : [placeholderRow];
-  const sheetStatus = [
-    ['Status', storedRows.length ? `${storedRows.length} decision${storedRows.length === 1 ? '' : 's'} recorded` : 'First decision pending'],
-    ['Hermes', hermesVersion.label],
-    ['Capital', 'Founder only · $0 customer funds'],
-    ['Public', 'Decisions, waits, outcomes, PnL'],
-    ['Private', 'Entries, exits, sizes, thresholds'],
-  ];
+
+  const openLabel = processMetrics.openPaths === null ? '-' : String(processMetrics.openPaths);
 
   return (
-    <main className="hx-page trust-page">
-      <header className="hx-header">
-        <div className="hx-header-inner">
-          <Link href="/" className="hx-brand">
-            <Mark size={20} />
-            Solace
+    <main className="hermes-paper ledger-doc min-h-screen bg-background text-foreground antialiased">
+      <header className="hermes-paper-header">
+        <div className="hermes-paper-header-inner">
+          <Link href="/" className="hermes-paper-brand" aria-label="Solace home">
+            <Mark size={18} className="site-mark" />
+            <span>Solace</span>
           </Link>
-          <div className="trust-header-actions">
-            <Link href={OBSERVATORY_PATH} className="hx-btn hx-btn-secondary hx-btn-sm">
-              Observatory
-            </Link>
-            <Link href={OBSERVATORY_HERMES_PATH} className="hx-btn hx-btn-secondary hx-btn-sm">
-              Hermes
-            </Link>
-            <Link href="/dashboard" className="hx-btn hx-btn-primary hx-btn-sm">
+          <nav className="hermes-paper-nav" aria-label="Primary">
+            <Link href={OBSERVATORY_PATH}>Observatory</Link>
+            <Link href="/hermes">Hermes</Link>
+            <Link href="/dashboard">Enter Hermes</Link>
+          </nav>
+          <div className="hermes-paper-actions">
+            <ThemeToggle />
+            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary hermes-paper-btn-sm">
               Enter Hermes
             </Link>
           </div>
         </div>
       </header>
 
-      <section className="hx-shell trust-ledger-hero">
-        <p className="section-kicker">
-          <Link href={OBSERVATORY_PATH} className="text-link">
+      <section className="hermes-paper-shell ledger-doc-intro">
+        <p className="hermes-paper-kicker">
+          <Link href={OBSERVATORY_PATH} className="ledger-doc-crumb">
             Observatory
           </Link>
           <span aria-hidden="true"> · </span>
-          <Link href={OBSERVATORY_HERMES_PATH} className="text-link">
+          <Link href={OBSERVATORY_HERMES_PATH} className="ledger-doc-crumb">
             Hermes
           </Link>
           <span aria-hidden="true"> · </span>
           Decision ledger
         </p>
-        <h1 className="trust-title">Hermes Decision Ledger</h1>
-        <p className="trust-dek">
-          Every Hermes decision gets a row here before the outcome is known. Trade mechanics stay private.
-          This is Hermes’s deep record inside the Observatory, not a separate product from watching the
-          instrument.
+        <h1 className="ledger-doc-title">Hermes decision ledger</h1>
+        <p className="hermes-paper-lede">
+          Every decision is sealed before the outcome is known. Public, hash-chained, and checkable, so
+          Hermes can be judged by recorded decisions, not screenshots after the fact.
         </p>
-        <p className="trust-ledger-note">
-          The ledger exists so Hermes can be judged by recorded decisions, not screenshots posted after the fact.
-        </p>
-        <ShareLedger />
       </section>
 
       <TrustLivePulseProvider
@@ -242,42 +233,76 @@ export default async function HermesLedgerPage() {
         initialHermesVersion={{ id: hermesVersion.id, label: hermesVersion.label }}
         livePosture={livePosture}
       >
-      <section className="hx-shell trust-sheet-section">
-        <div className="trust-sheet">
-          <div className="trust-sheet-toolbar">
-            <div>
-              <p>Sheet</p>
-              <h2>Hermes decisions</h2>
-            </div>
-            <span>Public view</span>
-          </div>
-
-          <TrustScoreboard scoreboard={scoreboard} />
-
-          <div className="trust-sheet-meta">
-            {sheetStatus.map(([label, value]) => (
-              <div key={label} className="trust-sheet-meta-cell">
-                <span>{label}</span>
-                <strong>{value}</strong>
+        <section className="hermes-paper-shell ledger-doc-sheet-section" aria-label="Decision ledger">
+          <div className="ledger-doc-sheet">
+            <div className="ledger-doc-head">
+              <div>
+                <span className="ledger-doc-head-kicker">Public record</span>
+                <strong className="ledger-doc-head-title">Hermes decision ledger</strong>
               </div>
-            ))}
-            <div className="trust-sheet-meta-cell">
-              <span>Live PnL</span>
-              <TrustLivePnL />
+              <div className="ledger-doc-stats" aria-label="Process summary">
+                <span>
+                  <em>Sealed</em>
+                  <strong>{processMetrics.sealedDecisions.toLocaleString('en-US')}</strong>
+                </span>
+                <span>
+                  <em>Standing down</em>
+                  <strong>{formatPercent(processMetrics.standDownRate)}</strong>
+                </span>
+                <span>
+                  <em>Capital</em>
+                  <strong>Founder</strong>
+                </span>
+              </div>
+            </div>
+
+            <div className="ledger-doc-note">
+              Every row is sealed before the outcome is known. Hash-chained · public · checkable · {hermesVersion.label}
+            </div>
+
+            <div className="ledger-doc-strip" aria-label="Live process">
+              <span>
+                <em>Open · closed</em>
+                <strong>
+                  {openLabel} · {processMetrics.closedPaths}
+                </strong>
+              </span>
+              <span>
+                <em>Backfilled</em>
+                <strong>{processMetrics.backfilled}</strong>
+              </span>
+              <span>
+                <em>Hermes</em>
+                <strong>{hermesVersion.label}</strong>
+              </span>
+              <span className="ledger-doc-strip-live">
+                <em>Live open PnL</em>
+                <span className="ledger-doc-live-pnl">
+                  <TrustLivePnL />
+                </span>
+              </span>
+            </div>
+
+            <TrustLedgerTable rows={ledgerRows} />
+
+            <p className="ledger-doc-disclosure">
+              Founder capital only · PnL net of fees and funding · Young sample: a record, not a claim · Not an
+              offer, not investment advice
+            </p>
+
+            <div className="ledger-doc-scoreboard">
+              <TrustScoreboard scoreboard={scoreboard} />
             </div>
           </div>
-
-          <TrustLedgerTable rows={ledgerRows} />
-          <p className="trust-ledger-disclosure">
-            Founder capital only · PnL net of fees and funding · Young sample: a record, not a claim · Not an
-            offer, not investment advice
-          </p>
-        </div>
-      </section>
+        </section>
       </TrustLivePulseProvider>
 
-      <section className="hx-shell trust-section">
-        <div className="trust-simple-sheet">
+      <section className="hermes-paper-shell ledger-doc-below">
+        <ShareLedger />
+      </section>
+
+      <section className="hermes-paper-shell ledger-doc-below">
+        <div className="ledger-doc-panel">
           <h2>How to read this</h2>
           <table>
             <tbody>
@@ -292,8 +317,8 @@ export default async function HermesLedgerPage() {
         </div>
       </section>
 
-      <section className="hx-shell trust-section">
-        <div className="trust-simple-sheet trust-verify">
+      <section className="hermes-paper-shell ledger-doc-below">
+        <div className="ledger-doc-panel ledger-doc-verify">
           <h2>Verify this ledger</h2>
           <p>
             Anyone with Node installed can recompute the chain from the public data. No account, no
@@ -305,32 +330,28 @@ node verify-ledger.mjs`}
           />
           <p>
             The script is ~90 lines of readable source. It recomputes every row hash from the{' '}
-            <a href="/api/hermes/decision-ledger" className="text-link">
+            <a href="/api/hermes/decision-ledger" className="ledger-doc-link">
               public ledger data
             </a>
-            , walks the chain, and checks that every close references its open row. Any edit to
-            history fails loudly. The printed chain head can be compared against an externally
-            anchored copy.
+            , walks the chain, and checks that every close references its open row. Any edit to history fails
+            loudly. The printed chain head can be compared against an externally anchored copy.
           </p>
           <VerifyInBrowser />
           <ScriptSource />
         </div>
       </section>
 
-      <section className="hx-shell">
-        <div className="hx-foot">
+      <footer className="hermes-paper-foot">
+        <div className="hermes-paper-shell hermes-paper-foot-inner">
           <p>Observatory · Hermes · Decision ledger</p>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
+          <span className="hermes-paper-foot-links">
             <ThemeToggle />
-            <Link href={OBSERVATORY_HERMES_PATH} className="text-link">
-              Hermes in Observatory
-            </Link>
-            <Link href={OBSERVATORY_PATH} className="text-link">
-              All instruments
-            </Link>
+            <Link href={OBSERVATORY_HERMES_PATH}>Hermes in Observatory</Link>
+            <Link href={OBSERVATORY_PATH}>All instruments</Link>
+            <Link href="/hermes">Meet Hermes</Link>
           </span>
         </div>
-      </section>
+      </footer>
     </main>
   );
 }

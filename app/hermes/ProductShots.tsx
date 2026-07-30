@@ -32,18 +32,18 @@ function ProductWindow({
 }
 
 /**
- * The only product illustrations on /hermes: dashboard + ledger.
+ * The only product illustrations on /hermes: ledger + dashboard.
  * Static frames, no multi-step walkthrough.
  */
 export default function ProductShots() {
   return (
-    <section className="hermes-product-shots" aria-label="Dashboard and ledger">
+    <section className="hermes-product-shots" aria-label="Ledger and dashboard">
       <div className="hermes-paper-shell">
         <p className="hermes-paper-kicker">See it</p>
         <h2 className="hermes-paper-section-title">Two surfaces. That is the product.</h2>
         <p className="hermes-paper-lede">
-          The dashboard is where capital is watched and managed. The ledger is where every decision is sealed
-          before the outcome is known, so you can verify rather than merely trust.
+          The ledger is where every decision is sealed before the outcome is known, so you can verify rather
+          than merely trust. The dashboard is where capital is watched and managed.
         </p>
       </div>
 
@@ -51,34 +51,7 @@ export default function ProductShots() {
         <figure className="hermes-product-shot">
           <div className="hermes-paper-shell hermes-product-shot-copy">
             <figcaption>
-              <span>01 · Dashboard</span>
-              <strong>Where your capital is managed</strong>
-            </figcaption>
-            <p>
-              Portfolio, posture, outlook, and recent decisions, one surface so you can see what Hermes is
-              doing without becoming the operator.
-            </p>
-          </div>
-          <div className="hermes-paper-shell">
-            <ProductWindow url="app.solace.fyi/dashboard">
-              <HermesBoardArt />
-            </ProductWindow>
-          </div>
-          <div className="hermes-paper-shell hermes-product-shot-cta">
-            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary">
-              Enter Hermes
-              <span aria-hidden="true">→</span>
-            </Link>
-            <p className="hermes-paper-footnote">
-              Illustrative board. Simulation capital never moves real money.
-            </p>
-          </div>
-        </figure>
-
-        <figure className="hermes-product-shot">
-          <div className="hermes-paper-shell hermes-product-shot-copy">
-            <figcaption>
-              <span>02 · Ledger</span>
+              <span>01 · Ledger</span>
               <strong>Where every decision is sealed</strong>
             </figcaption>
             <p>
@@ -99,9 +72,30 @@ export default function ProductShots() {
               Inspect the ledger
               <span aria-hidden="true">→</span>
             </Link>
-            <p className="hermes-paper-footnote">
-              Illustrative rows. Live sealed decisions are on the public ledger.
+          </div>
+        </figure>
+
+        <figure className="hermes-product-shot">
+          <div className="hermes-paper-shell hermes-product-shot-copy">
+            <figcaption>
+              <span>02 · Dashboard</span>
+              <strong>Where your capital is managed</strong>
+            </figcaption>
+            <p>
+              Portfolio, posture, outlook, and recent decisions, one surface so you can see what Hermes is
+              doing without becoming the operator.
             </p>
+          </div>
+          <div className="hermes-paper-shell">
+            <ProductWindow url="app.solace.fyi/dashboard">
+              <HermesBoardArt />
+            </ProductWindow>
+          </div>
+          <div className="hermes-paper-shell hermes-product-shot-cta">
+            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary">
+              Enter Hermes
+              <span aria-hidden="true">→</span>
+            </Link>
           </div>
         </figure>
       </div>

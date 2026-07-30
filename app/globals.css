@@ -16069,6 +16069,358 @@ section h3 {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   Live decision ledger, matches Hermes marketing ledger art
+   ═══════════════════════════════════════════════════════════ */
+.ledger-doc {
+  --ledger-ink: #1c1917;
+  --ledger-muted: #78716c;
+  --ledger-faint: #a8a29e;
+  --ledger-line: #e7e5e4;
+  --ledger-surface: #ffffff;
+  --ledger-bg: #fafaf9;
+  --ledger-pos: #3d6b4f;
+  --ledger-neg: #9f3a3a;
+}
+
+.ledger-doc-intro {
+  padding-top: clamp(4.5rem, 10vw, 6.5rem);
+  padding-bottom: 1.5rem;
+}
+
+.ledger-doc-title {
+  margin: 0;
+  max-width: 28rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(2rem, 4.5vw, 2.85rem);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--ledger-ink);
+  text-wrap: balance;
+}
+
+.ledger-doc-crumb {
+  color: inherit;
+  text-decoration: none;
+}
+
+.ledger-doc-crumb:hover {
+  color: var(--ledger-ink);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.ledger-doc-sheet-section {
+  padding-bottom: 1.5rem;
+}
+
+.ledger-doc-sheet {
+  overflow: hidden;
+  border: 1px solid var(--ledger-line);
+  border-radius: 0.65rem;
+  background: var(--ledger-surface);
+  box-shadow:
+    0 1.25rem 2.75rem rgba(28, 25, 23, 0.07),
+    0 0.25rem 0.75rem rgba(28, 25, 23, 0.04);
+}
+
+.ledger-doc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem 2rem;
+  padding: 1.25rem 1.35rem 1rem;
+  background: var(--ledger-bg);
+  border-bottom: 1px solid transparent;
+}
+
+.ledger-doc-head-kicker {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--ledger-faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ledger-doc-head-title {
+  display: block;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.25rem, 2.4vw, 1.45rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ledger-ink);
+}
+
+.ledger-doc-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem 1.75rem;
+}
+
+.ledger-doc-stats span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.ledger-doc-stats em,
+.ledger-doc-strip em {
+  font-style: normal;
+  color: var(--ledger-faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ledger-doc-stats strong {
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ledger-ink);
+}
+
+.ledger-doc-note {
+  margin: 0 1.25rem 1rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--ledger-line);
+  border-radius: 0.5rem;
+  background: var(--ledger-bg);
+  color: var(--ledger-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.ledger-doc-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+  margin: 0 1.25rem 1rem;
+  padding: 0.85rem 0 0;
+  border-top: 1px solid var(--ledger-line);
+}
+
+@media (min-width: 720px) {
+  .ledger-doc-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.ledger-doc-strip span {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.ledger-doc-strip strong,
+.ledger-doc-live-pnl {
+  color: var(--ledger-ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+
+.ledger-doc-live-pnl {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.ledger-doc-live-pnl strong {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.ledger-doc-live-pnl .trust-meta-sub {
+  display: block;
+  color: var(--ledger-faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.ledger-doc-sheet .trust-table-wrap {
+  margin: 0;
+  border-top: 1px solid var(--ledger-line);
+  border-radius: 0;
+}
+
+.ledger-doc-sheet .trust-ledger-table {
+  min-width: 64rem;
+}
+
+.ledger-doc-sheet .trust-ledger-table th {
+  background: var(--ledger-bg);
+}
+
+.ledger-doc-disclosure {
+  margin: 0;
+  padding: 0.85rem 1.25rem 1rem;
+  border-top: 1px solid var(--ledger-line);
+  color: var(--ledger-faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  line-height: 1.55;
+}
+
+.ledger-doc-scoreboard {
+  border-top: 1px solid var(--ledger-line);
+  padding: 0.25rem 0 0;
+}
+
+.ledger-doc-scoreboard .trust-scoreboard {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--ledger-bg);
+}
+
+.ledger-doc-scoreboard .trust-scoreboard-head {
+  padding: 1rem 1.25rem 0.5rem;
+}
+
+.ledger-doc-scoreboard .trust-scoreboard-head h3 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.ledger-doc-scoreboard .trust-score-grid,
+.ledger-doc-scoreboard .trust-scoreboard-actions {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+.ledger-doc-scoreboard .trust-scoreboard-actions {
+  padding-bottom: 1rem;
+}
+
+.ledger-doc-below {
+  padding-bottom: clamp(1.5rem, 4vw, 2.25rem);
+}
+
+.ledger-doc-panel {
+  overflow: hidden;
+  border: 1px solid var(--ledger-line);
+  border-radius: 0.65rem;
+  background: var(--ledger-surface);
+  box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04);
+}
+
+.ledger-doc-panel h2 {
+  margin: 0;
+  padding: 1.15rem 1.25rem 0.85rem;
+  border-bottom: 1px solid var(--ledger-line);
+  background: var(--ledger-bg);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ledger-ink);
+}
+
+.ledger-doc-panel table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ledger-doc-panel th,
+.ledger-doc-panel td {
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--ledger-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.ledger-doc-panel tr:last-child th,
+.ledger-doc-panel tr:last-child td {
+  border-bottom: 0;
+}
+
+.ledger-doc-panel th {
+  width: 11rem;
+  color: var(--ledger-faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ledger-doc-panel td {
+  color: #44403c;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.ledger-doc-verify {
+  padding-bottom: 1.25rem;
+}
+
+.ledger-doc-verify > p {
+  margin: 1rem 1.25rem 0;
+  color: var(--ledger-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.ledger-doc-verify .trust-verify-pre,
+.ledger-doc-verify .trust-verify-run,
+.ledger-doc-verify .trust-verify-source {
+  margin-left: 1.25rem;
+  margin-right: 1.25rem;
+}
+
+.ledger-doc-link {
+  color: var(--ledger-ink);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.ledger-doc-link:hover {
+  opacity: 0.75;
+}
+
+.ledger-doc .trust-share {
+  margin-top: 0;
+  border-color: var(--ledger-line);
+  border-radius: 0.65rem;
+  background: var(--ledger-surface);
+  box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04);
+}
+
+.ledger-doc .trust-pnl-pos {
+  color: var(--ledger-pos);
+}
+
+.ledger-doc .trust-pnl-neg {
+  color: var(--ledger-neg);
+}
+
+@media (max-width: 720px) {
+  .ledger-doc-panel th,
+  .ledger-doc-panel td {
+    display: block;
+    width: 100%;
+    padding: 0.55rem 1.1rem;
+  }
+
+  .ledger-doc-panel th {
+    padding-top: 0.9rem;
+    padding-bottom: 0.15rem;
+    border-bottom: 0;
+  }
+
+  .ledger-doc-panel td {
+    padding-bottom: 0.9rem;
+  }
+}
+}
+
 /* Dark preference: keep Hermes paper still paper (product page consistency).
    Site-wide dark still works via tokens on other pages. */
 html[data-theme='dark'] .hermes-paper {
