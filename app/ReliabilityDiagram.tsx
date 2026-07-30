@@ -34,23 +34,42 @@ export default function ReliabilityDiagram({ size = 'sm' }: { size?: 'sm' | 'lg'
 
         <line x1={px(0)} y1={py(0)} x2={px(1)} y2={py(1)} className="rel-diagonal" />
 
-        {calibration.buckets.map((b, i) => (
-          <circle key={i} cx={px(b.predicted)} cy={py(b.actual)} r={radius(b.count)} className="rel-dot" />
-        ))}
+        {calibration.buckets.map((b, i) => {
+          const gap = b.predicted - b.actual;
+          const tone = Math.abs(gap) < 0.06 ? 'on' : gap > 0 ? 'over' : 'under';
+          return (
+            <g key={i}>
+              <circle
+                cx={px(b.predicted)}
+                cy={py(b.actual)}
+                r={radius(b.count)}
+                className={`rel-dot rel-dot-${tone}`}
+              />
+              <text
+                x={px(b.predicted)}
+                y={py(b.actual) + 3.5}
+                className="rel-dot-label"
+                textAnchor="middle"
+              >
+                {b.count}
+              </text>
+            </g>
+          );
+        })}
 
         {labelTicks.map((t) => (
           <text key={`x-${t}`} x={px(t)} y={B + 16} className="rel-axis" textAnchor="middle">
-            {Math.round(t * 100)}
+            {Math.round(t * 100)}%
           </text>
         ))}
         {labelTicks.map((t) => (
           <text key={`y-${t}`} x={L - 8} y={py(t) + 3} className="rel-axis" textAnchor="end">
-            {Math.round(t * 100)}
+            {Math.round(t * 100)}%
           </text>
         ))}
 
         <text x={(L + R) / 2} y={H - 2} className="rel-axis-title" textAnchor="middle">
-          PREDICTED %
+          Predicted probability
         </text>
         <text
           x={11}
@@ -59,7 +78,7 @@ export default function ReliabilityDiagram({ size = 'sm' }: { size?: 'sm' | 'lg'
           textAnchor="middle"
           transform={`rotate(-90 11 ${(T + B) / 2})`}
         >
-          ACTUAL %
+          Actual rate
         </text>
       </svg>
       <figcaption className="rel-legend">
