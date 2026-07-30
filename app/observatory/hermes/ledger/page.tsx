@@ -236,7 +236,8 @@ export default async function HermesLedgerPage() {
         <section className="hermes-paper-shell ledger-doc-sheet-section" aria-label="Decision ledger">
           <div className="ledger-doc-sheet">
             <div className="ledger-doc-head">
-              <div>
+              <div className="ledger-doc-head-main">
+                <ShareLedger />
                 <span className="ledger-doc-head-kicker">Public record</span>
                 <strong className="ledger-doc-head-title">Hermes decision ledger</strong>
               </div>
@@ -296,10 +297,6 @@ export default async function HermesLedgerPage() {
           </div>
         </section>
       </TrustLivePulseProvider>
-
-      <section className="hermes-paper-shell ledger-doc-below">
-        <ShareLedger />
-      </section>
 
       <section className="hermes-paper-shell ledger-doc-below">
         <div className="ledger-doc-panel">

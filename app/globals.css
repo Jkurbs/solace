@@ -16229,9 +16229,22 @@ section h3 {
   border-bottom: 1px solid transparent;
 }
 
+.ledger-doc-head-main {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'share kicker'
+    'title title'
+    'actions actions';
+  align-items: center;
+  column-gap: 0.5rem;
+  row-gap: 0.3rem;
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+
 .ledger-doc-head-kicker {
-  display: block;
-  margin-bottom: 0.3rem;
+  grid-area: kicker;
   color: var(--ledger-faint);
   font-family: var(--font-plex), monospace;
   font-size: 0.68rem;
@@ -16240,12 +16253,86 @@ section h3 {
 }
 
 .ledger-doc-head-title {
-  display: block;
+  grid-area: title;
   font-family: var(--font-display), Georgia, serif;
   font-size: clamp(1.25rem, 2.4vw, 1.45rem);
   font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--ledger-ink);
+}
+
+/* Share: one trigger by "Public record" on phone; full actions on desktop */
+.ledger-share {
+  display: contents;
+}
+
+.ledger-share-trigger {
+  grid-area: share;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  min-height: 1.85rem;
+  min-width: 1.85rem;
+  padding: 0 0.45rem;
+  border: 1px solid var(--ledger-line, #e7e5e4);
+  border-radius: 999px;
+  background: var(--ledger-surface, #fff);
+  color: var(--ledger-ink, #1c1917);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+
+.ledger-share-trigger:hover {
+  border-color: rgba(28, 25, 23, 0.28);
+  background: #fff;
+}
+
+.ledger-share-trigger:focus-visible {
+  outline: 2px solid rgba(28, 25, 23, 0.35);
+  outline-offset: 2px;
+}
+
+.ledger-share-trigger-label {
+  display: none;
+  font-family: var(--font-plex), monospace;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ledger-share-desktop {
+  grid-area: actions;
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 0.45rem;
+}
+
+@media (min-width: 721px) {
+  .ledger-doc-head-main {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'kicker'
+      'title'
+      'actions';
+  }
+
+  .ledger-share-trigger {
+    display: none;
+  }
+
+  .ledger-share-desktop {
+    display: flex;
+  }
+}
+
+/* Remove old below-fold share panel styles when nested */
+.ledger-doc .trust-share {
+  display: none;
 }
 
 .ledger-doc-stats {
