@@ -11,7 +11,7 @@ import {
   updateAccountRiskProfile,
 } from '@/features/accounts/store';
 
-import { isLocalDashboardBypass } from './access';
+import { isGuestDashboardAccess, isLocalDashboardBypass } from './access';
 import { accountTypeValues, intendedDepositRangeValues, riskProfileValues, sourceOfFundsValues } from './contract';
 import type {
   AccountReview,
@@ -65,8 +65,8 @@ export async function getStoredRiskProfile(accountId?: string | null) {
     return riskProfile;
   }
 
-  // Local dev default so the dashboard has a coherent posture without cookies.
-  if (isLocalDashboardBypass() && !accountId) {
+  // Guest open-access default so posture is coherent without a real account.
+  if (isGuestDashboardAccess() && !accountId) {
     return 'Balanced' as RiskProfile;
   }
 
@@ -74,28 +74,22 @@ export async function getStoredRiskProfile(accountId?: string | null) {
 }
 
 export async function getDashboardOnboardingState(accountId?: string | null): Promise<DashboardOnboardingState> {
-  // Localhost / next dev: full synthetic setup so access works without magic-link,
-  // without lying that setup is "recorded" while review/intent are empty.
-  if (isLocalDashboardBypass() && !accountId) {
+  // Guest path: cookie-backed simulation onboarding (no magic-link wall).
+  // Incomplete until they accept the sim welcome — then complete + sim deposit intent.
+  if (isGuestDashboardAccess() && !accountId) {
+    const cookieStore = await cookies();
+    const complete = cookieStore.get(dashboardOnboardingCookieName)?.value === 'true';
+    const accountReview = parseAccountReviewCookie(cookieStore.get(accountReviewCookieName)?.value);
+    const depositIntentAmount = parseDepositIntentAmount(cookieStore.get(depositIntentAmountCookieName)?.value);
+    const identityVerification = parseIdentityVerificationCookie(
+      cookieStore.get(identityVerificationCookieName)?.value,
+    );
+
     return {
-      accountReview: {
-        accountType: 'Individual',
-        country: 'United States',
-        identityConsent: true,
-        intendedDepositRange: '$10k-$25k',
-        legalNameProvided: true,
-        profileConfirmed: true,
-        region: 'Local',
-        riskAcknowledged: true,
-        sourceOfFunds: 'Employment income',
-        status: 'SUBMITTED',
-      },
-      complete: true,
-      depositIntentAmount: 10_000,
-      identityVerification: {
-        provider: 'stripe_identity',
-        status: 'READY',
-      },
+      accountReview,
+      complete,
+      depositIntentAmount,
+      identityVerification,
     };
   }
 
@@ -272,7 +266,14 @@ export function completeDashboardOnboarding(
     accountReview,
     depositIntentAmount,
     riskProfile,
-  }: { accountReview: AccountReview; depositIntentAmount: number; riskProfile: RiskProfile },
+    identityStatus = 'READY',
+  }: {
+    accountReview: AccountReview;
+    depositIntentAmount: number;
+    riskProfile: RiskProfile;
+    /** Open simulation marks identity verified so capital rails stay unblocked for sim. */
+    identityStatus?: IdentityVerificationStatus;
+  },
 ) {
   setRiskProfilePreference(response, riskProfile);
   response.cookies.set(dashboardOnboardingCookieName, 'true', {
@@ -292,7 +293,39 @@ export function completeDashboardOnboarding(
   setJsonCookie(response, accountReviewCookieName, accountReview);
   setIdentityVerificationPreference(response, {
     provider: 'stripe_identity',
-    status: 'READY',
+    status: identityStatus,
+  });
+}
+
+/** Open simulation welcome: sim capital amount, verified-for-sim identity, Balanced default. */
+export function completeOpenSimulationOnboarding(
+  response: NextResponse,
+  {
+    depositAmount = 10_000,
+    riskProfile = 'Balanced',
+  }: {
+    depositAmount?: number;
+    riskProfile?: RiskProfile;
+  } = {},
+) {
+  const accountReview: AccountReview = {
+    accountType: 'Individual',
+    country: 'United States',
+    identityConsent: true,
+    intendedDepositRange: '$10k-$25k',
+    legalNameProvided: true,
+    profileConfirmed: true,
+    region: 'Simulation',
+    riskAcknowledged: true,
+    sourceOfFunds: 'Employment income',
+    status: 'SUBMITTED',
+  };
+
+  completeDashboardOnboarding(response, {
+    accountReview,
+    depositIntentAmount: depositAmount,
+    identityStatus: 'VERIFIED',
+    riskProfile,
   });
 }
 

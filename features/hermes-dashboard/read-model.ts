@@ -541,6 +541,84 @@ function getActiveSnapshotFromLedger(
   };
 }
 
+/**
+ * Open-access guest simulation: real Hermes-style surface, labeled simulation capital.
+ * Used when login wall is off and the visitor has completed sim welcome.
+ */
+export function getOpenSimulationDashboardSnapshot({
+  depositAmount = 10_000,
+  riskProfile = 'Balanced',
+}: {
+  depositAmount?: number;
+  riskProfile?: RiskProfile;
+} = {}): HermesDashboardSnapshot {
+  const snapshot = cloneSnapshot(hermesDashboardSnapshot);
+  const amount = Math.max(0, depositAmount);
+  const profit = snapshot.portfolio.profit;
+  const value = Math.round((amount + profit) * 100) / 100;
+  const sinceInception = amount > 0 ? Math.round((profit / amount) * 10000) / 100 : 0;
+  const updatedAt = new Date().toISOString();
+
+  return {
+    ...snapshot,
+    contractVersion: hermesDashboardContractVersion,
+    generatedAt: updatedAt,
+    updatedAt,
+    account: {
+      ...snapshot.account,
+      depositIntent: {
+        amount,
+        status: 'REVIEW_PENDING',
+      },
+      identityVerification: {
+        provider: 'stripe_identity',
+        status: 'VERIFIED',
+      },
+      label: 'Simulation account',
+      lifecycle: 'ACTIVE',
+      mode: 'SIMULATION',
+      review: {
+        accountType: 'Individual',
+        country: 'United States',
+        identityConsent: true,
+        intendedDepositRange: '$10k-$25k',
+        legalNameProvided: true,
+        profileConfirmed: true,
+        region: 'Simulation',
+        riskAcknowledged: true,
+        sourceOfFunds: 'Employment income',
+        status: 'SUBMITTED',
+      },
+    },
+    portfolio: {
+      ...snapshot.portfolio,
+      availableToWithdraw: value,
+      deposited: amount,
+      profit,
+      value,
+      sinceInception,
+      equityState: {
+        code: 'LIVE_EQUITY',
+        detail:
+          'Simulation capital is active. Figures follow live Hermes decisioning on founder capital; no real money is in your account.',
+        label: 'Simulation equity',
+        updatedAt,
+      },
+    },
+    status: {
+      ...snapshot.status,
+      riskProfile,
+    },
+    commentary:
+      'This is simulation capital. Hermes decisions and outcomes track the live instrument; your balance is virtual and no real money moves.',
+    activity: [
+      { timestamp: updatedAt, summary: `Simulation capital posted · $${amount.toLocaleString('en-US')}` },
+      { timestamp: updatedAt, summary: `${riskProfile} risk profile selected` },
+      ...snapshot.activity,
+    ],
+  };
+}
+
 export async function getHermesDashboardSnapshot({
   accountId,
   accountReview,

@@ -1,14 +1,21 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
+import {
+  getDashboardAccountId,
+  hasDashboardAccess,
+  isGuestDashboardAccess,
+} from '@/features/hermes-dashboard/access';
 import { HermesDashboard } from '@/features/hermes-dashboard/dashboard-client';
 import {
   getDashboardOnboardingState,
   getStoredRiskProfile,
   type DashboardOnboardingState,
 } from '@/features/hermes-dashboard/preferences';
-import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
+import {
+  getHermesDashboardSnapshot,
+  getOpenSimulationDashboardSnapshot,
+} from '@/features/hermes-dashboard/read-model';
 
 import DashboardAccessGate from './DashboardAccessGate';
 
@@ -59,16 +66,36 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <DashboardAccessGate
         email={email}
         nextPath={nextPath}
-        status={status === 'denied' || status === 'expired' || status === 'failed' || status === 'invalid' || status === 'sent' ? status : undefined}
+        status={
+          status === 'denied' ||
+          status === 'expired' ||
+          status === 'failed' ||
+          status === 'invalid' ||
+          status === 'sent'
+            ? status
+            : undefined
+        }
       />
     );
   }
 
   const accountId = await getDashboardAccountId();
   const onboarding = await getDashboardOnboardingState(accountId);
+  const guestOpen = isGuestDashboardAccess() && !accountId;
 
   if (!onboarding.complete) {
     redirect('/dashboard/onboarding?welcome=1');
+  }
+
+  // Guest simulation: show active sim capital without a ledger account invite.
+  if (guestOpen) {
+    const riskProfile = (await getStoredRiskProfile(accountId)) ?? 'Balanced';
+    const initialSnapshot = getOpenSimulationDashboardSnapshot({
+      depositAmount: onboarding.depositIntentAmount ?? 10_000,
+      riskProfile,
+    });
+
+    return <HermesDashboard initialSnapshot={initialSnapshot} />;
   }
 
   const initialSnapshot = await getInitialDashboardSnapshot({ accountId, onboarding });

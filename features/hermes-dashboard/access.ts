@@ -29,6 +29,23 @@ export function isLocalDashboardBypass() {
   return process.env.NODE_ENV === 'development';
 }
 
+/**
+ * Open simulation entry: anyone can enter Hermes without an approved account.
+ * Default on — disable with HERMES_DASHBOARD_OPEN_ACCESS=0 when re-enabling the wall.
+ */
+export function isOpenDashboardAccess() {
+  if (process.env.HERMES_DASHBOARD_OPEN_ACCESS === '0') {
+    return false;
+  }
+
+  return true;
+}
+
+/** Guest path: open sim or local bypass, no authenticated ledger account required. */
+export function isGuestDashboardAccess() {
+  return isOpenDashboardAccess() || isLocalDashboardBypass();
+}
+
 async function getAuthenticatedEmail() {
   if (!isSupabaseServerConfigured()) {
     return null;
@@ -69,7 +86,7 @@ export async function getDashboardAccountBundle() {
 }
 
 export async function hasDashboardAccess() {
-  if (isLocalDashboardBypass()) {
+  if (isGuestDashboardAccess()) {
     return true;
   }
 
