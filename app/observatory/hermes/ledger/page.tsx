@@ -20,15 +20,30 @@ import ScriptSource from '../../../trust/ScriptSource';
 import TrustLedgerTable from '../../../trust/TrustLedgerTable';
 import TrustLivePnL from '../../../trust/TrustLivePnL';
 import { TrustLivePulseProvider } from '../../../trust/TrustLivePulse';
+import ShareLedger from '../../../trust/ShareLedger';
 import TrustScoreboard from '../../../trust/TrustScoreboard';
 import VerifyInBrowser from '../../../trust/VerifyInBrowser';
 
 export const metadata: Metadata = {
   title: 'Solace — Hermes Decision Ledger',
   description:
-    'Public sealed record of Hermes decisions before outcomes are known. Part of the Observatory.',
+    'Public sealed record of Hermes decisions before outcomes are known. Founder capital · checkable chain. Part of the Observatory.',
   alternates: {
     canonical: 'https://solace.fyi/observatory/hermes/ledger',
+  },
+  openGraph: {
+    title: 'Solace — Hermes Decision Ledger',
+    description:
+      'Sealed before the outcome is known. Public process metrics and a checkable decision chain.',
+    url: 'https://solace.fyi/observatory/hermes/ledger',
+    type: 'website',
+    siteName: 'Solace',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Solace — Hermes Decision Ledger',
+    description:
+      'Sealed before the outcome is known. Public process metrics and a checkable decision chain.',
   },
 };
 
@@ -219,6 +234,7 @@ export default async function HermesLedgerPage() {
         <p className="trust-ledger-note">
           The ledger exists so Hermes can be judged by recorded decisions, not screenshots posted after the fact.
         </p>
+        <ShareLedger />
       </section>
 
       <TrustLivePulseProvider
