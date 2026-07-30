@@ -5,7 +5,9 @@
 
 import type { ActivePrediction } from '@/app/oracle/active-predictions';
 
+/** Public Trade API base (works for all markets, not only elections). */
 const KALSHI_API = 'https://api.elections.kalshi.com/trade-api/v2';
+const KALSHI_API_FALLBACK = 'https://api.kalshi.com/trade-api/v2';
 
 /** Longer-horizon BTC series we surface (no 15m / hourly). */
 const BTC_SERIES = [
@@ -110,17 +112,25 @@ function isActiveStatus(status: string | undefined) {
   return s === 'active' || s === 'open' || s === 'initialized';
 }
 
-async function fetchSeriesMarkets(seriesTicker: string): Promise<KalshiMarket[]> {
-  const url = new URL(`${KALSHI_API}/markets`);
-  url.searchParams.set('series_ticker', seriesTicker);
-  url.searchParams.set('status', 'open');
-  url.searchParams.set('limit', '50');
-
-  const res = await fetch(url.toString(), {
-    headers: { Accept: 'application/json' },
-    // Oracle board revalidates on a short cadence; avoid sticky empty caches.
-    next: { revalidate: 120 },
+async function fetchJson(url: string): Promise<Response> {
+  return fetch(url, {
+    headers: { Accept: 'application/json', 'User-Agent': 'Solace-Oracle/1.0' },
+    // Keep the public board near-live; empty responses should not stick for long.
+    next: { revalidate: 60 },
   });
+}
+
+async function fetchSeriesMarkets(seriesTicker: string): Promise<KalshiMarket[]> {
+  const params = new URLSearchParams({
+    series_ticker: seriesTicker,
+    status: 'open',
+    limit: '50',
+  });
+
+  let res = await fetchJson(`${KALSHI_API}/markets?${params}`);
+  if (!res.ok) {
+    res = await fetchJson(`${KALSHI_API_FALLBACK}/markets?${params}`);
+  }
 
   if (!res.ok) {
     throw new Error(`Kalshi markets ${seriesTicker}: HTTP ${res.status}`);

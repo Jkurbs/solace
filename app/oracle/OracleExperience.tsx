@@ -23,6 +23,7 @@ type Props = {
   active: ActivePrediction[];
   resolvedQuestions: ResolvedQuestion[];
   feedError?: string | null;
+  isLive?: boolean;
 };
 
 const tabs: { id: OracleTab; label: string }[] = [
@@ -72,6 +73,7 @@ export default function OracleExperience({
   active,
   resolvedQuestions,
   feedError = null,
+  isLive = false,
 }: Props) {
   const [tab, setTab] = useState<OracleTab>('active');
   const nowMs = useMemo(() => Date.now(), []);
@@ -91,11 +93,25 @@ export default function OracleExperience({
   return (
     <div className="oracle-board">
       <header className="oracle-board-hero">
+        <p className="oracle-board-kicker">
+          {isLive ? (
+            <span className="oracle-live-pill">
+              <i aria-hidden="true" />
+              Live · Kalshi BTC / ETH
+            </span>
+          ) : (
+            <span className="oracle-live-pill is-quiet">Oracle · BTC / ETH</span>
+          )}
+        </p>
         <h1 className="oracle-board-title">Oracle</h1>
         <p className="oracle-board-dek">
           Estimates the probability of real events, records each estimate before the outcome is known,
           and scores it against what actually happened. Live board begins with Bitcoin and Ethereum.
         </p>
+        <Link href={OBSERVATORY_ORACLE_LEDGER_PATH} className="oracle-board-ledger-btn">
+          Check the ledger
+          <span aria-hidden="true">→</span>
+        </Link>
         <div className="oracle-board-stats" aria-label="Oracle scoreboard">
           <div>
             <strong>{resolved}</strong>
@@ -332,20 +348,10 @@ export default function OracleExperience({
         </section>
       ) : null}
 
-      <footer className="oracle-board-foot">
-        <div className="oracle-board-ledger-cta">
-          <p className="oracle-board-ledger-kicker">Public record</p>
-          <h2 className="oracle-board-ledger-title">Oracle decision ledger</h2>
-          <p className="oracle-board-ledger-dek">
-            Every belief sealed before the outcome is known. Wins, misses, and waits, hash-chained and
-            checkable, the same discipline as Hermes.
-          </p>
-          <Link href={OBSERVATORY_ORACLE_LEDGER_PATH} className="oracle-board-ledger-link">
-            Inspect the Oracle ledger
-            <span aria-hidden="true">→</span>
-          </Link>
-        </div>
-      </footer>
+      <p className="oracle-board-source">
+        {isLive ? 'Live' : 'Board'} · Kalshi BTC / ETH · Updated {asOfLabel}
+        {feedError ? ` · ${feedError}` : ''} · No performance claims
+      </p>
     </div>
   );
 }

@@ -60,6 +60,10 @@ export default function GloryaPage() {
             Glorya is an instrument for allocating humanitarian capital only when intervention can change the
             outcome.
           </p>
+          <Link href={OBSERVATORY_GLORYA_LEDGER_PATH} className="glorya-ledger-btn">
+            Check the ledger
+            <span aria-hidden="true">→</span>
+          </Link>
           <div className="glorya-globe-legend">
             <span>
               <i className="glorya-legend-dot is-evaluated" /> Evaluated
@@ -120,54 +124,6 @@ export default function GloryaPage() {
             <strong>-</strong>
             <em>Predicted vs actual after first outcomes</em>
           </div>
-        </div>
-      </section>
-
-      <section className="glorya-ledger-section" aria-label="Glorya decision ledger">
-        <div className="glorya-ledger-head">
-          <p className="section-kicker">Public ledger</p>
-          <h2>Glorya decision ledger</h2>
-          <p>
-            First disbursement seals the first row. Until then the sheet is empty by design, not a hidden history.
-          </p>
-        </div>
-        <div className="glorya-ledger-table-wrap">
-          <table className="glorya-ledger-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Time</th>
-                <th>Place</th>
-                <th>Amount</th>
-                <th>Need</th>
-                <th>Partner</th>
-                <th>Predicted</th>
-                <th>Actual</th>
-                <th>Status</th>
-                <th>Hash</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="glorya-ledger-empty">
-                <td colSpan={10}>
-                  No sealed Glorya rows. Instrument is evaluating only. The live ledger begins with the first
-                  disbursement after the revenue gate.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div className="glorya-ledger-cta">
-          <p className="glorya-ledger-cta-kicker">Public record</p>
-          <h3 className="glorya-ledger-cta-title">Inspect Glorya&apos;s own decision ledger</h3>
-          <p className="glorya-ledger-cta-dek">
-            Every sealed disbursement will land here before outcomes are known, hash-chained and checkable, the
-            same discipline as Hermes and Oracle.
-          </p>
-          <Link href={OBSERVATORY_GLORYA_LEDGER_PATH} className="glorya-ledger-cta-link">
-            Open Glorya ledger
-            <span aria-hidden="true">→</span>
-          </Link>
         </div>
       </section>
 
