@@ -1,0 +1,230 @@
+/**
+ * Public Kalshi market data for Oracle (BTC / ETH only).
+ * Uses the unauthenticated Trade API. Excludes 15-minute and hourly series.
+ */
+
+import type { ActivePrediction } from '@/app/oracle/active-predictions';
+
+const KALSHI_API = 'https://api.elections.kalshi.com/trade-api/v2';
+
+/** Longer-horizon BTC series we surface (no 15m / hourly). */
+const BTC_SERIES = [
+  'KXBTCMAXY',
+  'KXBTC2026250',
+  'KXBTC2026200',
+  'KXBTCMAX150',
+  'KXBTCMAX100',
+  'KXBTCMINY',
+  'KXBTCMAXMON',
+  'KXBTC50VS100',
+  'KXBTCATH',
+  'BTCMAXY',
+  'BTCMINY',
+  'BTCATH',
+] as const;
+
+/** Longer-horizon ETH series we surface (no 15m / hourly). */
+const ETH_SERIES = [
+  'KXETHMAXY',
+  'KXETHMINY',
+  'KXETHMAXMON',
+  'KXETHMINMON',
+  'KXETHATH',
+  'ETHMAXY',
+  'ETHMINY',
+  'ETHATH',
+] as const;
+
+const SERIES_ASSET: Record<string, 'btc' | 'eth'> = Object.fromEntries([
+  ...BTC_SERIES.map((s) => [s, 'btc' as const]),
+  ...ETH_SERIES.map((s) => [s, 'eth' as const]),
+]);
+
+type KalshiMarket = {
+  ticker: string;
+  event_ticker?: string;
+  title?: string;
+  yes_sub_title?: string;
+  status?: string;
+  close_time?: string;
+  expected_expiration_time?: string;
+  updated_time?: string;
+  yes_bid_dollars?: string;
+  yes_ask_dollars?: string;
+  last_price_dollars?: string;
+  previous_price_dollars?: string;
+  volume_24h_fp?: string;
+  volume_fp?: string;
+  open_interest_fp?: string;
+};
+
+function parseDollar(value: string | undefined): number | null {
+  if (value == null || value === '') return null;
+  const n = Number.parseFloat(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function midProbability(market: KalshiMarket): number | null {
+  const bid = parseDollar(market.yes_bid_dollars);
+  const ask = parseDollar(market.yes_ask_dollars);
+  if (bid != null && ask != null && ask >= bid) {
+    return Math.min(0.99, Math.max(0.01, (bid + ask) / 2));
+  }
+  const last = parseDollar(market.last_price_dollars);
+  if (last != null) return Math.min(0.99, Math.max(0.01, last));
+  return null;
+}
+
+/** Spread-based confidence proxy (tighter book → higher confidence). */
+function confidenceFromBook(market: KalshiMarket): number {
+  const bid = parseDollar(market.yes_bid_dollars);
+  const ask = parseDollar(market.yes_ask_dollars);
+  if (bid == null || ask == null || ask < bid) return 0.6;
+  const spread = ask - bid;
+  // 1¢ spread ≈ 0.98, 10¢ ≈ 0.80, 25¢+ bottoms near 0.55
+  return Math.min(0.98, Math.max(0.55, 1 - spread * 1.8));
+}
+
+function deltaFromPrevious(market: KalshiMarket, probability: number): {
+  delta: number | null;
+  deltaWindow: string | null;
+} {
+  const prev = parseDollar(market.previous_price_dollars);
+  if (prev == null) return { delta: null, deltaWindow: null };
+  const delta = probability - prev;
+  if (Math.abs(delta) < 0.005) return { delta: null, deltaWindow: null };
+  return { delta, deltaWindow: 'since last mark' };
+}
+
+function seriesFromTicker(ticker: string): string | null {
+  // e.g. KXBTCMAXY-26DEC31-149999.99 → KXBTCMAXY
+  const parts = ticker.split('-');
+  if (parts.length < 2) return null;
+  // Series can include digits only at end of root token
+  return parts[0] ?? null;
+}
+
+function isActiveStatus(status: string | undefined) {
+  if (!status) return true;
+  const s = status.toLowerCase();
+  return s === 'active' || s === 'open' || s === 'initialized';
+}
+
+async function fetchSeriesMarkets(seriesTicker: string): Promise<KalshiMarket[]> {
+  const url = new URL(`${KALSHI_API}/markets`);
+  url.searchParams.set('series_ticker', seriesTicker);
+  url.searchParams.set('status', 'open');
+  url.searchParams.set('limit', '50');
+
+  const res = await fetch(url.toString(), {
+    headers: { Accept: 'application/json' },
+    // Oracle board revalidates on a short cadence; avoid sticky empty caches.
+    next: { revalidate: 120 },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Kalshi markets ${seriesTicker}: HTTP ${res.status}`);
+  }
+
+  const data = (await res.json()) as { markets?: KalshiMarket[] };
+  return data.markets ?? [];
+}
+
+function toPrediction(market: KalshiMarket, asset: 'btc' | 'eth'): ActivePrediction | null {
+  if (!isActiveStatus(market.status)) return null;
+  const probability = midProbability(market);
+  if (probability == null) return null;
+
+  const { delta, deltaWindow } = deltaFromPrevious(market, probability);
+  const title =
+    market.title?.trim() ||
+    (market.yes_sub_title ? `Will ${asset.toUpperCase()} be ${market.yes_sub_title}?` : market.ticker);
+
+  const resolvesAt =
+    market.expected_expiration_time || market.close_time || new Date(Date.now() + 86400000).toISOString();
+
+  return {
+    id: market.ticker,
+    question: title,
+    probability,
+    confidence: confidenceFromBook(market),
+    updatedAt: market.updated_time || new Date().toISOString(),
+    resolvesAt,
+    delta,
+    deltaWindow,
+    asset,
+    source: 'kalshi',
+    ticker: market.ticker,
+    volume24h: parseDollar(market.volume_24h_fp) ?? 0,
+    openInterest: parseDollar(market.open_interest_fp) ?? 0,
+  };
+}
+
+export type KalshiOracleSnapshot = {
+  active: ActivePrediction[];
+  activeCount: number;
+  asOf: string;
+  error: string | null;
+};
+
+/**
+ * Fetch open BTC + ETH Kalshi markets on longer horizons only.
+ * Drops 15-minute / hourly series by never querying them.
+ */
+export async function fetchKalshiBtcEthPredictions(limit = 12): Promise<KalshiOracleSnapshot> {
+  const series = [...BTC_SERIES, ...ETH_SERIES];
+  const settled = await Promise.allSettled(series.map((s) => fetchSeriesMarkets(s)));
+
+  const rows: ActivePrediction[] = [];
+  const errors: string[] = [];
+
+  settled.forEach((result, index) => {
+    const seriesTicker = series[index];
+    if (result.status === 'rejected') {
+      errors.push(`${seriesTicker}: ${result.reason instanceof Error ? result.reason.message : 'failed'}`);
+      return;
+    }
+    const asset = SERIES_ASSET[seriesTicker];
+    if (!asset) return;
+    for (const market of result.value) {
+      // Belt-and-suspenders: never show 15m / hourly tickers if they appear.
+      const t = market.ticker.toUpperCase();
+      if (t.includes('15M') || /-H\d{2}$/.test(t)) continue;
+      const seriesRoot = seriesFromTicker(market.ticker);
+      if (seriesRoot && /15M$/i.test(seriesRoot)) continue;
+
+      const prediction = toPrediction(market, asset);
+      if (prediction) rows.push(prediction);
+    }
+  });
+
+  // Prefer liquid, then open interest, then absolute probability edge from 50%.
+  rows.sort((a, b) => {
+    const vol = (b.volume24h ?? 0) - (a.volume24h ?? 0);
+    if (vol !== 0) return vol;
+    const oi = (b.openInterest ?? 0) - (a.openInterest ?? 0);
+    if (oi !== 0) return oi;
+    return Math.abs(b.probability - 0.5) - Math.abs(a.probability - 0.5);
+  });
+
+  // Cap, keep a mix of BTC and ETH when possible.
+  const selected: ActivePrediction[] = [];
+  let btc = 0;
+  let eth = 0;
+  const maxPer = Math.ceil(limit / 2) + 1;
+  for (const row of rows) {
+    if (selected.length >= limit) break;
+    if (row.asset === 'btc' && btc >= maxPer) continue;
+    if (row.asset === 'eth' && eth >= maxPer) continue;
+    selected.push(row);
+    if (row.asset === 'btc') btc += 1;
+    if (row.asset === 'eth') eth += 1;
+  }
+
+  return {
+    active: selected,
+    activeCount: rows.length,
+    asOf: new Date().toISOString(),
+    error: selected.length === 0 && errors.length ? errors.slice(0, 3).join('; ') : null,
+  };
+}

@@ -22,6 +22,7 @@ type Props = {
   buckets: CalibrationBucket[];
   active: ActivePrediction[];
   resolvedQuestions: ResolvedQuestion[];
+  feedError?: string | null;
 };
 
 const tabs: { id: OracleTab; label: string }[] = [
@@ -70,9 +71,22 @@ export default function OracleExperience({
   buckets,
   active,
   resolvedQuestions,
+  feedError = null,
 }: Props) {
   const [tab, setTab] = useState<OracleTab>('active');
   const nowMs = useMemo(() => Date.now(), []);
+  const asOfLabel = useMemo(() => {
+    const t = new Date(asOf).getTime();
+    if (!Number.isFinite(t)) return asOf;
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    }).format(t);
+  }, [asOf]);
 
   return (
     <div className="oracle-board">
@@ -80,7 +94,7 @@ export default function OracleExperience({
         <h1 className="oracle-board-title">Oracle</h1>
         <p className="oracle-board-dek">
           Estimates the probability of real events, records each estimate before the outcome is known,
-          and scores it against what actually happened.
+          and scores it against what actually happened. Live board begins with Bitcoin and Ethereum.
         </p>
         <div className="oracle-board-stats" aria-label="Oracle scoreboard">
           <div>
@@ -114,55 +128,72 @@ export default function OracleExperience({
 
       {tab === 'active' ? (
         <section className="oracle-board-panel" aria-label="Active predictions">
-          <ul className="oracle-belief-list">
-            {active.map((entry) => {
-              const delta = deltaLabel(entry.delta, entry.deltaWindow);
-              return (
-                <li key={entry.id} id={entry.id} className="oracle-belief-card">
-                  <div className="oracle-belief-main">
-                    <p className="oracle-belief-kicker">oracle believes</p>
-                    <h2 className="oracle-belief-question">{entry.question}</h2>
-                    <div className="oracle-belief-meta">
-                      <span className="oracle-belief-meta-item">
-                        <span className="oracle-belief-clock" aria-hidden="true">
-                          ○
+          {active.length === 0 ? (
+            <p className="oracle-board-empty">
+              {feedError
+                ? `Kalshi feed unavailable right now. ${feedError}`
+                : 'No open Bitcoin or Ethereum markets to show yet (15-minute markets are excluded).'}
+            </p>
+          ) : (
+            <ul className="oracle-belief-list">
+              {active.map((entry) => {
+                const delta = deltaLabel(entry.delta, entry.deltaWindow);
+                return (
+                  <li key={entry.id} id={entry.id} className="oracle-belief-card">
+                    <div className="oracle-belief-main">
+                      <p className="oracle-belief-kicker">
+                        oracle believes
+                        {entry.asset ? (
+                          <span className={`oracle-belief-asset is-${entry.asset}`}>
+                            {entry.asset.toUpperCase()}
+                          </span>
+                        ) : null}
+                      </p>
+                      <h2 className="oracle-belief-question">{entry.question}</h2>
+                      <div className="oracle-belief-meta">
+                        <span className="oracle-belief-meta-item">
+                          <span className="oracle-belief-clock" aria-hidden="true">
+                            ○
+                          </span>
+                          {remainingLabel(entry.resolvesAt, nowMs)}
                         </span>
-                        {remainingLabel(entry.resolvesAt, nowMs)}
-                      </span>
-                      <span className="oracle-belief-confidence">
-                        <span aria-hidden="true">✓</span>
-                        Confidence {pct(entry.confidence)}
-                      </span>
-                      {delta ? (
-                        <span className={`oracle-belief-delta is-${delta.tone}`}>
-                          {delta.tone === 'up' ? '↑' : delta.tone === 'down' ? '↓' : '·'} {delta.points}{' '}
-                          {delta.window}
+                        <span className="oracle-belief-confidence">
+                          <span aria-hidden="true">✓</span>
+                          Confidence {pct(entry.confidence)}
                         </span>
-                      ) : null}
-                      {entry.illustrative ? (
-                        <span className="oracle-belief-illustrative" title="Illustrative sample card">
-                          Illustrative
-                        </span>
-                      ) : null}
+                        {delta ? (
+                          <span className={`oracle-belief-delta is-${delta.tone}`}>
+                            {delta.tone === 'up' ? '↑' : delta.tone === 'down' ? '↓' : '·'} {delta.points}{' '}
+                            {delta.window}
+                          </span>
+                        ) : null}
+                        {entry.illustrative ? (
+                          <span className="oracle-belief-illustrative" title="Illustrative sample card">
+                            Illustrative
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                  <div className="oracle-belief-prob">
-                    <strong>{pct(entry.probability)}</strong>
-                    <span>probability</span>
-                  </div>
-                  <div className="oracle-belief-actions">
-                    <ShareBelief
-                      id={entry.id}
-                      question={entry.question}
-                      probability={entry.probability}
-                    />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                    <div className="oracle-belief-prob">
+                      <strong>{pct(entry.probability)}</strong>
+                      <span>probability</span>
+                    </div>
+                    <div className="oracle-belief-actions">
+                      <ShareBelief
+                        id={entry.id}
+                        question={entry.question}
+                        probability={entry.probability}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
           <p className="oracle-board-footnote">
-            Showing {active.length} of {activeCount} active predictions
+            {active.length === 0
+              ? 'BTC and ETH only · 15-minute markets excluded'
+              : `Showing ${active.length} of ${activeCount} open BTC/ETH markets · 15-minute markets excluded`}
           </p>
         </section>
       ) : null}
@@ -296,7 +327,7 @@ export default function OracleExperience({
             </li>
           </ul>
           <p className="oracle-board-footnote">
-            Source: live Kalshi event markets · Updated {asOf} · No performance claims
+            Source: live Kalshi event markets (BTC / ETH) · Updated {asOfLabel} · No performance claims
           </p>
         </section>
       ) : null}

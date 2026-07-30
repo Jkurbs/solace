@@ -17035,20 +17035,20 @@ html[data-theme='dark'] .hermes-paper {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Oracle board, dark product surface matching instrument mocks
+   Oracle board — paper light (matches Hermes / site default)
    ═══════════════════════════════════════════════════════════ */
 .oracle-shell {
-  --oracle-bg: #0a0a0a;
-  --oracle-ink: #f5f5f4;
-  --oracle-muted: #a8a29e;
-  --oracle-faint: #78716c;
-  --oracle-line: rgba(255, 255, 255, 0.08);
-  --oracle-card: #121212;
-  --oracle-up: #4ade80;
-  --oracle-down: #f87171;
+  --oracle-bg: #fafaf9;
+  --oracle-ink: #1c1917;
+  --oracle-muted: #78716c;
+  --oracle-faint: #a8a29e;
+  --oracle-line: #e7e5e4;
+  --oracle-card: #ffffff;
+  --oracle-up: #3d6b4f;
+  --oracle-down: #9f3a3a;
   background: var(--oracle-bg);
   color: var(--oracle-ink);
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 .oracle-shell-header {
@@ -17056,7 +17056,7 @@ html[data-theme='dark'] .hermes-paper {
   top: 0;
   z-index: 40;
   border-bottom: 1px solid transparent;
-  background: rgba(10, 10, 10, 0.88);
+  background: rgba(250, 250, 249, 0.88);
   backdrop-filter: blur(12px);
 }
 
@@ -17149,6 +17149,7 @@ html[data-theme='dark'] .hermes-paper {
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  color: var(--oracle-ink);
 }
 
 .oracle-board-stats span {
@@ -17221,6 +17222,7 @@ html[data-theme='dark'] .hermes-paper {
   border: 1px solid var(--oracle-line);
   border-radius: 0.9rem;
   background: var(--oracle-card);
+  box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04);
 }
 
 .oracle-belief-main {
@@ -17229,12 +17231,39 @@ html[data-theme='dark'] .hermes-paper {
 }
 
 .oracle-belief-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
   margin: 0 0 0.4rem;
   color: var(--oracle-faint);
   font-family: var(--font-plex), monospace;
   font-size: 0.68rem;
   letter-spacing: 0.06em;
   text-transform: lowercase;
+}
+
+.oracle-belief-asset {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--oracle-line);
+  border-radius: 999px;
+  background: #fafaf9;
+  color: var(--oracle-muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.oracle-belief-asset.is-btc {
+  border-color: rgba(180, 120, 40, 0.28);
+  color: #9a6b2f;
+}
+
+.oracle-belief-asset.is-eth {
+  border-color: rgba(60, 90, 180, 0.28);
+  color: #3b5bdb;
 }
 
 .oracle-belief-question {
@@ -17245,6 +17274,7 @@ html[data-theme='dark'] .hermes-paper {
   line-height: 1.3;
   letter-spacing: -0.015em;
   text-wrap: balance;
+  color: var(--oracle-ink);
 }
 
 .oracle-belief-meta {
@@ -17275,6 +17305,7 @@ html[data-theme='dark'] .hermes-paper {
   padding: 0.2rem 0.55rem;
   border: 1px solid var(--oracle-line);
   border-radius: 999px;
+  background: #fafaf9;
   color: var(--oracle-muted);
   font-size: 0.78rem;
 }
@@ -17291,7 +17322,7 @@ html[data-theme='dark'] .hermes-paper {
   padding: 0.15rem 0.45rem;
   border: 1px solid rgba(166, 124, 82, 0.35);
   border-radius: 999px;
-  color: #c4a574;
+  color: #a67c52;
   font-family: var(--font-plex), monospace;
   font-size: 0.62rem;
   letter-spacing: 0.08em;
@@ -17321,6 +17352,7 @@ html[data-theme='dark'] .hermes-paper {
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  color: var(--oracle-ink);
 }
 
 .oracle-belief-prob span {
@@ -17344,7 +17376,7 @@ html[data-theme='dark'] .hermes-paper {
   padding: 0 0.9rem;
   border: 1px solid var(--oracle-line);
   border-radius: 999px;
-  background: transparent;
+  background: #fafaf9;
   color: var(--oracle-muted);
   font-size: 0.84rem;
   cursor: pointer;
@@ -17353,8 +17385,8 @@ html[data-theme='dark'] .hermes-paper {
 
 .oracle-share-belief:hover {
   color: var(--oracle-ink);
-  border-color: rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(28, 25, 23, 0.22);
+  background: #fff;
 }
 
 .oracle-board-footnote {
@@ -17369,8 +17401,10 @@ html[data-theme='dark'] .hermes-paper {
   padding: 2rem 1.25rem;
   border: 1px solid var(--oracle-line);
   border-radius: 0.9rem;
+  background: var(--oracle-card);
   color: var(--oracle-muted);
   text-align: center;
+  line-height: 1.55;
 }
 
 .oracle-cal-copy h2 {
@@ -17378,6 +17412,7 @@ html[data-theme='dark'] .hermes-paper {
   font-family: var(--font-display), Georgia, serif;
   font-size: 1.45rem;
   font-weight: 500;
+  color: var(--oracle-ink);
 }
 
 .oracle-cal-copy p {
@@ -17390,6 +17425,9 @@ html[data-theme='dark'] .hermes-paper {
 .oracle-cal-chart {
   margin-top: 1.75rem;
   padding: 1rem 0.5rem 0.5rem;
+  border: 1px solid var(--oracle-line);
+  border-radius: 0.9rem;
+  background: var(--oracle-card);
 }
 
 .oracle-cal-legend {
@@ -17411,11 +17449,11 @@ html[data-theme='dark'] .hermes-paper {
 }
 
 .oracle-cal-legend i.is-on {
-  background: #4ab678;
+  background: #3d6b4f;
 }
 
 .oracle-cal-legend i.is-over {
-  background: #c45c5c;
+  background: #9f3a3a;
 }
 
 .oracle-cal-table {
@@ -17459,15 +17497,15 @@ html[data-theme='dark'] .hermes-paper {
 }
 
 .oracle-cal-read.is-on-line i {
-  background: #4ab678;
+  background: #3d6b4f;
 }
 
 .oracle-cal-read.is-overconfident i {
-  background: #c45c5c;
+  background: #9f3a3a;
 }
 
 .oracle-cal-read.is-cautious i {
-  background: #608cd2;
+  background: #3b5bdb;
 }
 
 .oracle-about-lede {
@@ -17495,6 +17533,7 @@ html[data-theme='dark'] .hermes-paper {
   border: 1px solid var(--oracle-line);
   border-radius: 0.9rem;
   background: var(--oracle-card);
+  box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04);
 }
 
 .oracle-about-list h3 {
@@ -17502,6 +17541,7 @@ html[data-theme='dark'] .hermes-paper {
   font-family: var(--font-display), Georgia, serif;
   font-size: 1.15rem;
   font-weight: 500;
+  color: var(--oracle-ink);
 }
 
 .oracle-about-list p {
@@ -17520,8 +17560,8 @@ html[data-theme='dark'] .hermes-paper {
   padding: 1.4rem 1.35rem 1.5rem;
   border: 1px solid var(--oracle-line);
   border-radius: 0.95rem;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 70%),
-    var(--oracle-card);
+  background: var(--oracle-card);
+  box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04);
 }
 
 .oracle-board-ledger-kicker {
@@ -17539,6 +17579,7 @@ html[data-theme='dark'] .hermes-paper {
   font-size: 1.45rem;
   font-weight: 500;
   letter-spacing: -0.02em;
+  color: var(--oracle-ink);
 }
 
 .oracle-board-ledger-dek {
@@ -17556,10 +17597,10 @@ html[data-theme='dark'] .hermes-paper {
   margin-top: 1.1rem;
   min-height: 2.4rem;
   padding: 0 1.05rem;
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--oracle-ink);
   border-radius: 999px;
   background: var(--oracle-ink);
-  color: #0a0a0a;
+  color: #fafaf9;
   font-family: var(--font-plex), monospace;
   font-size: 0.68rem;
   font-weight: 500;
@@ -17590,6 +17631,34 @@ html[data-theme='dark'] .hermes-paper {
   color: var(--ledger-muted, #78716c);
   font-size: 0.98rem;
   line-height: 1.6;
+}
+
+/* Reliability diagram on paper light */
+.oracle-shell .rel-grid {
+  stroke: rgba(28, 25, 23, 0.08);
+}
+
+.oracle-shell .rel-diagonal {
+  stroke: rgba(28, 25, 23, 0.35);
+}
+
+.oracle-shell .rel-axis,
+.oracle-shell .rel-axis-title {
+  fill: rgba(28, 25, 23, 0.45);
+}
+
+.oracle-shell .rel-dot-label {
+  fill: #fafaf9;
+}
+
+.oracle-shell .rel-legend {
+  color: var(--oracle-muted);
+}
+
+.oracle-shell .rel-key-line,
+.oracle-shell .rel-key-dot {
+  border-color: rgba(28, 25, 23, 0.35);
+  background: rgba(28, 25, 23, 0.2);
 }
 
 @media (max-width: 640px) {
