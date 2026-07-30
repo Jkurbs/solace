@@ -13189,7 +13189,7 @@ html[data-theme='light'] .home-shell .home-vault-card {
   color: #1c1917;
 }
 
-/* Stage: dark globe field for the instrument; rest of page stays paper light */
+/* Stage: paper copy on the left; only the globe pane is dark */
 .glorya-stage {
   display: grid;
   grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
@@ -13197,7 +13197,7 @@ html[data-theme='light'] .home-shell .home-vault-card {
   min-height: clamp(40rem, 84vw, 64rem);
   overflow: hidden;
   border-bottom: 1px solid #e7e5e4;
-  background: #07090e;
+  background: #fafaf9;
   padding-left: max(0px, calc((100vw - 1120px) / 2));
 }
 
@@ -13211,19 +13211,21 @@ html[data-theme='light'] .home-shell .home-vault-card {
   gap: 0.35rem;
   min-width: 0;
   padding: 2.5rem 1.5rem 2.5rem 1.25rem;
-  background: linear-gradient(90deg, #07090e 55%, rgba(7, 9, 14, 0.55) 82%, transparent);
-  color: #e8e8e4;
+  background: #fafaf9;
+  color: #1c1917;
 }
 
 .glorya-stage-copy .section-kicker {
-  color: #8a8a84;
+  color: #a8a29e;
 }
 
 .glorya-stage-globe {
   position: relative;
   z-index: 1;
   min-height: inherit;
-  margin-left: -2.5rem;
+  margin-left: 0;
+  background: #07090e;
+  border-left: 1px solid #e7e5e4;
 }
 
 .glorya-stage-globe .glorya-field {
@@ -13237,7 +13239,7 @@ html[data-theme='light'] .home-shell .home-vault-card {
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.05;
-  color: #f4f4f0;
+  color: #1c1917;
 }
 
 .glorya-status {
@@ -13252,10 +13254,10 @@ html[data-theme='light'] .home-shell .home-vault-card {
   display: inline-flex;
   align-items: center;
   padding: 0.22rem 0.6rem;
-  border: 1px solid rgba(180, 160, 210, 0.28);
+  border: 1px solid rgba(124, 98, 158, 0.28);
   border-radius: 999px;
-  background: rgba(40, 32, 52, 0.5);
-  color: #d4c8e4;
+  background: #f3eef8;
+  color: #6b5280;
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -13265,7 +13267,7 @@ html[data-theme='light'] .home-shell .home-vault-card {
 .glorya-dek {
   max-width: 24rem;
   margin: 0.75rem 0 0;
-  color: #a8a8a0;
+  color: #78716c;
   font-size: 0.92rem;
   line-height: 1.6;
   overflow-wrap: break-word;
@@ -13279,10 +13281,10 @@ html[data-theme='light'] .home-shell .home-vault-card {
   margin-top: 1rem;
   min-height: 2.35rem;
   padding: 0 1.05rem;
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  border: 1px solid #1c1917;
   border-radius: 999px;
-  background: #f4f4f0;
-  color: #0a0a0a;
+  background: #1c1917;
+  color: #fafaf9;
   font-family: var(--font-plex), monospace;
   font-size: 0.68rem;
   font-weight: 500;
@@ -13300,7 +13302,7 @@ html[data-theme='light'] .home-shell .home-vault-card {
   flex-wrap: wrap;
   gap: 0.45rem 0.65rem;
   margin-top: 1.15rem;
-  color: #9a9a94;
+  color: #78716c;
   font-size: 0.72rem;
 }
 
@@ -13309,14 +13311,14 @@ html[data-theme='light'] .home-shell .home-vault-card {
   align-items: center;
   gap: 0.4rem;
   padding: 0.28rem 0.55rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #e7e5e4;
   border-radius: 999px;
-  background: rgba(12, 14, 18, 0.55);
+  background: #ffffff;
 }
 
 .glorya-globe-hint {
   margin: 0.65rem 0 0;
-  color: #6a6a64;
+  color: #a8a29e;
   font-size: 0.7rem;
   letter-spacing: 0.02em;
 }
@@ -13330,14 +13332,14 @@ html[data-theme='light'] .home-shell .home-vault-card {
   bottom: 1.25rem;
   left: auto;
   width: min(17rem, calc(100% - 2.5rem));
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(8, 10, 14, 0.75);
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(8, 10, 14, 0.78);
   color: #b8c0cc;
   box-shadow: none;
 }
 
 .glorya-stage .glorya-field-readout.is-active {
-  border-color: rgba(180, 160, 210, 0.22);
+  border-color: rgba(180, 160, 210, 0.28);
 }
 
 .glorya-stage .glorya-field-readout strong {
@@ -13359,11 +13361,11 @@ html[data-theme='light'] .home-shell .home-vault-card {
   align-items: center;
   gap: 0.2rem;
   padding: 0.35rem 0.7rem 0.4rem;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 999px;
-  background: rgba(8, 10, 14, 0.42);
+  background: rgba(8, 10, 14, 0.55);
   backdrop-filter: blur(6px);
-  color: rgba(200, 200, 194, 0.72);
+  color: rgba(232, 232, 226, 0.85);
   font-size: 0.62rem;
   font-weight: 500;
   letter-spacing: 0.04em;
@@ -13375,9 +13377,9 @@ html[data-theme='light'] .home-shell .home-vault-card {
 
 .glorya-scroll-cue:hover,
 .glorya-scroll-cue:focus-visible {
-  color: rgba(232, 232, 226, 0.9);
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(8, 10, 14, 0.55);
+  color: #fafaf9;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(8, 10, 14, 0.7);
   outline: none;
 }
 
@@ -13439,13 +13441,15 @@ html[data-theme='light'] .home-shell .home-vault-card {
   .glorya-stage-copy {
     order: 1;
     padding: 1.5rem 1.25rem 1rem;
-    background: #07090e;
+    background: #fafaf9;
   }
 
   .glorya-stage-globe {
     order: 2;
     margin-left: 0;
     min-height: clamp(22rem, 58vh, 34rem);
+    border-left: 0;
+    border-top: 1px solid #e7e5e4;
   }
 
   .glorya-dek {

@@ -16,7 +16,7 @@ import { calibration } from './calibration';
 
 const footerInstruments = [
   { name: 'Hermes', status: 'Live', href: '/hermes' },
-  { name: 'Oracle', status: 'Keeping score', href: '/oracle' },
+  { name: 'Oracle', status: 'Live', href: '/oracle' },
   { name: 'Simulation', status: 'In progress', href: '/gates#simulation' },
   { name: 'Glorya', status: 'Evaluating', href: '/glorya' },
 ] as const;
@@ -441,10 +441,13 @@ export default function HomeClient({
                     Live probability over real events, scored against what actually happened.
                   </p>
                 </div>
-                <span className="text-sm text-muted shrink-0">Keeping score</span>
+                <span className="flex items-center gap-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
+                  <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
+                  Live
+                </span>
               </div>
               <p className="mt-4 text-sm text-muted font-mono tabular-nums">
-                {calibration.resolved} resolved · Brier {calibration.brier.toFixed(2)}
+                {calibration.resolved} resolved · Brier {calibration.brier.toFixed(2)} · BTC / ETH
               </p>
             </Link>
 
