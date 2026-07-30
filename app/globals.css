@@ -16485,6 +16485,65 @@ section h3 {
   width: auto;
 }
 
+/* Desktop: slightly larger ledger table (type, cell padding, canvas). */
+@media (min-width: 960px) {
+  .ledger-doc .hermes-paper-shell {
+    width: min(100%, 76rem);
+  }
+
+  .ledger-doc-sheet .trust-ledger-table {
+    width: max(100%, 72rem);
+    min-width: 72rem;
+  }
+
+  .ledger-doc-sheet .trust-ledger-table th,
+  .ledger-doc-sheet .trust-ledger-table td {
+    height: 3.15rem;
+    padding: 0.8rem 1rem;
+  }
+
+  .ledger-doc-sheet .trust-ledger-table th {
+    height: 2.65rem;
+    font-size: 0.66rem;
+  }
+
+  .ledger-doc-sheet .trust-ledger-table td {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .ledger-doc-sheet .trust-ledger-table .trust-row-head,
+  .ledger-doc-sheet .trust-ledger-table .trust-row-number {
+    width: 3.5rem;
+    font-size: 0.78rem;
+  }
+
+  .ledger-doc-sheet .trust-ledger-table th:nth-child(2),
+  .ledger-doc-sheet .trust-ledger-table td:nth-child(2) {
+    width: 12.5rem;
+  }
+
+  .ledger-doc-sheet .trust-ledger-table th:nth-child(3),
+  .ledger-doc-sheet .trust-ledger-table td:nth-child(3) {
+    width: 20rem;
+  }
+
+  .ledger-doc-sheet .trust-ledger-table th:nth-child(4),
+  .ledger-doc-sheet .trust-ledger-table td:nth-child(4) {
+    width: 9rem;
+  }
+
+  .ledger-doc-sheet .trust-ledger-table th:nth-child(5),
+  .ledger-doc-sheet .trust-ledger-table td:nth-child(5) {
+    width: 8rem;
+  }
+
+  .ledger-doc-sheet .trust-ledger-table th:nth-child(6),
+  .ledger-doc-sheet .trust-ledger-table td:nth-child(6) {
+    width: 8.5rem;
+  }
+}
+
 .ledger-doc-disclosure {
   margin: 0;
   padding: 0.85rem 1.25rem 1rem;
