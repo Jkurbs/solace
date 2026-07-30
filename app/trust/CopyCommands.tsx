@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-// The verify commands with a one-tap copy — the whole point of the block is
+// The verify commands with a one-tap copy, the whole point of the block is
 // that a stranger can run it, so getting it into their clipboard should not
 // require careful triple-click selection.
 export default function CopyCommands({ commands }: { commands: string }) {

@@ -5,7 +5,7 @@ import {
 import type { HermesDashboardSnapshot, PortfolioEquityStateCode } from './types';
 
 /**
- * Dashboard chapters — empathy-driven UX layout modes.
+ * Dashboard chapters, empathy-driven UX layout modes.
  * Canonical stance: notes/user-experience-empathy.md
  *
  * Identity is required before capital (real product, not optional beta shortcut).
@@ -43,7 +43,7 @@ export function resolveDashboardChapter(snapshot: HermesDashboardSnapshot): Dash
     return 'arrival';
   }
 
-  // 2. Identity is required before first capital — not optional.
+  // 2. Identity is required before first capital, not optional.
   //    (If capital already exists from an older path, do not hide the portfolio.)
   if (noCapitalYet && isIdentityVerificationIncomplete(snapshot)) {
     return 'identity';
@@ -75,19 +75,19 @@ export function getDashboardChapterMeta(chapter: DashboardChapter): DashboardCha
     case 'identity':
       return {
         chapter,
-        emotionalJob: 'Identity is required before capital — calm, clear, non-optional.',
+        emotionalJob: 'Identity is required before capital: calm, clear, non-optional.',
         kicker: 'Identity',
       };
     case 'ready':
       return {
         chapter,
-        emotionalJob: 'Reassure nothing is wrong; one next action — add capital.',
+        emotionalJob: 'Reassure nothing is wrong; one next action: add capital.',
         kicker: 'Ready',
       };
     case 'funding':
       return {
         chapter,
-        emotionalJob: 'You did not break it; capital is in flight — here is the path.',
+        emotionalJob: 'You did not break it; capital is in flight. Here is the path.',
         kicker: 'In progress',
       };
     case 'live':
@@ -99,7 +99,7 @@ export function getDashboardChapterMeta(chapter: DashboardChapter): DashboardCha
     case 'standing_down':
       return {
         chapter,
-        emotionalJob: 'Waiting is competence — hold the hand, do not alarm.',
+        emotionalJob: 'Waiting is competence, hold the hand, do not alarm.',
         kicker: 'Standing down',
       };
   }
@@ -126,7 +126,7 @@ export function getFundingPipelineSteps(code: PortfolioEquityStateCode): Array<{
   if (code === 'PENDING_SETTLEMENT') {
     return [
       { ...received, state: 'complete' },
-      { ...routing, detail: 'Waiting for settlement to clear — you do not need to do anything', state: 'current' },
+      { ...routing, detail: 'Waiting for settlement to clear. You do not need to do anything', state: 'current' },
       { ...hermes, state: 'upcoming' },
     ];
   }
@@ -143,7 +143,7 @@ export function getFundingPipelineSteps(code: PortfolioEquityStateCode): Array<{
     return [
       { ...received, state: 'complete' },
       { ...routing, state: 'complete' },
-      { ...hermes, detail: 'Waiting for the next pool mark — usually minutes in simulation', state: 'current' },
+      { ...hermes, detail: 'Waiting for the next pool mark (usually minutes in simulation)', state: 'current' },
     ];
   }
 

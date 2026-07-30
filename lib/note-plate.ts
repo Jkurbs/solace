@@ -1,4 +1,4 @@
-// Signature cover system for research notes: "The Reading" — one braided
+// Signature cover system for research notes: "The Reading", one braided
 // stroke of light per note, seeded by the note's slug so every surface
 // (card, index, OG image) draws the identical plate. Pure math, no DOM.
 
@@ -121,7 +121,7 @@ export function filamentOffset(filament: PlateFilament, t: number) {
   );
 }
 
-/** SVG path for one filament, in a W×H viewport — used by the OG renderer. */
+/** SVG path for one filament, in a W×H viewport, used by the OG renderer. */
 export function filamentPathD(reading: Reading, filament: PlateFilament, width: number, height: number) {
   const parts: string[] = [];
   reading.spine.forEach((point, index) => {

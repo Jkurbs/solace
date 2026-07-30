@@ -8,7 +8,7 @@ import HomeClient, { type HermesTelemetry, type ResearchItem } from './HomeClien
 const TELEMETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 // The freshness contract: telemetry renders only while a feed is fresh.
-// A stale or missing feed hides the cells entirely — never a fake pulse.
+// A stale or missing feed hides the cells entirely, never a fake pulse.
 // Hermes publishes two feeds; the brief snapshot is the primary artery, the
 // public reading a fallback. Freshest fresh feed wins.
 async function getHermesTelemetry(): Promise<HermesTelemetry | null> {
@@ -100,7 +100,7 @@ export default async function Home() {
     date: post.date,
   }));
 
-  // Newest first across brief, notes, and news — brief always available.
+  // Newest first across brief, notes, and news, brief always available.
   const researchItems = [technicalBrief, ...researchNotes, ...newsItems]
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
     // Prefer a full shelf; cap so the homepage stays scannable.

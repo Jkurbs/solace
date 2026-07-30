@@ -18,13 +18,13 @@ const decisions = [
     number: '02',
     title: 'Commitment',
     question: 'When is evidence strong enough?',
-    text: 'Attention is cheap; capital is not. Commitment happens only when structure, timing, and regime agree — and it is sized to the field, never to the feeling.',
+    text: 'Attention is cheap; capital is not. Commitment happens only when structure, timing, and regime agree, and it is sized to the field, never to the feeling.',
   },
   {
     number: '03',
     title: 'Monitoring',
     question: 'Does the evidence still hold?',
-    text: 'Deployment is not completion. This is where Hermes spends most of its life — asking whether the evidence still supports the capital at risk, and changing posture the moment it doesn’t.',
+    text: 'Deployment is not completion. This is where Hermes spends most of its life: asking whether the evidence still supports the capital at risk, and changing posture the moment it doesn’t.',
   },
   {
     number: '04',
@@ -58,7 +58,7 @@ function DecisionsHead() {
       </Reveal>
       <Reveal delay={0.14}>
         <p>
-          Every allocation Hermes makes — including the decision to make none — reduces to four questions,
+          Every allocation Hermes makes, including the decision to make none, reduces to four questions,
           asked in order, over and over.
         </p>
       </Reveal>

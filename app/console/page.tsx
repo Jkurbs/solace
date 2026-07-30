@@ -16,7 +16,7 @@ import ConsoleHeader from './ConsoleHeader';
 import ConsoleLivePanels from './ConsoleLivePanels';
 
 export const metadata: Metadata = {
-  title: 'Solace — Console',
+  title: 'Solace · Console',
   description: 'Internal Solace operator console for money movement, ledger health, and treasury status.',
 };
 

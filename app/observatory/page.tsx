@@ -17,9 +17,9 @@ import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
 
 export const metadata: Metadata = {
-  title: 'Solace — Observatory',
+  title: 'Solace · Observatory',
   description:
-    'Watch Solace instruments interact with their domains: status, state, activity, and health — not a trading terminal.',
+    'Watch Solace instruments interact with their domains: status, state, activity, and health. Not a trading terminal.',
 };
 
 export const revalidate = 60;
@@ -36,7 +36,7 @@ const timeFormatter = new Intl.DateTimeFormat('en-US', {
 
 function formatActivityTime(iso: string) {
   const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) return '—';
+  if (Number.isNaN(parsed.getTime())) return '-';
   return timeFormatter.format(parsed);
 }
 
@@ -204,7 +204,7 @@ export default async function ObservatoryPage() {
         <h1 className="obs-title">Observatory</h1>
         <p className="obs-dek">
           Every instrument continuously interacts with its domain. This board is how you watch those
-          interactions — status, state, activity, and health. Not a trading terminal. Not a forced
+          interactions: status, state, activity, and health. Not a trading terminal. Not a forced
           decision ledger for everything Solace builds.
         </p>
         <p className="obs-meta">
@@ -226,8 +226,8 @@ export default async function ObservatoryPage() {
           <p className="section-kicker">Across instruments</p>
           <h2 className="obs-feed-title">Recent activity</h2>
           <p className="obs-feed-dek">
-            A merged feed of what is worth observing right now. Event kinds differ by instrument —
-            that is intentional.
+            A merged feed of what is worth observing right now. Event kinds differ by instrument; that is
+            intentional.
           </p>
         </div>
         {snapshot.recentActivity.length > 0 ? (
@@ -253,7 +253,7 @@ export default async function ObservatoryPage() {
             <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="text-link">
               decision ledger
             </Link>{' '}
-            under Observatory → Hermes — sealed, hash-chained, and checkable. A deep record for one
+            under Observatory → Hermes · sealed, hash-chained, and checkable. A deep record for one
             instrument, not a separate Solace product.
           </li>
           <li>

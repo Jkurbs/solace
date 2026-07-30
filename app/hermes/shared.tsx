@@ -46,7 +46,7 @@ export function useMediaQuery(query: string) {
 }
 
 // Tracks which step element (matching `selector`) sits closest to the viewport
-// anchor while a sticky stage scrolls — shared by the scroll walkthroughs.
+// anchor while a sticky stage scrolls, shared by the scroll walkthroughs.
 export function useWalkthroughStep(
   ref: RefObject<HTMLElement | null>,
   enabled: boolean,

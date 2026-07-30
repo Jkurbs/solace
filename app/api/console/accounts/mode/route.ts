@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   }
 
   // Guard: LIVE means real money can move. Refuse promotion unless every
-  // account record is fully active — an account promoted early would accept
+  // account record is fully active, an account promoted early would accept
   // live deposits into an uninitialized system.
   if (accountMode === 'LIVE') {
     const bundle = await getPersistedAccountBundle(accountId).catch(() => null);

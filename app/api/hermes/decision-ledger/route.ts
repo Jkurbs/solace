@@ -8,7 +8,7 @@ import { safeSecretEquals } from '@/lib/secret-compare';
 
 export const runtime = 'nodejs';
 
-// Public read of the ledger — the same data Observatory → Hermes → ledger renders,
+// Public read of the ledger, the same data Observatory → Hermes → ledger renders,
 // as JSON, so the chain can be verified independently (scripts/verify-ledger.mjs).
 export async function GET() {
   const rows = await listHermesLedgerRows(1000);

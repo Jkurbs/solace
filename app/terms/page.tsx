@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Mark from '../Mark';
 
 export const metadata: Metadata = {
-  title: 'Solace — Terms of Service',
+  title: 'Solace · Terms of Service',
   description:
     'The terms under which Solace and Hermes are provided. Beta status, no guarantees, access at discretion. June 2026.',
 };

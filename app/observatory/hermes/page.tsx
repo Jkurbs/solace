@@ -16,7 +16,7 @@ import Mark from '../../Mark';
 import ThemeToggle from '../../ThemeToggle';
 
 export const metadata: Metadata = {
-  title: 'Solace — Observatory · Hermes',
+  title: 'Solace · Observatory · Hermes',
   description:
     'Hermes in the Observatory: live status, current state, recent activity, and the decision ledger.',
 };
@@ -35,7 +35,7 @@ const timeFormatter = new Intl.DateTimeFormat('en-US', {
 
 function formatActivityTime(iso: string) {
   const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) return '—';
+  if (Number.isNaN(parsed.getTime())) return '-';
   return timeFormatter.format(parsed);
 }
 
@@ -128,7 +128,7 @@ export default async function ObservatoryHermesPage() {
         </p>
         <h1 className="obs-title">Hermes</h1>
         <p className="obs-dek">
-          Capital allocation under uncertainty — observed here as status, state, and activity. Decisions
+          Capital allocation under uncertainty: observed here as status, state, and activity. Decisions
           are one kind of Hermes activity; the sealed ledger is the deep record for that kind.
         </p>
         <p className="obs-meta">
@@ -187,7 +187,7 @@ export default async function ObservatoryHermesPage() {
           </h2>
           <p className="obs-card-summary">
             Sealed rows before outcomes are known. Hash-chained, public, and checkable. This is how Hermes
-            proves process — not a second Solace product outside the Observatory.
+            proves process, not a second Solace product outside the Observatory.
           </p>
           <div className="obs-card-links">
             <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="obs-card-primary">

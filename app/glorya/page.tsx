@@ -10,7 +10,7 @@ import GloryaNeedField from '../GloryaNeedField';
 import GloryaScrollNudge from './GloryaScrollNudge';
 
 export const metadata: Metadata = {
-  title: 'Solace — Glorya',
+  title: 'Solace · Glorya',
   description:
     'Glorya is an instrument for allocating humanitarian capital only when intervention can change the outcome.',
 };
@@ -115,7 +115,7 @@ export default function GloryaPage() {
           </div>
           <div className="glorya-score-cell">
             <span>Calibration</span>
-            <strong>—</strong>
+            <strong>-</strong>
             <em>Predicted vs actual after first outcomes</em>
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function GloryaPage() {
           <p className="section-kicker">Public ledger</p>
           <h2>Glorya decision ledger</h2>
           <p>
-            First disbursement seals the first row. Until then the sheet is empty by design — not a hidden history.
+            First disbursement seals the first row. Until then the sheet is empty by design, not a hidden history.
           </p>
         </div>
         <div className="glorya-ledger-table-wrap">
@@ -175,20 +175,20 @@ export default function GloryaPage() {
             <h3>What “path” means</h3>
             <ul>
               <li>
-                <strong>Partners</strong> — who delivers on the ground with capacity and integrity, not a
+                <strong>Partners</strong>: who delivers on the ground with capacity and integrity, not a
                 place name alone
               </li>
               <li>
-                <strong>Access</strong> — whether that partner can reach the people in need (logistics,
+                <strong>Access</strong>: whether that partner can reach the people in need (logistics,
                 permissions, last mile)
               </li>
               <li>
-                <strong>Regime</strong> — whether the environment is stable enough for aid to land and stick —
+                <strong>Regime</strong>: whether the environment is stable enough for aid to land and stick,
                 not diverted, frozen, or made unsafe
               </li>
               <li>
-                <strong>Timing</strong> — whether this is the right window: crisis open, partners ready,
-                capital ready — not already past
+                <strong>Timing</strong>: whether this is the right window: crisis open, partners ready,
+                capital ready, not already past
               </li>
             </ul>
           </div>
@@ -196,30 +196,30 @@ export default function GloryaPage() {
             <h3>Three gates before capital</h3>
             <ul>
               <li>
-                <strong>Need</strong> — is the need severe enough and verifiable, not rumor or headline
+                <strong>Need</strong>: is the need severe enough and verifiable, not rumor or headline
                 alone?
               </li>
               <li>
-                <strong>Path</strong> — do partners and access exist so money can become delivery?
+                <strong>Path</strong>: do partners and access exist so money can become delivery?
               </li>
               <li>
-                <strong>Regime &amp; timing</strong> — can the environment and the window support a successful
+                <strong>Regime &amp; timing</strong>: can the environment and the window support a successful
                 intervention now?
               </li>
             </ul>
             <h3 className="glorya-framework-subhead">Then the lifecycle</h3>
             <ul>
               <li>
-                <strong>Selection</strong> — where attention is warranted
+                <strong>Selection</strong>: where attention is warranted
               </li>
               <li>
-                <strong>Commitment</strong> — whether evidence is strong enough to allocate
+                <strong>Commitment</strong>: whether evidence is strong enough to allocate
               </li>
               <li>
-                <strong>Monitoring</strong> — whether evidence still holds after money moves
+                <strong>Monitoring</strong>: whether evidence still holds after money moves
               </li>
               <li>
-                <strong>Exit / recycle</strong> — stay, reduce, or redirect when conditions change
+                <strong>Exit / recycle</strong>: stay, reduce, or redirect when conditions change
               </li>
             </ul>
           </div>
@@ -231,7 +231,7 @@ export default function GloryaPage() {
           <p className="section-kicker">Design layer</p>
           <h2>Evaluated places</h2>
           <p>
-            Real cities and countries with WGS84 coordinates. Illustrative evaluations only — not offers, transfers,
+            Real cities and countries with WGS84 coordinates. Illustrative evaluations only: not offers, transfers,
             or impact claims.
           </p>
         </div>

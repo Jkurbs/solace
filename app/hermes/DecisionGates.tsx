@@ -22,7 +22,7 @@ const gateSteps = [
   {
     kicker: 'Layer 02 · Regime',
     title: 'Know what kind of market this is.',
-    text: 'Every regime has a character — how it trends, how it absorbs volume, how volatility behaves. Hermes acts only inside regimes it recognizes.',
+    text: 'Every regime has a character: how it trends, how it absorbs volume, how volatility behaves. Hermes acts only inside regimes it recognizes.',
   },
   {
     kicker: 'Layer 03 · Timing',
@@ -32,7 +32,7 @@ const gateSteps = [
   {
     kicker: 'The gate',
     title: 'Deploy only when all three agree.',
-    text: 'Most hours they don’t agree, and the correct action is none. Execution is gated, not continuous — waiting and standing down are decisions like any other.',
+    text: 'Most hours they don’t agree, and the correct action is none. Execution is gated, not continuous, waiting and standing down are decisions like any other.',
   },
 ];
 
@@ -80,7 +80,7 @@ function GatePanel({ step }: { step: number }) {
       </div>
       <p className="hx-gate-note">
         {allClear
-          ? 'Structure, timing, and regime agree — capital may move, sized to the depth of the field.'
+          ? 'Structure, timing, and regime agree: capital may move, sized to the depth of the field.'
           : 'Until every gate clears, capital does not move.'}
       </p>
     </div>
@@ -99,7 +99,7 @@ function GatesHead() {
       <Reveal delay={0.14}>
         <p>
           Between every signal and every order sits a gate with three conditions. Nothing is bought or sold
-          because a forecast feels right — the structure, the regime, and the moment each have to clear.
+          because a forecast feels right, the structure, the regime, and the moment each have to clear.
         </p>
       </Reveal>
     </div>

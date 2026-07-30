@@ -10,7 +10,7 @@ import ConsoleAccessGate from '../ConsoleAccessGate';
 import ConsoleHeader from '../ConsoleHeader';
 
 export const metadata: Metadata = {
-  title: 'Solace — Access Approvals',
+  title: 'Solace · Access Approvals',
   description: 'Internal Solace approval queue for Hermes access requests.',
 };
 
@@ -540,8 +540,8 @@ export default async function AccessApprovalsPage({ searchParams }: AccessApprov
                         {request.status === 'more_info' ? (
                           <a
                             className="inline-flex h-10 items-center justify-center rounded-md border border-neutral-700 px-4 text-sm font-medium text-neutral-100 transition-colors hover:border-neutral-500"
-                            href={`mailto:${request.email}?subject=${encodeURIComponent('Your Hermes access request — one more thing')}&body=${encodeURIComponent(
-                              `Hi ${request.firstName},\n\nThanks for requesting access to Hermes. Before we can complete the review, could you tell us a bit more about:\n\n- \n\nReply to this email and we'll pick the review back up.\n\n— Solace`,
+                            href={`mailto:${request.email}?subject=${encodeURIComponent('Your Hermes access request: one more thing')}&body=${encodeURIComponent(
+                              `Hi ${request.firstName},\n\nThanks for requesting access to Hermes. Before we can complete the review, could you tell us a bit more about:\n\n- \n\nReply to this email and we'll pick the review back up.\n\n- Solace`,
                             )}`}
                           >
                             Email requester

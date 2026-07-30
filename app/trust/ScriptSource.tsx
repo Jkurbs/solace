@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-// Shows the verify script's source inline — fetched from the same public URL
+// Shows the verify script's source inline, fetched from the same public URL
 // a verifier downloads, so what you read is byte-for-byte what you'd run.
 export default function ScriptSource() {
   const [source, setSource] = useState<string | null>(null);
@@ -40,7 +40,7 @@ export default function ScriptSource() {
           <code>{source}</code>
         </pre>
       ) : error ? (
-        <p className="trust-verify-fail">Source could not be loaded — open /verify-ledger.mjs directly.</p>
+        <p className="trust-verify-fail">Source could not be loaded. Open /verify-ledger.mjs directly.</p>
       ) : loading ? (
         <p className="trust-verify-loading">Loading the served file…</p>
       ) : null}

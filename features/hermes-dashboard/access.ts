@@ -31,7 +31,7 @@ export function isLocalDashboardBypass() {
 
 /**
  * Open simulation entry: anyone can enter Hermes without an approved account.
- * Default on — disable with HERMES_DASHBOARD_OPEN_ACCESS=0 when re-enabling the wall.
+ * Default on, disable with HERMES_DASHBOARD_OPEN_ACCESS=0 when re-enabling the wall.
  */
 export function isOpenDashboardAccess() {
   if (process.env.HERMES_DASHBOARD_OPEN_ACCESS === '0') {

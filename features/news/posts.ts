@@ -12,33 +12,33 @@ export type NewsPost = {
   body: string;
 };
 
-// Newest first. News is announcements — what shipped, what changed, what is
+// Newest first. News is announcements, what shipped, what changed, what is
 // now checkable. Mechanism and status only; never performance.
 export const newsPosts: NewsPost[] = [
   {
     slug: 'introducing-glorya',
     title: 'Introducing Glorya',
-    dek: 'Solace’s second instrument: humanitarian capital only when need is verified and the path can carry help. Designed and evaluating — not live.',
+    dek: 'Solace’s second instrument: humanitarian capital only when need is verified and the path can carry help. Designed and evaluating: not live.',
     label: 'News 003',
     date: '2026-07-26',
     tint: 'teal',
     body: `Solace builds instruments for decisions under uncertainty. Hermes tests that loop in markets. Today we are publishing the design of the second instrument: [Glorya](/glorya).
 
-Glorya is for humanitarian capital. It does not fund a place because a map is tragic or a headline is loud. It asks whether need is verified and severe enough, and whether capital can actually become help on the ground — a partner who can deliver, access to the people in need, a regime stable enough for aid to land and stick, and a timing window that is still open.
+Glorya is for humanitarian capital. It does not fund a place because a map is tragic or a headline is loud. It asks whether need is verified and severe enough, and whether capital can actually become help on the ground, a partner who can deliver, access to the people in need, a regime stable enough for aid to land and stick, and a timing window that is still open.
 
 Hermes asks whether markets can carry a trade. Glorya asks whether the path to the field can carry an intervention. The method is the same: gates before money moves, evidence over story, stand down when the chain is broken. The domain is different.
 
-## What Glorya is — and is not
+## What Glorya is, and is not
 
 **What it is.** An instrument that evaluates need and path before capital moves. Most evaluations should end in no allocation. Standing down is first-class, not a failure mode. When Glorya does move capital someday, each disbursement will seal a public row the way Hermes seals decisions: before outcomes are known, with a record that can be checked.
 
-**What it is not.** It is not live. There are no active allocations. There are no sealed Glorya ledger rows. There are no impact claims. The evaluated places on the public field are a **design layer** — real coordinates and careful notes so the process can be seen and argued with, not offers, transfers, or proof that anyone was helped.
+**What it is not.** It is not live. There are no active allocations. There are no sealed Glorya ledger rows. There are no impact claims. The evaluated places on the public field are a **design layer**, real coordinates and careful notes so the process can be seen and argued with, not offers, transfers, or proof that anyone was helped.
 
 Anything not yet checkable is labeled that way on purpose. The standard from the [technical brief](/brief) still holds: claims that can be checked, published when they can be checked.
 
 ## The revenue gate
 
-Live Glorya capital waits on a hard condition: Solace must reach **$1M cumulative revenue** before the instrument can move money. Until that gate clears, Glorya stays dormant by design — presence and process, not theater.
+Live Glorya capital waits on a hard condition: Solace must reach **$1M cumulative revenue** before the instrument can move money. Until that gate clears, Glorya stays dormant by design, presence and process, not theater.
 
 You can read the public conditions on the [gate board](/gates#glorya). We update a row when something actually changes.
 
@@ -46,19 +46,19 @@ You can read the public conditions on the [gate board](/gates#glorya). We update
 
 - The [Glorya instrument page](/glorya): process scoreboard (evaluated needs, standing-down rate, **zero** active and completed allocations), empty ledger until first disbursement, and the evaluated-need field.
 - The same honesty rule as Hermes: mechanism stays private when it would let someone front-run the work; process and restraint stay public.
-- In the [Observatory](/observatory), Glorya appears as an instrument under evaluation — status, state, and activity — without inventing live missions.
+- In the [Observatory](/observatory), Glorya appears as an instrument under evaluation, status, state, and activity, without inventing live missions.
 
 ## Why this exists before capital does
 
 Instruments should be designed in public before they spend. Publishing Glorya early forces the hard questions while the cost of being wrong is still only design work: what counts as need, what counts as a path, when stand-down is the only honest answer, and how a future ledger will look when the first real disbursement seals the first real row.
 
-Markets fund the work. Markets are not the whole aim. Glorya is the first non-market instrument on the same loop Solace is building for — disciplined, checkable decisions wherever timing, resource allocation, and uncertainty matter, and outcomes can be verified against reality.
+Markets fund the work. Markets are not the whole aim. Glorya is the first non-market instrument on the same loop Solace is building for, disciplined, checkable decisions wherever timing, resource allocation, and uncertainty matter, and outcomes can be verified against reality.
 
 ## What this announcement does not say
 
 It does not claim impact. It does not name live partners. It does not open a donation rail. It does not put customer or donor capital into Glorya. Founder capital and Hermes remain the live arena today.
 
-When the revenue gate clears and the first disbursement is ready, the empty ledger will stop being empty — and that first row will matter more than this article.
+When the revenue gate clears and the first disbursement is ready, the empty ledger will stop being empty, and that first row will matter more than this article.
 
 Glorya is designed. Glorya is evaluating. The map is not the money. The path has to hold.`,
   },
@@ -87,7 +87,7 @@ The problem it answers is old. Anyone can post winners after the fact. Screensho
 
 A rule that says "we don't edit history" is still a promise, and promises are what the ledger exists to replace. So the ledger's integrity is checkable:
 
-Every row carries a SHA-256 hash computed when it is sealed, chained to the hash of the row before it. Editing any historical row — a word, a timestamp, a number — changes its hash and breaks every row after it. A short public script, published at [solace.fyi/verify-ledger.mjs](/verify-ledger.mjs), recomputes the entire chain from the [public ledger data](/api/hermes/decision-ledger), so "the record was never touched" is a claim you can test rather than trust.
+Every row carries a SHA-256 hash computed when it is sealed, chained to the hash of the row before it. Editing any historical row (a word, a timestamp, a number) changes its hash and breaks every row after it. A short public script, published at [solace.fyi/verify-ledger.mjs](/verify-ledger.mjs), recomputes the entire chain from the [public ledger data](/api/hermes/decision-ledger), so "the record was never touched" is a claim you can test rather than trust.
 
 ## What the ledger is not
 
@@ -110,7 +110,7 @@ Hermes is a capital allocation engine for markets. It reads liquidity distributi
 
 Most market systems try to predict where price is going. Hermes asks a different question: whether the field between here and there can carry price at all. We call this the liquidity path, and it is the core abstraction of the instrument: a destination matters less than the terrain on the way to it.
 
-Between every signal and every order sits a gate with three conditions. The structure has to be worth evaluating. The regime has to be behaving in character. The timing has to confirm. Capital moves only when all three agree — and most hours, they don't. Execution is gated, not continuous, and standing down is treated as a position the system takes often.
+Between every signal and every order sits a gate with three conditions. The structure has to be worth evaluating. The regime has to be behaving in character. The timing has to confirm. Capital moves only when all three agree, and most hours, they don't. Execution is gated, not continuous, and standing down is treated as a position the system takes often.
 
 ## What is live today
 

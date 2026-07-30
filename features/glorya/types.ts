@@ -8,7 +8,7 @@ export type GloryaNeedFocus =
   | 'shelter'
   | 'protection';
 
-/** Design-time evaluation only — no capital until the revenue gate and first seal. */
+/** Design-time evaluation only, no capital until the revenue gate and first seal. */
 export type GloryaEvaluatedNeed = {
   id: string;
   /** City or locality name (real place). */

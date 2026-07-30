@@ -126,7 +126,7 @@ vec3 targetFor(float mode, float seed, float u, float t) {
   vec3 outp = vec3(0.0);
 
   if (mode < 0.5) {
-    // Hollow sphere shell — clear ball of possibilities.
+    // Hollow sphere shell, clear ball of possibilities.
     float th = s1 * TAU;
     float ph = acos(clamp(s2 * 2.0 - 1.0, -1.0, 1.0));
     float r = HALF * 0.68 * (0.96 + s3 * 0.06);
@@ -136,7 +136,7 @@ vec3 targetFor(float mode, float seed, float u, float t) {
       r * sin(ph) * sin(th)
     );
   } else if (mode < 1.5) {
-    // Torus / ring — slow spin so it reads as a solid object.
+    // Torus / ring, slow spin so it reads as a solid object.
     float R = 0.30;
     float rr = 0.105;
     float uu = s1 * TAU + t * 0.12;
@@ -148,7 +148,7 @@ vec3 targetFor(float mode, float seed, float u, float t) {
     float tilt = 0.55;
     outp = vec3(cx, cy * cos(tilt) - cz * sin(tilt), cy * sin(tilt) + cz * cos(tilt));
   } else if (mode < 2.5) {
-    // Wireframe cube — particles on the 12 edges only.
+    // Wireframe cube, particles on the 12 edges only.
     float edge = floor(s1 * 12.0);
     float along = s2;
     float e = HALF * 0.62;
@@ -176,7 +176,7 @@ vec3 targetFor(float mode, float seed, float u, float t) {
     // Tiny thickness so edges aren't infinitely thin.
     outp += (vec3(s1, s2, s3) - 0.5) * 0.012;
   } else if (mode < 3.5) {
-    // Double helix — two clear strands + occasional rungs.
+    // Double helix, two clear strands + occasional rungs.
     float y = (s1 - 0.5) * 0.82;
     float strand = step(0.5, s2);
     float ang = y * 9.0 + t * 0.22 + strand * 3.14159265;
@@ -191,7 +191,7 @@ vec3 targetFor(float mode, float seed, float u, float t) {
       outp = vec3(cos(ang) * rad, y, sin(ang) * rad);
     }
   } else if (mode < 4.5) {
-    // Spiral galaxy — tight arms, bright core, thin disk.
+    // Spiral galaxy, tight arms, bright core, thin disk.
     float arms = 2.0;
     float maxR = HALF * 0.78;
     float spin = t * 0.1;
@@ -214,7 +214,7 @@ vec3 targetFor(float mode, float seed, float u, float t) {
       outp = vec3(x, y * cos(tilt) - z * sin(tilt), y * sin(tilt) + z * cos(tilt));
     }
   } else {
-    // Infinity (lemniscate) ribbon — unmistakable symbol of open possibility.
+    // Infinity (lemniscate) ribbon, unmistakable symbol of open possibility.
     float th = s1 * TAU + t * 0.1;
     float sc = 0.34;
     float den = 1.0 + sin(th) * sin(th);
@@ -228,7 +228,7 @@ vec3 targetFor(float mode, float seed, float u, float t) {
     outp = vec3(x, y, z) + vec3(nx, 0.0, nz) / nlen * ((s3 - 0.5) * 0.04);
   }
 
-  // Whisper of life only — keep silhouettes sharp during hold.
+  // Whisper of life only, keep silhouettes sharp during hold.
   float morph = 0.0035;
   outp.x += sin(t * 0.4 + seed * 11.0) * morph;
   outp.y += cos(t * 0.35 + seed * 9.0) * morph;
@@ -828,7 +828,7 @@ export default function SimulationEnsembleRender() {
     const EPOCH = MODE_COUNT * SLOT;
     const PATH_MODE = 5; // infinity formation id
 
-    // First paint mid-hold on market geometry (wire cube) — strongest lab read.
+    // First paint mid-hold on market geometry (wire cube), strongest lab read.
     const START_OFFSET = 0 * SLOT + T_CHAOS + T_LOCK + T_HOLD * 0.35;
     startedAt = performance.now() - START_OFFSET * 1000;
 
@@ -945,7 +945,7 @@ export default function SimulationEnsembleRender() {
         }
       }
 
-      // Hover: bounded stress on a held world — teaches robustness, not a toy.
+      // Hover: bounded stress on a held world, teaches robustness, not a toy.
       const hoverPerturbation = pointer.glow * shapeLock * 0.32;
       detonate = Math.max(detonate, hoverPerturbation);
       if (pointer.glow > 0.35 && shapeLock > 0.8) {

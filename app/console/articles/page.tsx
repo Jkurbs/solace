@@ -9,7 +9,7 @@ import ConsoleHeader from '../ConsoleHeader';
 import ArticleCreator from './ArticleCreator';
 
 export const metadata: Metadata = {
-  title: 'Solace — Article Creator',
+  title: 'Solace · Article Creator',
   description: 'Internal Solace article drafting surface for research notes and public writing.',
 };
 

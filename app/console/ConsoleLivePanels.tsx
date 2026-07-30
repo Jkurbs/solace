@@ -674,7 +674,7 @@ function PoolNavMarkCard({ poolMark }: { poolMark: PoolMarkingPool }) {
             ];
 
             if (changeRatio > 0.25) {
-              lines.unshift('⚠ LARGE CHANGE — more than 25% from the last mark.', '');
+              lines.unshift('⚠ LARGE CHANGE: more than 25% from the last mark.', '');
             }
 
             if (!window.confirm(lines.join('\n'))) {

@@ -139,7 +139,7 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
       });
       root.add(new THREE.Points(landGeo, landMat));
 
-      // Soft limb glow — neutral, barely cool.
+      // Soft limb glow, neutral, barely cool.
       const atmosphere = new THREE.Mesh(
         new THREE.SphereGeometry(radius * 1.025, 48, 32),
         new THREE.ShaderMaterial({

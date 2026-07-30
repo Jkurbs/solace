@@ -64,7 +64,7 @@ const fragmentShader = `
     return v;
   }
 
-  // Cold observatory dust, lightly clumped — the Oracle's air is clearer
+  // Cold observatory dust, lightly clumped, the Oracle's air is clearer
   // and colder than the Hermes field.
   vec3 dustLayer(vec2 w, float scale, float drift, float weight, float seed, float clump) {
     vec2 q = w + vec2(uTime * drift, uTime * drift * 0.25);
@@ -179,7 +179,7 @@ const fragmentShader = `
 
     color = min(color * 1.05 + 0.002, vec3(1.0));
 
-    // Luminance-keyed alpha: the void is a thin veil, not a wall — stars
+    // Luminance-keyed alpha: the void is a thin veil, not a wall, stars
     // from the continuous sky stay visible inside the section.
     float alphaLum = dot(color, vec3(0.299, 0.587, 0.114));
     float alpha = clamp(0.18 + alphaLum * 5.5, 0.0, 1.0);
@@ -260,7 +260,7 @@ function buildFutures(rand: () => number) {
   for (let p = 0; p < NUM_PATHS; p++) {
     for (let s = 0; s < PATH_STEPS; s++) {
       const x = s / (PATH_STEPS - 1);
-      // Definition decays as the future extends — uncertainty grows.
+      // Definition decays as the future extends, uncertainty grows.
       const defined = 1.0 - 0.62 * Math.min(Math.max((x - 0.08) / 0.86, 0), 1);
       const base4 = (p * PATH_STEPS + s) * 4;
       texture[base4] = ys[p][s];

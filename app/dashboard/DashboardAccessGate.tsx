@@ -31,7 +31,7 @@ function getStatusMessage(status: AuthStatus, email?: string) {
     case 'failed':
       return {
         tone: 'error' as const,
-        text: 'That sign-in link could not be completed. Request a fresh link. If it still fails, open it in the browser where you asked for the email — or contact Solace.',
+        text: 'That sign-in link could not be completed. Request a fresh link. If it still fails, open it in the browser where you asked for the email, or contact Solace.',
       };
     case 'expired':
       return {
@@ -90,7 +90,7 @@ export default function DashboardAccessGate({
             Enter Hermes
           </h1>
           <p className="mt-3 text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-            Sign in with your email to open the dashboard. Simulation capital is available without an application —
+            Sign in with your email to open the dashboard. Simulation capital is available without an application,
             no real money moves until you request real capital access.
           </p>
 

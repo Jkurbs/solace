@@ -10,13 +10,13 @@ import { hermesVersion } from '@/features/hermes-version';
 import HermesExperience, { type HermesProof } from './HermesExperience';
 
 export const metadata: Metadata = {
-  title: 'Solace — Hermes · Capital Allocation',
+  title: 'Solace · Hermes · Your capital, working',
   description:
-    'Hermes puts capital to work under uncertainty — and seals every decision in a public ledger you can check.',
+    'Your capital should work as hard as you do. Hermes is an autonomous instrument for better capital allocation decisions: disciplined, verifiable, and open to observe and simulate.',
   openGraph: {
-    title: 'Hermes — profit and trust',
+    title: 'Hermes · capital that works without constant attention',
     description:
-      'A live capital instrument with sealed decisions. Founder capital live; outcomes and process are public.',
+      'An instrument designed to allocate capital with discipline. Founder capital live; every decision sealed on a public ledger you can check.',
   },
 };
 

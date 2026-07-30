@@ -110,7 +110,7 @@ export const gateDomains: GateDomain[] = [
         id: 'glorya-need-layer',
         label: 'Need evaluation layer',
         definition:
-          'A public, checkable process for selecting places where need is severe enough and verifiable — not rumor or headline alone.',
+          'A public, checkable process for selecting places where need is severe enough and verifiable, not rumor or headline alone.',
         status: 'partial',
         note: 'Design layer of evaluated places is public. Sources and thresholds still illustrative.',
         evidence: { href: '/glorya', label: 'Glorya field' },
@@ -119,7 +119,7 @@ export const gateDomains: GateDomain[] = [
         id: 'glorya-path',
         label: 'Path integrity',
         definition:
-          'Before commitment, partners, access, regime, and timing must all hold so capital can become delivery — not theater.',
+          'Before commitment, partners, access, regime, and timing must all hold so capital can become delivery, not theater.',
         status: 'not_met',
         note: 'Framework designed. No live path reviews or allocations yet.',
         evidence: { href: '/brief#section-05', label: 'Brief §05' },
@@ -145,7 +145,7 @@ export const gateDomains: GateDomain[] = [
         id: 'sim-environment',
         label: 'Environment scaffold',
         definition:
-          'Synthetic markets cover structure, timing, and regime — the axes Hermes reads live — not just price replay.',
+          'Synthetic markets cover structure, timing, and regime: the axes Hermes reads live, not just price replay.',
         status: 'not_met',
         note: 'Not standing yet.',
       },
@@ -202,7 +202,7 @@ export const gateDomains: GateDomain[] = [
         id: 'auto-oracle',
         label: 'Oracle calibration proven',
         definition:
-          'Brier score on a resolved sample large enough to mean something — published in full.',
+          'Brier score on a resolved sample large enough to mean something, published in full.',
         status: 'partial',
         note: 'Keeping score. Sample still too small to claim.',
         evidence: { href: '/oracle', label: 'Oracle' },
@@ -211,7 +211,7 @@ export const gateDomains: GateDomain[] = [
         id: 'auto-simulation',
         label: 'Simulation load-bearing',
         definition:
-          'Simulation catches failures before deployment — with at least one documented case on the record.',
+          'Simulation catches failures before deployment, with at least one documented case on the record.',
         status: 'not_met',
         note: 'Waiting on Simulation #04.',
         dependsOn: 'sim-proof',

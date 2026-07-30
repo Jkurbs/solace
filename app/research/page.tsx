@@ -9,11 +9,11 @@ import type { ArticleRecord } from '@/features/articles/types';
 import Mark from '../Mark';
 
 export const metadata: Metadata = {
-  title: 'Solace — Research',
+  title: 'Solace · Research',
   description:
     'Public Solace research notes on capital allocation, uncertainty, market structure, and disciplined system design.',
   openGraph: {
-    title: 'Solace — Research',
+    title: 'Solace · Research',
     description:
       'Public Solace research notes on capital allocation, uncertainty, market structure, and disciplined system design.',
   },

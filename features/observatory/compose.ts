@@ -110,7 +110,7 @@ function composeHermes(
     ],
     disclosure:
       market?.disclosure ??
-      'Founder capital only · Market read only — not advice · Mechanism stays private',
+      'Founder capital only · Market read only: not advice · Mechanism stays private',
   };
 }
 
@@ -144,10 +144,10 @@ function hermesHealth(
 
   const ageMs = now.getTime() - new Date(market.as_of).getTime();
   if (!Number.isFinite(ageMs) || ageMs < 0 || ageMs > HERMES_STALE_MS || market.pulse === 'STALE') {
-    return { level: 'stale', note: 'Market feed is stale — not shown as live' };
+    return { level: 'stale', note: 'Market feed is stale: not shown as live' };
   }
   if (market.pulse === 'RECENT') {
-    return { level: 'degraded', note: 'Recent, not live-second' };
+    return { level: 'degraded', note: 'Recent: not live-second' };
   }
   return { level: 'ok', note: 'Live market read' };
 }
@@ -178,7 +178,7 @@ function composeOracle(now: Date): InstrumentObservation {
     name: 'Oracle',
     status: { label: 'Keeping score', phase: 'keeping_score' },
     health,
-    summary: `Calibration record — ${calibration.resolved} resolved questions, Brier ${calibration.brier.toFixed(3)}.`,
+    summary: `Calibration record: ${calibration.resolved} resolved questions, Brier ${calibration.brier.toFixed(3)}.`,
     state: [
       { label: 'Resolved', value: String(calibration.resolved) },
       { label: 'Brier', value: calibration.brier.toFixed(3) },
@@ -186,7 +186,7 @@ function composeOracle(now: Date): InstrumentObservation {
     ],
     activity,
     href: '/oracle',
-    disclosure: 'Scorekeeping and calibration — not a live trading feed.',
+    disclosure: 'Scorekeeping and calibration: not a live trading feed.',
   };
 }
 
@@ -215,7 +215,7 @@ function composeSimulation(): InstrumentObservation {
     state: [
       {
         label: 'Conditions',
-        value: summary ? `${summary.met}/${summary.total} met` : '—',
+        value: summary ? `${summary.met}/${summary.total} met` : '-',
         hint: summary && summary.partial > 0 ? `${summary.partial} partial` : undefined,
       },
       {
@@ -250,7 +250,7 @@ function composeGlorya(): InstrumentObservation {
       note: 'Design layer until revenue gate and first seal',
     },
     summary:
-      'Humanitarian capital — evaluating needs and standing down where intervention cannot change the outcome.',
+      'Humanitarian capital: evaluating needs and standing down where intervention cannot change the outcome.',
     state: [
       { label: 'Evaluated', value: String(board.evaluated) },
       { label: 'Standing down', value: String(board.standingDown) },

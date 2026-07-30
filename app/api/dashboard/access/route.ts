@@ -129,7 +129,7 @@ async function sendTokenHashMagicLink(request: Request, email: string, nextPath:
     return false;
   }
 
-  // Build a direct app callback — verifyOtp(token_hash) needs no PKCE verifier cookie.
+  // Build a direct app callback, verifyOtp(token_hash) needs no PKCE verifier cookie.
   const signInUrl = getCallbackUrl(request, nextPath);
   signInUrl.searchParams.set('token_hash', tokenHash);
   signInUrl.searchParams.set('type', 'magiclink');

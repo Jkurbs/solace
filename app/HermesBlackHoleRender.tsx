@@ -190,7 +190,7 @@ const fragmentShader = `
 
     float heat = clamp(t * (0.75 + turb * 0.55), 0.0, 1.0);
 
-    // Base disk color — cinematic, Foundation-inspired (warm core with energetic shifts)
+    // Base disk color, cinematic, Foundation-inspired (warm core with energetic shifts)
     vec3 coolCore = vec3(0.82, 0.91, 1.0);     // slightly blue-white on hottest
     vec3 warmMid  = vec3(1.0, 0.72, 0.38);
     vec3 ember    = vec3(0.72, 0.29, 0.11);
@@ -198,7 +198,7 @@ const fragmentShader = `
     vec3 col = mix(ember, warmMid, smoothstep(0.22, 0.58, heat));
     col = mix(col, coolCore, smoothstep(0.61, 0.94, heat));
 
-    // Doppler + beaming already applied outside — here we just modulate brightness by local turbulence
+    // Doppler + beaming already applied outside, here we just modulate brightness by local turbulence
     float density = 0.7 + 0.3 * smoothstep(0.1, 0.9, 1.0 - abs(turb - 0.5) * 1.6);
     col *= density;
 
@@ -247,7 +247,7 @@ const fragmentShader = `
   }
 
   // Very faint, geometrically precise "orbital infrastructure" (Starlink / instrument precision)
-  // These get dramatically lensed — the signature "watching something engineered near a singularity"
+  // These get dramatically lensed, the signature "watching something engineered near a singularity"
   vec3 orbitalTracks(vec2 p, float time) {
     float r = length(p);
     float a = atan(p.y, p.x);
@@ -351,7 +351,7 @@ const fragmentShader = `
     color += disk * proceduralWeight;
 
     // === PRECISE ORBITAL TRACKS (Starlink / instrument layer) ===
-    // These live outside the main disk and get violently lensed — very Foundation "ancient advanced tech observing the cosmos"
+    // These live outside the main disk and get violently lensed, very Foundation "ancient advanced tech observing the cosmos"
     vec3 tracks = orbitalTracks(p, time * 0.6);
     color += tracks * mix(1.0, 0.42, uPlateReady);
 

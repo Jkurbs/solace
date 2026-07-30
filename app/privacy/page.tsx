@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Mark from '../Mark';
 
 export const metadata: Metadata = {
-  title: 'Solace — Privacy Policy',
+  title: 'Solace · Privacy Policy',
   description:
     'What Solace collects, how it is used, and what it is never used for. Solace does not sell personal information. June 2026.',
 };
@@ -28,7 +28,7 @@ const sections = [
     number: '03',
     title: 'Data sharing',
     body: [
-      'Solace does not sell personal information. Information may be shared with service providers strictly to operate the service — for example, identity verification and payment processing — and as required by law.',
+      'Solace does not sell personal information. Information may be shared with service providers strictly to operate the service (for example, identity verification and payment processing), and as required by law.',
     ],
   },
   {

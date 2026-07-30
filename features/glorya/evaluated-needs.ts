@@ -3,7 +3,7 @@ import type { GloryaEvaluatedNeed } from './types';
 /**
  * Illustrative evaluated-need layer for instrument design.
  * Coordinates are real city/locality WGS84 positions.
- * These are not live allocations — evaluation-only until the
+ * These are not live allocations, evaluation-only until the
  * $1M Solace revenue gate and a first sealed disbursement.
  */
 export const gloryaEvaluatedNeeds: GloryaEvaluatedNeed[] = [

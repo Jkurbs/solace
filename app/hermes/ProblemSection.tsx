@@ -68,7 +68,7 @@ const questions = [
   { text: 'Is this move real, or noise?', left: '6%', top: '16%', window: [0.18, 0.4] },
   { text: 'Has the regime changed character?', left: '32%', top: '68%', window: [0.36, 0.56] },
   { text: 'Can liquidity carry price from here to there?', left: '46%', top: '12%', window: [0.52, 0.72] },
-  { text: 'Should capital move at all — or wait?', left: '62%', top: '60%', window: [0.68, 0.86] },
+  { text: 'Should capital move at all, or wait?', left: '62%', top: '60%', window: [0.68, 0.86] },
 ] as const;
 
 function ProblemQuestion({

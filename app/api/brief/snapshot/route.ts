@@ -39,7 +39,7 @@ export async function GET() {
   return response;
 }
 
-// A posture change reported by Hermes is a decision — but Hermes micro-cycles
+// A posture change reported by Hermes is a decision, but Hermes micro-cycles
 // between adjacent postures minute to minute, and transcribing every flip
 // buries the real stances. A change earns a ledger row only after it survives
 // the hold window; the sealed timestamp records when the stance began.
@@ -82,7 +82,7 @@ async function sealPostureChange(previous: HermesBriefSnapshot | null, next: Her
       const recordId = `HMS-${String(existing.length + 1).padStart(3, '0')}`;
 
       await sealHermesLedgerRow({
-        decision: `Posture change — ${formatPosture(state.lastSealed)} to ${formatPosture(state.pending.posture)}`,
+        decision: `Posture change, ${formatPosture(state.lastSealed)} to ${formatPosture(state.pending.posture)}`,
         note: state.pending.reason,
         posture: state.pending.posture,
         recordId,

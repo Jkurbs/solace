@@ -11,9 +11,9 @@ import MarketCopyButton from './MarketCopyButton';
 import MarketReadingAge from './MarketReadingAge';
 
 export const metadata: Metadata = {
-  title: 'Solace Docs — Hermes Market API',
+  title: 'Solace Docs · Hermes Market API',
   description:
-    'Public market read from Hermes: posture, outlook, and environment — how Hermes sees the market, not what it trades.',
+    'Public market read from Hermes: posture, outlook, and environment: how Hermes sees the market, not what it trades.',
   alternates: {
     canonical: DOCS_API_URL,
   },
@@ -72,7 +72,7 @@ export default async function DocsApiPage() {
         </p>
         <h1>How Hermes sees the market.</h1>
         <p className="hm-dek">
-          A public-safe market read — posture, outlook, and environment. Not trades. Not signals. Not the
+          A public-safe market read: posture, outlook, and environment. Not trades. Not signals. Not the
           mechanism. The same grade of language that appears on the homepage, available as JSON.
         </p>
       </section>
@@ -117,7 +117,7 @@ export default async function DocsApiPage() {
           <h2>GET {HERMES_MARKET_API_PATH}</h2>
           <p>
             No auth. CORS open for browser clients. Soft rate limit: 60 requests / minute / IP. Response is
-            public-safe by design — fields will not grow into signal dumps. Docs live at{' '}
+            public-safe by design. Fields will not grow into signal dumps. Docs live at{' '}
             <code className="hm-inline-code">docs.solace.fyi/api</code>.
           </p>
 
@@ -180,7 +180,7 @@ export default async function DocsApiPage() {
                 <td>
                   <code>outlook</code>
                 </td>
-                <td>Coarse risk tone — Moderate, Cautious, Constructive — not a forecast score</td>
+                <td>Coarse risk tone (Moderate, Cautious, Constructive), not a forecast score</td>
               </tr>
               <tr>
                 <td>
@@ -192,19 +192,19 @@ export default async function DocsApiPage() {
                 <td>
                   <code>capital.active</code>
                 </td>
-                <td>None, Limited, Active, or Reduced — activity level, not allocation recipe</td>
+                <td>None, Limited, Active, or Reduced: activity level, not allocation recipe</td>
               </tr>
               <tr>
                 <td>
                   <code>capital.deployed_paths</code> / <code>paths_under_review</code>
                 </td>
-                <td>Counts only — homepage-grade transparency, not which markets</td>
+                <td>Counts only: homepage-grade transparency, not which markets</td>
               </tr>
               <tr>
                 <td>
                   <code>pulse</code> / <code>as_of</code>
                 </td>
-                <td>Freshness of the read — LIVE, RECENT, or STALE</td>
+                <td>Freshness of the read: LIVE, RECENT, or STALE</td>
               </tr>
               <tr>
                 <td>

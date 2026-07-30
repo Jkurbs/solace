@@ -21,7 +21,7 @@ export default function ThemeToggle() {
     if (next === 'dark') {
       document.documentElement.dataset.theme = 'dark';
     } else {
-      // Light is default — keep dataset.theme='light' so existing light-mode
+      // Light is default, keep dataset.theme='light' so existing light-mode
       // component overrides (written for data-theme=light) still apply.
       document.documentElement.dataset.theme = 'light';
     }

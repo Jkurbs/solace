@@ -6,7 +6,7 @@ import { getClientIp, rateLimit } from '@/lib/rate-limit';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-// Public market read: how Hermes sees the market — not trades, not mechanism.
+// Public market read: how Hermes sees the market, not trades, not mechanism.
 // Stable contract for third parties; fields stay deliberately coarse.
 
 const corsHeaders = {

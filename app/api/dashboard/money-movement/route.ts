@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message:
-          'Identity verification is required before deposits — including simulation. Complete verification from the dashboard, then try again.',
+          'Identity verification is required before deposits, including simulation. Complete verification from the dashboard, then try again.',
       },
       { status: 403 },
     );

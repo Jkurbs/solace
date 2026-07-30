@@ -12,14 +12,14 @@ const ledgerOgUrl = 'solace.fyi/observatory/hermes/ledger';
 
 /**
  * Social share card for the public decision ledger.
- * Process metrics first — sealed record, not a performance ad.
+ * Process metrics first, sealed record, not a performance ad.
  *
  * Satori (next/og) constraints: every multi-child container needs display:flex;
  * avoid special unicode that triggers Google font download failures.
  */
 export function renderLedgerShareImage(scoreboard: LedgerScoreboard) {
   const { process } = scoreboard;
-  const openLabel = process.openPaths === null ? '—' : String(process.openPaths);
+  const openLabel = process.openPaths === null ? '-' : String(process.openPaths);
   const standDown = formatPercent(process.standDownRate);
 
   return new ImageResponse(

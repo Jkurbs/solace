@@ -6,7 +6,7 @@ import DashboardAccessGate from '../DashboardAccessGate';
 import ReportIssueView from './report-issue-view';
 
 export const metadata: Metadata = {
-  title: 'Solace — Report a Bug',
+  title: 'Solace · Report a Bug',
   description: 'File a bug report for the Hermes dashboard.',
 };
 

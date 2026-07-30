@@ -8,7 +8,7 @@ import NotePlate from '../NotePlate';
 import ThemeToggle from '../ThemeToggle';
 
 export const metadata: Metadata = {
-  title: 'Solace — News',
+  title: 'Solace · News',
   description: 'Announcements from the Solace observatory: what shipped, what changed, what is now checkable.',
 };
 

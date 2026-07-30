@@ -1,5 +1,5 @@
 // The Solace mark: an eight-point compass-star with an elongated vertical
-// axis — a north star for navigating uncertainty. Pure vector so it stays
+// axis, a north star for navigating uncertainty. Pure vector so it stays
 // crisp at any size and works in one flat color (inherits currentColor).
 export default function Mark({
   size = 22,

@@ -252,7 +252,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
             role="alert"
             className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-amber-700 dark:text-amber-300"
           >
-            Live refresh is failing — balances below are from the last successful sync. Retrying automatically.
+            Live refresh is failing, balances below are from the last successful sync. Retrying automatically.
           </div>
         ) : null}
         <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
@@ -329,7 +329,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
                 {setupIncomplete ? (
                   <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
                     {data.account.identityVerification.status !== 'VERIFIED'
-                      ? 'Identity verification is required before deposits open — even in simulation.'
+                      ? 'Identity verification is required before deposits open, even in simulation.'
                       : 'Complete setup (profile and capital intent) before deposits open.'}{' '}
                     <Link href="/dashboard" className="font-medium text-neutral-800 underline-offset-2 hover:underline dark:text-neutral-200">
                       Return to dashboard

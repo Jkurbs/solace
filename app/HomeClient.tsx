@@ -80,22 +80,22 @@ const homepageQuestions = [
   {
     question: 'What is Solace?',
     answer:
-      'An independent research company building instruments for disciplined decision-making under uncertainty. Not a fund, not a product, not a trading bot.',
+      'An independent research company building instruments that improve decision-making under uncertainty. Hermes is the first. It begins with capital because markets give rapid feedback for learning.',
   },
   {
     question: 'What is Hermes?',
     answer:
-      'The first instrument: a live system that reads market structure to decide when capital should move, wait, or be preserved.',
+      'An autonomous instrument designed to make better capital allocation decisions on your behalf, so your capital can compound without requiring your constant attention. Every decision is sealed on a public ledger you can check.',
   },
   {
     question: 'Does Hermes manage customer funds?',
     answer:
-      'Not yet. You can observe the public ledger and enter Hermes with simulation capital. Real capital is limited — when you ask to allocate, Solace adds you to the waitlist.',
+      'Not yet. You can observe the public ledger and enter Hermes with simulation capital. Real capital is limited. When you ask to allocate, Solace adds you to the waitlist.',
   },
   {
     question: 'How do I enter Hermes?',
     answer:
-      'Open the dashboard to run simulation capital — no application form. Watch the public ledger anytime. Real capital access is a separate waitlist when you choose to allocate.',
+      'Open the dashboard to run simulation capital. No application form. Watch the public ledger anytime. Real capital access is a separate waitlist when you choose to allocate.',
   },
 ];
 
@@ -345,8 +345,9 @@ export default function HomeClient({
             variants={fade}
             className="mt-8 text-lg md:text-xl text-muted leading-relaxed max-w-2xl"
           >
-            Solace builds systems that read complexity and decide when capital should move and when it shouldn&apos;t.
-            Hermes is the first instrument — live, sealed, and open to observe and simulate.
+            Solace builds instruments that help capital make better decisions under uncertainty. Hermes is the
+            first, designed so your capital can compound without demanding your constant attention. Live,
+            sealed, and open to observe and simulate.
           </motion.p>
 
           <motion.div variants={fade} className="mt-10 flex flex-wrap items-center gap-3 sm:gap-4">
@@ -410,8 +411,8 @@ export default function HomeClient({
                     Hermes
                   </h3>
                   <p className="mt-2 text-muted leading-relaxed max-w-xl">
-                    A live capital allocation engine that reads market structure to decide when
-                    capital should move, wait, or be preserved.
+                    An autonomous instrument for capital allocation, built to grow what you
+                    entrust it with, with discipline you can verify, not take on faith.
                   </p>
                 </div>
                 <span className="flex items-center gap-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
@@ -595,7 +596,7 @@ export default function HomeClient({
                 Solace
               </p>
               <p className="mt-4 text-sm text-muted leading-relaxed max-w-xs">
-                Independent research company building instruments for decision making under uncertainty.
+                Independent research company building instruments that help capital, and eventually other domains, make better decisions under uncertainty.
                 Kept only when they survive contact with the world.
               </p>
               <p className="mt-6 text-xs text-muted font-mono tracking-wider uppercase">

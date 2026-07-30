@@ -1,6 +1,6 @@
 import { OG_SIZE, renderPlateImage } from '@/lib/og-plate';
 
-export const alt = 'Solace — Independent Research Company';
+export const alt = 'Solace · Independent Research Company';
 export const size = OG_SIZE;
 export const contentType = 'image/png';
 

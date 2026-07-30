@@ -9,7 +9,7 @@ import QuestionPlate from './QuestionPlate';
 import { getQuestionRead, resolvedQuestions } from './resolved-questions';
 
 export const metadata: Metadata = {
-  title: 'Solace — Oracle · Calibration Record',
+  title: 'Solace · Oracle · Calibration Record',
   description:
     'The Oracle weighs the futures and keeps score. Calibration record: every probability scored against what actually happened. No performance claims.',
 };
@@ -24,7 +24,7 @@ const pct = (n: number) => `${Math.round(n * 100)}%`;
 export default function OraclePage() {
   const overconfidence = calibration.averageProbability - calibration.actualWinRate;
   // Freshness contract, same as the homepage telemetry: the pulsing badge
-  // only renders while the record is recent — never a fake pulse.
+  // only renders while the record is recent, never a fake pulse.
   const recordAge = Date.now() - new Date(calibration.asOf).getTime();
   const isFresh = Number.isFinite(recordAge) && recordAge >= 0 && recordAge <= FRESH_RECORD_MAX_AGE_MS;
 

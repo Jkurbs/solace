@@ -3,7 +3,7 @@ import type { HermesPublicReading } from '@/features/hermes-public-reading/types
 import { hermesVersion } from '@/features/hermes-version';
 
 /**
- * Public market read — how Hermes sees the market, not what it trades.
+ * Public market read, how Hermes sees the market, not what it trades.
  *
  * Contract principles:
  * - Posture + outlook + environment: public-safe summary language
@@ -18,7 +18,7 @@ export type HermesPublicMarketRead = {
   as_of: string;
   /** Freshness of the feed */
   pulse: 'LIVE' | 'RECENT' | 'STALE';
-  /** Capital posture — title case for humans and APIs */
+  /** Capital posture, title case for humans and APIs */
   posture: string;
   /** Risk / opportunity outlook (e.g. Moderate) */
   outlook: string;
@@ -37,7 +37,7 @@ export type HermesPublicMarketRead = {
 };
 
 const defaultDisclosure =
-  'Founder capital only · Beta portfolios are simulated · No customer funds are managed by Solace · Market read only — not advice';
+  'Founder capital only · Beta portfolios are simulated · No customer funds are managed by Solace · Market read only, not advice';
 
 function titleCaseToken(value: string) {
   return value
@@ -198,7 +198,7 @@ export function composeHermesPublicMarketRead({
 
   if (reading) {
     const posture = reading.posture.label;
-    // Public reading does not expose deployed path counts — do not invent them.
+    // Public reading does not expose deployed path counts, do not invent them.
     const deployed = 0;
     const underReview = reading.paths.count;
     const capitalActive = mapCapitalActive(null, posture, posture === 'DEPLOYED' ? 1 : 0);

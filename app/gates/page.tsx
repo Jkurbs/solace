@@ -19,7 +19,7 @@ import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
 
 export const metadata: Metadata = {
-  title: 'Solace — Gate Board',
+  title: 'Solace · Gate Board',
   description: 'Where Glorya, Simulation, and Autonomy stand. Public conditions, hand-marked status.',
 };
 
@@ -145,7 +145,7 @@ export default function GatesPage() {
         <h1 className="gates-title">Gate board</h1>
         <p className="gates-dek">
           Glorya evaluates under a revenue gate. Simulation and Autonomy stay closed until their conditions clear.
-          Status is hand-marked — not auto-scored.
+          Status is hand-marked, not auto-scored.
         </p>
 
         <dl className="gates-scoreline" aria-label="Board progress">

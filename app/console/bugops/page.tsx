@@ -11,7 +11,7 @@ import ConsoleAccessGate from '../ConsoleAccessGate';
 import ConsoleHeader from '../ConsoleHeader';
 
 export const metadata: Metadata = {
-  title: 'Solace — BugOps',
+  title: 'Solace · BugOps',
   description: 'Internal Solace beta bug triage queue and trust-impact report.',
 };
 

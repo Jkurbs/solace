@@ -25,14 +25,14 @@ import TrustScoreboard from '../../../trust/TrustScoreboard';
 import VerifyInBrowser from '../../../trust/VerifyInBrowser';
 
 export const metadata: Metadata = {
-  title: 'Solace — Hermes Decision Ledger',
+  title: 'Solace · Hermes Decision Ledger',
   description:
     'Public sealed record of Hermes decisions before outcomes are known. Founder capital · checkable chain. Part of the Observatory.',
   alternates: {
     canonical: 'https://solace.fyi/observatory/hermes/ledger',
   },
   openGraph: {
-    title: 'Solace — Hermes Decision Ledger',
+    title: 'Solace · Hermes Decision Ledger',
     description:
       'Sealed before the outcome is known. Public process metrics and a checkable decision chain.',
     url: 'https://solace.fyi/observatory/hermes/ledger',
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Solace — Hermes Decision Ledger',
+    title: 'Solace · Hermes Decision Ledger',
     description:
       'Sealed before the outcome is known. Public process metrics and a checkable decision chain.',
   },
@@ -111,7 +111,7 @@ const howToRead = [
   ],
   [
     'Process before performance',
-    'The scoreboard above the sheet leads with sealed decisions, live open paths vs closes, standing-down rate, and backfills. Open paths come from the same live marks as the LIVE row — not from historical open seals still unpaired on the chain. Outcome metrics stay behind a toggle so the page does not read as a trading log.',
+    'The scoreboard above the sheet leads with sealed decisions, live open paths vs closes, standing-down rate, and backfills. Open paths come from the same live marks as the LIVE row, not from historical open seals still unpaired on the chain. Outcome metrics stay behind a toggle so the page does not read as a trading log.',
   ],
   [
     'Verifiable by math',
@@ -228,7 +228,7 @@ export default async function HermesLedgerPage() {
         <h1 className="trust-title">Hermes Decision Ledger</h1>
         <p className="trust-dek">
           Every Hermes decision gets a row here before the outcome is known. Trade mechanics stay private.
-          This is Hermes’s deep record inside the Observatory — not a separate product from watching the
+          This is Hermes’s deep record inside the Observatory, not a separate product from watching the
           instrument.
         </p>
         <p className="trust-ledger-note">

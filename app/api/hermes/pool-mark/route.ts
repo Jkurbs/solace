@@ -365,7 +365,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Hermes pool source mark could not be translated.' }, { status: 503 });
   }
 
-  // New positions in this mark seal open rows in the public ledger —
+  // New positions in this mark seal open rows in the public ledger,
   // commitment on the chain before the outcome exists. Best-effort.
   await trackOpenPathsFromMark(payload.sourceMark.rawPayload, payload.sourceMark.effectiveAt);
 

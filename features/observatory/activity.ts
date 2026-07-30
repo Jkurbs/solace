@@ -12,7 +12,7 @@ const ACTIVITY_CAP = 6;
 
 /**
  * Map Hermes process ledger rows into public-safe activity lines.
- * Prefer template titles from event metadata — never dump raw notes
+ * Prefer template titles from event metadata, never dump raw notes
  * (they may carry mechanism detail).
  */
 export function hermesActivityFromLedgerRows(
@@ -34,7 +34,7 @@ export function hermesActivityFromLedgerRows(
     });
   }
 
-  // Newest first — process rows typically arrive chronological ascending.
+  // Newest first, process rows typically arrive chronological ascending.
   const ordered = [...rows].sort(
     (a, b) => new Date(b.sealedAt).getTime() - new Date(a.sealedAt).getTime(),
   );
@@ -103,7 +103,7 @@ function mapLedgerRowToActivity(row: HermesLedgerRow): ObservatoryActivity | nul
     };
   }
 
-  // Decision-style rows without path event type — posture-aware templates only.
+  // Decision-style rows without path event type, posture-aware templates only.
   const posture = (row.posture || '').toUpperCase().replace(/\s+/g, '_');
   const decision = (row.decision || '').toLowerCase();
 
@@ -167,7 +167,7 @@ export function gloryaActivityFromNeeds(
           instrumentId: 'glorya' as const,
           at: fixedDesignTimestamp(need.id),
           kind: 'need_stand_down',
-          title: `${place} — standing down`,
+          title: `${place}, standing down`,
           detail: need.focus,
           href: '/glorya',
         };
@@ -178,7 +178,7 @@ export function gloryaActivityFromNeeds(
           instrumentId: 'glorya' as const,
           at: fixedDesignTimestamp(need.id),
           kind: 'need_evaluated',
-          title: `${place} — under evaluation`,
+          title: `${place}, under evaluation`,
           detail: need.focus,
           href: '/glorya',
         };
@@ -188,7 +188,7 @@ export function gloryaActivityFromNeeds(
         instrumentId: 'glorya' as const,
         at: fixedDesignTimestamp(need.id),
         kind: `need_${need.status}`,
-        title: `${place} — ${need.status.replace('_', ' ')}`,
+        title: `${place}, ${need.status.replace('_', ' ')}`,
         href: '/glorya',
       };
     });

@@ -18,7 +18,7 @@ import type {
 } from '@/features/hermes-dashboard/types';
 
 export const metadata: Metadata = {
-  title: 'Solace — Hermes Contract Inspector',
+  title: 'Solace · Hermes Contract Inspector',
   description: 'Internal Hermes dashboard contract inspector for field ownership and backend requirements.',
 };
 

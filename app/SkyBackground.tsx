@@ -12,7 +12,7 @@ function mulberry32(seed: number) {
   };
 }
 
-// The one sky behind every section. Drawn once per resize — a static plate,
+// The one sky behind every section. Drawn once per resize, a static plate,
 // not a fourth render loop. Density is kept "grain of the night" low so it
 // never competes with text or the instrument renders.
 export default function SkyBackground() {

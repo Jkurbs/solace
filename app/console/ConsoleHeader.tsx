@@ -37,7 +37,7 @@ export default function ConsoleHeader({ pendingAccessCount = 0 }: { pendingAcces
           <ConsoleLiveRefresh />
         </div>
         {/* Single scrollable row on mobile so every destination stays reachable
-            at any width — no grid wrap, no hidden pages. */}
+            at any width, no grid wrap, no hidden pages. */}
         <nav
           className="-mx-4 flex w-[calc(100%+2rem)] items-center gap-1 overflow-x-auto px-4 pb-1 text-xs font-bold text-neutral-400 sm:mx-0 sm:w-auto sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:text-sm"
           aria-label="Console navigation"

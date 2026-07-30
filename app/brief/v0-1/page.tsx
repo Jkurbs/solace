@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Mark from '../../Mark';
 
 export const metadata: Metadata = {
-  title: 'Solace — Technical Brief V0.1 (Archived)',
+  title: 'Solace · Technical Brief V0.1 (Archived)',
   description:
     'Archived version. What Solace builds, how it is disciplined, and how it can be checked. V0.1, June 2026. Superseded by V0.2.',
 };
@@ -24,8 +24,8 @@ const sections = [
     number: '01',
     title: 'Thesis',
     body: [
-      'Solace is an independent research company building instruments for decision-making under uncertainty. The operating belief is narrow and testable: individual events resist prediction, but the structure around them — liquidity, timing, regime, probability — can be read, modeled, and acted on with discipline.',
-      'Solace begins with markets because markets compress feedback. They expose timing, uncertainty, and system quality in days rather than years, and they fund the work. Every instrument follows one loop: observe, model, simulate, deploy — and keep only what survives contact with the world.',
+      'Solace is an independent research company building instruments for decision-making under uncertainty. The operating belief is narrow and testable: individual events resist prediction, but the structure around them, liquidity, timing, regime, probability, can be read, modeled, and acted on with discipline.',
+      'Solace begins with markets because markets compress feedback. They expose timing, uncertainty, and system quality in days rather than years, and they fund the work. Every instrument follows one loop: observe, model, simulate, deploy, and keep only what survives contact with the world.',
     ],
   },
   {
@@ -38,7 +38,7 @@ const sections = [
   },
   {
     number: '03',
-    title: 'Hermes — the market instrument',
+    title: 'Hermes · the market instrument',
     body: [
       'Hermes is a live system that reads liquidity distribution, timing, and regime character across multiple timeframes. Its core abstraction is the liquidity path: the premise that a price destination matters less than whether the field between here and there can carry price. Hermes evaluates candidate paths and commits only when structure, timing, and regime agree.',
       'Execution is gated, not continuous. A dedicated decision engine sits between signal and order, enforcing entry conditions, position sizing, stop placement, and portfolio constraints. When the regime breaks character, Hermes changes posture or stands down entirely.',
@@ -47,10 +47,10 @@ const sections = [
   },
   {
     number: '04',
-    title: 'The Oracle — the event instrument',
+    title: 'The Oracle · the event instrument',
     body: [
       'The Oracle is a probability engine over event markets, beginning with exchange-listed target markets on crypto assets. For each open question it builds an order-book view, produces a probability estimate, and records that estimate before resolution.',
-      'Calibration is the product. Every prediction is scored against the resolved outcome — Brier scoring machinery already runs inside the system — and the score is the Oracle’s only honest résumé. The Oracle is currently calibrating: no public numbers will be shown until the resolved sample is large enough to mean something.',
+      'Calibration is the product. Every prediction is scored against the resolved outcome, Brier scoring machinery already runs inside the system, and the score is the Oracle’s only honest résumé. The Oracle is currently calibrating: no public numbers will be shown until the resolved sample is large enough to mean something.',
     ],
   },
   {
@@ -73,7 +73,7 @@ const sections = [
     number: '07',
     title: 'Horizon',
     body: [
-      'Beyond the live instruments, the roadmap runs through simulation — synthetic environments where hypotheses fail quietly before deployment — toward physical-world autonomy. Domains are earned, not declared. Expansion into autonomy is gated on the following conditions, and the board below is the public record of their status.',
+      'Beyond the live instruments, the roadmap runs through simulation (synthetic environments where hypotheses fail quietly before deployment) toward physical-world autonomy. Domains are earned, not declared. Expansion into autonomy is gated on the following conditions, and the board below is the public record of their status.',
     ],
   },
   {
@@ -108,7 +108,7 @@ export default function BriefV01Page() {
 
       <article className="mx-auto max-w-4xl px-5 pb-24 pt-36 md:px-8">
         <p className="inline-block border border-[#b8955a]/50 bg-[#b8955a]/10 px-3 py-1.5 font-mono text-[0.62rem] uppercase tracking-[0.2em] text-[#8a6d3b]">
-          Archived version — superseded by{' '}
+          Archived version: superseded by{' '}
           <Link href="/brief/v0-2" className="underline underline-offset-2">
             V0.2
           </Link>
@@ -136,7 +136,7 @@ export default function BriefV01Page() {
           <div>
             <p className="font-serif text-xl font-medium text-[#13110c] md:text-2xl">Kerby Jean</p>
             <p className="mt-1 max-w-xl text-sm leading-6 text-[#4f483c]">
-              Founder. Software engineer — four years building production systems at Apple. Every
+              Founder. Software engineer. Four years building production systems at Apple. Every
               Solace instrument is designed, built, and operated by him, end to end.
             </p>
             <p className="mt-2 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-[#6b6354]">
@@ -172,7 +172,7 @@ export default function BriefV01Page() {
 
                   {section.number === '07' && (
                     <div className="gate-board" aria-label="Autonomy gate conditions">
-                      <p className="gate-board-title">Gate conditions — domains are earned</p>
+                      <p className="gate-board-title">Gate conditions: domains are earned</p>
                       <ul>
                         {gate.map((condition, index) => (
                           <li key={condition.label}>

@@ -7,8 +7,8 @@ import type { Json } from '@/lib/supabase/types';
 import { listHermesLedgerRows, sealHermesLedgerRow } from './store';
 
 // Two-row path schema: when a new position appears in the pool-mark feed, an
-// OPEN row is sealed immediately — instrument, direction, and size withheld
-// (mechanism stays private) — so the commitment is on the chain before the
+// OPEN row is sealed immediately, instrument, direction, and size withheld
+// (mechanism stays private), so the commitment is on the chain before the
 // outcome exists. The close row later references it via `ref`.
 //
 // Failure modes we harden against:
@@ -249,7 +249,7 @@ function withBookLock<T>(fn: () => Promise<T>): Promise<T> {
 /**
  * Called from the pool-mark ingest after a healthy mark stores. Seals an
  * open row for every position not already tracked. Positions that vanish
- * are NOT closed here — close rows come only from the trade-events feed.
+ * are NOT closed here, close rows come only from the trade-events feed.
  */
 export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: string) {
   return withBookLock(async () => {
@@ -270,7 +270,7 @@ export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: 
       let changed = pruneRecentlyClosed(book.recentlyClosed, nowMs);
 
       // Do NOT drop opens when a mark omits a symbol. Only popOpenPathRef
-      // (trade close) removes tracking — prevents unpaired opens + re-spam.
+      // (trade close) removes tracking, prevents unpaired opens + re-spam.
 
       for (const position of positions) {
         const key = pathKey(position.symbol, position.side);
@@ -306,7 +306,7 @@ export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: 
         const recordId = `HMS-${String(nextRecordNumber).padStart(3, '0')}`;
         const sealedAt = effectiveAt ?? new Date().toISOString();
         const row = await sealHermesLedgerRow({
-          decision: 'Opened a path — instrument private until close',
+          decision: 'Opened a path: instrument private until close',
           eventType: 'open',
           note: '',
           posture: snapshot && snapshot.brief_id !== 'fallback' ? snapshot.posture : 'DEPLOYED',
@@ -349,7 +349,7 @@ export async function popOpenPathRef(symbol: string, side: string): Promise<stri
       const closedAt = new Date().toISOString();
 
       // Always record the close cooldown, even if we lacked an open entry
-      // (pre-schema or state loss) — still blocks ghost re-opens from stale marks.
+      // (pre-schema or state loss), still blocks ghost re-opens from stale marks.
       book.recentlyClosed[key] = closedAt;
       pruneRecentlyClosed(book.recentlyClosed, Date.now());
 

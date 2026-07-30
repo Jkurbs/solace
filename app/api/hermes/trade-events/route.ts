@@ -96,7 +96,7 @@ function parseTradeEventPayload(value: unknown): HermesRealizedTradeEventInput |
   };
 }
 
-// Per-row note: how long the path was held — actual information, unlike a
+// Per-row note: how long the path was held, actual information, unlike a
 // repeated disclaimer. (PnL being net of fees/funding is stated once on the
 // ledger page itself.)
 function formatHoldDuration(openedAt: string | undefined, closedAt: string) {
@@ -153,7 +153,7 @@ async function sealClosedTradeLedgerRow(event: HermesRealizedTradeEvent) {
     const ref = await popOpenPathRef(event.symbol, event.side);
 
     await sealHermesLedgerRow({
-      decision: `Closed ${event.symbol} ${event.side.toLowerCase()} — path complete`,
+      decision: `Closed ${event.symbol} ${event.side.toLowerCase()}, path complete`,
       eventType: 'close',
       note: formatHoldDuration(event.openedAt, event.closedAt),
       outcome,

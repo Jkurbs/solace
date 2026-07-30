@@ -54,7 +54,7 @@ export default function TrustScoreboard({ scoreboard }: { scoreboard: LedgerScor
         />
         <Metric
           label="Open paths · Closed"
-          value={`${process.openPaths === null ? '—' : process.openPaths} · ${process.closedPaths}`}
+          value={`${process.openPaths === null ? '-' : process.openPaths} · ${process.closedPaths}`}
           detail={
             process.openPaths === null
               ? 'Live marks unavailable · closed = close rows on chain'
@@ -109,7 +109,7 @@ export default function TrustScoreboard({ scoreboard }: { scoreboard: LedgerScor
           />
           <Metric
             label="Expectancy"
-            value={performance.expectancy === null ? '—' : pnlFormatter.format(performance.expectancy)}
+            value={performance.expectancy === null ? '-' : pnlFormatter.format(performance.expectancy)}
             detail={performance.sampleSize ? `Mean PnL · n=${performance.sampleSize}` : 'Sealed resolved only'}
           />
           <Metric

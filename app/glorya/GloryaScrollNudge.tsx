@@ -4,14 +4,14 @@ import { useEffect } from 'react';
 
 /** Wait before a gentle page nudge on mobile when the visitor never scrolls. */
 const DELAY_MS = 30_000;
-/** How far to ease down — enough to reveal the next band, not a jump. */
+/** How far to ease down, enough to reveal the next band, not a jump. */
 const NUDGE_PX = 140;
 /** Treat anything past this as intentional scroll; cancel the nudge. */
 const SCROLLED_THRESHOLD_PX = 40;
 
 /**
  * Mobile-only: after 30s at the top of /glorya, smoothly scroll a little
- * so the process/ledger band peeks in. Never fights the user — cancels on
+ * so the process/ledger band peeks in. Never fights the user, cancels on
  * any real scroll, reduced motion, or desktop layout.
  */
 export default function GloryaScrollNudge() {
@@ -63,7 +63,7 @@ export default function GloryaScrollNudge() {
     };
 
     const onPointerDown = (event: PointerEvent) => {
-      // "Tap to scroll" means they found the affordance — don't auto-nudge later.
+      // "Tap to scroll" means they found the affordance, don't auto-nudge later.
       const target = event.target;
       if (target instanceof Element && target.closest('.glorya-scroll-cue')) {
         cleanup();

@@ -9,7 +9,7 @@ import { isWebglPaused, observeWebglMountVisibility, subscribeWebglPause } from 
 
 // Variant D of the telemetry design: real posture drives the art's energy.
 // Deployed burns at full brightness; standing down dims to embers. The field
-// itself (terrain, haze) persists at every level — the world stays, the
+// itself (terrain, haze) persists at every level, the world stays, the
 // judgment quiets.
 const postureEnergy: Record<HermesPublicPosture, number> = {
   DEPLOYED: 1,
@@ -115,7 +115,7 @@ const fragmentShader = `
     return dcol * spawn * pt * tw * weight * (0.3 + fc * 1.1 + (1.0 - temp) * 0.25);
   }
 
-  // Soft out-of-focus foreground particles — prestige-cinema depth of field.
+  // Soft out-of-focus foreground particles, prestige-cinema depth of field.
   vec3 bokeh(vec2 w, float scale, float drift, float seed) {
     vec2 q = w + vec2(uTime * drift, uTime * drift * 0.35);
     vec2 g = q * scale;
@@ -149,7 +149,7 @@ const fragmentShader = `
     w += vec2(sin(uTime * 0.011), cos(uTime * 0.0083)) * 0.012;
     w = (w - 0.5) * (1.0 + 0.008 * sin(uTime * 0.007)) + 0.5;
 
-    // Gentle lensing pull toward the dominant liquidity well — mass bends the view.
+    // Gentle lensing pull toward the dominant liquidity well, mass bends the view.
     vec2 toWell = w - uWell;
     float wr = length(toWell * vec2(1.3, 1.0));
     vec2 wWarp = w - (toWell / max(wr, 0.001)) * 0.014 * exp(-wr * wr / 0.045);
@@ -166,7 +166,7 @@ const fragmentShader = `
 
     vec3 color = vec3(0.003, 0.0045, 0.0075);
 
-    // Cold nebula floor — the void leans deep teal-blue, never dead black.
+    // Cold nebula floor, the void leans deep teal-blue, never dead black.
     float neb = noise(w * 2.4 + vec2(uTime * 0.012, 0.0)) * 0.6 + noise(w * 5.1) * 0.4;
     color += vec3(0.008, 0.016, 0.026) * neb * 0.7;
 
@@ -278,7 +278,7 @@ const fragmentShader = `
         float halo = exp(-dPix * dPix / (10.0 * 10.0));
 
         // Candidates are looser bundles; as one nears rejection its strands
-        // splay apart — the reading unravels before its light goes out.
+        // splay apart, the reading unravels before its light goes out.
         float splay = 1.0 + fray * fray * 6.5;
         float fil = 0.0;
         for (int k = 0; k < 4; k++) {
@@ -328,7 +328,7 @@ const fragmentShader = `
     color = min(color * 1.06 + 0.003, vec3(1.0));
 
     // Luminance-keyed alpha: bright content is opaque, empty void is a thin
-    // veil — so the continuous sky's stars shine through the section's air.
+    // veil, so the continuous sky's stars shine through the section's air.
     float alphaLum = dot(color, vec3(0.299, 0.587, 0.114));
     float alpha = clamp(0.18 + alphaLum * 5.5, 0.0, 1.0);
 
@@ -637,7 +637,7 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       renderer.setPixelRatio(dpr);
       renderer.setSize(w, h, false);
       // gl_FragCoord is in physical pixels, so the shader needs the drawing
-      // buffer size — not CSS pixels — or Retina displays render the whole
+      // buffer size, not CSS pixels, or Retina displays render the whole
       // composition into the bottom-left quadrant.
       uniforms.uResolution.value.set(w * dpr, h * dpr);
       uniforms.uPixelRatio.value = dpr;
@@ -730,7 +730,7 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
     });
 
     // Pause the loop while the section is offscreen, tab hidden, or nav pending.
-    // Out-of-view is debounced — scroll thrashing was killing in-view rAF loops.
+    // Out-of-view is debounced, scroll thrashing was killing in-view rAF loops.
     const visibilityWatch = observeWebglMountVisibility(mount, (visible) => {
       inView = visible;
       if (visible) tryStartLoop();

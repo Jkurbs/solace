@@ -13,7 +13,7 @@ export type LedgerScoreboard = {
     sealedDecisions: number;
     /**
      * Currently open paths from the live mark feed.
-     * Null when marks are missing/stale — never invent from unpaired history.
+     * Null when marks are missing/stale, never invent from unpaired history.
      */
     openPaths: number | null;
     /** Close rows on the chain. */
@@ -21,7 +21,7 @@ export type LedgerScoreboard = {
     /** Open rows successfully paired via close/void ref. */
     pairedOpens: number;
     /**
-     * Open seals still without a close/void ref. Archive integrity signal —
+     * Open seals still without a close/void ref. Archive integrity signal,
      * not live inventory.
      */
     unpairedChainOpens: number;
@@ -130,7 +130,7 @@ export function computeLedgerScoreboard(
 
   const openById = new Map(openRows.map((row) => [row.recordId, row] as const));
 
-  // Performance sample: sealed-first guarantees only — exclude backfill and system.
+  // Performance sample: sealed-first guarantees only, exclude backfill and system.
   // Prefer close rows with PnL; never treat opens as resolved outcomes.
   const sealedResolved = decisionRows.filter(
     (row) => !isBackfill(row) && row.outcome !== null && row.eventType !== 'open',
@@ -201,7 +201,7 @@ export function computeLedgerScoreboard(
 
 export function formatPercent(rate: number | null, digits = 0) {
   if (rate === null) {
-    return '—';
+    return '-';
   }
 
   return `${(rate * 100).toFixed(digits)}%`;
@@ -209,7 +209,7 @@ export function formatPercent(rate: number | null, digits = 0) {
 
 export function formatHours(hours: number | null) {
   if (hours === null) {
-    return '—';
+    return '-';
   }
 
   if (hours < 1) {

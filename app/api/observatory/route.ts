@@ -20,7 +20,7 @@ export async function OPTIONS() {
   });
 }
 
-/** Public observatory snapshot — status, state, activity, health per instrument. */
+/** Public observatory snapshot, status, state, activity, health per instrument. */
 export async function GET(request: Request) {
   const ip = getClientIp(request);
   const limit = rateLimit({

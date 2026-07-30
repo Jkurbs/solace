@@ -64,7 +64,7 @@ const fragmentShader = `
     return mat2(c, -s, s, c);
   }
 
-  // Cold, sparse observatory dust — same lattice technique as the Hermes
+  // Cold, sparse observatory dust, same lattice technique as the Hermes
   // field, but uniform density: the instrument floats in clear night air.
   vec3 dustLayer(vec2 w, float scale, float drift, float weight, float seed) {
     vec2 q = w + vec2(uTime * drift, uTime * drift * 0.2);
@@ -122,7 +122,7 @@ const fragmentShader = `
 
     vec2 w = uv;
     // On mobile, center horizontally and lift the instrument into the clear
-    // upper zone — the copy is bottom-aligned, so this keeps them from stacking.
+    // upper zone, the copy is bottom-aligned, so this keeps them from stacking.
     vec2 center = mix(vec2(0.67, 0.5), vec2(0.5, 0.6), mobile);
     vec2 p = w - center;
     p.x *= aspect;
@@ -130,7 +130,7 @@ const fragmentShader = `
     // shrink the whole instrument so it reads as one object, not clipped arcs.
     p *= mix(1.0, 1.5, mobile);
 
-    // Cold night base, faint nebula — same floor as the Hermes field's void.
+    // Cold night base, faint nebula, same floor as the Hermes field's void.
     vec3 color = vec3(0.0028, 0.0037, 0.0055);
     float neb = noise(w * 2.2 + vec2(uTime * 0.008, 0.0)) * 0.6 + noise(w * 4.7) * 0.4;
     color += vec3(0.008, 0.014, 0.023) * neb * 0.55;

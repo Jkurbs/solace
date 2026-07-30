@@ -14,7 +14,7 @@ import {
 import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
 
 export const metadata: Metadata = {
-  title: 'Solace — Enter Hermes Simulation',
+  title: 'Solace · Enter Hermes Simulation',
   description: 'Start Hermes with simulation capital. Performance tracks the live instrument; no real money moves.',
 };
 
@@ -73,7 +73,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
               Enter Hermes with simulation capital.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-neutral-600 dark:text-neutral-400">
-              You can use Hermes now — no application. We will deposit virtual capital into your account so you
+              You can use Hermes now, no application. We will deposit virtual capital into your account so you
               can watch how Hermes waits, deploys, and records decisions.
             </p>
           </div>
@@ -82,7 +82,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             <div className="rounded-lg border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-[#0d0d0b]">
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">What is real</p>
               <p className="mt-3 text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                Hermes decisions, posture, and outcomes track the live instrument — the same process sealed on the
+                Hermes decisions, posture, and outcomes track the live instrument, the same process sealed on the
                 public ledger for founder capital.
               </p>
             </div>
@@ -130,7 +130,7 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
               <input name="simAcknowledged" type="checkbox" required className="mt-1 h-4 w-4" />
               <span>
                 I understand that <strong className="font-semibold">Hermes performance reflects the live instrument</strong>, and that{' '}
-                <strong className="font-semibold">my capital is simulated</strong> — no real money is deposited or
+                <strong className="font-semibold">my capital is simulated</strong>, no real money is deposited or
                 at risk. Real capital remains limited and requires a separate request when I am ready.
               </span>
             </label>

@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 // Canonical hashing for the decision ledger chain. The canonical form must be
 // byte-identical however the data round-trips (insert input vs Postgres
 // rendering), so timestamps normalize through Date#toISOString and pnl is a
-// fixed two-decimal string. scripts/verify-ledger.mjs mirrors these rules —
+// fixed two-decimal string. scripts/verify-ledger.mjs mirrors these rules,
 // change them only together, and never after rows exist.
 //
 // Unhashed write-once metadata (not part of row_hash): row_class, event_type,

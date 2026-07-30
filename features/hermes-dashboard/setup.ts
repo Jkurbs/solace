@@ -5,7 +5,7 @@ import type { HermesDashboardSnapshot } from './types';
 //
 // Order for a real product:
 //   1. Profile setup (review + capital intent)
-//   2. Identity verification (required — not optional)
+//   2. Identity verification (required, not optional)
 //   3. First deposit
 //
 // isSetupIncomplete = anything that still blocks deposits.
@@ -24,7 +24,7 @@ export function isIdentityVerificationIncomplete(snapshot: HermesDashboardSnapsh
   return snapshot.account.identityVerification.status !== 'VERIFIED';
 }
 
-/** True until profile + identity are complete — deposits stay closed. */
+/** True until profile + identity are complete, deposits stay closed. */
 export function isSetupIncomplete(snapshot: HermesDashboardSnapshot) {
   return isProfileSetupIncomplete(snapshot) || isIdentityVerificationIncomplete(snapshot);
 }

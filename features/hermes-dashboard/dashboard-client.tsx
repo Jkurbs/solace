@@ -477,7 +477,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
       role="alert"
       className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-amber-700 dark:text-amber-300"
     >
-      We could not refresh just now — figures below are from the last successful sync
+      We could not refresh just now, figures below are from the last successful sync
       {dataUpdatedAt ? ` (${formatUpdatedAt(new Date(dataUpdatedAt).toISOString())})` : ''}. Retrying quietly in the
       background. Nothing is wrong with your account.
     </div>
@@ -520,7 +520,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             </h1>
             <p className="mt-4 text-base leading-7 text-neutral-600 dark:text-neutral-400">
               Your access is approved. Next: confirm your profile and capital intent, then complete identity
-              verification. Capital — including simulation — opens only after identity is verified. We prefill what you
+              verification. Capital, including simulation, opens only after identity is verified. We prefill what you
               already shared.
             </p>
             <Button asChild size="lg" className="mt-8 w-full sm:w-auto">
@@ -563,7 +563,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               Verify your identity
             </h1>
             <p className="mt-4 text-base leading-7 text-neutral-600 dark:text-neutral-400">
-              Setup is complete. Before capital can move — even in simulation — we need identity verification. This
+              Setup is complete. Before capital can move, even in simulation, we need identity verification. This
               protects you and Solace. It is a required step, not a formality you can skip.
             </p>
             <p className="mt-4 text-sm leading-6 text-neutral-500 dark:text-neutral-400">
@@ -636,7 +636,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               You are ready. Nothing is wrong.
             </h1>
             <p className="mt-4 text-base leading-7 text-neutral-600 dark:text-neutral-400">
-              Setup and identity are complete. Hermes has no capital to work with yet — so it stays still. That is
+              Setup and identity are complete. Hermes has no capital to work with yet, so it stays still. That is
               expected. When you are ready, add
               {isSimulationMode ? ' simulation capital' : ' capital'} and allocation can begin.
             </p>
@@ -706,7 +706,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             </h1>
             <p className="mt-4 text-base leading-7 text-neutral-600 dark:text-neutral-400">
               Capital is received and moving through Solace before Hermes shows it on your balance. Safe to leave this
-              tab — the update will be here when you return.
+              tab, the update will be here when you return.
             </p>
             <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
               Posted:{' '}
@@ -783,7 +783,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             className="rounded-lg border border-neutral-300 bg-neutral-100 px-5 py-4 text-sm leading-6 text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900/80 dark:text-neutral-200"
           >
             <strong className="font-semibold text-neutral-950 dark:text-neutral-50">Hermes is standing down.</strong>{' '}
-            Choosing not to press is part of the design — not a fault on your account. Capital remains yours; activity
+            Choosing not to press is part of the design, not a fault on your account. Capital remains yours; activity
             resumes when conditions warrant.
           </div>
         ) : null}
@@ -820,7 +820,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Metric
                     label="Today's change"
-                    value={showTodaysChange ? formatTodaysChange(data.portfolio.todaysChange) : '—'}
+                    value={showTodaysChange ? formatTodaysChange(data.portfolio.todaysChange) : '-'}
                     positive={showTodaysChange && data.portfolio.todaysChange.amount > 0}
                   />
                   <Metric
@@ -831,7 +831,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 </div>
                 {!showTodaysChange ? (
                   <p className="text-xs leading-5 text-neutral-500 dark:text-neutral-400">
-                    Today&apos;s change appears after a real day mark — a dash is honest, not a zero gain.
+                    Today&apos;s change appears after a real day mark, a dash is honest, not a zero gain.
                   </p>
                 ) : null}
                 <Button asChild className="w-full sm:w-auto sm:justify-self-start">

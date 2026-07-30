@@ -20,7 +20,7 @@ import {
 import DashboardAccessGate from './DashboardAccessGate';
 
 export const metadata: Metadata = {
-  title: 'Solace — Hermes Dashboard',
+  title: 'Solace · Hermes Dashboard',
   description: 'A simple Hermes account dashboard focused on value, status, allocation, activity, and commentary.',
 };
 

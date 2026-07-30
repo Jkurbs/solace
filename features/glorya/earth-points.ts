@@ -40,7 +40,7 @@ export function pixelIsLand(r: number, g: number, b: number) {
   // Ice / snow / bright cloud over land or ice sheet
   if (r > 165 && g > 165 && b > 165) return true;
 
-  // Deserts, vegetation, rock — any non-water remaining
+  // Deserts, vegetation, rock, any non-water remaining
   // Require some red or green mass so pure blue-gray water stays out
   if (r < 30 && g < 110 && b > 100) return false;
 

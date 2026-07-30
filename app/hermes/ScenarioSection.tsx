@@ -6,7 +6,7 @@ import { type MotionValue, motion, useReducedMotion, useScroll, useTransform } f
 import { Reveal, useMediaQuery, useWalkthroughStep } from './shared';
 
 // One illustrative pass through the gate. Mechanism only: postures, gates,
-// and sizing — never outcomes, prices, or P&L.
+// and sizing, never outcomes, prices, or P&L.
 
 function mulberry32(seed: number) {
   let a = seed;
@@ -109,7 +109,7 @@ const beats: Beat[] = [
   {
     kicker: 'Beat 02 · A path forms',
     title: 'Liquidity deepens along one corridor.',
-    text: 'The signal gate clears. The destination still matters less than the field — the question is whether it can carry price from here to there.',
+    text: 'The signal gate clears. The destination still matters less than the field, the question is whether it can carry price from here to there.',
     posture: 'SELECTIVE',
     gates: ['clear', 'checking', 'waiting'],
     exposure: 0,
@@ -127,7 +127,7 @@ const beats: Beat[] = [
   {
     kicker: 'Beat 04 · Deployed',
     title: 'Timing confirms. Capital moves.',
-    text: 'All three gates agree, so the position is opened — sized to the depth of the field, never to the strength of the conviction.',
+    text: 'All three gates agree, so the position is opened, sized to the depth of the field, never to the strength of the conviction.',
     posture: 'DEPLOYED',
     gates: ['clear', 'clear', 'clear'],
     exposure: 0.62,
@@ -145,7 +145,7 @@ const beats: Beat[] = [
   {
     kicker: 'Beat 06 · Standing down',
     title: 'Leaving is also a decision.',
-    text: 'Conditions never recover their character, so the remaining exposure is closed. No forecast was required — only the discipline to leave when the conditions did.',
+    text: 'Conditions never recover their character, so the remaining exposure is closed. No forecast was required, only the discipline to leave when the conditions did.',
     posture: 'STANDING DOWN',
     gates: ['waiting', 'break', 'waiting'],
     exposure: 0,
@@ -163,7 +163,7 @@ const chipLabel: Record<ChipState, string> = {
 };
 
 const DISCLAIMER =
-  'Illustrative sequence — mechanism, not history. No prices, outcomes, or performance are shown; the real record lives in the decision trail.';
+  'Illustrative sequence: mechanism, not history. No prices, outcomes, or performance are shown; the real record lives in the decision trail.';
 
 function ScenarioFigure({
   drawnLength,

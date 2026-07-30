@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 // One-click chain verification running entirely in the visitor's browser via
-// Web Crypto — same canonical rules as scripts/verify-ledger.mjs (keep the
+// Web Crypto, same canonical rules as scripts/verify-ledger.mjs (keep the
 // two in sync with features/hermes-ledger/hash.ts). The offline script
 // remains the stronger check; this lowers the floor to "anyone with a
 // browser", phones included.

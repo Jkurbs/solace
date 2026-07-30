@@ -2,7 +2,7 @@ import 'server-only';
 
 // Fixed-window in-memory rate limiter. State is per server instance, so this
 // is an abuse speed bump (bursts, naive scripts) rather than a hard global
-// cap — the right tradeoff until there's shared infrastructure for limits.
+// cap, the right tradeoff until there's shared infrastructure for limits.
 type RateWindow = { count: number; resetAt: number };
 
 const windows = new Map<string, RateWindow>();

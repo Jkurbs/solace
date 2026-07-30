@@ -17,7 +17,7 @@ import ConsoleAccessGate from '../ConsoleAccessGate';
 import ConsoleHeader from '../ConsoleHeader';
 
 export const metadata: Metadata = {
-  title: 'Solace — Social Observatory',
+  title: 'Solace · Social Observatory',
   description: 'Internal approval queue for social signals, drafts, risk checks, and gated publishing.',
 };
 

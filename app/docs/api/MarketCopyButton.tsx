@@ -15,7 +15,7 @@ export default function MarketCopyButton({ text, label = 'Copy' }: { text: strin
           setCopied(true);
           window.setTimeout(() => setCopied(false), 1800);
         } catch {
-          // Clipboard blocked — silent; user can still select the pre.
+          // Clipboard blocked, silent; user can still select the pre.
         }
       }}
     >

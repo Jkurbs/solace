@@ -328,14 +328,14 @@ h2 {
     padding: 0 2.25rem;
   }
 
-  /* Nav type ladder (links/actions only — brand uses display face below). */
+  /* Nav type ladder (links/actions only, brand uses display face below). */
   .site-nav a,
   .site-action-link {
     font-family: var(--font-plex), monospace;
     text-transform: uppercase;
   }
 
-  /* Canonical Solace wordmark — same face as the homepage. */
+  /* Canonical Solace wordmark, same face as the homepage. */
   .site-wordmark,
   .site-wordmark-research,
   .hx-brand,
@@ -636,7 +636,7 @@ h2 {
   }
 
   /* Homepage: absolute black floor. Body is #0a0a0a by default, which reads as
-     a white/gray glow against true black sections — pin everything to #000. */
+     a white/gray glow against true black sections, pin everything to #000. */
   html:has(.home-shell),
   html:has(.home-shell) body {
     background: #000000;
@@ -741,8 +741,8 @@ h2 {
     inset: auto 0 -1px 0;
     z-index: 1;
     height: 70%;
-    /* Ramp the hero's bottom to #040405 — the measured rendered tone at the
-       top of the Hermes section (sky, not the dark scrim) — so the seam is
+    /* Ramp the hero's bottom to #040405, the measured rendered tone at the
+       top of the Hermes section (sky, not the dark scrim), so the seam is
        same-tone-meeting-same-tone, no step. */
     background:
       linear-gradient(180deg, transparent 0%, rgba(4, 4, 5, 0.45) 52%, rgba(4, 4, 5, 0.9) 84%, #040405 100%);
@@ -1246,7 +1246,7 @@ h2 {
     position: relative;
   }
 
-  /* Overlay link (the card itself is one big anchor — no nesting allowed):
+  /* Overlay link (the card itself is one big anchor, no nesting allowed):
      chip register, top-right, mirroring the LIVE chip on the left. */
   .inst-card-ledger {
     position: absolute;
@@ -1490,7 +1490,7 @@ h2 {
     top: 1.25rem;
     right: 1.25rem;
     /* Leave room for the status pill so metrics never slide under it on
-       mid-width Oracle columns (span 5 ≈ 400–520px). */
+       mid-width Oracle columns (span 5 ≈ 400-520px). */
     left: 11rem;
     z-index: 2;
     display: flex;
@@ -2476,7 +2476,7 @@ h2 {
   }
 
   /* --- LATEST RESEARCH STRIP --- */
-  /* Vertical padding only — longhand so the section's px-5/md:px-8 survives. */
+  /* Vertical padding only, longhand so the section's px-5/md:px-8 survives. */
   .research-strip {
     padding-top: clamp(6.5rem, 14vw, 10.5rem);
     padding-bottom: clamp(4.5rem, 10vw, 7.5rem);
@@ -2681,7 +2681,7 @@ h2 {
     display: block;
   }
 
-  /* Technical Brief — same paper register as the homepage (.home-research). */
+  /* Technical Brief, same paper register as the homepage (.home-research). */
   .brief-paper {
     --background: #fafaf9;
     --foreground: #1c1917;
@@ -5380,7 +5380,7 @@ h2 {
   }
 
   /* WebGL canvases mount after hydration; they bloom in slowly enough to read
-     as the environment emerging, not a UI event — so their nondeterministic
+     as the environment emerging, not a UI event, so their nondeterministic
      load timing can't clash with the copy's entrance. Same curve as all
      Framer motion on the site. */
   .hero-render-canvas,
@@ -6791,7 +6791,7 @@ h2 {
   }
 
   /* ============================================================
-     HERMES PRODUCT EXPERIENCE — Linear/Apple-inspired redesign.
+     HERMES PRODUCT EXPERIENCE, Linear/Apple-inspired redesign.
      Stays in the site's observatory palette: dark neutrals,
      Geist display + mono, warm cream/amber accents, hairlines.
      ============================================================ */
@@ -6834,7 +6834,7 @@ h2 {
 
   /* .hx-brand face is defined with .site-wordmark (homepage display face). */
 
-  /* Header CTAs share the nav mono ladder — not a second display voice. */
+  /* Header CTAs share the nav mono ladder, not a second display voice. */
   .hx-header .hx-btn {
     font-family: var(--font-plex), monospace;
     font-weight: 600;
@@ -7587,7 +7587,7 @@ h2 {
   }
 
 
-  /* --- PUBLIC LEDGER SHEET — Research Edition --- */
+  /* --- PUBLIC LEDGER SHEET, Research Edition --- */
   /* Paper sheet: own chrome so dark site header/footer/text-link do not bleed. */
   .trust-page {
     --trust-bg: #fafaf9;
@@ -7833,7 +7833,7 @@ h2 {
     background: var(--trust-surface);
   }
 
-  /* Meta: 6 cells (Status…Live PnL) — 3×2, not 5-col overflow */
+  /* Meta: 6 cells (Status…Live PnL), 3×2, not 5-col overflow */
   .trust-sheet-meta {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -9336,7 +9336,7 @@ h2 {
   }
 
   /* ============================================================
-     HERMES CONSOLE — high-fidelity, public-safe product mock.
+     HERMES CONSOLE, high-fidelity, public-safe product mock.
      Real app chrome (sidebar / read / properties) + a floating
      "engine" agent panel, in the site's dark/amber language.
      ============================================================ */
@@ -9889,7 +9889,7 @@ h2 {
   }
 
   /* ============================================================
-     DASHBOARD REVEAL — the faithful Hermes dashboard, framed in a
+     DASHBOARD REVEAL, the faithful Hermes dashboard, framed in a
      browser window, brought in with a cinematic scroll transition
      while the Reads / Decides / Shows captions step alongside it.
      ============================================================ */
@@ -11885,7 +11885,7 @@ h2 {
 }
 
 /* ============================================================
-   LIGHT MODE — the paper world. Dark is the default (the
+   LIGHT MODE, the paper world. Dark is the default (the
    observatory); light reuses the brief/scorecard paper register.
    Instrument renders and plates deliberately STAY dark: they are
    additive-glow exposures, framed on the paper like photographs.
@@ -12835,7 +12835,7 @@ h2 {
     background: var(--background);
   }
 
-  /* Dark plates only — not the mobile copy under the platter. */
+  /* Dark plates only, not the mobile copy under the platter. */
   html[data-theme='light'] .inst-card:not(.inst-card-quiet) .inst-platter,
   html[data-theme='light'] .oracle-qhero,
   html[data-theme='light'] .news-item .note-plate,
@@ -12944,7 +12944,7 @@ h2 {
   }
 }
 
-/* Homepage pure black — final cascade win over plate/media-query charcoal.
+/* Homepage pure black, final cascade win over plate/media-query charcoal.
    Use the `background` shorthand so no leftover gradient layers can sit above
    background-color (mobile used to set multi-stop background: on .home-shell). */
 html:has(.home-shell),
@@ -13103,7 +13103,7 @@ html[data-theme='light'] .home-shell .home-vault-card {
   font-size: 0.75rem;
 }
 
-/* Full Glorya page — Solace dark, not a purple theme */
+/* Full Glorya page, Solace dark, not a purple theme */
 .glorya-page {
   min-height: 100vh;
   background: #0a0a0a;
@@ -13166,7 +13166,7 @@ html[data-theme='light'] .home-shell .home-vault-card {
   color: #ecece6;
 }
 
-/* Stage: copy left, full globe right — same band, no text over the sphere */
+/* Stage: copy left, full globe right, same band, no text over the sphere */
 .glorya-stage {
   display: grid;
   grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
@@ -13503,7 +13503,7 @@ html[data-theme='light'] .home-shell .home-vault-card {
   overflow-x: auto;
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 0.5rem;
-  /* Single thin purple presence line — not a purple UI */
+  /* Single thin purple presence line, not a purple UI */
   border-left: 2px solid rgba(168, 120, 220, 0.35);
   background: #0d0d0b;
 }
@@ -13729,7 +13729,7 @@ html[data-theme='light'] .glorya-globe-legend {
 }
 
 /* ============================================================
-   Hermes Market API — public market read display
+   Hermes Market API, public market read display
    ============================================================ */
 .hm-page {
   min-height: 100vh;
@@ -15114,7 +15114,7 @@ section h3 {
   }
 }
 /* ═══════════════════════════════════════════════════════════
-   Hermes product page — paper light, X Money rhythm
+   Hermes product page, paper light, X Money rhythm
    ═══════════════════════════════════════════════════════════ */
 .hermes-paper {
   --background: #fafaf9;
@@ -15555,9 +15555,9 @@ section h3 {
   }
 }
 
-/* Product surface — hosts the original hx-pin dashboard walkthrough */
+/* Product surface (text-only blocks under .hermes-paper) */
 .hermes-paper-surface {
-  padding: clamp(3rem, 7vw, 4.5rem) 0 0;
+  padding: clamp(3rem, 7vw, 4.5rem) 0;
   border-bottom: 1px solid var(--border);
 }
 
@@ -15570,24 +15570,220 @@ section h3 {
   padding-bottom: clamp(2.5rem, 6vw, 3.5rem);
 }
 
-/* Soft paper-friendly glow under the sticky reveal (was tuned for pure black pages). */
-.hermes-paper .hx-pin-glow {
-  opacity: 0.45;
+/* Two product illustrations only: dashboard + ledger */
+.hermes-product-shots {
+  padding: clamp(3rem, 7vw, 5rem) 0 clamp(2.5rem, 6vw, 4rem);
+  border-bottom: 1px solid var(--border);
 }
 
-.hermes-paper .hx-walk-step strong,
-.hermes-paper .hx-pin-step strong {
-  color: var(--foreground);
+.hermes-product-shots > .hermes-paper-shell:first-child {
+  margin-bottom: clamp(2rem, 5vw, 3rem);
 }
 
-.hermes-paper .hx-walk-step p,
-.hermes-paper .hx-pin-step p {
-  color: var(--muted);
+.hermes-product-shots-list {
+  display: grid;
+  gap: clamp(3.5rem, 9vw, 5.5rem);
 }
 
-.hermes-paper .hx-walk-step span,
-.hermes-paper .hx-pin-step span {
+.hermes-product-shot {
+  margin: 0;
+}
+
+.hermes-product-shot-copy {
+  margin-bottom: 1.25rem;
+}
+
+.hermes-product-shot-copy figcaption {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+}
+
+.hermes-product-shot-copy figcaption span {
   color: var(--faint);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hermes-product-shot-copy figcaption strong {
+  color: var(--foreground);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.hermes-product-shot-copy p {
+  max-width: 36rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.hermes-product-window {
+  width: 100%;
+  max-width: none;
+}
+
+.hermes-product-window-view {
+  height: auto;
+  max-height: min(52vh, 28rem);
+  overflow: hidden;
+  -webkit-mask: linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
+  mask: linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
+}
+
+.hermes-product-shot-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  margin-top: 1.25rem;
+}
+
+.hermes-product-shot-cta .hermes-paper-footnote {
+  margin: 0;
+}
+
+/* Ledger illustration (marketing) */
+.hx-ledger-art {
+  padding: 1.25rem 1.35rem 1.5rem;
+  background: #0a0a0a;
+  color: rgba(250, 250, 250, 0.92);
+}
+
+.hx-ledger-art-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem 2rem;
+  margin-bottom: 1rem;
+}
+
+.hx-ledger-art-kicker {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: rgba(250, 250, 250, 0.45);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hx-ledger-art-title {
+  display: block;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: #fafafa;
+}
+
+.hx-ledger-art-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem 1.75rem;
+}
+
+.hx-ledger-art-stats span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.hx-ledger-art-stats em {
+  font-style: normal;
+  color: rgba(250, 250, 250, 0.42);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hx-ledger-art-stats strong {
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #fafafa;
+}
+
+.hx-ledger-art-note {
+  margin-bottom: 1rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(250, 250, 250, 0.55);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.hx-ledger-art-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.hx-ledger-art-table th,
+.hx-ledger-art-table td {
+  padding: 0.65rem 0.55rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.hx-ledger-art-table th {
+  color: rgba(250, 250, 250, 0.4);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hx-ledger-art-table td {
+  color: rgba(250, 250, 250, 0.78);
+}
+
+.hx-ledger-art-table td:nth-child(3) {
+  white-space: normal;
+  min-width: 10rem;
+}
+
+.hx-ledger-art-kind {
+  display: inline-block;
+  padding: 0.12rem 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.3rem;
+  font-family: var(--font-plex), monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  color: rgba(250, 250, 250, 0.65);
+}
+
+.hx-ledger-art-pnl {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.hx-ledger-art-table tr.is-pos .hx-ledger-art-pnl {
+  color: #6ee7b7;
+}
+
+.hx-ledger-art-table tr.is-neg .hx-ledger-art-pnl {
+  color: #fca5a5;
+}
+
+.hx-ledger-art-table tr.is-open td:nth-child(4) {
+  color: #93c5fd;
+}
+
+.hx-ledger-art-table tr.is-wait td:nth-child(4) {
+  color: rgba(250, 250, 250, 0.45);
 }
 
 .hermes-paper-footnote {
@@ -15923,6 +16119,65 @@ html[data-theme='dark'] .hermes-paper {
 .hermes-paper .hx-window-view {
   -webkit-mask: linear-gradient(180deg, #000 0%, #000 84%, transparent 100%);
   mask: linear-gradient(180deg, #000 0%, #000 84%, transparent 100%);
+}
+
+.hermes-paper .hermes-product-window-view {
+  -webkit-mask: linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
+  mask: linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
+}
+
+/* Ledger illustration, paper light */
+.hermes-paper .hx-ledger-art {
+  background: #fafaf9;
+  color: #1c1917;
+}
+
+.hermes-paper .hx-ledger-art-kicker,
+.hermes-paper .hx-ledger-art-stats em,
+.hermes-paper .hx-ledger-art-table th {
+  color: #a8a29e;
+}
+
+.hermes-paper .hx-ledger-art-title,
+.hermes-paper .hx-ledger-art-stats strong {
+  color: #1c1917;
+}
+
+.hermes-paper .hx-ledger-art-note {
+  border-color: #e7e5e4;
+  background: #ffffff;
+  color: #78716c;
+}
+
+.hermes-paper .hx-ledger-art-table th,
+.hermes-paper .hx-ledger-art-table td {
+  border-bottom-color: #e7e5e4;
+}
+
+.hermes-paper .hx-ledger-art-table td {
+  color: #44403c;
+}
+
+.hermes-paper .hx-ledger-art-kind {
+  border-color: #e7e5e4;
+  background: #ffffff;
+  color: #57534e;
+}
+
+.hermes-paper .hx-ledger-art-table tr.is-pos .hx-ledger-art-pnl {
+  color: #3d6b4f;
+}
+
+.hermes-paper .hx-ledger-art-table tr.is-neg .hx-ledger-art-pnl {
+  color: #9f3a3a;
+}
+
+.hermes-paper .hx-ledger-art-table tr.is-open td:nth-child(4) {
+  color: #1d4ed8;
+}
+
+.hermes-paper .hx-ledger-art-table tr.is-wait td:nth-child(4) {
+  color: #a8a29e;
 }
 
 .hermes-paper .hx-board-art,

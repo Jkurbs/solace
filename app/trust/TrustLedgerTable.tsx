@@ -140,7 +140,7 @@ export default function TrustLedgerTable({ rows }: { rows: TrustLedgerDisplayRow
           </button>
           <p>
             <span>
-              {rangeStart}–{rangeEnd} of {rows.length}
+              {rangeStart}-{rangeEnd} of {rows.length}
             </span>
             <strong>
               Page {pageIndex + 1} of {totalPages}

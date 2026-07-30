@@ -1,6 +1,6 @@
 // Resolved questions for the Oracle board. Until the Kalshi monitor feeds
 // real records through an ingest route, entries here must carry
-// `illustrative: true` — the card then wears the house Illustrative chip.
+// `illustrative: true`, the card then wears the house Illustrative chip.
 // Never add a fabricated record without the flag: this page is the record.
 
 export type ResolvedQuestion = {

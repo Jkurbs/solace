@@ -75,7 +75,7 @@ export async function getStoredRiskProfile(accountId?: string | null) {
 
 export async function getDashboardOnboardingState(accountId?: string | null): Promise<DashboardOnboardingState> {
   // Guest path: cookie-backed simulation onboarding (no magic-link wall).
-  // Incomplete until they accept the sim welcome — then complete + sim deposit intent.
+  // Incomplete until they accept the sim welcome, then complete + sim deposit intent.
   if (isGuestDashboardAccess() && !accountId) {
     const cookieStore = await cookies();
     const complete = cookieStore.get(dashboardOnboardingCookieName)?.value === 'true';

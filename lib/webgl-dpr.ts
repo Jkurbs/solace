@@ -1,6 +1,6 @@
 /**
  * Device pixel ratio for homepage WebGL plates.
- * Phones are often 2–3×; capping at 2 leaves canvases soft when CSS-scaled.
+ * Phones are often 2-3×; capping at 2 leaves canvases soft when CSS-scaled.
  * Cap at 3 so iPhone/ProMotion stay sharp without over-allocating 4× desktops.
  */
 export function getRenderPixelRatio(maxDpr = 3): number {

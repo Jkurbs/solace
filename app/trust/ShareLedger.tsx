@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const LEDGER_PATH = '/observatory/hermes/ledger';
-const SHARE_TITLE = 'Hermes Decision Ledger — Solace';
+const SHARE_TITLE = 'Hermes Decision Ledger · Solace';
 const SHARE_TEXT =
   'Public sealed record of Hermes decisions before outcomes are known. Founder capital · checkable chain.';
 

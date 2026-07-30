@@ -1,9 +1,9 @@
 /**
- * Observatory — common container for instrument observation.
+ * Observatory, common container for instrument observation.
  *
  * Core abstraction: an instrument continuously interacting with its domain.
  * The shared shape is Status · State · Activity · Health.
- * Event *content* is instrument-specific — never force a global "decision" schema.
+ * Event *content* is instrument-specific, never force a global "decision" schema.
  */
 
 export type InstrumentId = 'hermes' | 'glorya' | 'simulation' | 'oracle';
@@ -36,7 +36,7 @@ export type ObservatoryActivity = {
   instrumentId: InstrumentId;
   at: string;
   kind: ActivityKind;
-  /** One careful sentence — the feed line */
+  /** One careful sentence, the feed line */
   title: string;
   detail?: string;
   href?: string;

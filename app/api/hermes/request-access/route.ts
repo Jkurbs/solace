@@ -124,7 +124,7 @@ function requestReceivedResponse(request: Request) {
 
 export async function POST(request: Request) {
   // Abuse speed bump: this endpoint is anonymous, writes to the database, and
-  // sends email — it must not accept unlimited requests.
+  // sends email, it must not accept unlimited requests.
   const { allowed, retryAfterSeconds } = rateLimit({
     key: `request-access:${getClientIp(request)}`,
     limit: 5,

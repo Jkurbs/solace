@@ -9,5 +9,5 @@ export const hermesVersion = {
 
 export type HermesVersion = typeof hermesVersion;
 
-/** @deprecated Prefer hermesVersion.label — kept for existing call sites. */
+/** @deprecated Prefer hermesVersion.label, kept for existing call sites. */
 export const hermesBetaVersionLabel = hermesVersion.label;

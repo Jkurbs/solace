@@ -4,14 +4,14 @@ import Link from 'next/link';
 import Mark from '../../Mark';
 
 export const metadata: Metadata = {
-  title: 'Solace — Technical Brief V0.4 (Archived)',
+  title: 'Solace · Technical Brief V0.4 (Archived)',
   description:
     'Archived version. What Solace builds, how it is disciplined, and how it can be checked. V0.4, July 2026. Superseded by V0.5.',
 };
 
 const gate = [
   { label: 'Regime cycles', status: 'Neither of two complete' },
-  { label: 'Capital threshold', status: 'Holding — figure to be published' },
+  { label: 'Capital threshold', status: 'Holding: figure to be published' },
   { label: 'Oracle calibration proven', status: 'Keeping score' },
   { label: 'Simulation load-bearing', status: 'Not begun' },
 ];
@@ -31,8 +31,8 @@ const sections: BriefSection[] = [
     number: '01',
     title: 'Thesis',
     body: [
-      'Solace is an independent research company building instruments for decision-making under uncertainty. The operating belief is narrow and testable: individual events resist prediction, but the structure around them — liquidity, timing, regime, probability — can be read, modeled, and acted on with discipline.',
-      'Solace begins with markets because markets compress feedback. They expose timing, uncertainty, and system quality in days rather than years, and they fund the work. Every instrument follows one loop: observe, model, simulate, deploy — and keep only what survives contact with the world.',
+      'Solace is an independent research company building instruments for decision-making under uncertainty. The operating belief is narrow and testable: individual events resist prediction, but the structure around them, liquidity, timing, regime, probability, can be read, modeled, and acted on with discipline.',
+      'Solace begins with markets because markets compress feedback. They expose timing, uncertainty, and system quality in days rather than years, and they fund the work. Every instrument follows one loop: observe, model, simulate, deploy, and keep only what survives contact with the world.',
     ],
   },
   {
@@ -45,7 +45,7 @@ const sections: BriefSection[] = [
   },
   {
     number: '03',
-    title: 'Hermes — the market instrument',
+    title: 'Hermes · the market instrument',
     body: [
       'Hermes is a live system that reads liquidity distribution, timing, and regime character across multiple timeframes. Its core abstraction is the liquidity path: the premise that a price destination matters less than whether the field between here and there can carry price. Hermes evaluates candidate paths and commits only when structure, timing, and regime agree.',
       'Execution is gated, not continuous. A dedicated decision engine sits between signal and order, enforcing entry conditions, position sizing, stop placement, and portfolio constraints. When the regime breaks character, Hermes changes posture or stands down entirely.',
@@ -54,7 +54,7 @@ const sections: BriefSection[] = [
   },
   {
     number: '04',
-    title: 'The Oracle — the event instrument',
+    title: 'The Oracle · the event instrument',
     body: [
       'The Oracle is a probability engine over event markets, beginning with exchange-listed target markets on crypto assets. For each open question it builds an order-book view, produces a probability estimate, and records that estimate before resolution.',
       'Calibration is the product. Every prediction is scored against the resolved outcome (Brier scoring machinery already runs inside the system), and the score is the Oracle’s only honest résumé. The Oracle is currently calibrating. The interim record (every resolved question, scored, misses included) is published as it stands on the public calibration page, labeled as a young sample; headline calibration claims wait until the resolved sample is large enough to mean something.',
@@ -94,10 +94,10 @@ const sections: BriefSection[] = [
       'Domains are earned, not declared. Expansion beyond markets is gated on the conditions below, and this board is the public record of their status. Each gate is defined so it can be checked, not just claimed:',
     ],
     list: [
-      'Regime cycles — a complete bull-and-bear cycle in the primary markets Hermes trades. By construction, this gate is measured in years, not months.',
-      'Capital threshold — a minimum of sustained, verified founder-and-approved-user capital under management, held through at least one full drawdown, before scale is considered. The specific figure will be published once it’s set, not held back after the fact.',
-      'Oracle calibration proven — a Brier score on a resolved-question sample large enough to be statistically meaningful, published in full, not selectively.',
-      'Simulation load-bearing — synthetic environments are trusted to catch a failure before deployment, demonstrated by at least one documented case where simulation caught something live testing would have missed.',
+      'Regime cycles: a complete bull-and-bear cycle in the primary markets Hermes trades. By construction, this gate is measured in years, not months.',
+      'Capital threshold: a minimum of sustained, verified founder-and-approved-user capital under management, held through at least one full drawdown, before scale is considered. The specific figure will be published once it’s set, not held back after the fact.',
+      'Oracle calibration proven: a Brier score on a resolved-question sample large enough to be statistically meaningful, published in full, not selectively.',
+      'Simulation load-bearing: synthetic environments are trusted to catch a failure before deployment, demonstrated by at least one documented case where simulation caught something live testing would have missed.',
     ],
     after: [
       'Until every gate clears, Solace is a markets company. That’s not a hedge; it’s the actual current scope.',
@@ -135,7 +135,7 @@ export default function BriefPage() {
 
       <article className="mx-auto max-w-4xl px-5 pb-24 pt-36 md:px-8">
         <p className="inline-block border border-[#b8955a]/50 bg-[#b8955a]/10 px-3 py-1.5 font-mono text-[0.62rem] uppercase tracking-[0.2em] text-[#8a6d3b]">
-          Archived version — superseded by{' '}
+          Archived version: superseded by{' '}
           <Link href="/brief" className="underline underline-offset-2">
             V0.5
           </Link>
@@ -168,7 +168,7 @@ export default function BriefPage() {
             <div>
               <p className="font-serif text-xl font-medium text-[#13110c] md:text-2xl">Kerby Jean</p>
               <p className="mt-1 max-w-xl text-sm leading-6 text-[#4f483c]">
-                Founder. Software engineer, four years building production systems at Apple. Today,
+                Founder. Software engineer. Four years building production systems at Apple. Today,
                 every Solace instrument is designed, built, and operated by him end to end.
               </p>
             </div>
@@ -251,7 +251,7 @@ export default function BriefPage() {
                   {section.number === '07' && (
                     <div className="gate-board" aria-label="Autonomy gate conditions">
                       <p className="gate-board-title">
-                        Gate conditions — domains are earned ·{' '}
+                        Gate conditions: domains are earned ·{' '}
                         <Link href="/gates" className="text-link">
                           full board →
                         </Link>

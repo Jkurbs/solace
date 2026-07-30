@@ -33,7 +33,7 @@ type SupabaseClient = Awaited<ReturnType<typeof createSupabaseDataClient>>;
 
 function isMissingLedgerTable(message: string) {
   // A missing COLUMN (migration not yet run) must never be treated as a
-  // missing table — that would silently drop rows. Only the table itself
+  // missing table, that would silently drop rows. Only the table itself
   // being absent is tolerable.
   if (message.includes('column')) {
     return false;
@@ -198,7 +198,7 @@ export async function listHermesLedgerRows(limit = 50): Promise<HermesLedgerRow[
 
 /**
  * Lean ledger read for homepage vault metrics. Selects only the columns the
- * process scoreboard needs — much cheaper than listHermesLedgerRows(1000) with `*`.
+ * process scoreboard needs, much cheaper than listHermesLedgerRows(1000) with `*`.
  */
 export async function listHermesLedgerProcessRows(limit = 1500): Promise<HermesLedgerRow[]> {
   if (!isSupabaseDataClientConfigured()) {
@@ -255,7 +255,7 @@ export async function sealHermesLedgerRow(input: {
   /**
    * For decisions whose outcome is known the moment they are made (a closed
    * trade's realized PnL), the row may be sealed already-resolved. This is an
-   * INSERT — the trigger still forbids any later edit.
+   * INSERT, the trigger still forbids any later edit.
    */
   outcome?: string;
   pnl?: number | null;
@@ -272,7 +272,7 @@ export async function sealHermesLedgerRow(input: {
   ref?: string;
   /**
    * Agent id at seal time. Defaults to the running product version.
-   * Unhashed write-once metadata (V4) — does not affect the chain.
+   * Unhashed write-once metadata (V4), does not affect the chain.
    */
   hermesVersion?: string;
 }): Promise<HermesLedgerRow | null> {
@@ -335,7 +335,7 @@ export async function sealHermesLedgerRow(input: {
       }
 
       if (error.code === '23505') {
-        // Duplicate record id: sealing is idempotent — return the existing row.
+        // Duplicate record id: sealing is idempotent, return the existing row.
         if (error.message.includes('pkey') || error.message.includes('record_id')) {
           const existing = await supabase
             .from('hermes_decision_ledger')

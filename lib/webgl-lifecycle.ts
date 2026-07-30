@@ -44,7 +44,7 @@ export function isInAppNavigationAnchor(anchor: HTMLAnchorElement) {
   try {
     const url = new URL(href, window.location.href);
     if (url.origin !== window.location.origin) return false;
-    // Pure hash change on the same path — not a route transition.
+    // Pure hash change on the same path, not a route transition.
     if (url.pathname === window.location.pathname && url.search === window.location.search) {
       return false;
     }

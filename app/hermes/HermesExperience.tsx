@@ -9,7 +9,7 @@ import { DOCS_API_URL } from '@/lib/docs';
 
 import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
-import DashboardReveal from './DashboardReveal';
+import ProductShots from './ProductShots';
 
 export type HermesProof = {
   posture: string | null;
@@ -39,17 +39,17 @@ const stagger = {
   show: { transition: { staggerChildren: 0.07, delayChildren: 0.08 } },
 };
 
-/** Observe → Simulate → Allocate — no application form to enter the instrument. */
+/** Observe → Simulate → Allocate, no application form to enter the instrument. */
 const pathSteps = [
   {
     n: '01',
     title: 'Observe',
-    text: 'Watch live posture, sealed decisions, and the public ledger. No account required.',
+    text: 'See how Hermes decides: what it waits for, what it deploys, and every sealed outcome on the public ledger. No account required.',
   },
   {
     n: '02',
     title: 'Simulate',
-    text: 'Enter Hermes with virtual capital. Experience how it waits and deploys — no financial risk.',
+    text: 'Enter with virtual capital. Watch it work on your behalf with no financial risk, so you can judge the instrument before you trust it with more.',
   },
   {
     n: '03',
@@ -77,7 +77,7 @@ function Header() {
         </Link>
 
         <nav className="hermes-paper-nav" aria-label="Primary">
-          <a href="#profit">Profit</a>
+          <a href="#profit">Growth</a>
           <a href="#trust">Trust</a>
           <Link href={OBSERVATORY_HERMES_LEDGER_PATH}>Ledger</Link>
         </nav>
@@ -110,7 +110,7 @@ function Header() {
             className="hermes-paper-menu"
           >
             <a href="#profit" onClick={() => setMenuOpen(false)}>
-              Profit
+              Growth
             </a>
             <a href="#trust" onClick={() => setMenuOpen(false)}>
               Trust
@@ -129,11 +129,11 @@ function Header() {
 }
 
 function TwinPillars({ proof }: { proof: HermesProof }) {
-  const openLabel = proof.openPaths === null ? '—' : String(proof.openPaths);
+  const openLabel = proof.openPaths === null ? '-' : String(proof.openPaths);
   const livePnl =
-    proof.liveUnrealizedPnl === null ? '—' : pnlFormatter.format(proof.liveUnrealizedPnl);
+    proof.liveUnrealizedPnl === null ? '-' : pnlFormatter.format(proof.liveUnrealizedPnl);
   const expectancy =
-    proof.expectancy === null ? '—' : pnlFormatter.format(proof.expectancy);
+    proof.expectancy === null ? '-' : pnlFormatter.format(proof.expectancy);
   const liveTone =
     proof.liveUnrealizedPnl === null
       ? undefined
@@ -144,22 +144,23 @@ function TwinPillars({ proof }: { proof: HermesProof }) {
           : undefined;
 
   return (
-    <section className="hermes-pillars" aria-label="Profit and trust">
+    <section className="hermes-pillars" aria-label="Growth and trust">
       <div className="hermes-paper-shell">
         <p className="hermes-paper-kicker">What Hermes is for</p>
         <h2 className="hermes-paper-section-title hermes-pillars-title">Two things. Only two.</h2>
         <p className="hermes-paper-lede">
-          Put capital to work when the field earns it — and leave a sealed record so you never have to take
-          anyone&apos;s word for it.
+          Grow capital with discipline, and leave a sealed record so you never have to take anyone&apos;s word
+          for it.
         </p>
 
         <div className="hermes-pillars-grid">
           <article id="profit" className="hermes-pillar hermes-pillar-profit scroll-mt-28">
-            <p className="hermes-pillar-kicker">01 · Profit</p>
-            <h3>Capital that works when it should — and waits when it shouldn&apos;t.</h3>
+            <p className="hermes-pillar-kicker">01 · Growth</p>
+            <h3>Capital that works when it should, and waits when it shouldn&apos;t.</h3>
             <p>
-              Hermes allocates founder capital under uncertainty. Outcomes are public on sealed closes. The
-              sample is young; the numbers are real dollars at risk, not a marketing track.
+              Hermes allocates founder capital under uncertainty. It is built to compound without demanding
+              your constant attention. Outcomes are public on sealed closes. The sample is young; the numbers
+              are real dollars at risk, not a marketing track.
             </p>
 
             <div className="hermes-pillar-metrics">
@@ -207,10 +208,11 @@ function TwinPillars({ proof }: { proof: HermesProof }) {
 
           <article id="trust" className="hermes-pillar hermes-pillar-trust scroll-mt-28">
             <p className="hermes-pillar-kicker">02 · Trust</p>
-            <h3>Every decision sealed before the outcome is known.</h3>
+            <h3>You should not have to take anyone&apos;s word for it.</h3>
             <p>
-              Wins, losses, and waits get rows. The chain is hashed and public. You can recompute it yourself —
-              no account, no permission. That is how Hermes earns confidence.
+              Every decision is sealed before the outcome is known, wins, losses, and waits. The chain is
+              hashed and public. You can recompute it yourself, no account, no permission. That is how Hermes
+              earns confidence: not by asking for faith, but by leaving a record.
             </p>
 
             <div className="hermes-pillar-metrics">
@@ -268,14 +270,15 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
           variants={stagger}
         >
           <motion.p variants={fade} className="hermes-paper-kicker">
-            Hermes · The first instrument
+            Hermes · The first instrument from Solace
           </motion.p>
           <motion.h1 variants={fade} className="hermes-paper-hero-title">
-            Profit you can see. Trust you can check.
+            Your capital should work as hard as you do.
           </motion.h1>
           <motion.p variants={fade} className="hermes-paper-hero-lede">
-            Observe the instrument. Experience it in simulation. Request real capital access only when you are
-            ready — capacity is limited.
+            Hermes is an autonomous instrument designed to make better capital allocation decisions on your
+            behalf. It continuously evaluates opportunities and acts with discipline, so your capital can
+            compound without requiring your constant attention.
           </motion.p>
           <motion.p variants={fade} className="hermes-paper-status">
             Simulation open · founder capital live on the ledger · real capital by waitlist
@@ -295,25 +298,24 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
         </motion.div>
       </section>
 
-      <TwinPillars proof={proof} />
-
-      <section className="hermes-paper-surface">
+      {/* Bridge: Solace → Hermes, why capital first */}
+      <section className="hermes-paper-surface" aria-label="Why Hermes">
         <div className="hermes-paper-shell">
-          <p className="hermes-paper-kicker">The surface</p>
-          <h2 className="hermes-paper-section-title">Where profit and process meet.</h2>
+          <p className="hermes-paper-kicker">Why this exists</p>
+          <h2 className="hermes-paper-section-title">An instrument for decisions under uncertainty.</h2>
           <p className="hermes-paper-lede">
-            Scroll the illustrative dashboard — capital, posture, outlook, decisions — then enter Hermes to run
-            the same loop with simulation capital.
-          </p>
-        </div>
-        <DashboardReveal />
-        <div className="hermes-paper-shell">
-          <p className="hermes-paper-footnote">
-            Board art is illustrative. Live PnL, posture, and sealed outcomes are in the pillars and ledger
-            above. Simulation capital never moves real money.
+            Hermes is the first instrument created by Solace to improve decision-making under uncertainty. It
+            begins with capital because markets provide rapid feedback, allowing the system to learn and improve
+            continuously. If Solace expands into other domains, that framing still holds. Hermes simply happens
+            to be the first instrument, because capital offers the fastest loop for learning.
           </p>
         </div>
       </section>
+
+      <TwinPillars proof={proof} />
+
+      {/* Only two product illustrations: dashboard + ledger */}
+      <ProductShots />
 
       {/* Observe → Simulate → Allocate */}
       <section id="path" className="hermes-paper-access scroll-mt-28">
@@ -321,8 +323,9 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
           <p className="hermes-paper-kicker">How you enter</p>
           <h2 className="hermes-paper-section-title">Observe. Simulate. Allocate when capacity allows.</h2>
           <p className="hermes-paper-lede">
-            No application to start. Real capital is limited — when you choose to allocate, Solace places you on
-            the waitlist and reaches out when a seat is open.
+            No application to start. Judge the instrument with your own eyes and simulation capital first.
+            Real capital is limited, when you choose to allocate, Solace places you on the waitlist and
+            reaches out when a seat is open.
           </p>
           <ol className="hermes-paper-access-steps">
             {pathSteps.map((step) => (
@@ -351,7 +354,7 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
           <div className="hermes-paper-deeper-grid">
             <Link href="/brief" className="hermes-paper-deeper-card">
               <strong>Technical brief</strong>
-              <span>How Hermes is disciplined and checked.</span>
+              <span>How Hermes is disciplined and verified.</span>
             </Link>
             <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-deeper-card">
               <strong>Decision ledger</strong>
@@ -362,8 +365,8 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
               <span>What must be true before capital moves.</span>
             </Link>
             <a href={DOCS_API_URL} className="hermes-paper-deeper-card">
-              <strong>Market API</strong>
-              <span>Public market read for builders.</span>
+              <strong>Public API</strong>
+              <span>Readings for builders who want the data layer.</span>
             </a>
           </div>
         </div>

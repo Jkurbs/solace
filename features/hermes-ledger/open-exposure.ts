@@ -5,7 +5,7 @@ import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/
 
 // Live open-exposure read for the public ledger strip: unrealized PnL from
 // the latest NAV mark per pool, and drawdown measured from the historical
-// peak equity. This is a live overlay — it is NOT part of the sealed record,
+// peak equity. This is a live overlay, it is NOT part of the sealed record,
 // and the page labels it that way.
 export type HermesOpenExposure = {
   unrealizedPnl: number;
@@ -14,7 +14,7 @@ export type HermesOpenExposure = {
   /** 0..1 fraction below peak equity; 0 when at or above the peak. */
   drawdownFromPeak: number;
   asOf: string;
-  /** Open position identities (symbol + side only — never size or entry). */
+  /** Open position identities (symbol + side only, never size or entry). */
   positions: Array<{ symbol: string; side: string }>;
 };
 
@@ -40,7 +40,7 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
   }
 
   try {
-    // Source marks are the bridge's raw exchange-account readings — the real
+    // Source marks are the bridge's raw exchange-account readings, the real
     // founder-capital numbers. (Pool NAV snapshots carry simulation-scaled
     // accounting and must never feed a public figure.)
     const supabase = await createSupabaseDataClient();
@@ -77,7 +77,7 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
     }
 
     // A pool with only degraded marks in the window falls back to its newest
-    // row — a stale-but-real number beats none, and the as-of stamp stays honest.
+    // row, a stale-but-real number beats none, and the as-of stamp stays honest.
     for (const row of data) {
       if (!latestByPool.has(row.pool_id)) {
         latestByPool.set(row.pool_id, row);
