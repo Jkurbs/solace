@@ -13,6 +13,9 @@ const ledgerOgUrl = 'solace.fyi/observatory/hermes/ledger';
 /**
  * Social share card for the public decision ledger.
  * Process metrics first — sealed record, not a performance ad.
+ *
+ * Satori (next/og) constraints: every multi-child container needs display:flex;
+ * avoid special unicode that triggers Google font download failures.
  */
 export function renderLedgerShareImage(scoreboard: LedgerScoreboard) {
   const { process } = scoreboard;
@@ -34,12 +37,11 @@ export function renderLedgerShareImage(scoreboard: LedgerScoreboard) {
           fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 12,
               fontSize: 22,
               fontWeight: 500,
               letterSpacing: '-0.02em',
@@ -47,23 +49,26 @@ export function renderLedgerShareImage(scoreboard: LedgerScoreboard) {
           >
             <div
               style={{
+                display: 'flex',
                 width: 28,
                 height: 28,
+                marginRight: 12,
                 borderRadius: 999,
                 border: '1.5px solid #1c1917',
-                display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 14,
+                fontSize: 11,
+                fontWeight: 600,
               }}
             >
-              ✦
+              S
             </div>
-            Solace
+            <div style={{ display: 'flex' }}>Solace</div>
           </div>
           <div
             style={{
-              marginTop: 20,
+              display: 'flex',
+              marginTop: 28,
               fontSize: 18,
               letterSpacing: '0.18em',
               textTransform: 'uppercase',
@@ -74,12 +79,13 @@ export function renderLedgerShareImage(scoreboard: LedgerScoreboard) {
           </div>
           <div
             style={{
-              marginTop: 8,
+              display: 'flex',
+              marginTop: 12,
               fontSize: 52,
               fontWeight: 500,
               letterSpacing: '-0.03em',
               lineHeight: 1.05,
-              maxWidth: 900,
+              maxWidth: 920,
             }}
           >
             Sealed before the outcome is known.
@@ -89,7 +95,7 @@ export function renderLedgerShareImage(scoreboard: LedgerScoreboard) {
         <div
           style={{
             display: 'flex',
-            gap: 16,
+            flexDirection: 'row',
             marginTop: 36,
           }}
         >
@@ -101,6 +107,7 @@ export function renderLedgerShareImage(scoreboard: LedgerScoreboard) {
         <div
           style={{
             display: 'flex',
+            flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'flex-end',
             marginTop: 40,
@@ -108,12 +115,17 @@ export function renderLedgerShareImage(scoreboard: LedgerScoreboard) {
             paddingTop: 28,
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ fontSize: 20, color: '#44403c' }}>Founder capital · checkable chain</div>
-            <div style={{ fontSize: 18, color: '#a8a29e' }}>{hermesVersion.label} · young sample</div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', fontSize: 20, color: '#44403c' }}>
+              Founder capital · checkable chain
+            </div>
+            <div style={{ display: 'flex', marginTop: 6, fontSize: 18, color: '#a8a29e' }}>
+              {hermesVersion.label} · young sample
+            </div>
           </div>
           <div
             style={{
+              display: 'flex',
               fontSize: 20,
               fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
               color: '#57534e',
@@ -137,8 +149,8 @@ function Metric({ label, value }: { label: string; value: string }) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 10,
         flex: 1,
+        marginRight: 16,
         padding: '22px 24px',
         borderRadius: 12,
         border: '1px solid #e7e5e4',
@@ -147,6 +159,7 @@ function Metric({ label, value }: { label: string; value: string }) {
     >
       <div
         style={{
+          display: 'flex',
           fontSize: 14,
           letterSpacing: '0.14em',
           textTransform: 'uppercase',
@@ -157,10 +170,11 @@ function Metric({ label, value }: { label: string; value: string }) {
       </div>
       <div
         style={{
+          display: 'flex',
+          marginTop: 10,
           fontSize: 36,
           fontWeight: 500,
           letterSpacing: '-0.02em',
-          fontVariantNumeric: 'tabular-nums',
         }}
       >
         {value}
