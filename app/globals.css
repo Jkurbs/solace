@@ -16231,13 +16231,13 @@ section h3 {
 
 .ledger-doc-head-main {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 1fr auto;
   grid-template-areas:
-    'share kicker'
+    'kicker share'
     'title title'
     'actions actions';
   align-items: center;
-  column-gap: 0.5rem;
+  column-gap: 0.65rem;
   row-gap: 0.3rem;
   min-width: 0;
   flex: 1 1 14rem;
@@ -16261,13 +16261,14 @@ section h3 {
   color: var(--ledger-ink);
 }
 
-/* Share: one trigger by "Public record" on phone; full actions on desktop */
+/* Share: one trigger top-right of "Public record" on phone; full actions on desktop */
 .ledger-share {
   display: contents;
 }
 
 .ledger-share-trigger {
   grid-area: share;
+  justify-self: end;
   display: inline-flex;
   align-items: center;
   justify-content: center;
