@@ -8,6 +8,7 @@ import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 
 import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
+import { ExperienceHermesButton, HermesOnboardingProvider } from './HermesOnboarding';
 
 export type HermesTimelineEntry = {
   action: string;
@@ -113,13 +114,13 @@ function Header() {
         <nav className="hmk-nav" aria-label="Primary">
           <a href="#how">How it works</a>
           <a href="#ledger">Ledger</a>
-          <Link href="/dashboard">Simulate</Link>
+          <ExperienceHermesButton className="hmk-nav-btn">Simulate</ExperienceHermesButton>
         </nav>
         <div className="hmk-header-actions">
           <ThemeToggle />
-          <Link href="/dashboard" className="hmk-btn hmk-btn-light hmk-btn-sm">
+          <ExperienceHermesButton className="hmk-btn hmk-btn-light hmk-btn-sm">
             Experience Hermes
-          </Link>
+          </ExperienceHermesButton>
           <button
             type="button"
             className={`site-menu-button${menuOpen ? ' is-open' : ''}`}
@@ -147,9 +148,12 @@ function Header() {
             <a href="#ledger" onClick={() => setMenuOpen(false)}>
               Ledger
             </a>
-            <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
+            <ExperienceHermesButton
+              className="hmk-menu-btn"
+              onClick={() => setMenuOpen(false)}
+            >
               Experience Hermes
-            </Link>
+            </ExperienceHermesButton>
             <Link href={OBSERVATORY_HERMES_LEDGER_PATH} onClick={() => setMenuOpen(false)}>
               Observatory
             </Link>
@@ -293,6 +297,7 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
         ];
 
   return (
+    <HermesOnboardingProvider>
     <main className="hmk">
       <Header />
 
@@ -318,10 +323,10 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
             to allocate capital, how much, and when to exit. Every decision is logged before it moves.
           </motion.p>
           <motion.div variants={fade}>
-            <Link href="/dashboard" className="hmk-btn hmk-btn-dark">
+            <ExperienceHermesButton className="hmk-btn hmk-btn-dark">
               Experience Hermes
               <span aria-hidden="true">→</span>
-            </Link>
+            </ExperienceHermesButton>
           </motion.div>
           <motion.div variants={fade} className="hmk-hero-phone">
             <PhoneMock />
@@ -470,10 +475,10 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
               Track Hermes&apos;s real decision loop with simulated money. Real markets, zero financial risk.
               See how the system behaves before allocating real capital.
             </p>
-            <Link href="/dashboard" className="hmk-btn hmk-btn-light">
+            <ExperienceHermesButton className="hmk-btn hmk-btn-light">
               Start simulation
               <span aria-hidden="true">→</span>
-            </Link>
+            </ExperienceHermesButton>
             <p className="hmk-sim-note">Real capital allocation coming soon. Join the waitlist to be first.</p>
           </div>
         </div>
@@ -506,11 +511,12 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
           <span className="hmk-foot-links">
             <ThemeToggle />
             <Link href="/">Home</Link>
-            <Link href="/dashboard">Simulate</Link>
+            <ExperienceHermesButton className="hmk-foot-sim">Simulate</ExperienceHermesButton>
             <Link href={OBSERVATORY_HERMES_LEDGER_PATH}>Observatory</Link>
           </span>
         </div>
       </footer>
     </main>
+    </HermesOnboardingProvider>
   );
 }

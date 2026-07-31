@@ -18851,3 +18851,344 @@ html[data-theme='dark'] .hermes-paper {
 .hmk .site-menu-button span {
   background: #fafafa;
 }
+
+.hmk-nav-btn {
+  border: 0;
+  background: none;
+  color: var(--hmk-muted);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.hmk-nav-btn:hover {
+  color: var(--hmk-ink);
+}
+
+.hmk-menu-btn {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: none;
+  color: var(--hmk-ink);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.15rem;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+
+.hmk-foot-sim {
+  border: 0;
+  background: none;
+  color: var(--hmk-muted);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.hmk-foot-sim:hover {
+  color: var(--hmk-ink);
+}
+
+/* ─── Hermes onboarding sheet (Experience Hermes) ─── */
+.hermes-onboard-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(4px);
+}
+
+.hermes-onboard-sheet-root {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.hermes-onboard-sheet {
+  width: 100%;
+  max-height: min(90vh, 44rem);
+  overflow-y: auto;
+  padding: 1.25rem 1.25rem calc(1.75rem + env(safe-area-inset-bottom, 0px));
+  border-radius: 1.25rem 1.25rem 0 0;
+  background: #fafaf9;
+  color: #18181b;
+  box-shadow: 0 -1.5rem 3rem rgba(0, 0, 0, 0.28);
+  color-scheme: light;
+  pointer-events: auto;
+}
+
+@media (min-width: 560px) {
+  .hermes-onboard-sheet-root {
+    bottom: 1.5rem;
+    padding-inline: 1rem;
+  }
+
+  .hermes-onboard-sheet {
+    width: min(100%, 26rem);
+    max-height: min(88vh, 42rem);
+    border-radius: 1.25rem;
+    padding: 1.35rem 1.35rem 1.65rem;
+  }
+}
+
+.hermes-onboard-handle {
+  width: 2.25rem;
+  height: 0.25rem;
+  margin: 0 auto 1.15rem;
+  border-radius: 999px;
+  background: #e4e4e7;
+}
+
+.hermes-onboard-header {
+  margin-bottom: 1.35rem;
+  text-align: center;
+}
+
+.hermes-onboard-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  padding: 0.28rem 0.75rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 999px;
+  color: #71717a;
+  font-family: var(--font-plex), monospace;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hermes-onboard-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: #16a34a;
+  box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4);
+  animation: live-pulse 2.4s ease-out infinite;
+}
+
+.hermes-onboard-title {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: #18181b;
+}
+
+.hermes-onboard-sub {
+  margin: 0;
+  color: #52525b;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.hermes-onboard-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 1.35rem;
+}
+
+.hermes-onboard-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.hermes-onboard-step-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin-top: 0.1rem;
+  border-radius: 0.5rem;
+}
+
+.hermes-onboard-step-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.hermes-onboard-step-icon-green {
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+
+.hermes-onboard-step-icon-blue {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.hermes-onboard-step-icon-gray {
+  background: rgba(0, 0, 0, 0.05);
+  color: #52525b;
+}
+
+.hermes-onboard-step-text strong {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: #18181b;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.hermes-onboard-step-text span {
+  color: #52525b;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.hermes-onboard-capital {
+  margin-bottom: 1.15rem;
+}
+
+.hermes-onboard-capital-label {
+  display: block;
+  margin-bottom: 0.6rem;
+  color: #52525b;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.hermes-onboard-capital-options {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.hermes-onboard-capital-btn {
+  flex: 1;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 0.65rem;
+  background: #fff;
+  color: #18181b;
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.hermes-onboard-capital-btn:hover {
+  border-color: #a1a1aa;
+}
+
+.hermes-onboard-capital-btn.is-selected {
+  border-color: #18181b;
+  background: #18181b;
+  color: #fafafa;
+}
+
+.hermes-onboard-error {
+  margin: 0 0 0.85rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(180, 83, 9, 0.35);
+  border-radius: 0.65rem;
+  background: rgba(251, 191, 36, 0.12);
+  color: #78350f;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.hermes-onboard-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: #18181b;
+  color: #fafafa;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.hermes-onboard-cta:hover {
+  opacity: 0.92;
+}
+
+.hermes-onboard-cta:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.hermes-onboard-cta svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.hermes-onboard-note {
+  margin: 0.75rem 0 0;
+  color: #a1a1aa;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.hermes-onboard-success {
+  padding: 1.15rem 0 0.25rem;
+  text-align: center;
+}
+
+.hermes-onboard-success-ring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto 1rem;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+
+.hermes-onboard-success-ring svg {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.hermes-onboard-success-title {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #18181b;
+}
+
+.hermes-onboard-success-text {
+  margin: 0 0 1.35rem;
+  color: #52525b;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+

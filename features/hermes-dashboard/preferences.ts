@@ -297,6 +297,12 @@ export function completeDashboardOnboarding(
   });
 }
 
+function intendedDepositRangeForSimAmount(depositAmount: number): IntendedDepositRange {
+  if (depositAmount >= 100_000) return '$100k-$250k';
+  if (depositAmount >= 25_000) return '$25k-$100k';
+  return '$10k-$25k';
+}
+
 /** Open simulation welcome: sim capital amount, verified-for-sim identity, Balanced default. */
 export function completeOpenSimulationOnboarding(
   response: NextResponse,
@@ -312,7 +318,7 @@ export function completeOpenSimulationOnboarding(
     accountType: 'Individual',
     country: 'United States',
     identityConsent: true,
-    intendedDepositRange: '$10k-$25k',
+    intendedDepositRange: intendedDepositRangeForSimAmount(depositAmount),
     legalNameProvided: true,
     profileConfirmed: true,
     region: 'Simulation',
