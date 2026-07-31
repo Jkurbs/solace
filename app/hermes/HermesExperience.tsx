@@ -85,7 +85,6 @@ const ledgerEntries = [
     time: 'Jul 28, 2026 · 09:14 UTC',
     detail: 'Size: 2.1% · Entry: $58,240 · Invalidation: $55,800 · Target: $64,500',
     outcome: 'Resolved +$2,142',
-    sealed: true,
     resolved: true,
   },
   {
@@ -93,7 +92,6 @@ const ledgerEntries = [
     time: 'Jul 25, 2026 · 14:32 UTC',
     detail: 'Size: 1.5% · Entry ratio: 0.042 · Invalidation: 0.038 · Target: 0.048',
     outcome: 'Resolved +$1,890',
-    sealed: true,
     resolved: true,
   },
   {
@@ -101,7 +99,6 @@ const ledgerEntries = [
     time: 'Jul 22, 2026 · 11:07 UTC',
     detail: 'Size: 1.8% · Entry: -45bps · Invalidation: -25bps · Target: -75bps',
     outcome: 'Open · -$612 unrealized',
-    sealed: true,
     resolved: false,
   },
 ] as const;
@@ -188,286 +185,138 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
     <main className="hermes-paper min-h-screen bg-background text-foreground antialiased">
       <Header />
 
-      {/* ─── DARK HERO ─── */}
-      <section className="hermes-paper-hero" style={{ background: 'var(--kimi-color-text-primary)', color: 'var(--kimi-color-surface)', padding: '64px 24px 48px', textAlign: 'center' }}>
+      {/* ─── HERO ─── */}
+      <section className="hermes-paper-hero">
         <motion.div
           className="hermes-paper-shell"
           initial={heroInitial}
           animate="show"
           variants={stagger}
         >
-          <motion.div variants={fade} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '5px 14px', borderRadius: '100px', border: '1px solid rgba(255,255,255,0.15)', fontSize: '12px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.65)', marginBottom: '28px' }}>
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--kimi-color-positive)' }} />
-            Hermes beta v0.2.0 — live
-          </motion.div>
-          <motion.h1 variants={fade} className="hermes-paper-hero-title" style={{ fontSize: '40px', lineHeight: 1.08, letterSpacing: '-0.02em', color: 'var(--kimi-color-surface)', marginBottom: '16px' }}>
-            Capital that decides<br />for itself.
+          <motion.p variants={fade} className="hermes-paper-kicker">
+            Hermes · The first instrument from Solace
+          </motion.p>
+          <motion.h1 variants={fade} className="hermes-paper-hero-title">
+            Capital that decides for itself.
           </motion.h1>
-          <motion.p variants={fade} className="hermes-paper-hero-lede" style={{ color: 'rgba(255,255,255,0.6)', maxWidth: '460px', margin: '0 auto 32px' }}>
-            Hermes reads market structure — liquidity, volatility, regime, risk — and decides whether to allocate capital, how much, and when to exit. Every decision is logged before it moves.
+          <motion.p variants={fade} className="hermes-paper-hero-lede">
+            Hermes reads market structure — liquidity, volatility, regime, risk — and decides
+            whether to allocate capital, how much, and when to exit. Every decision is logged
+            before it moves.
+          </motion.p>
+          <motion.p variants={fade} className="hermes-paper-status">
+            Simulation open · founder capital live on the ledger · real capital by waitlist
           </motion.p>
           <motion.div variants={fade} className="hermes-paper-hero-actions">
-            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary" style={{ background: 'var(--kimi-color-surface)', color: 'var(--kimi-color-text-primary)' }}>
+            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary">
               Experience Hermes
               <span aria-hidden="true">→</span>
             </Link>
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-btn hermes-paper-btn-secondary">
+              Inspect the ledger
+            </Link>
+            <a href="#path" className="hermes-paper-btn hermes-paper-btn-secondary">
+              How it works
+            </a>
           </motion.div>
         </motion.div>
       </section>
 
-      {/* ─── PHONE MOCKUP ─── */}
-      <section id="see-it" className="scroll-mt-28" style={{ background: 'var(--kimi-color-text-primary)', padding: '0 24px 56px', display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '300px', background: 'var(--kimi-color-surface)', borderRadius: '36px', padding: '12px', boxShadow: '0 24px 64px rgba(0,0,0,0.35)' }}>
-          <div style={{ background: 'var(--kimi-color-surface)', borderRadius: '28px', overflow: 'hidden', border: '1px solid var(--kimi-color-border)' }}>
-            <div style={{ width: '90px', height: '22px', background: 'var(--kimi-color-text-primary)', borderRadius: '0 0 14px 14px', margin: '0 auto' }} />
-            <div style={{ padding: '16px 18px 24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', fontSize: '13px', fontWeight: 500, color: 'var(--kimi-color-text-secondary)' }}>
-                <span style={{ fontWeight: 500 }}>Solace</span>
-                <span style={{ fontSize: '11px', color: 'var(--kimi-color-text-tertiary)' }}>Simulation</span>
-              </div>
-              <div style={{ fontSize: '12px', color: 'var(--kimi-color-text-tertiary)', marginBottom: '4px' }}>Simulated allocation</div>
-              <div style={{ fontSize: '36px', fontWeight: 500, fontVariantNumeric: 'tabular-nums', lineHeight: 1.05, marginBottom: '16px' }}>$50,897</div>
-              <div style={{ fontSize: '14px', color: 'var(--kimi-color-positive)', fontWeight: 500, marginBottom: '20px' }}>+$19,692 (+63.1%)</div>
-              <div style={{ height: '1px', background: 'var(--kimi-color-border)', margin: '16px 0' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', color: 'var(--kimi-color-text-tertiary)' }}>In strategy</span>
-                <span style={{ fontSize: '14px', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>$50,406</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', color: 'var(--kimi-color-text-tertiary)' }}>Unallocated</span>
-                <span style={{ fontSize: '14px', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>$490</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', color: 'var(--kimi-color-text-tertiary)' }}>Positions</span>
-                <span style={{ fontSize: '14px', fontWeight: 500 }}>5 open</span>
-              </div>
-              <div style={{ marginTop: '16px', padding: '10px', borderRadius: '10px', background: 'var(--kimi-color-text-primary)', color: 'var(--kimi-color-surface)', fontSize: '13px', fontWeight: 500, textAlign: 'center' }}>
-                Join the waitlist
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ─── PERFORMANCE ─── */}
-      <section style={{ padding: '48px 0 32px', textAlign: 'center' }}>
+      <section className="hermes-paper-perf">
         <div className="hermes-paper-shell">
-          <h2 className="hermes-paper-section-title" style={{ fontSize: '28px', marginBottom: '8px' }}>A record you can inspect.</h2>
-          <p className="hermes-paper-lede" style={{ marginBottom: '32px' }}>Every position, entry, and exit is sealed publicly before the outcome.</p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '48px', flexWrap: 'wrap' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '36px', fontWeight: 500, fontVariantNumeric: 'tabular-nums', lineHeight: 1, color: 'var(--kimi-color-positive)' }}>+12.4%</div>
-              <div style={{ fontSize: '12px', color: 'var(--kimi-color-text-tertiary)', marginTop: '6px', textTransform: 'lowercase' }}>since inception</div>
+          <p className="hermes-paper-kicker">Performance</p>
+          <h2 className="hermes-paper-section-title">A record you can inspect.</h2>
+          <p className="hermes-paper-lede">
+            Every position, entry, and exit is sealed publicly before the outcome.
+          </p>
+          <div className="hermes-paper-perf-grid">
+            <div className="hermes-paper-perf-item">
+              <div className="hermes-paper-perf-num">+12.4%</div>
+              <div className="hermes-paper-perf-label">since inception</div>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '36px', fontWeight: 500, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{proof.sealedDecisions || 12}</div>
-              <div style={{ fontSize: '12px', color: 'var(--kimi-color-text-tertiary)', marginTop: '6px', textTransform: 'lowercase' }}>positions taken</div>
+            <div className="hermes-paper-perf-item">
+              <div className="hermes-paper-perf-num">{proof.sealedDecisions || 12}</div>
+              <div className="hermes-paper-perf-label">positions taken</div>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '36px', fontWeight: 500, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{proof.closedPaths || 8}</div>
-              <div style={{ fontSize: '12px', color: 'var(--kimi-color-text-tertiary)', marginTop: '6px', textTransform: 'lowercase' }}>positions closed</div>
+            <div className="hermes-paper-perf-item">
+              <div className="hermes-paper-perf-num">{proof.closedPaths || 8}</div>
+              <div className="hermes-paper-perf-label">positions closed</div>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '36px', fontWeight: 500, fontVariantNumeric: 'tabular-nums', lineHeight: 1, color: 'var(--kimi-color-positive)' }}>{proof.hitRateLabel || '75%'}</div>
-              <div style={{ fontSize: '12px', color: 'var(--kimi-color-text-tertiary)', marginTop: '6px', textTransform: 'lowercase' }}>win rate</div>
+            <div className="hermes-paper-perf-item">
+              <div className="hermes-paper-perf-num">{proof.hitRateLabel || '75%'}</div>
+              <div className="hermes-paper-perf-label">win rate</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ─── FEATURES ─── */}
-      <section style={{ padding: '32px 0' }}>
+      <section className="hermes-paper-features">
         <div className="hermes-paper-shell">
-          {features.map((f, i) => (
-            <div
-              key={f.num}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '32px',
-                alignItems: 'center',
-                marginBottom: '48px',
-                ...(i % 2 === 1 ? { direction: 'rtl' } : {}),
-              }}
-            >
-              <div style={{ direction: 'ltr' }}>
-                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--kimi-color-text-quaternary)', marginBottom: '8px' }}>{f.num}</div>
-                <h3 style={{ fontSize: '20px', fontWeight: 500, lineHeight: 1.25, marginBottom: '10px' }}>{f.title}</h3>
-                <p style={{ fontSize: '15px', color: 'var(--kimi-color-text-secondary)', lineHeight: 1.55 }}>{f.desc}</p>
+          <p className="hermes-paper-kicker">How it works</p>
+          <h2 className="hermes-paper-section-title">Reads the market, not the news.</h2>
+          <div className="hermes-paper-features-grid">
+            {features.map((f) => (
+              <div key={f.num} className="hermes-paper-feature-card">
+                <span className="hermes-paper-feature-num">{f.num}</span>
+                <h3 className="hermes-paper-feature-title">{f.title}</h3>
+                <p className="hermes-paper-feature-text">{f.desc}</p>
               </div>
-              <div
-                style={{
-                  direction: 'ltr',
-                  border: '1px solid var(--kimi-color-border)',
-                  borderRadius: '14px',
-                  padding: '24px',
-                  minHeight: '180px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-              >
-                {i === 0 && (
-                  <>
-                    <div style={{ height: '100px', display: 'flex', alignItems: 'flex-end', gap: '4px', padding: '8px 0', width: '100%' }}>
-                      {[40,55,35,70,85,60,45,90,100,75,88,65].map((h, idx) => (
-                        <div key={idx} style={{ flex: 1, height: `${h}%`, borderRadius: '3px 3px 0 0', background: idx === 3 || idx === 4 || idx === 7 || idx === 8 || idx === 10 ? 'var(--kimi-color-positive)' : idx === 6 ? 'var(--kimi-color-danger)' : 'var(--kimi-color-border)' }} />
-                      ))}
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--kimi-color-text-tertiary)', textAlign: 'center', marginTop: '8px' }}>Live market structure read</div>
-                  </>
-                )}
-                {i === 1 && (
-                  <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '8px 0', width: '100%', justifyContent: 'center' }}>
-                      <div style={{ textAlign: 'center', flex: 1 }}>
-                        <div style={{ fontSize: '28px', fontWeight: 500, color: 'var(--kimi-color-text-quaternary)' }}>3.2%</div>
-                        <div style={{ fontSize: '12px', color: 'var(--kimi-color-text-tertiary)', marginTop: '4px' }}>Market implied</div>
-                      </div>
-                      <div style={{ fontSize: '24px', color: 'var(--kimi-color-text-quaternary)' }}>→</div>
-                      <div style={{ textAlign: 'center', flex: 1 }}>
-                        <div style={{ fontSize: '28px', fontWeight: 500, color: 'var(--kimi-color-positive)' }}>8.7%</div>
-                        <div style={{ fontSize: '12px', color: 'var(--kimi-color-text-tertiary)', marginTop: '4px' }}>Hermes reads</div>
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--kimi-color-text-tertiary)', textAlign: 'center', marginTop: '8px' }}>Edge detection: risk vs reward</div>
-                  </>
-                )}
-                {i === 2 && (
-                  <>
-                    {[{w:60,l:'2.1%'}, {w:35,l:'1.5%'}, {w:80,l:'1.8%'}].map((bar, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0', width: '100%' }}>
-                        <div style={{ flex: 1, height: '8px', borderRadius: '4px', background: 'var(--kimi-color-border)' }}>
-                          <div style={{ width: `${bar.w}%`, height: '100%', borderRadius: '4px', background: 'var(--kimi-color-text-primary)' }} />
-                        </div>
-                        <span style={{ fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap' }}>{bar.l} sizing</span>
-                      </div>
-                    ))}
-                    <div style={{ fontSize: '12px', color: 'var(--kimi-color-text-tertiary)', textAlign: 'center', marginTop: '8px' }}>Position sizing by conviction</div>
-                  </>
-                )}
-                {i === 3 && (
-                  <>
-                    {[
-                      {asset: 'BTC long', pnl: '+$2,142', up: true},
-                      {asset: 'ETH/BTC spread', pnl: '+$1,890', up: true},
-                      {asset: '2s10s curve', pnl: '-$612', up: false},
-                      {asset: 'Volatility long', pnl: '+$3,050', up: true},
-                    ].map((row, idx) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: idx < 3 ? '1px solid var(--kimi-color-border)' : 'none', fontSize: '13px', width: '100%' }}>
-                        <span style={{ fontWeight: 500 }}>{row.asset}</span>
-                        <span style={{ fontVariantNumeric: 'tabular-nums', color: row.up ? 'var(--kimi-color-positive)' : 'var(--kimi-color-danger)' }}>{row.pnl}</span>
-                      </div>
-                    ))}
-                    <div style={{ fontSize: '12px', color: 'var(--kimi-color-text-tertiary)', textAlign: 'center', marginTop: '8px' }}>Sealed public ledger</div>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ─── DECISION LEDGER ILLUSTRATION ─── */}
-      <section style={{ padding: '32px 0 48px' }}>
+      <section className="hermes-paper-ledger">
         <div className="hermes-paper-shell">
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <h2 className="hermes-paper-section-title" style={{ fontSize: '28px', marginBottom: '8px' }}>The decision ledger</h2>
-            <p style={{ fontSize: '15px', color: 'var(--kimi-color-text-secondary)', maxWidth: '460px', margin: '0 auto', lineHeight: 1.55 }}>
-              Every move Hermes makes is recorded publicly before the outcome is known. No revisions. No backtests. Just a timeline you can follow.
-            </p>
-          </div>
-          <div style={{ border: '1px solid var(--kimi-color-border)', borderRadius: '14px', padding: '28px', background: 'color-mix(in srgb, var(--kimi-color-surface-muted) 25%, transparent)' }}>
-            <div style={{ position: 'relative', paddingLeft: '28px' }}>
-              <div style={{ position: 'absolute', left: '8px', top: 0, bottom: 0, width: '2px', background: 'var(--kimi-color-border)' }} />
-              {ledgerEntries.map((entry, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    position: 'relative',
-                    marginBottom: idx < ledgerEntries.length - 1 ? '20px' : 0,
-                    padding: '16px',
-                    borderRadius: '10px',
-                    border: '1px solid var(--kimi-color-border)',
-                    background: 'var(--kimi-color-surface)',
-                  }}
-                >
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: '-24px',
-                      top: '20px',
-                      width: '10px',
-                      height: '10px',
-                      borderRadius: '50%',
-                      background: entry.resolved ? 'var(--kimi-color-positive)' : 'var(--kimi-color-text-primary)',
-                      border: '2px solid var(--kimi-color-surface)',
-                      boxShadow: entry.resolved ? '0 0 0 3px color-mix(in srgb, var(--kimi-color-positive) 20%, transparent)' : 'none',
-                    }}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 500 }}>{entry.action}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--kimi-color-text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>{entry.time}</span>
-                  </div>
-                  <div style={{ fontSize: '13px', color: 'var(--kimi-color-text-secondary)', lineHeight: 1.5, marginBottom: '10px' }}>{entry.detail}</div>
-                  <div>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        fontSize: '11px',
-                        fontWeight: 500,
-                        padding: '3px 10px',
-                        borderRadius: '6px',
-                        background: 'color-mix(in srgb, var(--kimi-color-positive) 10%, transparent)',
-                        color: 'var(--kimi-color-positive)',
-                      }}
-                    >
-                      <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: '12px', height: '12px' }}>
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      </svg>
-                      Sealed before execution
-                    </span>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        fontSize: '11px',
-                        fontWeight: 500,
-                        padding: '3px 10px',
-                        borderRadius: '6px',
-                        background: 'color-mix(in srgb, var(--kimi-color-text-quaternary) 15%, transparent)',
-                        color: 'var(--kimi-color-text-tertiary)',
-                        marginLeft: '6px',
-                      }}
-                    >
-                      {entry.outcome}
-                    </span>
-                  </div>
+          <p className="hermes-paper-kicker">The sealed record</p>
+          <h2 className="hermes-paper-section-title">The decision ledger</h2>
+          <p className="hermes-paper-lede">
+            Every move Hermes makes is recorded publicly before the outcome is known.
+            No revisions. No backtests. Just a timeline you can follow.
+          </p>
+
+          <div className="hermes-paper-ledger-timeline">
+            {ledgerEntries.map((entry, idx) => (
+              <div
+                key={idx}
+                className={`hermes-paper-ledger-entry${entry.resolved ? ' is-resolved' : ''}`}
+              >
+                <div className="hermes-paper-ledger-entry-header">
+                  <span className="hermes-paper-ledger-action">{entry.action}</span>
+                  <span className="hermes-paper-ledger-time">{entry.time}</span>
                 </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '20px', fontSize: '12px', color: 'var(--kimi-color-text-tertiary)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--kimi-color-positive)', boxShadow: '0 0 0 2px color-mix(in srgb, var(--kimi-color-positive) 20%, transparent)' }} />
-                <span>Sealed & resolved</span>
+                <p className="hermes-paper-ledger-detail">{entry.detail}</p>
+                <div className="hermes-paper-ledger-badges">
+                  <span className="hermes-paper-ledger-seal">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                    Sealed before execution
+                  </span>
+                  <span className="hermes-paper-ledger-outcome">{entry.outcome}</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--kimi-color-text-primary)' }} />
-                <span>Sealed · awaiting outcome</span>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* ─── INSPECT LEDGER BUTTON ─── */}
-          <div style={{ textAlign: 'center', marginTop: '28px' }}>
+          <div className="hermes-paper-ledger-legend">
+            <span className="hermes-paper-ledger-legend-item">
+              <span className="hermes-paper-ledger-dot resolved" />
+              Sealed & resolved
+            </span>
+            <span className="hermes-paper-ledger-legend-item">
+              <span className="hermes-paper-ledger-dot pending" />
+              Sealed · awaiting outcome
+            </span>
+          </div>
+
+          <div className="hermes-paper-ledger-cta">
             <Link
               href={OBSERVATORY_HERMES_LEDGER_PATH}
               className="hermes-paper-btn hermes-paper-btn-primary"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
             >
               Inspect the full ledger
               <span aria-hidden="true">→</span>
@@ -477,65 +326,53 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
       </section>
 
       {/* ─── TRUST ─── */}
-      <section style={{ padding: '48px 0 32px', textAlign: 'center' }}>
+      <section className="hermes-paper-trust">
         <div className="hermes-paper-shell">
-          <h2 className="hermes-paper-section-title" style={{ fontSize: '28px', marginBottom: '8px' }}>Protected by transparency.</h2>
-          <p style={{ fontSize: '15px', color: 'var(--kimi-color-text-secondary)', marginBottom: '32px' }}>No black box. No backtests. Just a record you can check.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-            {[
-              {
-                title: 'Sealed before action',
-                desc: 'Every decision is logged publicly before capital moves. No revisions.',
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                ),
-              },
-              {
-                title: 'Signal-linked',
-                desc: 'Every position traces back to specific market conditions that triggered it.',
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                ),
-              },
-              {
-                title: 'Fully inspectable',
-                desc: 'The entire ledger is public. Entries, sizing, exits, and reasoning.',
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                ),
-              },
-            ].map((card, idx) => (
-              <div key={idx} style={{ border: '1px solid var(--kimi-color-border)', borderRadius: '12px', padding: '24px', textAlign: 'left' }}>
-                <div style={{ width: '32px', height: '32px', marginBottom: '14px', color: 'var(--kimi-color-text-secondary)' }}>{card.icon}</div>
-                <div style={{ fontSize: '15px', fontWeight: 500, marginBottom: '6px' }}>{card.title}</div>
-                <div style={{ fontSize: '13px', color: 'var(--kimi-color-text-secondary)', lineHeight: 1.5 }}>{card.desc}</div>
-              </div>
-            ))}
+          <p className="hermes-paper-kicker">Why this is different</p>
+          <h2 className="hermes-paper-section-title">Protected by transparency.</h2>
+          <p className="hermes-paper-lede">No black box. No backtests. Just a record you can check.</p>
+          <div className="hermes-paper-trust-grid">
+            <div className="hermes-paper-trust-card">
+              <svg className="hermes-paper-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <strong>Sealed before action</strong>
+              <span>Every decision is logged publicly before capital moves. No revisions.</span>
+            </div>
+            <div className="hermes-paper-trust-card">
+              <svg className="hermes-paper-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              <strong>Signal-linked</strong>
+              <span>Every position traces back to specific market conditions that triggered it.</span>
+            </div>
+            <div className="hermes-paper-trust-card">
+              <svg className="hermes-paper-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <strong>Fully inspectable</strong>
+              <span>The entire ledger is public. Entries, sizing, exits, and reasoning.</span>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ─── CTA ─── */}
-      <section id="experience" style={{ padding: '48px 0', textAlign: 'center' }}>
+      <section className="hermes-paper-cta-section">
         <div className="hermes-paper-shell">
-          <div style={{ border: '1px solid var(--kimi-color-border)', borderRadius: '16px', padding: '40px 24px', background: 'color-mix(in srgb, var(--kimi-color-surface-muted) 30%, transparent)' }}>
-            <h3 style={{ fontSize: '24px', fontWeight: 500, marginBottom: '10px' }}>Experience Hermes with simulated capital.</h3>
-            <p style={{ fontSize: '15px', color: 'var(--kimi-color-text-secondary)', lineHeight: 1.55, marginBottom: '24px', maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
-              Track Hermes's real positions with simulated money. Real trades, real markets, zero risk. See how the system performs before allocating real capital.
+          <div className="hermes-paper-cta-box">
+            <h3 className="hermes-paper-cta-title">Experience Hermes with simulated capital.</h3>
+            <p className="hermes-paper-cta-body">
+              Track Hermes's real positions with simulated money. Real trades, real markets, zero risk.
+              See how the system performs before allocating real capital.
             </p>
-            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary">
               Start simulation
               <span aria-hidden="true">→</span>
             </Link>
-            <p style={{ fontSize: '12px', color: 'var(--kimi-color-text-quaternary)', marginTop: '14px' }}>
+            <p className="hermes-paper-cta-note">
               Real capital allocation coming soon. Join the waitlist to be first.
             </p>
           </div>
@@ -543,19 +380,22 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
       </section>
 
       {/* ─── FAQ ─── */}
-      <section style={{ padding: '32px 0', borderTop: '1px solid var(--kimi-color-border)' }}>
+      <section className="hermes-paper-faq">
         <div className="hermes-paper-shell">
-          <h2 className="hermes-paper-section-title" style={{ fontSize: '20px', marginBottom: '24px' }}>What this is</h2>
-          {faqItems.map((item, idx) => (
-            <div key={idx} style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '15px', fontWeight: 500, marginBottom: '6px', lineHeight: 1.4 }}>{item.q}</div>
-              <div style={{ fontSize: '14px', color: 'var(--kimi-color-text-secondary)', lineHeight: 1.6 }}>{item.a}</div>
-            </div>
-          ))}
+          <p className="hermes-paper-kicker">What this is</p>
+          <h2 className="hermes-paper-section-title">Common questions</h2>
+          <div className="hermes-paper-faq-list">
+            {faqItems.map((item, idx) => (
+              <div key={idx} className="hermes-paper-faq-item">
+                <strong>{item.q}</strong>
+                <p>{item.a}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ─── PATH STEPS (Observe → Simulate → Allocate) ─── */}
+      {/* ─── PATH STEPS ─── */}
       <section id="path" className="hermes-paper-access scroll-mt-28">
         <div className="hermes-paper-shell">
           <p className="hermes-paper-kicker">How you enter</p>
