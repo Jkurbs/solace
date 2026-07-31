@@ -64,6 +64,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+function daysUntilResolution(resolvesAt: string): string | null {
+  const end = new Date(resolvesAt).getTime();
+  if (!Number.isFinite(end)) return null;
+  const ms = end - Date.now();
+  if (ms <= 0) return 'Resolving soon';
+  const days = Math.max(1, Math.ceil(ms / 86_400_000));
+  return days === 1 ? '1 day until resolution' : `${days} days until resolution`;
+}
+
 export default async function OracleBeliefPage({ params }: Props) {
   const { ticker: raw } = await params;
   const ticker = decodeURIComponent(raw);
@@ -72,6 +81,7 @@ export default async function OracleBeliefPage({ params }: Props) {
 
   const pct = Math.round(belief.probability * 100);
   const conf = Math.round(belief.confidence * 100);
+  const resolutionLabel = daysUntilResolution(belief.resolvesAt);
 
   return (
     <main className="oracle-shell hermes-paper min-h-screen text-foreground">
@@ -101,31 +111,34 @@ export default async function OracleBeliefPage({ params }: Props) {
           </span>
         </p>
 
-        <div className="oracle-belief-card oracle-belief-card-featured">
-          <div className="oracle-belief-main">
-            <p className="oracle-belief-kicker">
-              oracle believes
-              {belief.asset ? (
-                <span className={`oracle-belief-asset is-${belief.asset}`}>
-                  {belief.asset.toUpperCase()}
-                </span>
-              ) : null}
-            </p>
-            <h1 className="oracle-belief-question">{belief.question}</h1>
-            <div className="oracle-belief-meta">
-              <span className="oracle-belief-confidence">
-                <span aria-hidden="true">✓</span>
-                Confidence {conf}%
+        {/* Centered social-landing card: what Oracle believes at a glance */}
+        <div className="oracle-belief-platter">
+          <p className="oracle-belief-platter-kicker">
+            oracle believes
+            {belief.asset ? (
+              <span className={`oracle-belief-asset is-${belief.asset}`}>
+                {belief.asset.toUpperCase()}
               </span>
-            </div>
-          </div>
-          <div className="oracle-belief-prob">
+            ) : null}
+          </p>
+          <h1 className="oracle-belief-platter-question">{belief.question}</h1>
+          <p className="oracle-belief-platter-prob">
             <strong>{pct}%</strong>
             <span>probability</span>
+          </p>
+          <div className="oracle-belief-platter-meta">
+            <span className="oracle-belief-confidence">
+              <span aria-hidden="true">✓</span>
+              Confidence {conf}%
+            </span>
+            {resolutionLabel ? (
+              <span className="oracle-belief-platter-resolve">{resolutionLabel}</span>
+            ) : null}
           </div>
-          <div className="oracle-belief-actions">
+          <div className="oracle-belief-platter-share">
             <ShareBelief id={belief.id} question={belief.question} probability={belief.probability} />
           </div>
+          <p className="oracle-belief-platter-url">solace.fyi/oracle</p>
         </div>
 
         <p className="oracle-board-footnote">

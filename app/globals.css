@@ -17224,17 +17224,118 @@ html[data-theme='dark'] .hermes-paper {
   line-height: 1.5;
 }
 
-/* Single-belief share landing */
+/* Single-belief share landing (social link destination) */
 .oracle-belief-page {
-  padding-top: clamp(2.5rem, 6vw, 3.5rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 4.5rem);
+  padding-top: clamp(1.5rem, 4vw, 2.5rem);
+  padding-bottom: clamp(2.5rem, 6vw, 4rem);
+  text-align: center;
 }
 
-.oracle-belief-card-featured {
-  margin-top: 1.25rem;
+.oracle-belief-platter {
+  box-sizing: border-box;
+  width: min(100%, 28rem);
+  margin: 0.35rem auto 0;
+  padding: clamp(1.75rem, 5vw, 2.5rem) clamp(1.35rem, 4vw, 2rem) clamp(1.5rem, 4vw, 1.85rem);
+  border: 1px solid var(--oracle-line, #e7e5e4);
+  border-radius: 1.35rem;
+  background: #fff;
+  box-shadow: 0 1rem 2.5rem rgba(28, 25, 23, 0.06);
+  text-align: center;
 }
 
-.oracle-belief-card-featured .oracle-belief-question {
-  font-size: clamp(1.35rem, 3.2vw, 1.75rem);
+.oracle-belief-platter-kicker {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0;
+  color: var(--oracle-faint, #a8a29e);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.oracle-belief-platter-question {
+  margin: 1.1rem 0 0;
+  color: var(--oracle-ink, #1c1917);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.35rem, 4.2vw, 1.75rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.oracle-belief-platter-prob {
+  display: grid;
+  gap: 0.35rem;
+  margin: 1.65rem 0 0;
+  justify-items: center;
+}
+
+.oracle-belief-platter-prob strong {
+  color: var(--oracle-ink, #1c1917);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(3.5rem, 14vw, 4.75rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+.oracle-belief-platter-prob span {
+  color: var(--oracle-faint, #a8a29e);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+.oracle-belief-platter-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem 0.85rem;
+  margin-top: 1.35rem;
+}
+
+.oracle-belief-platter .oracle-belief-confidence {
+  margin: 0;
+}
+
+.oracle-belief-platter-resolve {
+  color: var(--oracle-muted, #78716c);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.oracle-belief-platter-share {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--oracle-line, #e7e5e4);
+}
+
+.oracle-belief-platter-url {
+  margin: 1.1rem 0 0;
+  color: var(--oracle-faint, #a8a29e);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+
+.oracle-belief-page .oracle-board-footnote {
+  max-width: 28rem;
+  margin-top: 1.75rem;
+  text-align: center;
 }
 
 .oracle-belief-page-actions {
@@ -17243,7 +17344,7 @@ html[data-theme='dark'] .hermes-paper {
   align-items: center;
   justify-content: center;
   gap: 1rem 1.5rem;
-  margin-top: 1.75rem;
+  margin-top: 1.5rem;
 }
 
 /* Hermes-style link share for beliefs: primary button + desktop chips */
@@ -17251,9 +17352,13 @@ html[data-theme='dark'] .hermes-paper {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 0.5rem 0.65rem;
   width: 100%;
+}
+
+.oracle-belief-platter .oracle-share-belief-wrap {
+  justify-content: center;
 }
 
 .oracle-share-belief-desktop {
