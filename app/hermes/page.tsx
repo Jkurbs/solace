@@ -7,22 +7,40 @@ import { listHermesLedgerProcessRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { hermesVersion } from '@/features/hermes-version';
 
-import HermesExperience, { type HermesProof } from './HermesExperience';
+import HermesExperience, { type HermesProof, type HermesTimelineEntry } from './HermesExperience';
 
 export const metadata: Metadata = {
-  title: 'Solace · Hermes · Your capital, working',
+  title: 'Solace · Hermes · Capital that decides for itself',
   description:
-    'Your capital should work as hard as you do. Hermes is an autonomous instrument for better capital allocation decisions: disciplined, verifiable, and open to observe and simulate.',
+    'Hermes reads market structure and decides whether to allocate capital, how much, and when to exit. Every decision is sealed publicly before it moves.',
   openGraph: {
-    title: 'Hermes · capital that works without constant attention',
+    title: 'Hermes · Capital that decides for itself',
     description:
-      'An instrument designed to allocate capital with discipline. Founder capital live; every decision sealed on a public ledger you can check.',
+      'Autonomous capital allocation with a public sealed ledger. Founder capital live. Simulation open.',
   },
 };
 
 export const revalidate = 60;
 
 const TELEMETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
+  day: 'numeric',
+  hour: 'numeric',
+  hour12: true,
+  minute: '2-digit',
+  month: 'short',
+  timeZone: 'UTC',
+  timeZoneName: 'short',
+  year: 'numeric',
+});
+
+const pnlFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  maximumFractionDigits: 0,
+  signDisplay: 'always',
+  style: 'currency',
+});
 
 function formatConstant(value: string) {
   return value
@@ -80,6 +98,32 @@ async function getHermesProof(): Promise<HermesProof> {
 
   const { performance, process } = scoreboard;
 
+  // Newest decision-bearing rows for the marketing timeline (public-safe fields only).
+  const timeline: HermesTimelineEntry[] = ledgerRows
+    .filter((row) => row.rowClass !== 'system')
+    .slice(-8)
+    .reverse()
+    .map((row) => {
+      const isOpen = row.eventType === 'open';
+      const resolved = !isOpen && row.outcome !== null;
+      let outcome = 'Sealed · awaiting outcome';
+      if (isOpen) {
+        outcome = 'Open';
+      } else if (row.pnl !== null) {
+        outcome = `Resolved ${pnlFormatter.format(row.pnl)}`;
+      } else if (row.outcome) {
+        outcome = row.outcome;
+      }
+
+      return {
+        action: row.decision,
+        time: sealedAtFormatter.format(new Date(row.sealedAt)),
+        detail: row.note || formatConstant(row.posture),
+        outcome,
+        resolved,
+      };
+    });
+
   return {
     posture,
     postureAge,
@@ -87,6 +131,7 @@ async function getHermesProof(): Promise<HermesProof> {
     openPaths: process.openPaths,
     closedPaths: process.closedPaths,
     hermesLabel: hermesVersion.label,
+    hermesVersionId: hermesVersion.id,
     liveUnrealizedPnl: openExposure?.unrealizedPnl ?? null,
     expectancy: performance.expectancy,
     hitRateLabel: formatPercent(performance.hitRate),
@@ -94,6 +139,7 @@ async function getHermesProof(): Promise<HermesProof> {
     positive: performance.positive,
     negative: performance.negative,
     standDownRateLabel: formatPercent(process.standDownRate),
+    timeline,
   };
 }
 

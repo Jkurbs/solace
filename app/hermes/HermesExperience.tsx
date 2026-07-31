@@ -5,10 +5,17 @@ import { useState } from 'react';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
-import { DOCS_API_URL } from '@/lib/docs';
 
 import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
+
+export type HermesTimelineEntry = {
+  action: string;
+  time: string;
+  detail: string;
+  outcome: string;
+  resolved: boolean;
+};
 
 export type HermesProof = {
   posture: string | null;
@@ -17,6 +24,7 @@ export type HermesProof = {
   openPaths: number | null;
   closedPaths: number;
   hermesLabel: string;
+  hermesVersionId: string;
   liveUnrealizedPnl: number | null;
   expectancy: number | null;
   hitRateLabel: string;
@@ -24,82 +32,45 @@ export type HermesProof = {
   positive: number;
   negative: number;
   standDownRateLabel: string;
+  timeline: HermesTimelineEntry[];
 };
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
 const fade = {
-  hidden: { opacity: 0, y: 14 },
+  hidden: { opacity: 0, y: 16 },
   show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: easeOut } },
 };
 
 const stagger = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.07, delayChildren: 0.08 } },
+  show: { transition: { staggerChildren: 0.08, delayChildren: 0.06 } },
 };
-
-const pathSteps = [
-  {
-    n: '01',
-    title: 'Observe',
-    text: 'See how Hermes decides: what it waits for, what it deploys, and every sealed outcome on the public ledger. No account required.',
-  },
-  {
-    n: '02',
-    title: 'Simulate',
-    text: 'Enter with virtual capital. Watch it work on your behalf with no financial risk, so you can judge the instrument before you trust it with more.',
-  },
-  {
-    n: '03',
-    title: 'Allocate',
-    text: 'When you ask to put real capital in, Solace adds you to the waitlist. Capacity is limited; we reach out when a seat opens.',
-  },
-] as const;
 
 const features = [
   {
     num: '01',
     title: 'Measures market structure',
     desc: 'Hermes continuously reads liquidity depth, volatility compression, and positioning to assess whether conditions favor capital deployment.',
+    visual: 'structure' as const,
   },
   {
     num: '02',
     title: 'Finds the edge',
     desc: 'Not every calm market is an opportunity. Hermes calculates whether the current setup offers asymmetric reward relative to risk.',
+    visual: 'edge' as const,
   },
   {
     num: '03',
     title: 'Sizes with discipline',
-    desc: 'When the edge is sufficient, Hermes decides position size, entry, and invalidation level — all before any capital moves.',
+    desc: 'When the edge is sufficient, Hermes decides position size, entry, and invalidation level, all before any capital moves.',
+    visual: 'size' as const,
   },
   {
     num: '04',
     title: 'Logs before it acts',
     desc: 'Every decision is timestamped and sealed in the public ledger. The record cannot be edited after the fact.',
-  },
-] as const;
-
-const ledgerEntries = [
-  {
-    action: 'Opened BTC long position',
-    time: 'Jul 28, 2026 · 09:14 UTC',
-    detail: 'Size: 2.1% · Entry: $58,240 · Invalidation: $55,800 · Target: $64,500',
-    outcome: 'Resolved +$2,142',
-    resolved: true,
-  },
-  {
-    action: 'Opened ETH/BTC spread',
-    time: 'Jul 25, 2026 · 14:32 UTC',
-    detail: 'Size: 1.5% · Entry ratio: 0.042 · Invalidation: 0.038 · Target: 0.048',
-    outcome: 'Resolved +$1,890',
-    resolved: true,
-  },
-  {
-    action: 'Opened 2s10s curve flatten',
-    time: 'Jul 22, 2026 · 11:07 UTC',
-    detail: 'Size: 1.8% · Entry: -45bps · Invalidation: -25bps · Target: -75bps',
-    outcome: 'Open · -$612 unrealized',
-    resolved: false,
+    visual: 'log' as const,
   },
 ] as const;
 
@@ -114,35 +85,40 @@ const faqItems = [
   },
   {
     q: 'How is this different from a hedge fund?',
-    a: 'Hermes does not manage outside capital today. It does not charge fees. It simply executes, logs every decision in a sealed public record, and lets the track record speak for itself.',
+    a: 'Hermes does not manage outside capital today. It does not charge fees. It executes, logs every decision in a sealed public record, and lets the track record speak for itself.',
   },
   {
     q: 'Can I see the exact trades?',
-    a: 'Yes. The ledger shows position type, entry date, sizing, and P&L. Each entry links to the market conditions that triggered the decision.',
+    a: 'You can inspect sealed decisions, outcomes, and process on the public ledger. Execution detail that would reveal the recipe stays private. The chain is still checkable by math.',
   },
 ] as const;
+
+const pnlFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  maximumFractionDigits: 0,
+  signDisplay: 'always',
+  style: 'currency',
+});
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="hermes-paper-header">
-      <div className="hermes-paper-header-inner">
-        <Link href="/" className="hermes-paper-brand" aria-label="Solace home">
+    <header className="hmk-header">
+      <div className="hmk-header-inner">
+        <Link href="/" className="hmk-brand" aria-label="Solace home">
           <Mark size={18} className="site-mark" />
           <span>Solace</span>
         </Link>
-
-        <nav className="hermes-paper-nav" aria-label="Primary">
-          <a href="#see-it">See it</a>
-          <a href="#path">How it works</a>
-          <Link href={OBSERVATORY_HERMES_LEDGER_PATH}>Ledger</Link>
+        <nav className="hmk-nav" aria-label="Primary">
+          <a href="#how">How it works</a>
+          <a href="#ledger">Ledger</a>
+          <Link href="/dashboard">Simulate</Link>
         </nav>
-
-        <div className="hermes-paper-actions">
+        <div className="hmk-header-actions">
           <ThemeToggle />
-          <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary hermes-paper-btn-sm">
-            Enter Hermes
+          <Link href="/dashboard" className="hmk-btn hmk-btn-light hmk-btn-sm">
+            Experience Hermes
           </Link>
           <button
             type="button"
@@ -157,19 +133,26 @@ function Header() {
           </button>
         </div>
       </div>
-
       <AnimatePresence>
         {menuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="hermes-paper-menu"
+            className="hmk-menu"
           >
-            <a href="#see-it" onClick={() => setMenuOpen(false)}>See it</a>
-            <a href="#path" onClick={() => setMenuOpen(false)}>How it works</a>
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} onClick={() => setMenuOpen(false)}>Ledger</Link>
-            <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Enter Hermes</Link>
+            <a href="#how" onClick={() => setMenuOpen(false)}>
+              How it works
+            </a>
+            <a href="#ledger" onClick={() => setMenuOpen(false)}>
+              Ledger
+            </a>
+            <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
+              Experience Hermes
+            </Link>
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} onClick={() => setMenuOpen(false)}>
+              Observatory
+            </Link>
           </motion.div>
         )}
       </AnimatePresence>
@@ -177,288 +160,354 @@ function Header() {
   );
 }
 
+function PhoneMock() {
+  return (
+    <div className="hmk-phone" aria-hidden="true">
+      <div className="hmk-phone-bezel">
+        <div className="hmk-phone-screen">
+          <div className="hmk-phone-bar">
+            <span>Solace</span>
+            <em>Simulation</em>
+          </div>
+          <div className="hmk-phone-body">
+            <span className="hmk-phone-label">Simulated allocation</span>
+            <strong className="hmk-phone-value">$50,897</strong>
+            <span className="hmk-phone-delta is-pos">+$19,692 (+63.1%)</span>
+            <div className="hmk-phone-rows">
+              <div>
+                <span>In strategy</span>
+                <strong>$50,406</strong>
+              </div>
+              <div>
+                <span>Unallocated</span>
+                <strong>$490</strong>
+              </div>
+              <div>
+                <span>Positions</span>
+                <strong>5 open</strong>
+              </div>
+            </div>
+            <div className="hmk-phone-cta">Join the waitlist</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeatureVisual({ kind }: { kind: (typeof features)[number]['visual'] }) {
+  if (kind === 'structure') {
+    return (
+      <div className="hmk-viz hmk-viz-bars" aria-hidden="true">
+        <div className="hmk-viz-bars-track">
+          {[40, 55, 35, 70, 45, 85, 30, 75, 50, 90, 40, 65].map((h, i) => (
+            <i
+              key={i}
+              style={{ height: `${h}%` }}
+              className={i === 5 || i === 9 ? 'is-hot' : i === 6 ? 'is-warn' : undefined}
+            />
+          ))}
+        </div>
+        <span>Live market structure read</span>
+      </div>
+    );
+  }
+  if (kind === 'edge') {
+    return (
+      <div className="hmk-viz hmk-viz-edge" aria-hidden="true">
+        <div>
+          <strong>3.2%</strong>
+          <em>Market implied</em>
+        </div>
+        <span className="hmk-viz-arrow">→</span>
+        <div>
+          <strong className="is-pos">8.7%</strong>
+          <em>Hermes reads</em>
+        </div>
+        <span className="hmk-viz-caption">Edge detection: risk vs reward</span>
+      </div>
+    );
+  }
+  if (kind === 'size') {
+    return (
+      <div className="hmk-viz hmk-viz-size" aria-hidden="true">
+        {[
+          { label: '2.1% sizing', w: 72 },
+          { label: '1.5% sizing', w: 52 },
+          { label: '1.8% sizing', w: 62 },
+        ].map((row) => (
+          <div key={row.label} className="hmk-viz-size-row">
+            <i style={{ width: `${row.w}%` }} />
+            <span>{row.label}</span>
+          </div>
+        ))}
+        <span className="hmk-viz-caption">Position sizing by conviction</span>
+      </div>
+    );
+  }
+  return (
+    <div className="hmk-viz hmk-viz-log" aria-hidden="true">
+      {[
+        { name: 'BTC long', pnl: '+$2,142', pos: true },
+        { name: 'ETH/BTC spread', pnl: '+$1,890', pos: true },
+        { name: '2s10s curve', pnl: '−$612', pos: false },
+        { name: 'Volatility long', pnl: '+$3,050', pos: true },
+      ].map((row) => (
+        <div key={row.name} className="hmk-viz-log-row">
+          <span>{row.name}</span>
+          <strong className={row.pos ? 'is-pos' : 'is-neg'}>{row.pnl}</strong>
+        </div>
+      ))}
+      <span className="hmk-viz-caption">Sealed public ledger</span>
+    </div>
+  );
+}
+
 export default function HermesExperience({ proof }: { proof: HermesProof }) {
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
 
+  const openLabel = proof.openPaths === null ? '—' : String(proof.openPaths);
+  const livePnl =
+    proof.liveUnrealizedPnl === null ? null : pnlFormatter.format(proof.liveUnrealizedPnl);
+  const liveTone =
+    proof.liveUnrealizedPnl === null
+      ? undefined
+      : proof.liveUnrealizedPnl > 0
+        ? 'is-pos'
+        : proof.liveUnrealizedPnl < 0
+          ? 'is-neg'
+          : undefined;
+
+  const timeline =
+    proof.timeline.length > 0
+      ? proof.timeline.slice(0, 5)
+      : [
+          {
+            action: 'First sealed decisions appear here',
+            time: 'Pending',
+            detail: 'The public chain is live. Newest sealed rows surface on this strip.',
+            outcome: 'Awaiting activity',
+            resolved: false,
+          },
+        ];
+
   return (
-    <main className="hermes-paper min-h-screen bg-background text-foreground antialiased">
+    <main className="hmk">
       <Header />
 
-      {/* ─── HERO ─── */}
-      <section className="hermes-paper-hero">
+      {/* Hero */}
+      <section className="hmk-hero">
         <motion.div
-          className="hermes-paper-shell"
+          className="hmk-hero-card"
           initial={heroInitial}
           animate="show"
           variants={stagger}
         >
-          <motion.p variants={fade} className="hermes-paper-kicker">
-            Hermes · The first instrument from Solace
-          </motion.p>
-          <motion.h1 variants={fade} className="hermes-paper-hero-title">
-            Capital that decides for itself.
+          <motion.div variants={fade} className="hmk-badge">
+            <i />
+            HERMES BETA V{proof.hermesVersionId} · LIVE
+          </motion.div>
+          <motion.h1 variants={fade} className="hmk-hero-title">
+            Capital that decides
+            <br />
+            for itself.
           </motion.h1>
-          <motion.p variants={fade} className="hermes-paper-hero-lede">
-            Hermes reads market structure — liquidity, volatility, regime, risk — and decides
-            whether to allocate capital, how much, and when to exit. Every decision is logged
-            before it moves.
+          <motion.p variants={fade} className="hmk-hero-lede">
+            Hermes reads market structure (liquidity, volatility, regime, risk) and decides whether
+            to allocate capital, how much, and when to exit. Every decision is logged before it moves.
           </motion.p>
-          <motion.p variants={fade} className="hermes-paper-status">
-            Simulation open · founder capital live on the ledger · real capital by waitlist
-          </motion.p>
-          <motion.div variants={fade} className="hermes-paper-hero-actions">
-            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary">
+          <motion.div variants={fade}>
+            <Link href="/dashboard" className="hmk-btn hmk-btn-dark">
               Experience Hermes
               <span aria-hidden="true">→</span>
             </Link>
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-btn hermes-paper-btn-secondary">
-              Inspect the ledger
-            </Link>
-            <a href="#path" className="hermes-paper-btn hermes-paper-btn-secondary">
-              How it works
-            </a>
+          </motion.div>
+          <motion.div variants={fade} className="hmk-hero-phone">
+            <PhoneMock />
           </motion.div>
         </motion.div>
       </section>
 
-      {/* ─── PERFORMANCE ─── */}
-      <section className="hermes-paper-perf">
-        <div className="hermes-paper-shell">
-          <p className="hermes-paper-kicker">Performance</p>
-          <h2 className="hermes-paper-section-title">A record you can inspect.</h2>
-          <p className="hermes-paper-lede">
+      {/* Record metrics */}
+      <section className="hmk-section hmk-metrics-section">
+        <div className="hmk-shell hmk-center">
+          <h2 className="hmk-section-title">A record you can inspect.</h2>
+          <p className="hmk-section-dek">
             Every position, entry, and exit is sealed publicly before the outcome.
           </p>
-          <div className="hermes-paper-perf-grid">
-            <div className="hermes-paper-perf-item">
-              <div className="hermes-paper-perf-num">+12.4%</div>
-              <div className="hermes-paper-perf-label">since inception</div>
+          <div className="hmk-metrics">
+            <div>
+              <strong className={liveTone ?? 'is-pos'}>
+                {livePnl ?? (proof.expectancy !== null ? pnlFormatter.format(proof.expectancy) : '—')}
+              </strong>
+              <span>{livePnl ? 'live open PnL' : 'mean sealed close'}</span>
             </div>
-            <div className="hermes-paper-perf-item">
-              <div className="hermes-paper-perf-num">{proof.sealedDecisions || 12}</div>
-              <div className="hermes-paper-perf-label">positions taken</div>
+            <div>
+              <strong>{proof.sealedDecisions || '—'}</strong>
+              <span>sealed decisions</span>
             </div>
-            <div className="hermes-paper-perf-item">
-              <div className="hermes-paper-perf-num">{proof.closedPaths || 8}</div>
-              <div className="hermes-paper-perf-label">positions closed</div>
+            <div>
+              <strong>{proof.closedPaths || '—'}</strong>
+              <span>positions closed</span>
             </div>
-            <div className="hermes-paper-perf-item">
-              <div className="hermes-paper-perf-num">{proof.hitRateLabel || '75%'}</div>
-              <div className="hermes-paper-perf-label">win rate</div>
+            <div>
+              <strong className="is-pos">{proof.hitRateLabel !== '-' ? proof.hitRateLabel : '—'}</strong>
+              <span>directional hit rate</span>
             </div>
           </div>
+          <p className="hmk-metrics-note">
+            Founder capital · young sample n={proof.sampleSize} · {openLabel} open paths ·{' '}
+            {proof.standDownRateLabel} standing down
+            {proof.posture ? ` · ${proof.posture}` : ''}
+            {proof.postureAge ? ` · ${proof.postureAge}` : ''}
+          </p>
         </div>
       </section>
 
-      {/* ─── FEATURES ─── */}
-      <section className="hermes-paper-features">
-        <div className="hermes-paper-shell">
-          <p className="hermes-paper-kicker">How it works</p>
-          <h2 className="hermes-paper-section-title">Reads the market, not the news.</h2>
-          <div className="hermes-paper-features-grid">
-            {features.map((f) => (
-              <div key={f.num} className="hermes-paper-feature-card">
-                <span className="hermes-paper-feature-num">{f.num}</span>
-                <h3 className="hermes-paper-feature-title">{f.title}</h3>
-                <p className="hermes-paper-feature-text">{f.desc}</p>
-              </div>
+      {/* How it works */}
+      <section id="how" className="hmk-section hmk-features-section scroll-mt-24">
+        <div className="hmk-shell">
+          <div className="hmk-features">
+            {features.map((feature) => (
+              <article key={feature.num} className="hmk-feature">
+                <div className="hmk-feature-copy">
+                  <span className="hmk-feature-num">{feature.num}</span>
+                  <h3>{feature.title}</h3>
+                  <p>{feature.desc}</p>
+                </div>
+                <FeatureVisual kind={feature.visual} />
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── DECISION LEDGER ILLUSTRATION ─── */}
-      <section className="hermes-paper-ledger">
-        <div className="hermes-paper-shell">
-          <p className="hermes-paper-kicker">The sealed record</p>
-          <h2 className="hermes-paper-section-title">The decision ledger</h2>
-          <p className="hermes-paper-lede">
-            Every move Hermes makes is recorded publicly before the outcome is known.
-            No revisions. No backtests. Just a timeline you can follow.
+      {/* Decision ledger timeline */}
+      <section id="ledger" className="hmk-section hmk-ledger-section scroll-mt-24">
+        <div className="hmk-shell hmk-center">
+          <h2 className="hmk-section-title">The decision ledger</h2>
+          <p className="hmk-section-dek">
+            Every move Hermes makes is recorded publicly before the outcome is known. No revisions. No
+            backtests. Just a timeline you can follow.
           </p>
 
-          <div className="hermes-paper-ledger-timeline">
-            {ledgerEntries.map((entry, idx) => (
-              <div
-                key={idx}
-                className={`hermes-paper-ledger-entry${entry.resolved ? ' is-resolved' : ''}`}
-              >
-                <div className="hermes-paper-ledger-entry-header">
-                  <span className="hermes-paper-ledger-action">{entry.action}</span>
-                  <span className="hermes-paper-ledger-time">{entry.time}</span>
-                </div>
-                <p className="hermes-paper-ledger-detail">{entry.detail}</p>
-                <div className="hermes-paper-ledger-badges">
-                  <span className="hermes-paper-ledger-seal">
-                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    </svg>
-                    Sealed before execution
-                  </span>
-                  <span className="hermes-paper-ledger-outcome">{entry.outcome}</span>
-                </div>
-              </div>
-            ))}
+          <div className="hmk-ledger-card">
+            <ul className="hmk-ledger-list">
+              {timeline.map((entry) => (
+                <li key={`${entry.time}-${entry.action}`} className={entry.resolved ? 'is-resolved' : 'is-open'}>
+                  <span className="hmk-ledger-dot" aria-hidden="true" />
+                  <div className="hmk-ledger-body">
+                    <div className="hmk-ledger-top">
+                      <strong>{entry.action}</strong>
+                      <time>{entry.time}</time>
+                    </div>
+                    <p>{entry.detail}</p>
+                    <div className="hmk-ledger-tags">
+                      <span className="hmk-tag is-seal">Sealed before execution</span>
+                      <span className={`hmk-tag ${entry.resolved ? 'is-done' : 'is-wait'}`}>
+                        {entry.outcome}
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="hmk-ledger-legend">
+              <span>
+                <i className="is-resolved" /> Sealed & resolved
+              </span>
+              <span>
+                <i className="is-open" /> Sealed · awaiting outcome
+              </span>
+            </div>
           </div>
 
-          <div className="hermes-paper-ledger-legend">
-            <span className="hermes-paper-ledger-legend-item">
-              <span className="hermes-paper-ledger-dot resolved" />
-              Sealed & resolved
-            </span>
-            <span className="hermes-paper-ledger-legend-item">
-              <span className="hermes-paper-ledger-dot pending" />
-              Sealed · awaiting outcome
-            </span>
-          </div>
-
-          <div className="hermes-paper-ledger-cta">
-            <Link
-              href={OBSERVATORY_HERMES_LEDGER_PATH}
-              className="hermes-paper-btn hermes-paper-btn-primary"
-            >
-              Inspect the full ledger
-              <span aria-hidden="true">→</span>
-            </Link>
-          </div>
+          <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hmk-btn hmk-btn-light hmk-btn-ghost">
+            Inspect the chain
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </section>
 
-      {/* ─── TRUST ─── */}
-      <section className="hermes-paper-trust">
-        <div className="hermes-paper-shell">
-          <p className="hermes-paper-kicker">Why this is different</p>
-          <h2 className="hermes-paper-section-title">Protected by transparency.</h2>
-          <p className="hermes-paper-lede">No black box. No backtests. Just a record you can check.</p>
-          <div className="hermes-paper-trust-grid">
-            <div className="hermes-paper-trust-card">
-              <svg className="hermes-paper-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
+      {/* Transparency */}
+      <section className="hmk-section">
+        <div className="hmk-shell hmk-center">
+          <h2 className="hmk-section-title">Protected by transparency.</h2>
+          <p className="hmk-section-dek">No black box. No backtests. Just a record you can check.</p>
+          <div className="hmk-trust-grid">
+            <article>
+              <span className="hmk-trust-icon" aria-hidden="true">
+                ⌁
+              </span>
               <strong>Sealed before action</strong>
-              <span>Every decision is logged publicly before capital moves. No revisions.</span>
-            </div>
-            <div className="hermes-paper-trust-card">
-              <svg className="hermes-paper-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
+              <p>Every decision is logged publicly before capital moves. No revisions.</p>
+            </article>
+            <article>
+              <span className="hmk-trust-icon" aria-hidden="true">
+                ◇
+              </span>
               <strong>Signal-linked</strong>
-              <span>Every position traces back to specific market conditions that triggered it.</span>
-            </div>
-            <div className="hermes-paper-trust-card">
-              <svg className="hermes-paper-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
+              <p>Every position traces back to market conditions that triggered it.</p>
+            </article>
+            <article>
+              <span className="hmk-trust-icon" aria-hidden="true">
+                ◯
+              </span>
               <strong>Fully inspectable</strong>
-              <span>The entire ledger is public. Entries, sizing, exits, and reasoning.</span>
-            </div>
+              <p>The Observatory chain is public. Process, outcomes, and sealed waits.</p>
+            </article>
           </div>
         </div>
       </section>
 
-      {/* ─── CTA ─── */}
-      <section className="hermes-paper-cta-section">
-        <div className="hermes-paper-shell">
-          <div className="hermes-paper-cta-box">
-            <h3 className="hermes-paper-cta-title">Experience Hermes with simulated capital.</h3>
-            <p className="hermes-paper-cta-body">
-              Track Hermes's real positions with simulated money. Real trades, real markets, zero risk.
-              See how the system performs before allocating real capital.
+      {/* Simulation CTA */}
+      <section className="hmk-section">
+        <div className="hmk-shell">
+          <div className="hmk-sim-card">
+            <h2>Experience Hermes with simulated capital.</h2>
+            <p>
+              Track Hermes&apos;s real decision loop with simulated money. Real markets, zero financial risk.
+              See how the system behaves before allocating real capital.
             </p>
-            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary">
+            <Link href="/dashboard" className="hmk-btn hmk-btn-light">
               Start simulation
               <span aria-hidden="true">→</span>
             </Link>
-            <p className="hermes-paper-cta-note">
-              Real capital allocation coming soon. Join the waitlist to be first.
-            </p>
+            <p className="hmk-sim-note">Real capital allocation coming soon. Join the waitlist to be first.</p>
           </div>
         </div>
       </section>
 
-      {/* ─── FAQ ─── */}
-      <section className="hermes-paper-faq">
-        <div className="hermes-paper-shell">
-          <p className="hermes-paper-kicker">What this is</p>
-          <h2 className="hermes-paper-section-title">Common questions</h2>
-          <div className="hermes-paper-faq-list">
-            {faqItems.map((item, idx) => (
-              <div key={idx} className="hermes-paper-faq-item">
-                <strong>{item.q}</strong>
-                <p>{item.a}</p>
+      {/* FAQ */}
+      <section className="hmk-section hmk-faq-section">
+        <div className="hmk-shell">
+          <h2 className="hmk-faq-heading">What this is</h2>
+          <dl className="hmk-faq">
+            {faqItems.map((item) => (
+              <div key={item.q}>
+                <dt>{item.q}</dt>
+                <dd>{item.a}</dd>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── PATH STEPS ─── */}
-      <section id="path" className="hermes-paper-access scroll-mt-28">
-        <div className="hermes-paper-shell">
-          <p className="hermes-paper-kicker">How you enter</p>
-          <h2 className="hermes-paper-section-title">Observe. Simulate. Allocate when capacity allows.</h2>
-          <p className="hermes-paper-lede">
-            No application to start. Judge the instrument with your own eyes and simulation capital first.
-            Real capital is limited, when you choose to allocate, Solace places you on the waitlist and
-            reaches out when a seat is open.
+          </dl>
+          <p className="hmk-disclaimer">
+            Hermes operates on founder capital. Nothing here is an offer to manage funds, provide investment
+            advice, or sell automated trading services. Young sample. A record, not a claim.
           </p>
-          <ol className="hermes-paper-access-steps">
-            {pathSteps.map((step) => (
-              <li key={step.n}>
-                <span>{step.n}</span>
-                <strong>{step.title}</strong>
-                <p>{step.text}</p>
-              </li>
-            ))}
-          </ol>
-          <div className="hermes-paper-hero-actions" style={{ marginTop: '2rem' }}>
-            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary">
-              Enter Hermes
-              <span aria-hidden="true">→</span>
-            </Link>
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-btn hermes-paper-btn-secondary">
-              Start with the ledger
-            </Link>
-          </div>
         </div>
       </section>
 
-      {/* ─── DEEPER LINKS ─── */}
-      <section className="hermes-paper-deeper">
-        <div className="hermes-paper-shell">
-          <p className="hermes-paper-kicker">If you want more</p>
-          <div className="hermes-paper-deeper-grid">
-            <Link href="/brief" className="hermes-paper-deeper-card">
-              <strong>Technical brief</strong>
-              <span>How Hermes is disciplined and verified.</span>
-            </Link>
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hermes-paper-deeper-card">
-              <strong>Decision ledger</strong>
-              <span>Sealed outcomes and process, in full.</span>
-            </Link>
-            <Link href="/gates" className="hermes-paper-deeper-card">
-              <strong>Gate conditions</strong>
-              <span>What must be true before capital moves.</span>
-            </Link>
-            <a href={DOCS_API_URL} className="hermes-paper-deeper-card">
-              <strong>Public API</strong>
-              <span>Readings for builders who want the data layer.</span>
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <footer className="hermes-paper-foot">
-        <div className="hermes-paper-shell hermes-paper-foot-inner">
-          <p>Hermes · Observe · Simulate · Allocate · {proof.hermesLabel}</p>
-          <span className="hermes-paper-foot-links">
+      <footer className="hmk-foot">
+        <div className="hmk-shell hmk-foot-inner">
+          <p>
+            Hermes · {proof.hermesLabel} · Observe · Simulate · Allocate
+          </p>
+          <span className="hmk-foot-links">
             <ThemeToggle />
             <Link href="/">Home</Link>
-            <Link href="/dashboard">Enter Hermes</Link>
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH}>Ledger</Link>
+            <Link href="/dashboard">Simulate</Link>
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH}>Observatory</Link>
           </span>
         </div>
       </footer>
