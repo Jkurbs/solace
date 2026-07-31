@@ -8,7 +8,7 @@ import { OG_SIZE } from './og-plate';
 
 export { OG_SIZE };
 
-const ledgerOgUrl = 'solace.fyi/observatory/hermes/ledger';
+const ledgerOgUrl = 'solace.fyi/observatory';
 
 /**
  * Social share card for the public decision ledger.

@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-const LEDGER_PATH = '/observatory/hermes/ledger';
-const SHARE_TITLE = 'Hermes Decision Ledger · Solace';
+/** Unified Observatory (Hermes selected). OG image stays on the legacy path for crawlers. */
+const LEDGER_PATH = '/observatory?instrument=hermes';
+/** Stable OG asset URL (page redirects; image route remains). */
+const LEDGER_OG_PATH = '/observatory/hermes/ledger/opengraph-image';
+const SHARE_TITLE = 'Solace Observatory · Hermes decision chain';
 const SHARE_TEXT =
-  'Public sealed record of Hermes decisions before outcomes are known. Founder capital · checkable chain.';
+  'Inspect the Hermes chain on the Solace Observatory. Sealed before the outcome is known. Founder capital · checkable.';
 
 function ShareIcon() {
   return (
@@ -44,7 +47,7 @@ export default function ShareLedger() {
   }, []);
 
   const pageUrl = useMemo(() => `${origin}${LEDGER_PATH}`, [origin]);
-  const imageUrl = useMemo(() => `${origin}${LEDGER_PATH}/opengraph-image`, [origin]);
+  const imageUrl = useMemo(() => `${origin}${LEDGER_OG_PATH}`, [origin]);
 
   const xIntent = useMemo(
     () => `https://x.com/intent/post?text=${encodeURIComponent(`${SHARE_TEXT}\n\n${pageUrl}`)}`,

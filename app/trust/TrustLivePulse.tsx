@@ -10,6 +10,8 @@ export type LedgerPulse = {
   hermesVersionLabel: string | null;
   latestRecordId: string | null;
   paths: number;
+  /** Open path directions from live marks (LONG / SHORT only). */
+  sides: Array<'LONG' | 'SHORT'>;
   rowCount: number;
   unrealizedPnl: number | null;
 };
@@ -24,8 +26,27 @@ const SAFETY_REFRESH_MS = 60_000;
 
 const TrustLivePulseContext = createContext<TrustLivePulseContextValue | null>(null);
 
+function sidesFromPositions(
+  positions: Array<{ side?: string } | unknown> | undefined,
+): Array<'LONG' | 'SHORT'> {
+  if (!positions?.length) return [];
+  return positions
+    .map((position) => {
+      if (!position || typeof position !== 'object') return null;
+      const side = String((position as { side?: string }).side || '')
+        .trim()
+        .toUpperCase();
+      return side === 'LONG' || side === 'SHORT' ? side : null;
+    })
+    .filter((side): side is 'LONG' | 'SHORT' => side !== null);
+}
+
 function toPulse(
-  exposure: { asOf: string; unrealizedPnl: number; positions: unknown[] } | null,
+  exposure: {
+    asOf: string;
+    unrealizedPnl: number;
+    positions: Array<{ symbol?: string; side?: string } | unknown>;
+  } | null,
   version?: { id: string; label: string } | null,
 ): LedgerPulse {
   return {
@@ -35,6 +56,7 @@ function toPulse(
     hermesVersionLabel: version?.label ?? null,
     latestRecordId: null,
     paths: exposure?.positions.length ?? 0,
+    sides: sidesFromPositions(exposure?.positions),
     rowCount: 0,
     unrealizedPnl: exposure?.unrealizedPnl ?? null,
   };

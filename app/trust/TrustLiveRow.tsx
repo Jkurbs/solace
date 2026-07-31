@@ -23,9 +23,25 @@ const pnlFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
 });
 
-function decisionLabel(paths: number, unrealizedPnl: number) {
+function directionSuffix(sides: Array<'LONG' | 'SHORT'>): string {
+  if (!sides.length) return '';
+
+  const long = sides.filter((side) => side === 'LONG').length;
+  const short = sides.filter((side) => side === 'SHORT').length;
+
+  if (long && !short) return ' long';
+  if (short && !long) return ' short';
+  return ` (${long} long · ${short} short)`;
+}
+
+function decisionLabel(
+  paths: number,
+  sides: Array<'LONG' | 'SHORT'>,
+  unrealizedPnl: number,
+) {
   if (paths > 0) {
-    return `Holding ${paths === 1 ? 'one open path' : `${paths} open paths`}`;
+    const pathWord = paths === 1 ? 'one open path' : `${paths} open paths`;
+    return `Holding ${pathWord}${directionSuffix(sides)}`;
   }
 
   if (unrealizedPnl === 0) {
@@ -108,7 +124,7 @@ export default function TrustLiveRow() {
           </span>
         ) : null}
       </td>
-      <td>{decisionLabel(pulse.paths, unrealizedPnl)}</td>
+      <td>{decisionLabel(pulse.paths, pulse.sides ?? [], unrealizedPnl)}</td>
       <td>{displayedPosture}</td>
       <td>Open</td>
       <td className={pnlToneClass(unrealizedPnl)}>{pnlFormatter.format(unrealizedPnl)}</td>

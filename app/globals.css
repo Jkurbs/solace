@@ -17839,3 +17839,156 @@ html[data-theme='dark'] .hermes-paper {
     grid-template-columns: 1fr auto;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Unified Observatory decision chain
+   ═══════════════════════════════════════════════════════════ */
+.obs-chain-intro {
+  padding-bottom: 0.5rem;
+}
+
+.obs-chain-selector-block {
+  margin-top: 1.75rem;
+  max-width: 28rem;
+}
+
+.obs-chain-selector-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--ledger-faint, #a8a29e);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.obs-chain-selector-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+.obs-chain-select {
+  appearance: none;
+  min-height: 2.6rem;
+  min-width: min(100%, 16rem);
+  padding: 0 2.25rem 0 0.95rem;
+  border: 1px solid var(--ledger-line, #e7e5e4);
+  border-radius: 0.55rem;
+  background:
+    #ffffff
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2378716c' d='M1 1l5 5 5-5'/%3E%3C/svg%3E")
+    no-repeat right 0.9rem center;
+  color: var(--ledger-ink, #1c1917);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+}
+
+.obs-chain-select:focus-visible {
+  outline: 2px solid rgba(28, 25, 23, 0.35);
+  outline-offset: 2px;
+}
+
+.obs-chain-product-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--ledger-muted, #78716c);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.obs-chain-product-link:hover {
+  color: var(--ledger-ink, #1c1917);
+}
+
+.obs-chain-selector-hint {
+  margin: 0.55rem 0 0;
+  color: var(--ledger-faint, #a8a29e);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.obs-chain-sheet.is-pending {
+  opacity: 0.72;
+  transition: opacity 0.15s ease;
+}
+
+.obs-chain-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border-top: 1px solid var(--ledger-line, #e7e5e4);
+  -webkit-overflow-scrolling: touch;
+}
+
+.obs-chain-table {
+  width: 100%;
+  min-width: 40rem;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.obs-chain-table th,
+.obs-chain-table td {
+  padding: 0.8rem 0.85rem;
+  border-bottom: 1px solid var(--ledger-line, #e7e5e4);
+  text-align: left;
+  vertical-align: top;
+}
+
+.obs-chain-table th {
+  background: var(--ledger-bg, #fafaf9);
+  color: var(--ledger-faint, #a8a29e);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.obs-chain-table td {
+  color: #44403c;
+  line-height: 1.45;
+}
+
+.obs-chain-table tr.is-resolved td,
+.obs-chain-table tr.is-system td {
+  color: #78716c;
+}
+
+.obs-chain-num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #1c1917 !important;
+}
+
+.obs-chain-mono {
+  font-family: var(--font-plex), monospace;
+  font-size: 0.78rem;
+  color: #a8a29e !important;
+}
+
+.obs-chain-empty {
+  padding: 1.75rem 0.85rem !important;
+  color: #78716c !important;
+  line-height: 1.55;
+}
+
+.obs-chain-belief-link {
+  color: #1c1917;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.obs-chain-belief-link:hover {
+  opacity: 0.75;
+}
+
+.obs-chain-about {
+  padding-bottom: 2rem;
+}

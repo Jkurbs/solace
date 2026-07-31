@@ -15,6 +15,10 @@ export async function GET() {
     getHermesOpenExposure().catch(() => null),
   ]);
 
+  const sides = (exposure?.positions ?? [])
+    .map((position) => String(position.side || '').trim().toUpperCase())
+    .filter((side): side is 'LONG' | 'SHORT' => side === 'LONG' || side === 'SHORT');
+
   const response = NextResponse.json({
     asOf: exposure?.asOf ?? null,
     chainHead: pulse?.chainHead ?? null,
@@ -22,6 +26,8 @@ export async function GET() {
     hermesVersionLabel: hermesVersion.label,
     latestRecordId: pulse?.latestRecordId ?? null,
     paths: exposure?.positions.length ?? 0,
+    /** LONG / SHORT only — public direction for open paths, never size. */
+    sides,
     rowCount: pulse?.rowCount ?? 0,
     unrealizedPnl: exposure?.unrealizedPnl ?? null,
   });

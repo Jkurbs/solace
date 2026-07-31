@@ -381,7 +381,7 @@ export default function HomeClient({
           <SealIcon className="w-12 h-12 text-muted mx-auto mb-8" />
           <p className="text-xs uppercase tracking-[0.3em] text-muted mb-6">Charter</p>
           <p className="font-serif text-[clamp(1.4rem,3.2vw,2.2rem)] leading-snug text-foreground">
-            Every decision any live instruments makes is recorded in a sealed ledger before the outcome is known.
+            Every decision any live instruments makes is recorded in a sealed ledger before the outcome is known. Each ledger can be inspected in the Observatory.
           </p>
           <div className="mt-10 flex flex-col items-center gap-4">
             <div className="w-8 h-px bg-border" />
@@ -389,7 +389,7 @@ export default function HomeClient({
               href={OBSERVATORY_HERMES_LEDGER_PATH}
               className="home-charter-cta inline-flex items-center gap-2 rounded-full border border-foreground/20 bg-background px-5 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-foreground shadow-sm transition-colors hover:border-foreground/45 hover:bg-foreground/[0.04]"
             >
-              Inspect the chain
+              Inspect the Observatory
               <span aria-hidden="true" className="text-[0.85em] opacity-60">
                 →
               </span>
