@@ -13036,16 +13036,16 @@ html[data-theme='light'] .home-shell .home-vault-card {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  /* Soft field like the reference, adapted to Solace dark */
+  /* Paper field — globe sits on the same light register as the rest of Glorya */
   background:
-    radial-gradient(ellipse 80% 70% at 50% 48%, rgba(28, 36, 58, 0.45), transparent 58%),
-    radial-gradient(circle at 50% 50%, #0b0e14 0%, #06070a 70%, #050608 100%);
+    radial-gradient(ellipse 70% 60% at 50% 48%, rgba(231, 229, 228, 0.9), transparent 62%),
+    #fafaf9;
 }
 
 .glorya-field.is-full {
   background:
-    radial-gradient(ellipse 75% 65% at 48% 50%, rgba(36, 44, 68, 0.35), transparent 55%),
-    #07090e;
+    radial-gradient(ellipse 65% 55% at 48% 50%, rgba(231, 229, 228, 0.75), transparent 58%),
+    #fafaf9;
 }
 
 .glorya-field.is-compact {
@@ -13098,30 +13098,31 @@ html[data-theme='light'] .home-shell .home-vault-card {
   display: grid;
   gap: 0.15rem;
   padding: 0.7rem 0.85rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #e7e5e4;
   border-radius: 0.45rem;
-  background: rgba(8, 10, 14, 0.75);
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
-  color: #b8c0cc;
+  color: #57534e;
   font-size: 0.78rem;
   line-height: 1.4;
   pointer-events: none;
-  opacity: 0.88;
+  opacity: 0.92;
+  box-shadow: 0 1px 3px rgba(28, 25, 23, 0.08);
   transition: opacity 0.2s ease, border-color 0.2s ease;
 }
 
 .glorya-field-readout.is-active {
   opacity: 1;
-  border-color: rgba(180, 160, 210, 0.22);
+  border-color: rgba(124, 98, 158, 0.28);
 }
 
 .glorya-field-readout strong {
-  color: #f0f2f5;
+  color: #1c1917;
   font-weight: 600;
 }
 
 .glorya-field-readout em {
-  color: #8a93a1;
+  color: #78716c;
   font-style: normal;
   font-size: 0.75rem;
 }
@@ -13225,7 +13226,7 @@ html[data-theme='light'] .home-shell .home-vault-card {
   z-index: 1;
   min-height: inherit;
   margin-left: 0;
-  background: #07090e;
+  background: #fafaf9;
   border-left: 1px solid #e7e5e4;
 }
 
@@ -13333,22 +13334,22 @@ html[data-theme='light'] .home-shell .home-vault-card {
   bottom: 1.25rem;
   left: auto;
   width: min(17rem, calc(100% - 2.5rem));
-  border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(8, 10, 14, 0.78);
-  color: #b8c0cc;
-  box-shadow: none;
+  border-color: #e7e5e4;
+  background: rgba(255, 255, 255, 0.94);
+  color: #57534e;
+  box-shadow: 0 1px 3px rgba(28, 25, 23, 0.08);
 }
 
 .glorya-stage .glorya-field-readout.is-active {
-  border-color: rgba(180, 160, 210, 0.28);
+  border-color: rgba(124, 98, 158, 0.28);
 }
 
 .glorya-stage .glorya-field-readout strong {
-  color: #f0f2f5;
+  color: #1c1917;
 }
 
 .glorya-stage .glorya-field-readout em {
-  color: #8a93a1;
+  color: #78716c;
 }
 
 .glorya-scroll-cue {
@@ -13362,11 +13363,11 @@ html[data-theme='light'] .home-shell .home-vault-card {
   align-items: center;
   gap: 0.2rem;
   padding: 0.35rem 0.7rem 0.4rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #e7e5e4;
   border-radius: 999px;
-  background: rgba(8, 10, 14, 0.55);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(6px);
-  color: rgba(232, 232, 226, 0.85);
+  color: #78716c;
   font-size: 0.62rem;
   font-weight: 500;
   letter-spacing: 0.04em;
@@ -13378,9 +13379,9 @@ html[data-theme='light'] .home-shell .home-vault-card {
 
 .glorya-scroll-cue:hover,
 .glorya-scroll-cue:focus-visible {
-  color: #fafaf9;
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(8, 10, 14, 0.7);
+  color: #1c1917;
+  border-color: #d6d3d1;
+  background: #fff;
   outline: none;
 }
 
@@ -13484,7 +13485,7 @@ html[data-theme='light'] .home-shell .home-vault-card {
     border-left: 0;
     border-top: 1px solid #e7e5e4;
     overflow: hidden;
-    background: #07090e;
+    background: #fafaf9;
   }
 
   .glorya-globe-hint.is-desktop {
