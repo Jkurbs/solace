@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
 import { getPersistedAccountBundleByUserEmail } from '@/features/accounts/store';
-import { isDashboardOnboardingRequired } from '@/features/hermes-dashboard/setup';
 import {
   createSupabaseAdminClient,
   createSupabaseRouteClient,
@@ -215,13 +214,7 @@ async function sendDashboardMagicLink(
     return null;
   }
 
-  // Onboarding parked: magic links land on the dashboard. Flip
-  // isDashboardOnboardingRequired() to restore welcome routing.
-  const nextPath =
-    requestedNextPath ??
-    (bundle.onboarding?.complete || !isDashboardOnboardingRequired()
-      ? '/dashboard'
-      : '/dashboard/onboarding?welcome=1');
+  const nextPath = requestedNextPath ?? (bundle.onboarding?.complete ? '/dashboard' : '/dashboard/onboarding?welcome=1');
 
   // Production-safe path first (any browser / device).
   if (await sendTokenHashMagicLink(request, email, nextPath)) {

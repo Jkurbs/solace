@@ -9,7 +9,6 @@ import DashboardThemeShell from '@/app/dashboard/DashboardThemeShell';
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
 import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
-import { isDashboardOnboardingRequired } from '@/features/hermes-dashboard/setup';
 import { hasConsoleAccess } from '@/features/solace-console/access';
 import type {
   DashboardFieldKey,
@@ -178,13 +177,7 @@ export default async function DashboardContractPage() {
         },
       };
 
-  // Onboarding parked: do not force /dashboard/onboarding (see isDashboardOnboardingRequired).
-  if (
-    isDashboardOnboardingRequired() &&
-    dashboardAccessGranted &&
-    !consoleAccessGranted &&
-    !onboarding.complete
-  ) {
+  if (dashboardAccessGranted && !consoleAccessGranted && !onboarding.complete) {
     redirect('/dashboard/onboarding');
   }
 

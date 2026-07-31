@@ -637,6 +637,16 @@ export async function getHermesDashboardSnapshot({
   };
 
   if (lifecycle === 'AWAITING_DEPOSIT') {
+    // Open-simulation guests never sit on the unfunded "ready" chapter: once
+    // they have a deposit intent (from Experience Hermes / open-sim welcome),
+    // materialize simulation capital and show the live dashboard.
+    if (!accountId && (depositIntentAmount ?? 0) > 0) {
+      return getOpenSimulationDashboardSnapshot({
+        depositAmount: depositIntentAmount ?? 10_000,
+        riskProfile: selectedRiskProfile,
+      });
+    }
+
     const pendingSnapshot = getAwaitingDepositSnapshot(baseSnapshot, {
       accountReview,
       depositIntentAmount,

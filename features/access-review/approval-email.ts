@@ -77,9 +77,7 @@ function getAppOrigin(fallbackOrigin: string) {
   }
 }
 
-// Onboarding is parked (see isDashboardOnboardingRequired). Welcome path kept as
-// a comment for restore: '/dashboard/onboarding?welcome=1'
-function getDashboardLoginUrl(origin: string, email: string, nextPath = '/dashboard') {
+function getDashboardLoginUrl(origin: string, email: string, nextPath = '/dashboard/onboarding?welcome=1') {
   const url = new URL('/dashboard', getAppOrigin(origin));
   url.searchParams.set('email', email);
   url.searchParams.set('next', nextPath);
@@ -89,7 +87,7 @@ function getDashboardLoginUrl(origin: string, email: string, nextPath = '/dashbo
 
 function getAuthRedirectUrl(origin: string) {
   const url = new URL('/auth/callback', getAppOrigin(origin));
-  url.searchParams.set('next', '/dashboard');
+  url.searchParams.set('next', '/dashboard/onboarding?welcome=1');
 
   return url.toString();
 }

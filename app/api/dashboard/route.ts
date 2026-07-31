@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
 
-import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
+import {
+  getDashboardAccountId,
+  hasDashboardAccess,
+  isGuestDashboardAccess,
+} from '@/features/hermes-dashboard/access';
 import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
-import { getHermesDashboardSnapshot } from '@/features/hermes-dashboard/read-model';
+import {
+  getHermesDashboardSnapshot,
+  getOpenSimulationDashboardSnapshot,
+} from '@/features/hermes-dashboard/read-model';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +19,19 @@ export async function GET() {
   }
 
   const accountId = await getDashboardAccountId();
-  const riskProfile = await getStoredRiskProfile(accountId);
+  const riskProfile = (await getStoredRiskProfile(accountId)) ?? 'Balanced';
   const onboarding = await getDashboardOnboardingState(accountId);
+
+  // Guest open-simulation: match the page SSR path so client refetch does not
+  // replace a funded sim with the unfunded "ready / add capital" chapter.
+  if (isGuestDashboardAccess() && !accountId) {
+    return NextResponse.json(
+      getOpenSimulationDashboardSnapshot({
+        depositAmount: onboarding.depositIntentAmount ?? 10_000,
+        riskProfile,
+      }),
+    );
+  }
 
   const snapshot = await getHermesDashboardSnapshot({
     accountId,
