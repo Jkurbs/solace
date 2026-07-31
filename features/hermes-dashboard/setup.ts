@@ -10,7 +10,22 @@ import type { HermesDashboardSnapshot } from './types';
 //
 // isSetupIncomplete = anything that still blocks deposits.
 
+/**
+ * When false, users go straight to the dashboard.
+ * Setup / identity / onboarding routes and UI stay in the codebase; they are
+ * not forced. Flip to `true` to restore the gate (redirects + chapter flow).
+ */
+export const DASHBOARD_ONBOARDING_REQUIRED = false;
+
+export function isDashboardOnboardingRequired() {
+  return DASHBOARD_ONBOARDING_REQUIRED;
+}
+
 export function isProfileSetupIncomplete(snapshot: HermesDashboardSnapshot) {
+  if (!isDashboardOnboardingRequired()) {
+    return false;
+  }
+
   if (snapshot.account.lifecycle !== 'AWAITING_DEPOSIT') {
     return false;
   }
@@ -21,10 +36,18 @@ export function isProfileSetupIncomplete(snapshot: HermesDashboardSnapshot) {
 }
 
 export function isIdentityVerificationIncomplete(snapshot: HermesDashboardSnapshot) {
+  if (!isDashboardOnboardingRequired()) {
+    return false;
+  }
+
   return snapshot.account.identityVerification.status !== 'VERIFIED';
 }
 
 /** True until profile + identity are complete, deposits stay closed. */
 export function isSetupIncomplete(snapshot: HermesDashboardSnapshot) {
+  if (!isDashboardOnboardingRequired()) {
+    return false;
+  }
+
   return isProfileSetupIncomplete(snapshot) || isIdentityVerificationIncomplete(snapshot);
 }

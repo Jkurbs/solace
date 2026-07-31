@@ -16,6 +16,7 @@ import {
   getHermesDashboardSnapshot,
   getOpenSimulationDashboardSnapshot,
 } from '@/features/hermes-dashboard/read-model';
+import { isDashboardOnboardingRequired } from '@/features/hermes-dashboard/setup';
 
 import DashboardAccessGate from './DashboardAccessGate';
 
@@ -83,11 +84,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const onboarding = await getDashboardOnboardingState(accountId);
   const guestOpen = isGuestDashboardAccess() && !accountId;
 
-  if (!onboarding.complete) {
+  // Onboarding is parked: users land on the dashboard. Routes/UI under
+  // /dashboard/onboarding remain available if re-enabled.
+  if (isDashboardOnboardingRequired() && !onboarding.complete) {
     redirect('/dashboard/onboarding?welcome=1');
   }
 
   // Guest simulation: show active sim capital without a ledger account invite.
+  // When onboarding is parked, open sim is the default entry (no welcome sheet).
   if (guestOpen) {
     const riskProfile = (await getStoredRiskProfile(accountId)) ?? 'Balanced';
     const initialSnapshot = getOpenSimulationDashboardSnapshot({

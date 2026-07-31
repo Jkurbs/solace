@@ -12,6 +12,7 @@ import {
   isGuestDashboardAccess,
 } from '@/features/hermes-dashboard/access';
 import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
+import { isDashboardOnboardingRequired } from '@/features/hermes-dashboard/setup';
 
 export const metadata: Metadata = {
   title: 'Solace · Enter Hermes Simulation',
@@ -28,6 +29,11 @@ type DashboardOnboardingPageProps = {
 };
 
 export default async function DashboardOnboardingPage({ searchParams }: DashboardOnboardingPageProps) {
+  // Onboarding parked: page code kept; send everyone to the dashboard for now.
+  if (!isDashboardOnboardingRequired()) {
+    redirect('/dashboard');
+  }
+
   const accessGranted = await hasDashboardAccess();
 
   if (!accessGranted) {
