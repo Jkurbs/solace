@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 
 import { fetchKalshiBeliefByTicker } from '@/features/oracle/kalshi';
 import { OBSERVATORY_ORACLE_LEDGER_PATH } from '@/features/observatory/paths';
+import { OG_SIZE } from '@/lib/og-plate';
 
 import Mark from '../../../Mark';
 import ThemeToggle from '../../../ThemeToggle';
@@ -14,6 +15,10 @@ export const revalidate = 60;
 type Props = {
   params: Promise<{ ticker: string }>;
 };
+
+function beliefPath(ticker: string) {
+  return `/oracle/belief/${encodeURIComponent(ticker)}`;
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { ticker: raw } = await params;
@@ -27,23 +32,34 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? `Oracle believes ${pct}%: ${belief.question}. Sealed before the outcome is known. Solace.`
     : 'An Oracle belief from Solace. Sealed before the outcome is known.';
 
-  const path = `/oracle/belief/${encodeURIComponent(ticker)}`;
+  const path = beliefPath(ticker);
+  // Absolute image URL so crawlers unfurl the platter the same way as Hermes ledger.
+  const ogImage = {
+    url: `${path}/opengraph-image`,
+    width: OG_SIZE.width,
+    height: OG_SIZE.height,
+    alt: belief
+      ? `Oracle believes ${pct}%: ${belief.question}`
+      : 'Solace Oracle belief card',
+  };
 
   return {
     title: `Solace · ${title}`.slice(0, 110),
     description: description.slice(0, 200),
-    alternates: { canonical: `https://solace.fyi${path}` },
+    alternates: { canonical: path },
     openGraph: {
       title: title.slice(0, 90),
       description: description.slice(0, 180),
-      url: `https://solace.fyi${path}`,
+      url: path,
       type: 'website',
       siteName: 'Solace',
+      images: [ogImage],
     },
     twitter: {
       card: 'summary_large_image',
       title: title.slice(0, 70),
       description: description.slice(0, 160),
+      images: [ogImage.url],
     },
   };
 }
@@ -113,7 +129,8 @@ export default async function OracleBeliefPage({ params }: Props) {
         </div>
 
         <p className="oracle-board-footnote">
-          Cite a source, not an opinion. Every belief is recorded before the outcome is known.
+          Cite a source, not an opinion. Every belief is recorded before the outcome is known. Paste the
+          link anywhere, platforms load the platter card from the page.
         </p>
 
         <div className="oracle-belief-page-actions">

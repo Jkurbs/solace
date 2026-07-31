@@ -17246,6 +17246,56 @@ html[data-theme='dark'] .hermes-paper {
   margin-top: 1.75rem;
 }
 
+/* Hermes-style link share for beliefs: primary button + desktop chips */
+.oracle-share-belief-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem 0.65rem;
+  width: 100%;
+}
+
+.oracle-share-belief-desktop {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.oracle-share-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.9rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--oracle-line, #e7e5e4);
+  border-radius: 999px;
+  background: #fafaf9;
+  color: var(--oracle-muted, #78716c);
+  font-family: var(--font-plex), monospace;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.oracle-share-chip:hover {
+  color: var(--oracle-ink, #1c1917);
+  border-color: #d6d3d1;
+  background: #fff;
+}
+
+.oracle-share-chip.is-secondary {
+  background: transparent;
+}
+
+@media (min-width: 721px) {
+  .oracle-share-belief-desktop {
+    display: flex;
+  }
+}
+
 .oracle-board-stats {
   display: flex;
   justify-content: center;
