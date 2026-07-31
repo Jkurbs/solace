@@ -140,15 +140,29 @@ async function fetchSeriesMarkets(seriesTicker: string): Promise<KalshiMarket[]>
   return data.markets ?? [];
 }
 
-function toPrediction(market: KalshiMarket, asset: 'btc' | 'eth'): ActivePrediction | null {
-  if (!isActiveStatus(market.status)) return null;
+function assetFromTicker(ticker: string): 'btc' | 'eth' | undefined {
+  const t = ticker.toUpperCase();
+  if (t.includes('ETH')) return 'eth';
+  if (t.includes('BTC') || t.includes('BITCOIN')) return 'btc';
+  return undefined;
+}
+
+function toPrediction(
+  market: KalshiMarket,
+  asset: 'btc' | 'eth' | undefined,
+  options?: { allowInactive?: boolean },
+): ActivePrediction | null {
+  if (!options?.allowInactive && !isActiveStatus(market.status)) return null;
   const probability = midProbability(market);
   if (probability == null) return null;
 
+  const resolvedAsset = asset ?? assetFromTicker(market.ticker);
   const { delta, deltaWindow } = deltaFromPrevious(market, probability);
   const title =
     market.title?.trim() ||
-    (market.yes_sub_title ? `Will ${asset.toUpperCase()} be ${market.yes_sub_title}?` : market.ticker);
+    (market.yes_sub_title
+      ? `Will ${resolvedAsset?.toUpperCase() ?? 'it'} be ${market.yes_sub_title}?`
+      : market.ticker);
 
   const resolvesAt =
     market.expected_expiration_time || market.close_time || new Date(Date.now() + 86400000).toISOString();
@@ -162,12 +176,28 @@ function toPrediction(market: KalshiMarket, asset: 'btc' | 'eth'): ActivePredict
     resolvesAt,
     delta,
     deltaWindow,
-    asset,
+    asset: resolvedAsset,
     source: 'kalshi',
     ticker: market.ticker,
     volume24h: parseDollar(market.volume_24h_fp) ?? 0,
     openInterest: parseDollar(market.open_interest_fp) ?? 0,
   };
+}
+
+/** Load one market by ticker for share pages / OG cards. */
+export async function fetchKalshiBeliefByTicker(ticker: string): Promise<ActivePrediction | null> {
+  const encoded = encodeURIComponent(ticker);
+  let res = await fetchJson(`${KALSHI_API}/markets/${encoded}`);
+  if (!res.ok) {
+    res = await fetchJson(`${KALSHI_API_FALLBACK}/markets/${encoded}`);
+  }
+  if (!res.ok) return null;
+
+  const data = (await res.json()) as { market?: KalshiMarket };
+  const market = data.market;
+  if (!market) return null;
+
+  return toPrediction(market, assetFromTicker(market.ticker), { allowInactive: true });
 }
 
 export type KalshiOracleSnapshot = {
