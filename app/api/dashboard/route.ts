@@ -10,6 +10,7 @@ import {
   getHermesDashboardSnapshot,
   getOpenSimulationDashboardSnapshot,
 } from '@/features/hermes-dashboard/read-model';
+import { getGuestSimSessionFromCookies } from '@/features/hermes-dashboard/sim-session';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,10 +26,13 @@ export async function GET() {
   // Guest open-simulation: match the page SSR path so client refetch does not
   // replace a funded sim with the unfunded "ready / add capital" chapter.
   if (isGuestDashboardAccess() && !accountId) {
+    const depositAmount = onboarding.depositIntentAmount ?? 10_000;
+    const session = await getGuestSimSessionFromCookies({ depositAmount, riskProfile });
     return NextResponse.json(
-      getOpenSimulationDashboardSnapshot({
-        depositAmount: onboarding.depositIntentAmount ?? 10_000,
+      await getOpenSimulationDashboardSnapshot({
+        depositAmount,
         riskProfile,
+        session,
       }),
     );
   }

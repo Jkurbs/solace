@@ -11,8 +11,14 @@ import {
   updateAccountRiskProfile,
 } from '@/features/accounts/store';
 
-import { isGuestDashboardAccess, isLocalDashboardBypass } from './access';
+import { isGuestDashboardAccess } from './access';
 import { accountTypeValues, intendedDepositRangeValues, riskProfileValues, sourceOfFundsValues } from './contract';
+import {
+  applyGuestSimSessionCookies,
+  createGuestSimSession,
+  expireGuestSimSessionCookies,
+  type GuestSimSession,
+} from './sim-session';
 import type {
   AccountReview,
   AccountType,
@@ -309,16 +315,26 @@ export function completeOpenSimulationOnboarding(
   {
     depositAmount = 10_000,
     riskProfile = 'Balanced',
+    session,
   }: {
     depositAmount?: number;
     riskProfile?: RiskProfile;
+    /** When restoring a prior device session, pass the stored session as-is. */
+    session?: GuestSimSession;
   } = {},
-) {
+): GuestSimSession {
+  const guestSession =
+    session ??
+    createGuestSimSession({
+      depositAmount,
+      riskProfile,
+    });
+
   const accountReview: AccountReview = {
     accountType: 'Individual',
     country: 'United States',
     identityConsent: true,
-    intendedDepositRange: intendedDepositRangeForSimAmount(depositAmount),
+    intendedDepositRange: intendedDepositRangeForSimAmount(guestSession.depositAmount),
     legalNameProvided: true,
     profileConfirmed: true,
     region: 'Simulation',
@@ -329,10 +345,13 @@ export function completeOpenSimulationOnboarding(
 
   completeDashboardOnboarding(response, {
     accountReview,
-    depositIntentAmount: depositAmount,
+    depositIntentAmount: guestSession.depositAmount,
     identityStatus: 'VERIFIED',
-    riskProfile,
+    riskProfile: guestSession.riskProfile,
   });
+  applyGuestSimSessionCookies(response, guestSession);
+
+  return guestSession;
 }
 
 export async function completePersistedDashboardOnboarding(
@@ -378,4 +397,9 @@ export function expireDashboardOnboarding(response: NextResponse) {
     maxAge: 0,
     path: '/',
   });
+  response.cookies.set(riskProfileCookieName, '', {
+    maxAge: 0,
+    path: '/',
+  });
+  expireGuestSimSessionCookies(response);
 }

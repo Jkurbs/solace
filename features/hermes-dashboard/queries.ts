@@ -108,6 +108,14 @@ export async function logoutUser() {
     throw new Error(payload.message ?? 'Logout failed.');
   }
 
+  // Clear device-local simulation identity so "Experience Hermes" can start fresh.
+  try {
+    window.localStorage.removeItem('hermes_sim_session_v1');
+    window.localStorage.removeItem('hermes_sim_started');
+  } catch {
+    // ignore storage failures
+  }
+
   window.location.assign(payload.url ?? '/');
 
   return payload;

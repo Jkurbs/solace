@@ -217,6 +217,67 @@ export async function getRecentHermesRealizedTradeEvents({
   }
 }
 
+/**
+ * Closed trades eligible for a guest simulation book:
+ * - closed after the guest entered
+ * - opened after the guest entered (no joining mid-trade / pre-entry exposure)
+ * Trades with unknown open time are excluded so pre-entry positions cannot slip in.
+ */
+export async function getHermesRealizedTradeEventsForSimulation({
+  after,
+  limit = 50,
+  poolId,
+}: {
+  after: string;
+  limit?: number;
+  poolId: string;
+}): Promise<HermesRealizedTradeEvent[]> {
+  if (!isSupabaseDataClientConfigured() || !poolId.trim() || !after) {
+    return [];
+  }
+
+  const afterMs = new Date(after).getTime();
+
+  if (!Number.isFinite(afterMs)) {
+    return [];
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    // Over-fetch then filter opened_at in process (opened_at may be null).
+    const { data, error } = await supabase
+      .from('hermes_realized_trade_events')
+      .select('*')
+      .eq('pool_id', poolId)
+      .gte('closed_at', after)
+      .order('closed_at', { ascending: false })
+      .limit(Math.max(limit * 3, 30));
+
+    if (error) {
+      if (!isMissingRealizedTradeObject(error.message)) {
+        console.warn('[hermes-realized-trades] Simulation events lookup failed.', error.message);
+      }
+
+      return [];
+    }
+
+    return (data ?? [])
+      .map(fromHermesRealizedTradeEventRow)
+      .filter((event) => {
+        if (!event.openedAt) {
+          return false;
+        }
+
+        const openedMs = new Date(event.openedAt).getTime();
+        return Number.isFinite(openedMs) && openedMs >= afterMs;
+      })
+      .slice(0, limit);
+  } catch (error) {
+    console.warn('[hermes-realized-trades] Simulation events lookup failed.', error);
+    return [];
+  }
+}
+
 export async function getHermesRealizedTradePerformance({
   after,
   at,

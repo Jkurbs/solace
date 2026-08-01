@@ -16,6 +16,8 @@ import type {
 
 import { dashboardFieldSources, hermesDashboardContractVersion } from './contract';
 import { hermesDashboardSnapshot } from './mock-data';
+import { buildLiveOpenSimulationDashboardSnapshot } from './sim-read-model';
+import { getGuestSimSessionFromCookies, type GuestSimSession } from './sim-session';
 import type {
   AccountReview,
   HermesDashboardSnapshot,
@@ -312,19 +314,23 @@ const tradePnlFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
 });
 
-// Real fills from the Hermes stream, rendered in the activity feed. This is a
-// protected account surface, so per-trade detail is in-contract here.
-function getTradeEventActivity(events: HermesRealizedTradeEvent[]) {
+// Real fills from the Hermes stream, rendered in the activity feed.
+// Scale pool/KuCoin notional to this account's capital share so activity
+// matches the user's book, not founder exchange dollars.
+function getTradeEventActivity(events: HermesRealizedTradeEvent[], capitalShare = 1) {
+  const share = Number.isFinite(capitalShare) && capitalShare > 0 ? Math.min(1, capitalShare) : 1;
+
   return events.map((event) => {
     // Same double-count guard as the public ledger: KuCoin realized is already fee-net.
     const reconstructed =
       Math.round((event.realizedPnl - Math.abs(event.fees) - Math.abs(event.funding)) * 100) / 100;
     const closePnl =
       Math.abs(reconstructed - event.netPnl) < 0.02 ? event.realizedPnl : event.netPnl;
+    const userPnl = Math.round(closePnl * share * 100) / 100;
 
     return {
       timestamp: event.closedAt,
-      summary: `Closed ${event.symbol} ${event.side === 'LONG' ? 'long' : 'short'} · ${tradePnlFormatter.format(closePnl)}`,
+      summary: `Closed ${event.symbol} ${event.side === 'LONG' ? 'long' : 'short'} · ${tradePnlFormatter.format(userPnl)}`,
     };
   });
 }
@@ -437,8 +443,10 @@ function getActiveSnapshotFromLedger(
 ): HermesDashboardSnapshot {
   const hermesActivity = ledger.activities.filter((activity) => activity.type === 'hermes_decision');
   const allocationActivity = getAllocationActivity(poolAllocations, poolProjection);
+  // poolShare is percent (0–100); convert to fraction so closes match user capital, not KuCoin notional.
+  const capitalShare = poolProjection ? poolProjection.position.poolShare / 100 : 1;
   const visibleActivity = [
-    ...getTradeEventActivity(tradeEvents),
+    ...getTradeEventActivity(tradeEvents, capitalShare),
     ...allocationActivity,
     ...(hermesActivity.length ? hermesActivity : ledger.activities).map((activity) => ({
       timestamp: activity.createdAt,
@@ -542,81 +550,29 @@ function getActiveSnapshotFromLedger(
 }
 
 /**
- * Open-access guest simulation: real Hermes-style surface, labeled simulation capital.
- * Used when login wall is off and the visitor has completed sim welcome.
+ * Open-access guest simulation: live Hermes paths after the guest entered,
+ * scaled to their virtual capital (never raw KuCoin founder notional).
  */
-export function getOpenSimulationDashboardSnapshot({
+export async function getOpenSimulationDashboardSnapshot({
   depositAmount = 10_000,
   riskProfile = 'Balanced',
+  session,
 }: {
   depositAmount?: number;
   riskProfile?: RiskProfile;
-} = {}): HermesDashboardSnapshot {
-  const snapshot = cloneSnapshot(hermesDashboardSnapshot);
-  const amount = Math.max(0, depositAmount);
-  const profit = snapshot.portfolio.profit;
-  const value = Math.round((amount + profit) * 100) / 100;
-  const sinceInception = amount > 0 ? Math.round((profit / amount) * 10000) / 100 : 0;
-  const updatedAt = new Date().toISOString();
-
-  return {
-    ...snapshot,
-    contractVersion: hermesDashboardContractVersion,
-    generatedAt: updatedAt,
-    updatedAt,
-    account: {
-      ...snapshot.account,
-      depositIntent: {
-        amount,
-        status: 'REVIEW_PENDING',
-      },
-      identityVerification: {
-        provider: 'stripe_identity',
-        status: 'VERIFIED',
-      },
-      label: 'Simulation account',
-      lifecycle: 'ACTIVE',
-      mode: 'SIMULATION',
-      review: {
-        accountType: 'Individual',
-        country: 'United States',
-        identityConsent: true,
-        intendedDepositRange: '$10k-$25k',
-        legalNameProvided: true,
-        profileConfirmed: true,
-        region: 'Simulation',
-        riskAcknowledged: true,
-        sourceOfFunds: 'Employment income',
-        status: 'SUBMITTED',
-      },
-    },
-    portfolio: {
-      ...snapshot.portfolio,
-      availableToWithdraw: value,
-      deposited: amount,
-      profit,
-      value,
-      sinceInception,
-      equityState: {
-        code: 'LIVE_EQUITY',
-        detail:
-          'Simulation capital is active. Figures follow live Hermes decisioning on founder capital; no real money is in your account.',
-        label: 'Simulation equity',
-        updatedAt,
-      },
-    },
-    status: {
-      ...snapshot.status,
+  session?: GuestSimSession | null;
+} = {}): Promise<HermesDashboardSnapshot> {
+  const resolved =
+    session ??
+    (await getGuestSimSessionFromCookies({ depositAmount, riskProfile })) ??
+    ({
+      depositAmount,
       riskProfile,
-    },
-    commentary:
-      'This is simulation capital. Hermes decisions and outcomes track the live instrument; your balance is virtual and no real money moves.',
-    activity: [
-      { timestamp: updatedAt, summary: `Simulation capital posted · $${amount.toLocaleString('en-US')}` },
-      { timestamp: updatedAt, summary: `${riskProfile} risk profile selected` },
-      ...snapshot.activity,
-    ],
-  };
+      sessionId: 'ephemeral',
+      startedAt: new Date().toISOString(),
+    } satisfies GuestSimSession);
+
+  return buildLiveOpenSimulationDashboardSnapshot(resolved);
 }
 
 export async function getHermesDashboardSnapshot({
@@ -641,7 +597,7 @@ export async function getHermesDashboardSnapshot({
     // they have a deposit intent (from Experience Hermes / open-sim welcome),
     // materialize simulation capital and show the live dashboard.
     if (!accountId && (depositIntentAmount ?? 0) > 0) {
-      return getOpenSimulationDashboardSnapshot({
+      return await getOpenSimulationDashboardSnapshot({
         depositAmount: depositIntentAmount ?? 10_000,
         riskProfile: selectedRiskProfile,
       });

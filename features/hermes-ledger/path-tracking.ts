@@ -334,6 +334,24 @@ export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: 
 }
 
 /**
+ * Open paths currently tracked by Hermes, for simulation participation.
+ * Paths sealed before a guest's sim start must not be treated as their opens.
+ */
+export async function listTrackedOpenPaths(): Promise<Array<{ openedAt: string; recordId: string; key: string }>> {
+  try {
+    const book = await readBook();
+    return Object.entries(book.opens).map(([key, entry]) => ({
+      key,
+      openedAt: entry.openedAt,
+      recordId: entry.recordId,
+    }));
+  } catch (error) {
+    console.warn('[hermes-ledger] Open path list failed.', error);
+    return [];
+  }
+}
+
+/**
  * Called from the trade-events ingest when a close seals: returns (and
  * consumes) the open row's record id for the `ref` field.
  *

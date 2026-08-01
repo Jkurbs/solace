@@ -16,8 +16,10 @@ import {
   getHermesDashboardSnapshot,
   getOpenSimulationDashboardSnapshot,
 } from '@/features/hermes-dashboard/read-model';
+import { getGuestSimSessionFromCookies } from '@/features/hermes-dashboard/sim-session';
 
 import DashboardAccessGate from './DashboardAccessGate';
+import SimSessionPersist from './SimSessionPersist';
 
 export const metadata: Metadata = {
   title: 'Solace · Hermes Dashboard',
@@ -87,18 +89,31 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     redirect('/dashboard/onboarding?welcome=1');
   }
 
-  // Guest simulation: show active sim capital without a ledger account invite.
+  // Guest simulation: live book scaled to virtual capital, no ledger invite.
   if (guestOpen) {
     const riskProfile = (await getStoredRiskProfile(accountId)) ?? 'Balanced';
-    const initialSnapshot = getOpenSimulationDashboardSnapshot({
-      depositAmount: onboarding.depositIntentAmount ?? 10_000,
+    const depositAmount = onboarding.depositIntentAmount ?? 10_000;
+    const session = await getGuestSimSessionFromCookies({ depositAmount, riskProfile });
+    const initialSnapshot = await getOpenSimulationDashboardSnapshot({
+      depositAmount,
       riskProfile,
+      session,
     });
 
-    return <HermesDashboard initialSnapshot={initialSnapshot} />;
+    return (
+      <>
+        <SimSessionPersist />
+        <HermesDashboard initialSnapshot={initialSnapshot} />
+      </>
+    );
   }
 
   const initialSnapshot = await getInitialDashboardSnapshot({ accountId, onboarding });
 
-  return <HermesDashboard initialSnapshot={initialSnapshot} />;
+  return (
+    <>
+      <SimSessionPersist />
+      <HermesDashboard initialSnapshot={initialSnapshot} />
+    </>
+  );
 }

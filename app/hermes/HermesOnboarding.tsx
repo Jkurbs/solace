@@ -13,7 +13,10 @@ import {
 } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
+/** Legacy flag; still cleared for older clients. */
 const SIM_STARTED_KEY = 'hermes_sim_started';
+/** Durable device-local sim identity (no credentials). Keep in sync with server. */
+export const SIM_SESSION_STORAGE_KEY = 'hermes_sim_session_v1';
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -64,8 +67,8 @@ const steps = [
         <path d="M12 6v6l4 2" />
       </svg>
     ),
-    title: 'No commitment, no catch',
-    text: 'No email required. No deposit. No spam. Just open the dashboard and watch it work.',
+    title: 'Saved on this device',
+    text: 'No email required. When you come back on this browser, you can open the same simulation dashboard again.',
     tone: 'gray' as const,
   },
 ] as const;
@@ -77,6 +80,14 @@ export const SIM_ALLOCATIONS = [
 ] as const;
 
 export type SimAllocation = (typeof SIM_ALLOCATIONS)[number]['value'];
+
+type StoredSimSession = {
+  version: 1;
+  sessionId: string;
+  startedAt: string;
+  depositAmount: number;
+  riskProfile: string;
+};
 
 type OnboardingContextValue = {
   open: () => void;
@@ -90,6 +101,44 @@ export function useHermesOnboarding() {
     throw new Error('useHermesOnboarding must be used within HermesOnboardingProvider');
   }
   return ctx;
+}
+
+function readStoredSimSession(): StoredSimSession | null {
+  try {
+    const raw = window.localStorage.getItem(SIM_SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<StoredSimSession>;
+    if (
+      parsed?.version !== 1 ||
+      typeof parsed.sessionId !== 'string' ||
+      typeof parsed.startedAt !== 'string' ||
+      typeof parsed.depositAmount !== 'number' ||
+      typeof parsed.riskProfile !== 'string'
+    ) {
+      return null;
+    }
+    return parsed as StoredSimSession;
+  } catch {
+    return null;
+  }
+}
+
+export function persistSimSession(session: StoredSimSession) {
+  try {
+    window.localStorage.setItem(SIM_SESSION_STORAGE_KEY, JSON.stringify(session));
+    window.localStorage.setItem(SIM_STARTED_KEY, '1');
+  } catch {
+    // storage blocked
+  }
+}
+
+export function clearPersistedSimSession() {
+  try {
+    window.localStorage.removeItem(SIM_SESSION_STORAGE_KEY);
+    window.localStorage.removeItem(SIM_STARTED_KEY);
+  } catch {
+    // ignore
+  }
 }
 
 /** Opens the simulation onboarding sheet. Use on every Experience Hermes entry. */
@@ -136,26 +185,11 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const [isOpen, setIsOpen] = useState(false);
-  const [step, setStep] = useState<'explain' | 'success'>('explain');
+  const [step, setStep] = useState<'explain' | 'success' | 'returning'>('explain');
   const [selectedAllocation, setSelectedAllocation] = useState<SimAllocation>(50_000);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const open = useCallback(() => {
-    try {
-      if (window.localStorage.getItem(SIM_STARTED_KEY) === '1') {
-        router.push('/dashboard');
-        return;
-      }
-    } catch {
-      // storage blocked: fall through to sheet
-    }
-
-    setStep('explain');
-    setError(null);
-    setSubmitting(false);
-    setIsOpen(true);
-  }, [router]);
+  const [activeDeposit, setActiveDeposit] = useState<number>(50_000);
 
   const close = useCallback(() => {
     setIsOpen(false);
@@ -166,11 +200,89 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
     }, 300);
   }, []);
 
+  const restoreSession = useCallback(async (stored: StoredSimSession) => {
+    const response = await fetch('/api/dashboard/onboarding/open-simulation', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ restore: true, session: stored }),
+      credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const payload = (await response.json().catch(() => null)) as {
+      ok?: boolean;
+      session?: StoredSimSession;
+    } | null;
+
+    if (payload?.ok === false) {
+      return false;
+    }
+
+    if (payload?.session) {
+      persistSimSession(payload.session);
+    } else {
+      persistSimSession(stored);
+    }
+
+    return true;
+  }, []);
+
+  const open = useCallback(async () => {
+    setError(null);
+    setSubmitting(false);
+
+    const stored = readStoredSimSession();
+    if (stored) {
+      setActiveDeposit(stored.depositAmount);
+      setSubmitting(true);
+      setStep('returning');
+      setIsOpen(true);
+
+      try {
+        const ok = await restoreSession(stored);
+        setSubmitting(false);
+        if (ok) {
+          router.push('/dashboard');
+          close();
+          return;
+        }
+        // Stored session rejected: clear and offer a fresh start.
+        clearPersistedSimSession();
+        setStep('explain');
+        setError('Your previous simulation could not be restored on this device. Start again below.');
+      } catch {
+        setSubmitting(false);
+        setStep('explain');
+        setError('We could not reach your simulation just now. Try again in a moment.');
+      }
+      return;
+    }
+
+    // Legacy flag without full session: send them to dashboard; cookies may still work.
+    try {
+      if (window.localStorage.getItem(SIM_STARTED_KEY) === '1') {
+        router.push('/dashboard');
+        return;
+      }
+    } catch {
+      // storage blocked
+    }
+
+    setStep('explain');
+    setIsOpen(true);
+  }, [close, restoreSession, router]);
+
   useEffect(() => {
     if (!isOpen) return;
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !submitting) {
         close();
       }
     };
@@ -183,7 +295,7 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', onKey);
     };
-  }, [isOpen, close]);
+  }, [isOpen, close, submitting]);
 
   const startTracking = useCallback(async () => {
     if (submitting) return;
@@ -192,46 +304,45 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
     setError(null);
 
     try {
-      const body = new URLSearchParams({
-        simAcknowledged: 'on',
-        riskProfile: 'Balanced',
-        depositAmount: String(selectedAllocation),
-      });
-
       const response = await fetch('/api/dashboard/onboarding/open-simulation', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body,
+        body: JSON.stringify({
+          simAcknowledged: true,
+          riskProfile: 'Balanced',
+          depositAmount: selectedAllocation,
+        }),
         credentials: 'same-origin',
       });
 
       if (response.ok) {
-        const payload = (await response.json().catch(() => null)) as { ok?: boolean } | null;
+        const payload = (await response.json().catch(() => null)) as {
+          ok?: boolean;
+          session?: StoredSimSession;
+          depositAmount?: number;
+        } | null;
+
         if (payload?.ok !== false) {
-          try {
-            window.localStorage.setItem(SIM_STARTED_KEY, '1');
-          } catch {
-            // ignore storage failures
+          if (payload?.session) {
+            persistSimSession(payload.session);
+            setActiveDeposit(payload.session.depositAmount);
+          } else {
+            persistSimSession({
+              version: 1,
+              sessionId: `local_${Date.now()}`,
+              startedAt: new Date().toISOString(),
+              depositAmount: selectedAllocation,
+              riskProfile: 'Balanced',
+            });
+            setActiveDeposit(selectedAllocation);
           }
           setStep('success');
           setSubmitting(false);
           return;
         }
-      }
-
-      // Fallback: form-style redirect path completed cookies server-side.
-      if (response.redirected || response.status === 303 || response.status === 0) {
-        try {
-          window.localStorage.setItem(SIM_STARTED_KEY, '1');
-        } catch {
-          // ignore
-        }
-        setStep('success');
-        setSubmitting(false);
-        return;
       }
 
       setError('We could not start the simulation just now. Try again in a moment.');
@@ -256,7 +367,9 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
             initial={motionOff ? false : 'hidden'}
             animate="visible"
             exit="exit"
-            onClick={close}
+            onClick={() => {
+              if (!submitting) close();
+            }}
             aria-hidden="true"
           />
         )}
@@ -280,7 +393,41 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
             <div className="hermes-onboard-handle" aria-hidden="true" />
 
             <AnimatePresence mode="wait">
-              {step === 'explain' ? (
+              {step === 'returning' ? (
+                <motion.div
+                  key="returning"
+                  variants={motionOff ? undefined : contentVariants}
+                  initial={motionOff ? false : 'hidden'}
+                  animate="visible"
+                  exit="exit"
+                  className="hermes-onboard-success"
+                >
+                  <div className="hermes-onboard-success-ring" aria-hidden="true">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                    </svg>
+                  </div>
+                  <h3 id={titleId} className="hermes-onboard-success-title">
+                    Welcome back
+                  </h3>
+                  <p className="hermes-onboard-success-text">
+                    Opening your simulation ({allocationLabel(activeDeposit)}) on this device. No sign-in
+                    needed.
+                  </p>
+                  {submitting ? (
+                    <p className="hermes-onboard-note" role="status">
+                      Restoring…
+                    </p>
+                  ) : null}
+                </motion.div>
+              ) : step === 'explain' ? (
                 <motion.div
                   key="explain"
                   variants={motionOff ? undefined : contentVariants}
@@ -361,8 +508,8 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
                     ) : null}
                   </button>
                   <p className="hermes-onboard-note">
-                    You are not depositing real money. This is a simulation using Hermes&apos;s live
-                    decision data. {allocationLabel(selectedAllocation)} virtual capital.
+                    You are not depositing real money. Paths Hermes already has open do not enter your book.
+                    You only participate from the next path forward. {allocationLabel(selectedAllocation)} virtual capital.
                   </p>
                 </motion.div>
               ) : (
@@ -390,8 +537,8 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
                     You are now tracking Hermes
                   </h3>
                   <p className="hermes-onboard-success-text">
-                    Your simulated portfolio ({allocationLabel(selectedAllocation)}) is live. Every
-                    position Hermes opens or closes will be mirrored here. No real money moves.
+                    Your simulated portfolio ({allocationLabel(activeDeposit)}) is live. Closed results
+                    scale to your capital. You will not join trades that were already open when you entered.
                   </p>
                   <Link href="/dashboard" className="hermes-onboard-cta" onClick={close}>
                     Open dashboard

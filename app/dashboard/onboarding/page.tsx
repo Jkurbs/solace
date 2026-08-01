@@ -5,6 +5,7 @@ import { ArrowRight } from 'lucide-react';
 
 import Mark from '@/app/Mark';
 import DashboardThemeShell from '@/app/dashboard/DashboardThemeShell';
+import SimSessionRestore from '@/app/dashboard/SimSessionRestore';
 import RiskProfileSelector from '@/app/dashboard/onboarding/risk-profile-selector';
 import {
   getDashboardAccountId,
@@ -94,6 +95,8 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
               </p>
             </div>
           </div>
+
+          <SimSessionRestore />
 
           <form action="/api/dashboard/onboarding/open-simulation" method="post" className="grid gap-6">
             {invalid ? (
