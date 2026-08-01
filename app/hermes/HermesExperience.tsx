@@ -114,6 +114,9 @@ function Header() {
         <nav className="hmk-nav" aria-label="Primary">
           <a href="#how">How it works</a>
           <a href="#ledger">Ledger</a>
+          <a href="https://docs.solace.fyi" target="_blank" rel="noopener noreferrer">
+            API
+          </a>
           <ExperienceHermesButton className="hmk-nav-btn">Simulate</ExperienceHermesButton>
         </nav>
         <div className="hmk-header-actions">
@@ -147,6 +150,14 @@ function Header() {
             </a>
             <a href="#ledger" onClick={() => setMenuOpen(false)}>
               Ledger
+            </a>
+            <a
+              href="https://docs.solace.fyi"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMenuOpen(false)}
+            >
+              API
             </a>
             <ExperienceHermesButton
               className="hmk-menu-btn"
