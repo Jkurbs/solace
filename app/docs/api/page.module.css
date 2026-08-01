@@ -1,16 +1,41 @@
+/* Docs API page — dark reference UI matching the public market-read design. */
 .page {
+  --docs-bg: #0a0a0a;
+  --docs-surface: #111111;
+  --docs-surface-muted: #141414;
+  --docs-border: #262626;
+  --docs-text: #fafafa;
+  --docs-text-secondary: #a3a3a3;
+  --docs-text-tertiary: #737373;
+  --docs-text-quaternary: #525252;
+  --docs-positive: #22c55e;
+  --docs-string: #7dd3fc;
+  --docs-font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --docs-font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  min-height: 100vh;
   max-width: 800px;
   margin: 0 auto;
   padding: 0 24px 64px;
-  font-family: var(--kimi-font-sans, system-ui, sans-serif);
-  color: var(--kimi-color-text-primary);
+  background: var(--docs-bg);
+  font-family: var(--docs-font-sans);
+  color: var(--docs-text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
+/* Full-bleed dark canvas behind the constrained column */
+.page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--docs-bg);
+}
+
 /* Header */
 .header {
-  border-bottom: 1px solid var(--kimi-color-border);
+  border-bottom: 1px solid var(--docs-border);
   margin-bottom: 32px;
 }
 
@@ -27,7 +52,7 @@
   gap: 10px;
   font-size: 15px;
   font-weight: 500;
-  color: var(--kimi-color-text-primary);
+  color: var(--docs-text);
   text-decoration: none;
 }
 
@@ -39,13 +64,13 @@
 
 .navLink {
   font-size: 14px;
-  color: var(--kimi-color-text-secondary);
+  color: var(--docs-text-secondary);
   text-decoration: none;
   transition: color 120ms ease-out;
 }
 
 .navLink:hover {
-  color: var(--kimi-color-text-primary);
+  color: var(--docs-text);
 }
 
 /* Hero */
@@ -57,7 +82,7 @@
 .kicker {
   font-size: 12px;
   font-weight: 500;
-  color: var(--kimi-color-text-tertiary);
+  color: var(--docs-text-tertiary);
   letter-spacing: 0.02em;
   text-transform: lowercase;
   margin-bottom: 8px;
@@ -67,28 +92,32 @@
   font-size: 32px;
   font-weight: 500;
   line-height: 1.15;
+  letter-spacing: -0.022em;
   margin: 0 0 16px;
+  color: var(--docs-text);
 }
 
 .heroBody {
   font-size: 16px;
   line-height: 24px;
-  color: var(--kimi-color-text-secondary);
+  color: var(--docs-text-secondary);
   margin: 0;
 }
 
 /* Live card */
 .liveCard {
-  border: 1px solid var(--kimi-color-border);
+  border: 1px solid var(--docs-border);
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 32px;
+  background: color-mix(in srgb, var(--docs-surface) 55%, transparent);
 }
 
 .liveHeader {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  gap: 16px;
   margin-bottom: 20px;
 }
 
@@ -102,46 +131,47 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--kimi-color-text-quaternary);
+  background: var(--docs-text-quaternary);
   flex-shrink: 0;
   margin-top: 4px;
 }
 
 .pulseDotLive {
-  background: var(--kimi-color-positive);
+  background: var(--docs-positive);
   animation: pulseRing 2s infinite;
 }
 
 @keyframes pulseRing {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--kimi-color-positive) 35%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--docs-positive) 35%, transparent);
   }
   70% {
-    box-shadow: 0 0 0 8px color-mix(in srgb, var(--kimi-color-positive) 0%, transparent);
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--docs-positive) 0%, transparent);
   }
   100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--kimi-color-positive) 0%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--docs-positive) 0%, transparent);
   }
 }
 
 .pulseLabel {
   font-size: 18px;
   font-weight: 500;
-  color: var(--kimi-color-text-primary);
+  color: var(--docs-text);
 }
 
 .pulseSublabel {
   font-size: 12px;
-  color: var(--kimi-color-text-tertiary);
+  color: var(--docs-text-tertiary);
   margin-top: 2px;
 }
 
 .liveMeta {
   font-size: 12px;
-  color: var(--kimi-color-text-tertiary);
+  color: var(--docs-text-tertiary);
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .liveMeta svg {
@@ -152,24 +182,18 @@
 .summary {
   font-size: 16px;
   line-height: 24px;
-  color: var(--kimi-color-text-secondary);
+  color: var(--docs-text-secondary);
   margin: 0 0 24px;
   padding-bottom: 24px;
-  border-bottom: 1px solid var(--kimi-color-border);
+  border-bottom: 1px solid var(--docs-border);
 }
 
-/* Field grid */
+/* Field grid — 2×2 like the design reference */
 .fieldGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-bottom: 20px;
-}
-
-@media (max-width: 720px) {
-  .fieldGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 @media (max-width: 480px) {
@@ -179,14 +203,15 @@
 }
 
 .fieldCard {
-  border: 1px solid var(--kimi-color-border);
+  border: 1px solid var(--docs-border);
   border-radius: 10px;
   padding: 16px;
+  background: color-mix(in srgb, var(--docs-surface) 40%, transparent);
 }
 
 .fieldLabel {
   font-size: 12px;
-  color: var(--kimi-color-text-tertiary);
+  color: var(--docs-text-tertiary);
   margin-bottom: 8px;
   text-transform: lowercase;
 }
@@ -194,13 +219,13 @@
 .fieldValue {
   font-size: 18px;
   font-weight: 500;
-  color: var(--kimi-color-text-primary);
+  color: var(--docs-text);
   margin-bottom: 6px;
 }
 
 .fieldHint {
   font-size: 12px;
-  color: var(--kimi-color-text-quaternary);
+  color: var(--docs-text-quaternary);
   line-height: 16px;
 }
 
@@ -215,7 +240,7 @@
   width: 6px;
   height: 6px;
   border-radius: 2px;
-  background: var(--kimi-color-text-quaternary);
+  background: var(--docs-text-quaternary);
   opacity: 0.35;
 }
 
@@ -223,13 +248,13 @@
   width: 6px;
   height: 6px;
   border-radius: 2px;
-  background: var(--kimi-color-text-primary);
+  background: var(--docs-text);
 }
 
 /* Disclosure */
 .disclosure {
   font-size: 12px;
-  color: var(--kimi-color-text-quaternary);
+  color: var(--docs-text-quaternary);
   line-height: 18px;
   display: flex;
   gap: 8px;
@@ -254,35 +279,32 @@
 .apiTitle {
   font-size: 20px;
   font-weight: 500;
+  letter-spacing: -0.02em;
   margin: 0 0 8px;
+  color: var(--docs-text);
 }
 
 .apiBody {
   font-size: 14px;
-  color: var(--kimi-color-text-secondary);
+  color: var(--docs-text-secondary);
   line-height: 20px;
   margin: 0;
 }
 
-/* Panels */
+/* Panels — stacked full-width like the design reference */
 .panels {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
 }
 
-@media (max-width: 720px) {
-  .panels {
-    grid-template-columns: 1fr;
-  }
-}
-
 .panel {
-  border: 1px solid var(--kimi-color-border);
+  border: 1px solid var(--docs-border);
   border-radius: 12px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  background: color-mix(in srgb, var(--docs-surface) 50%, transparent);
 }
 
 .panelHead {
@@ -290,13 +312,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--kimi-color-border);
+  border-bottom: 1px solid var(--docs-border);
 }
 
 .panelLabel {
   font-size: 12px;
   font-weight: 500;
-  color: var(--kimi-color-text-tertiary);
+  color: var(--docs-text-tertiary);
   text-transform: lowercase;
   display: flex;
   align-items: center;
@@ -309,7 +331,7 @@
 
 /* Code blocks */
 .codeWrap {
-  background: var(--kimi-color-surface-muted);
+  background: var(--docs-surface-muted);
   padding: 16px;
   overflow-x: auto;
   flex: 1;
@@ -317,10 +339,11 @@
 
 .codePre {
   margin: 0;
-  font-family: var(--kimi-font-mono, ui-monospace, monospace);
+  font-family: var(--docs-font-mono);
   font-size: 13px;
   line-height: 20px;
   white-space: pre;
+  color: var(--docs-text-secondary);
 }
 
 .codePre code {
@@ -334,9 +357,9 @@
   gap: 6px;
   padding: 4px 10px;
   border-radius: 6px;
-  border: 1px solid var(--kimi-color-border);
+  border: 1px solid var(--docs-border);
   background: transparent;
-  color: var(--kimi-color-text-secondary);
+  color: var(--docs-text-secondary);
   font-size: 12px;
   font-weight: 500;
   font-family: inherit;
@@ -345,8 +368,8 @@
 }
 
 .copyBtn:hover {
-  border-color: var(--kimi-color-text-primary);
-  color: var(--kimi-color-text-primary);
+  border-color: var(--docs-text);
+  color: var(--docs-text);
 }
 
 .copyBtn svg {
@@ -367,7 +390,7 @@
 
 .rules li {
   font-size: 14px;
-  color: var(--kimi-color-text-secondary);
+  color: var(--docs-text-secondary);
   line-height: 20px;
   padding-left: 16px;
   position: relative;
@@ -381,7 +404,7 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--kimi-color-text-quaternary);
+  background: var(--docs-text-quaternary);
 }
 
 /* Fields table */
@@ -392,13 +415,16 @@
 .fieldsTitle {
   font-size: 20px;
   font-weight: 500;
+  letter-spacing: -0.02em;
   margin: 0 0 16px;
+  color: var(--docs-text);
 }
 
 .tableWrap {
-  border: 1px solid var(--kimi-color-border);
+  border: 1px solid var(--docs-border);
   border-radius: 12px;
   overflow: hidden;
+  background: color-mix(in srgb, var(--docs-surface) 40%, transparent);
 }
 
 .table {
@@ -411,14 +437,14 @@
   text-align: left;
   padding: 12px 16px;
   font-weight: 500;
-  color: var(--kimi-color-text-tertiary);
-  border-bottom: 1px solid var(--kimi-color-border);
+  color: var(--docs-text-tertiary);
+  border-bottom: 1px solid var(--docs-border);
 }
 
 .table td {
   padding: 12px 16px;
-  color: var(--kimi-color-text-secondary);
-  border-bottom: 1px solid var(--kimi-color-border);
+  color: var(--docs-text-secondary);
+  border-bottom: 1px solid var(--docs-border);
   vertical-align: top;
 }
 
@@ -427,23 +453,23 @@
 }
 
 .table code {
-  font-family: var(--kimi-font-mono, ui-monospace, monospace);
+  font-family: var(--docs-font-mono);
   font-size: 12px;
-  color: var(--kimi-color-text-primary);
-  background: var(--kimi-color-surface-muted);
+  color: var(--docs-text);
+  background: var(--docs-surface-muted);
   padding: 2px 5px;
   border-radius: 4px;
 }
 
 /* Footer */
 .footer {
-  border-top: 1px solid var(--kimi-color-border);
+  border-top: 1px solid var(--docs-border);
   padding-top: 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 12px;
-  color: var(--kimi-color-text-quaternary);
+  color: var(--docs-text-quaternary);
   flex-wrap: wrap;
   gap: 12px;
 }
@@ -453,11 +479,11 @@
 }
 
 .footerLink {
-  color: var(--kimi-color-text-secondary);
+  color: var(--docs-text-secondary);
   text-decoration: none;
   transition: color 120ms ease-out;
 }
 
 .footerLink:hover {
-  color: var(--kimi-color-text-primary);
+  color: var(--docs-text);
 }

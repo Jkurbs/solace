@@ -18164,6 +18164,7 @@ html[data-theme='dark'] .hermes-paper {
 
 .hmk-nav {
   display: none;
+  align-items: center;
   gap: 1.75rem;
 }
 
@@ -18175,6 +18176,26 @@ html[data-theme='dark'] .hermes-paper {
 
 .hmk-nav a:hover {
   color: var(--hmk-ink);
+}
+
+/* Extra breathing room around the API entry so it doesn’t crowd neighbors */
+.hmk-nav-api {
+  margin-inline: 0.15rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.hmk-nav-api:hover {
+  border-color: var(--hmk-line);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.hmk-menu-api {
+  display: inline-flex;
+  margin: 0.15rem 0;
+  padding: 0.35rem 0;
 }
 
 .hmk-header-actions {
@@ -18315,8 +18336,23 @@ html[data-theme='dark'] .hermes-paper {
   line-height: 1.6;
 }
 
-.hmk-hero-card .hmk-btn {
+.hmk-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem 1rem;
   margin-top: 1.5rem;
+}
+
+.hmk-hero-card .hmk-hero-actions .hmk-btn {
+  margin-top: 0;
+}
+
+/* Space around the secondary API docs control in the hero */
+.hmk-btn-api {
+  margin-left: 0.15rem;
+  padding-inline: 1.5rem;
 }
 
 .hmk-hero-phone {

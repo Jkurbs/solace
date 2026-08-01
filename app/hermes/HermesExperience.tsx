@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
+import { DOCS_API_URL } from '@/lib/docs';
 
 import Mark from '../Mark';
 import ThemeToggle from '../ThemeToggle';
@@ -114,7 +115,12 @@ function Header() {
       <nav className="hmk-nav" aria-label="Primary">
         <a href="#how">How it works</a>
         <a href="#ledger">Ledger</a>
-        <a href="https://docs.solace.fyi" target="_blank" rel="noopener noreferrer">
+        <a
+          href={DOCS_API_URL}
+          className="hmk-nav-api"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           API
         </a>
         <ExperienceHermesButton className="hmk-nav-btn">Simulate</ExperienceHermesButton>
@@ -152,7 +158,8 @@ function Header() {
             Ledger
           </a>
           <a
-            href="https://docs.solace.fyi"
+            href={DOCS_API_URL}
+            className="hmk-menu-api"
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setMenuOpen(false)}
@@ -339,10 +346,10 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
               <span aria-hidden="true">→</span>
             </ExperienceHermesButton>
             <a
-              href="https://docs.solace.fyi"
+              href={DOCS_API_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="hmk-btn hmk-btn-light"
+              className="hmk-btn hmk-btn-light hmk-btn-api"
             >
               API docs
             </a>

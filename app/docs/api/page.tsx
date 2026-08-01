@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import Mark from '@/app/Mark';
-import ThemeToggle from '@/app/ThemeToggle';
 import { getHermesPublicMarketRead } from '@/features/hermes-market/read';
 import { hermesVersion } from '@/features/hermes-version';
 import { DOCS_API_URL, HERMES_MARKET_API_PATH, HERMES_MARKET_API_URL } from '@/lib/docs';
@@ -25,9 +24,13 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
+/** Docs-facing disclosure for the live card (posture read, not a trade signal). */
+const DOCS_POSTURE_DISCLOSURE =
+  'This is a posture read, not a signal. It describes how Hermes sees conditions, not what it will do next.';
+
 function RefreshIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path d="M6.88048 6.89231C9.69226 4.08054 14.251 4.08054 17.0628 6.89231L16.2364 7.71871C15.7324 8.22268 16.0894 9.0844 16.8021 9.0844H19.7276C20.1694 9.0844 20.5276 8.72623 20.5276 8.2844V5.35891C20.5276 4.64619 19.6659 4.28926 19.1619 4.79323L18.3356 5.61952C14.8209 2.1048 9.12241 2.1048 5.60769 5.61952C2.09297 9.13424 2.09297 14.8327 5.60769 18.3474C9.12241 21.8622 14.8209 21.8622 18.3356 18.3474C19.4929 17.1902 20.2703 15.7937 20.6655 14.3163C20.7939 13.8361 20.5087 13.3428 20.0285 13.2143C19.5483 13.0859 19.055 13.3711 18.9266 13.8513C18.611 15.0314 17.9906 16.1469 17.0628 17.0746C14.251 19.8864 9.69226 19.8864 6.88048 17.0746C4.06871 14.2629 4.06871 9.70409 6.88048 6.89231Z" fill="currentColor"/>
     </svg>
   );
@@ -35,7 +38,7 @@ function RefreshIcon() {
 
 function InfoIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path d="M12 2.1001C17.4676 2.10031 21.8994 6.53286 21.8994 12.0005C21.8992 17.4679 17.4674 21.8997 12 21.8999C6.53237 21.8999 2.09982 17.4681 2.09961 12.0005C2.09961 6.53273 6.53224 2.1001 12 2.1001ZM12 3.8999C7.52636 3.8999 3.89941 7.52684 3.89941 12.0005C3.89963 16.474 7.52649 20.1001 12 20.1001C16.4733 20.0999 20.0994 16.4738 20.0996 12.0005C20.0996 7.52697 16.4735 3.90011 12 3.8999ZM12 9.50049C12.4969 9.50068 12.8994 9.87055 12.8994 10.3267V16.6743C12.8992 17.1303 12.4968 17.5003 12 17.5005C11.503 17.5005 11.0998 17.1304 11.0996 16.6743V10.3267C11.0996 9.87043 11.5029 9.50049 12 9.50049ZM12 6.49951C12.4968 6.49951 12.8994 6.90313 12.8994 7.3999C12.8992 7.8965 12.4966 8.30029 12 8.30029C11.5025 8.30028 11.0998 7.8965 11.0996 7.3999C11.0996 6.90313 11.5024 6.49952 12 6.49951Z" fill="currentColor"/>
     </svg>
   );
@@ -43,7 +46,7 @@ function InfoIcon() {
 
 function CodeIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path d="M16.5293 15.0596C16.9496 15.1021 17.2772 15.4572 17.2773 15.8887C17.2773 16.3202 16.9497 16.6753 16.5293 16.7178L16.4443 16.7217H12C11.5399 16.7216 11.167 16.3488 11.167 15.8887C11.1671 15.4286 11.54 15.0558 12 15.0557H16.4443L16.5293 15.0596Z" fill="currentColor"/>
       <path d="M6.96582 7.52246C7.27077 7.21751 7.75375 7.1983 8.08105 7.46484L8.14453 7.52246L10.8232 10.2002C11.5102 10.8872 11.5102 12.0014 10.8232 12.6885L8.14453 15.3672L8.08105 15.4248C7.75377 15.6913 7.27075 15.6721 6.96582 15.3672C6.66114 15.0621 6.64234 14.5791 6.90918 14.252L6.96582 14.1885L9.64453 11.5098C9.68057 11.4736 9.68062 11.415 9.64453 11.3789L6.96582 8.7002C6.64116 8.37488 6.6411 7.84774 6.96582 7.52246Z" fill="currentColor"/>
       <path fillRule="evenodd" clipRule="evenodd" d="M17 3.09961C19.1539 3.09966 20.9004 4.84612 20.9004 7V17C20.9004 19.1539 19.1539 20.9003 17 20.9004H7C4.84609 20.9004 3.09961 19.1539 3.09961 17V7C3.09961 4.84609 4.84609 3.09961 7 3.09961H17ZM7 4.90039C5.8402 4.90039 4.90039 5.8402 4.90039 7V17C4.90039 18.1598 5.8402 19.0996 7 19.0996H17C18.1598 19.0996 19.0996 18.1598 19.0996 17V7C19.0996 5.84024 18.1598 4.90044 17 4.90039H7Z" fill="currentColor"/>
@@ -53,7 +56,7 @@ function CodeIcon() {
 
 function PulseDot({ pulse }: { pulse: string }) {
   const isLive = pulse.toLowerCase() === 'live';
-  return <div className={`${styles.pulseDot} ${isLive ? styles.pulseDotLive : ''}`} />;
+  return <div className={`${styles.pulseDot} ${isLive ? styles.pulseDotLive : ''}`} aria-hidden="true" />;
 }
 
 function FieldCard({ label, value, hint, children }: { label: string; value: string; hint?: string; children?: React.ReactNode }) {
@@ -68,9 +71,10 @@ function FieldCard({ label, value, hint, children }: { label: string; value: str
 }
 
 function CapitalDots({ active, total }: { active: number; total: number }) {
+  const count = Math.max(total, 1);
   return (
-    <div className={styles.capitalDots}>
-      {Array.from({ length: total }).map((_, i) => (
+    <div className={styles.capitalDots} aria-hidden="true">
+      {Array.from({ length: count }).map((_, i) => (
         <span key={i} className={i < active ? styles.capitalDotActive : styles.capitalDot} />
       ))}
     </div>
@@ -78,9 +82,9 @@ function CapitalDots({ active, total }: { active: number; total: number }) {
 }
 
 function highlightJson(json: string): string {
-  const keyColor = 'var(--kimi-color-text-secondary)';
-  const strColor = 'var(--kimi-chart-1)';
-  const numColor = 'var(--kimi-color-text-primary)';
+  const keyColor = 'var(--docs-text-secondary)';
+  const strColor = 'var(--docs-string)';
+  const numColor = 'var(--docs-text)';
   return json
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -92,8 +96,27 @@ function highlightJson(json: string): string {
 
 export default async function DocsApiPage() {
   const market = await getHermesPublicMarketRead();
-  const prettyJson = JSON.stringify(market, null, 2);
+  // Docs sample mirrors the public contract fields (what curl returns that stay).
+  const docsPayload = {
+    posture: market.posture,
+    outlook: market.outlook,
+    environment: market.environment,
+    capital: {
+      active: market.capital.active,
+      deployed_paths: market.capital.deployed_paths,
+      paths_under_review: market.capital.paths_under_review,
+    },
+    pulse: market.pulse,
+    as_of: market.as_of,
+    version: market.version,
+  };
+  const prettyJson = JSON.stringify(docsPayload, null, 2);
   const curlCommand = `curl -sS ${HERMES_MARKET_API_URL} | jq .`;
+  const capitalTotal = Math.max(
+    market.capital.deployed_paths + market.capital.paths_under_review,
+    market.capital.deployed_paths,
+    1,
+  );
 
   return (
     <main className={styles.page}>
@@ -103,11 +126,10 @@ export default async function DocsApiPage() {
             <Mark size={20} />
             Solace
           </Link>
-          <nav className={styles.nav}>
+          <nav className={styles.nav} aria-label="Docs">
             <a href="https://solace.fyi/hermes" className={styles.navLink}>Hermes</a>
             <a href="https://solace.fyi/observatory/hermes/ledger" className={styles.navLink}>Ledger</a>
             <a href="https://solace.fyi" className={styles.navLink}>solace.fyi</a>
-            <ThemeToggle />
           </nav>
         </div>
       </header>
@@ -146,13 +168,13 @@ export default async function DocsApiPage() {
             value={market.capital.active}
             hint={`${market.capital.deployed_paths} paths deployed · ${market.capital.paths_under_review} under review`}
           >
-            <CapitalDots active={market.capital.deployed_paths} total={market.capital.deployed_paths + market.capital.paths_under_review} />
+            <CapitalDots active={market.capital.deployed_paths} total={capitalTotal} />
           </FieldCard>
         </div>
 
         <div className={styles.disclosure}>
           <InfoIcon />
-          {market.disclosure}
+          <span>{DOCS_POSTURE_DISCLOSURE}</span>
         </div>
       </section>
 
