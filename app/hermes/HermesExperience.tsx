@@ -105,73 +105,73 @@ function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="hmk-header">
-      <div className="hmk-header-inner">
-        <Link href="/" className="hmk-brand" aria-label="Solace home">
-          <Mark size={18} className="site-mark" />
-          <span>Solace</span>
-        </Link>
-        <nav className="hmk-nav" aria-label="Primary">
-          <a href="#how">How it works</a>
-          <a href="#ledger">Ledger</a>
-          <a href="https://docs.solace.fyi" target="_blank" rel="noopener noreferrer">
+  <header className="hmk-header">
+    <div className="hmk-header-inner">
+      <Link href="/" className="hmk-brand" aria-label="Solace home">
+        <Mark size={18} className="site-mark" />
+        <span>Solace</span>
+      </Link>
+      <nav className="hmk-nav" aria-label="Primary">
+        <a href="#how">How it works</a>
+        <a href="#ledger">Ledger</a>
+        <a href="https://docs.solace.fyi" target="_blank" rel="noopener noreferrer">
+          API
+        </a>
+        <ExperienceHermesButton className="hmk-nav-btn">Simulate</ExperienceHermesButton>
+      </nav>
+      <div className="hmk-header-actions">
+        <ThemeToggle />
+        <ExperienceHermesButton className="hmk-btn hmk-btn-light hmk-btn-sm">
+          Experience Hermes
+        </ExperienceHermesButton>
+        <button
+          type="button"
+          className={`site-menu-button${menuOpen ? ' is-open' : ''}`}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((o) => !o)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+      </div>
+    </div>
+    <AnimatePresence>
+      {menuOpen && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="hmk-menu"
+        >
+          <a href="#how" onClick={() => setMenuOpen(false)}>
+            How it works
+          </a>
+          <a href="#ledger" onClick={() => setMenuOpen(false)}>
+            Ledger
+          </a>
+          <a
+            href="https://docs.solace.fyi"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMenuOpen(false)}
+          >
             API
           </a>
-          <ExperienceHermesButton className="hmk-nav-btn">Simulate</ExperienceHermesButton>
-        </nav>
-        <div className="hmk-header-actions">
-          <ThemeToggle />
-          <ExperienceHermesButton className="hmk-btn hmk-btn-light hmk-btn-sm">
+          <ExperienceHermesButton
+            className="hmk-menu-btn"
+            onClick={() => setMenuOpen(false)}
+          >
             Experience Hermes
           </ExperienceHermesButton>
-          <button
-            type="button"
-            className={`site-menu-button${menuOpen ? ' is-open' : ''}`}
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((o) => !o)}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
-        </div>
-      </div>
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="hmk-menu"
-          >
-            <a href="#how" onClick={() => setMenuOpen(false)}>
-              How it works
-            </a>
-            <a href="#ledger" onClick={() => setMenuOpen(false)}>
-              Ledger
-            </a>
-            <a
-              href="https://docs.solace.fyi"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setMenuOpen(false)}
-            >
-              API
-            </a>
-            <ExperienceHermesButton
-              className="hmk-menu-btn"
-              onClick={() => setMenuOpen(false)}
-            >
-              Experience Hermes
-            </ExperienceHermesButton>
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} onClick={() => setMenuOpen(false)}>
-              Observatory
-            </Link>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
+          <Link href={OBSERVATORY_HERMES_LEDGER_PATH} onClick={() => setMenuOpen(false)}>
+            Observatory
+          </Link>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </header>
   );
 }
 
@@ -333,18 +333,25 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
             Hermes reads market structure (liquidity, volatility, regime, risk) and decides whether
             to allocate capital, how much, and when to exit. Every decision is logged before it moves.
           </motion.p>
-          <motion.div variants={fade}>
+          <motion.div variants={fade} className="hmk-hero-actions">
             <ExperienceHermesButton className="hmk-btn hmk-btn-dark">
               Experience Hermes
               <span aria-hidden="true">→</span>
             </ExperienceHermesButton>
+            <a
+              href="https://docs.solace.fyi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hmk-btn hmk-btn-light"
+            >
+              API docs
+            </a>
           </motion.div>
           <motion.div variants={fade} className="hmk-hero-phone">
             <PhoneMock />
           </motion.div>
         </motion.div>
       </section>
-
       {/* Record metrics */}
       <section className="hmk-section hmk-metrics-section">
         <div className="hmk-shell hmk-center">
