@@ -345,9 +345,9 @@ export default function HomeClient({
             variants={fade}
             className="mt-8 text-lg md:text-xl text-muted leading-relaxed max-w-2xl"
           >
-            Solace builds instruments that help capital make better decisions under uncertainty. Hermes is the
-            first, designed so your capital can compound without demanding your constant attention. Live,
-            sealed, and open to observe and simulate.
+            Solace builds instruments for disciplined decision making under uncertainty. 
+            Hermes, the first, allocates capital autonomously so it can compound without constant attention, 
+            every decision sealed before the outcome and open to inspection.
           </motion.p>
 
           <motion.div variants={fade} className="mt-10 flex flex-wrap items-center gap-3 sm:gap-4">
