@@ -22,7 +22,7 @@ const dateFormat = new Intl.DateTimeFormat('en-US', {
 export default function NewsPage() {
   return (
     <main className="hx-page pt-16">
-      <SiteHeader variant="editorial" />
+      <SiteHeader />
 
       <section className="hx-shell pt-16 md:pt-20">
         <p className="section-kicker">Solace News</p>
@@ -45,7 +45,7 @@ export default function NewsPage() {
         </div>
       </section>
 
-      <SiteFooter variant="editorial" />
+      <SiteFooter />
     </main>
   );
 }

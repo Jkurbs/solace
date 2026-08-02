@@ -87,7 +87,7 @@ export default async function ResearchPage() {
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-[var(--paper-warm)] pt-16 text-[var(--paper-ink)]">
-      <SiteHeader variant="editorial" />
+      <SiteHeader />
 
       <article className="mx-auto max-w-4xl px-5 pb-24 pt-12 md:px-8">
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.24em] text-[var(--paper-muted)]">
@@ -177,7 +177,7 @@ export default async function ResearchPage() {
         </div>
       </article>
 
-      <SiteFooter variant="editorial" />
+      <SiteFooter />
     </main>
   );
 }

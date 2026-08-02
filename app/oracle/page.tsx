@@ -29,7 +29,7 @@ export default async function OraclePage() {
 
   return (
     <main className="oracle-shell hermes-paper min-h-screen pt-16 text-foreground">
-      <SiteHeader variant="product" />
+      <SiteHeader variant="ink" />
 
       <OracleExperience
         resolved={calibration.resolved}
@@ -43,7 +43,7 @@ export default async function OraclePage() {
         isLive={isLive}
       />
 
-      <SiteFooter variant="product" />
+      <SiteFooter variant="ink" />
     </main>
   );
 }

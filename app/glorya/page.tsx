@@ -28,7 +28,7 @@ export default function GloryaPage() {
   return (
     <main className="glorya-page pt-16">
       <GloryaScrollNudge />
-      <SiteHeader variant="product" />
+      <SiteHeader variant="ink" />
 
       <section className="glorya-stage" aria-label="Evaluated needs field">
         <div className="glorya-stage-copy">
@@ -208,7 +208,7 @@ export default function GloryaPage() {
         </ul>
       </section>
 
-      <SiteFooter variant="product" />
+      <SiteFooter variant="ink" />
     </main>
   );
 }

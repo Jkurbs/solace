@@ -120,7 +120,7 @@ export default async function DocsApiPage() {
 
   return (
     <main className={styles.page}>
-      <SiteHeader variant="product" />
+      <SiteHeader />
 
       <section className={styles.hero}>
         <p className={styles.kicker}>docs.solace.fyi/api · {hermesVersion.label}</p>
@@ -257,7 +257,7 @@ export default async function DocsApiPage() {
         </div>
       </section>
 
-      <SiteFooter variant="product" />
+      <SiteFooter />
     </main>
   );
 }

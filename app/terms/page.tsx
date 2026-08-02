@@ -51,7 +51,7 @@ const sections = [
 export default function TermsPage() {
   return (
     <main className="brief-paper relative min-h-screen overflow-x-hidden pt-16">
-      <SiteHeader variant="editorial" />
+      <SiteHeader />
 
       <article className="mx-auto max-w-4xl px-5 pb-24 pt-12 md:px-8">
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.24em] text-[var(--paper-muted)]">
@@ -129,7 +129,7 @@ export default function TermsPage() {
         </div>
       </article>
 
-      <SiteFooter variant="editorial" />
+      <SiteFooter />
     </main>
   );
 }

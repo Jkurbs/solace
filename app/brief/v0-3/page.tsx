@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import Mark from '../../Mark';
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
 
 export const metadata: Metadata = {
   title: 'Solace · Technical Brief V0.3 (Archived)',
@@ -88,26 +89,10 @@ const sections = [
 
 export default function BriefV03Page() {
   return (
-    <main className="brief-paper relative min-h-screen overflow-x-hidden">
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-black/10 bg-[rgba(247,242,232,0.86)] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-5 py-4 md:px-8">
-          <Link
-            href="/"
-            className="solace-wordmark text-[#1c1917]"
-          >
-            <Mark size={20} />
-            Solace
-          </Link>
-          <Link
-            href="/brief"
-            className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-[#6b6354] transition-colors hover:text-[#13110c]"
-          >
-            Current brief
-          </Link>
-        </div>
-      </header>
+    <main className="brief-paper relative min-h-screen overflow-x-hidden pt-16">
+      <SiteHeader />
 
-      <article className="mx-auto max-w-4xl px-5 pb-24 pt-36 md:px-8">
+      <article className="mx-auto max-w-4xl px-5 pb-24 pt-12 md:px-8">
         <p className="inline-block border border-[#b8955a]/50 bg-[#b8955a]/10 px-3 py-1.5 font-mono text-[0.62rem] uppercase tracking-[0.2em] text-[#8a6d3b]">
           Archived version: superseded by later briefs; current is{' '}
           <Link href="/brief" className="underline underline-offset-2">
@@ -196,18 +181,20 @@ export default function BriefV03Page() {
           ))}
         </div>
 
-        <div className="mt-20 flex flex-col gap-3 border-t border-black/10 pt-6 md:flex-row md:items-center md:justify-between">
-          <p className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-[#6b6354]">
+        <div className="mt-20 flex flex-col gap-3 border-t border-[var(--paper-line)] pt-6 md:flex-row md:items-center md:justify-between">
+          <p className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-[var(--paper-muted)]">
             © 2026 Solace · Technical Brief V0.3 · Archived
           </p>
           <Link
             href="/brief"
-            className="font-mono text-xs uppercase tracking-[0.18em] text-[#6b6354] transition-colors hover:text-[#13110c]"
+            className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--paper-muted)] transition-colors hover:text-[var(--paper-ink)]"
           >
             Read the current brief
           </Link>
         </div>
       </article>
+
+      <SiteFooter />
     </main>
   );
 }

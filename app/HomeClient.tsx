@@ -244,7 +244,7 @@ export default function HomeClient({
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
-      <SiteHeader variant="editorial" />
+      <SiteHeader variant="ink" />
       {/* ── Hero ── */}
       <section className="hero-research relative overflow-hidden px-5 pt-12 pb-20 md:pt-16 md:pb-28 border-t border-border">
         <PrimeRadiantLattice />
@@ -515,7 +515,7 @@ export default function HomeClient({
         </div>
       </section>
 
-      <SiteFooter variant="editorial" />
+      <SiteFooter variant="ink" />
     </main>
   );
 }

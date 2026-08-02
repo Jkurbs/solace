@@ -93,7 +93,7 @@ export default async function ObservatoryHermesPage() {
 
   return (
     <main className="obs-page pt-16">
-      <SiteHeader variant="product" />
+      <SiteHeader />
 
       <section className="hx-shell obs-hero">
         <p className="section-kicker">
@@ -180,7 +180,7 @@ export default async function ObservatoryHermesPage() {
         </aside>
       </section>
 
-      <SiteFooter variant="product" />
+      <SiteFooter />
     </main>
   );
 }

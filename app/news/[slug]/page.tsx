@@ -55,7 +55,7 @@ export default async function NewsPostPage({
 
   return (
     <main className="hx-page pt-16">
-      <SiteHeader variant="editorial" />
+      <SiteHeader />
 
       <article className="hx-shell max-w-3xl pb-24 pt-16 md:pt-20">
         <NotePlate seed={post.slug} tint={post.tint} label={post.label} />
@@ -90,7 +90,7 @@ export default async function NewsPostPage({
         </div>
       </article>
 
-      <SiteFooter variant="editorial" />
+      <SiteFooter />
     </main>
   );
 }

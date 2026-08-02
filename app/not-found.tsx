@@ -8,7 +8,7 @@ import Mark from './Mark';
 export default function NotFound() {
   return (
     <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)]">
-      <SiteHeader variant="editorial" />
+      <SiteHeader variant="ink" />
 
       <main className="flex flex-1 flex-col items-center justify-center px-6 pt-16 text-center">
         <Mark size={28} className="text-accent" />
@@ -28,7 +28,7 @@ export default function NotFound() {
         </div>
       </main>
 
-      <SiteFooter variant="editorial" />
+      <SiteFooter variant="ink" />
     </div>
   );
 }

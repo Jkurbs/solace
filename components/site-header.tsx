@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 import Mark from '@/app/Mark';
 import ThemeToggle from '@/app/ThemeToggle';
 
-type SiteHeaderVariant = 'editorial' | 'product';
+export type SiteHeaderVariant = 'paper' | 'ink';
 
 const navItems = [
   { label: 'Research', href: '/research' },
@@ -23,63 +23,102 @@ const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 function HeaderLink({
   href,
   label,
-  variant,
   active,
   onClick,
+  mobile = false,
+  variant = 'paper',
 }: {
   href: string;
   label: string;
-  variant: SiteHeaderVariant;
   active?: boolean;
   onClick?: () => void;
+  mobile?: boolean;
+  variant?: SiteHeaderVariant;
 }) {
   const isExternal = href.startsWith('http');
-  const baseClasses =
-    'font-mono text-[0.7rem] font-medium uppercase tracking-[0.12em] transition-colors duration-200';
-  const colorClasses =
-    variant === 'editorial'
-      ? `text-muted hover:text-foreground ${active ? 'text-foreground font-semibold' : ''}`
-      : `text-white/60 hover:text-white ${active ? 'text-white font-semibold' : ''}`;
+  const muted = variant === 'ink' ? 'text-white/56' : 'text-[var(--paper-muted)]';
+  const hover = variant === 'ink' ? 'hover:text-white' : 'hover:text-[var(--paper-ink)]';
+  const ink = variant === 'ink' ? 'bg-white' : 'bg-[var(--paper-ink)]';
+
+  const classes = mobile
+    ? `group relative py-2 font-mono text-sm font-medium uppercase tracking-[0.14em] ${muted} transition-colors ${hover}`
+    : `group relative py-1 font-mono text-[0.7rem] font-medium uppercase tracking-[0.12em] ${muted} transition-colors duration-200 ${hover}`;
+
+  const indicator = (
+    <span
+      className={`absolute left-1/2 -translate-x-1/2 rounded-full ${ink} transition-all duration-200 ${
+        mobile
+          ? 'top-0 h-px w-0 group-hover:w-4'
+          : '-bottom-1 h-[2px] w-[2px] group-hover:w-1.5 group-hover:opacity-100'
+      } ${active ? (mobile ? 'w-4 opacity-100' : 'w-1.5 opacity-100') : 'opacity-0'}`}
+      aria-hidden="true"
+    />
+  );
 
   if (isExternal) {
     return (
-      <a href={href} className={`${baseClasses} ${colorClasses}`} onClick={onClick} target="_blank" rel="noopener noreferrer">
+      <a
+        href={href}
+        className={classes}
+        onClick={onClick}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         {label}
+        {indicator}
       </a>
     );
   }
 
   return (
-    <Link href={href} className={`${baseClasses} ${colorClasses}`} onClick={onClick} aria-current={active ? 'page' : undefined}>
+    <Link
+      href={href}
+      className={classes}
+      onClick={onClick}
+      aria-current={active ? 'page' : undefined}
+    >
       {label}
+      {indicator}
     </Link>
   );
 }
 
-export default function SiteHeader({ variant = 'editorial' }: { variant?: SiteHeaderVariant }) {
+export default function SiteHeader({ variant = 'paper' }: { variant?: SiteHeaderVariant }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  const isEditorial = variant === 'editorial';
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const isInk = variant === 'ink';
+  const bg = isInk
+    ? 'bg-[#0a0a0a]/80'
+    : 'bg-[var(--paper-warm)]/85';
+  const text = isInk ? 'text-white' : 'text-[var(--paper-ink)]';
+  const border = scrolled
+    ? isInk
+      ? 'border-white/10 shadow-[0_1px_24px_rgba(0,0,0,0.35)]'
+      : 'border-[var(--paper-line)] shadow-[0_1px_20px_rgba(19,17,12,0.04)]'
+    : 'border-transparent';
+  const menuBg = isInk ? 'bg-[#0a0a0a] border-white/10' : 'bg-[var(--paper-warm)] border-[var(--paper-line)]';
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-40 border-b backdrop-blur-xl ${
-        isEditorial
-          ? 'border-[var(--line)] bg-[var(--background)]/86'
-          : 'border-white/[0.06] bg-[#040405]/70'
-      }`}
+      className={`fixed inset-x-0 top-0 z-40 border-b ${bg} backdrop-blur-xl transition-shadow duration-300 ${border} ${text}`}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 md:px-8">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 md:px-8">
         <Link
           href="/"
-          className={`inline-flex items-center gap-2 text-lg font-medium tracking-[-0.025em] transition-colors ${
-            isEditorial ? 'text-foreground' : 'text-white'
-          }`}
+          className="group inline-flex items-center gap-2 text-lg font-medium tracking-[-0.025em] transition-opacity hover:opacity-70"
           aria-label="Solace home"
         >
-          <Mark size={18} className={isEditorial ? 'text-foreground' : 'text-white'} />
-          Solace
+          <Mark size={18} className="transition-transform duration-500 group-hover:rotate-45" />
+          <span>Solace</span>
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex" aria-label="Primary navigation">
@@ -88,37 +127,35 @@ export default function SiteHeader({ variant = 'editorial' }: { variant?: SiteHe
               key={item.href}
               href={item.href}
               label={item.label}
-              variant={variant}
               active={pathname === item.href || pathname.startsWith(`${item.href}/`)}
+              variant={variant}
             />
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <ThemeToggle variant={variant} />
           <button
             type="button"
-            className={`inline-flex h-9 w-9 flex-col items-center justify-center gap-[0.23rem] md:hidden ${
-              isEditorial ? 'text-foreground' : 'text-white'
-            }`}
+            className="inline-flex h-9 w-9 flex-col items-center justify-center gap-[0.23rem] md:hidden"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((o) => !o)}
           >
             <span
-              className={`block h-px w-[1.05rem] transition-transform duration-200 ${
-                isEditorial ? 'bg-current' : 'bg-white'
-              } ${menuOpen ? 'translate-y-[0.46rem] rotate-45' : ''}`}
+              className={`block h-px w-[1.05rem] bg-current transition-transform duration-200 ${
+                menuOpen ? 'translate-y-[0.46rem] rotate-45' : ''
+              }`}
             />
             <span
-              className={`block h-px w-[1.05rem] transition-opacity duration-200 ${
-                isEditorial ? 'bg-current' : 'bg-white'
-              } ${menuOpen ? 'opacity-0' : ''}`}
+              className={`block h-px w-[1.05rem] bg-current transition-opacity duration-200 ${
+                menuOpen ? 'opacity-0' : ''
+              }`}
             />
             <span
-              className={`block h-px w-[1.05rem] transition-transform duration-200 ${
-                isEditorial ? 'bg-current' : 'bg-white'
-              } ${menuOpen ? '-translate-y-[0.46rem] -rotate-45' : ''}`}
+              className={`block h-px w-[1.05rem] bg-current transition-transform duration-200 ${
+                menuOpen ? '-translate-y-[0.46rem] -rotate-45' : ''
+              }`}
             />
           </button>
         </div>
@@ -131,21 +168,18 @@ export default function SiteHeader({ variant = 'editorial' }: { variant?: SiteHe
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: easeOut }}
-            className={`overflow-hidden border-t md:hidden ${
-              isEditorial
-                ? 'border-[var(--line)] bg-[var(--background)]'
-                : 'border-white/[0.06] bg-[#040405]/95'
-            }`}
+            className={`overflow-hidden border-t ${menuBg} md:hidden`}
           >
-            <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-6">
+            <div className="mx-auto flex max-w-6xl flex-col px-5 py-8">
               {navItems.map((item) => (
                 <HeaderLink
                   key={item.href}
                   href={item.href}
                   label={item.label}
-                  variant={variant}
                   active={pathname === item.href || pathname.startsWith(`${item.href}/`)}
                   onClick={() => setMenuOpen(false)}
+                  mobile
+                  variant={variant}
                 />
               ))}
             </div>

@@ -122,7 +122,7 @@ export default function GatesPage() {
 
   return (
     <main className="hx-page gates-page pt-16">
-      <SiteHeader variant="editorial" />
+      <SiteHeader />
 
       <section className="hx-shell gates-hero">
         <p className="section-kicker">Earned, not declared</p>
@@ -244,7 +244,7 @@ export default function GatesPage() {
         </div>
       </section>
 
-      <SiteFooter variant="editorial" />
+      <SiteFooter />
     </main>
   );
 }

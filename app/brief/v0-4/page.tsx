@@ -116,7 +116,7 @@ const sections: BriefSection[] = [
 export default function BriefPage() {
   return (
     <main className="brief-paper relative min-h-screen overflow-x-hidden pt-16">
-      <SiteHeader variant="editorial" />
+      <SiteHeader />
 
       <article className="mx-auto max-w-4xl px-5 pb-24 pt-12 md:px-8">
         <p className="inline-block border border-[#b8955a]/50 bg-[#b8955a]/10 px-3 py-1.5 font-mono text-[0.62rem] uppercase tracking-[0.2em] text-[#8a6d3b]">
@@ -288,7 +288,7 @@ export default function BriefPage() {
         </div>
       </article>
 
-      <SiteFooter variant="editorial" />
+      <SiteFooter />
     </main>
   );
 }

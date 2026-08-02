@@ -129,7 +129,7 @@ export default function ObservatoryExperience({
 
   return (
     <main className="hermes-paper ledger-doc obs-chain min-h-screen bg-background pt-16 text-foreground antialiased">
-      <SiteHeader variant="product" />
+      <SiteHeader />
 
       <section className="hermes-paper-shell ledger-doc-intro obs-chain-intro">
         <p className="hermes-paper-kicker">Solace primitive</p>
@@ -265,7 +265,7 @@ export default function ObservatoryExperience({
         </div>
       </section>
 
-      <SiteFooter variant="product" />
+      <SiteFooter />
     </main>
   );
 }
