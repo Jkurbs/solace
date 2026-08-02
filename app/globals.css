@@ -21,6 +21,13 @@
   --info: #6c8aa6;
   --ink: #1c1917;
   --line: rgba(28, 25, 23, 0.12);
+  /* Warm editorial paper palette, used by Brief and Research pages. */
+  --paper-warm: #f7f5ef;
+  --paper-warm-accent: #efe8d8;
+  --paper-ink: #13110c;
+  --paper-body: #3f3a30;
+  --paper-muted: #6b6354;
+  --paper-line: rgba(19, 17, 12, 0.1);
   --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-grotesk: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-plex: var(--font-geist-mono), "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
@@ -43,6 +50,13 @@ html[data-theme='dark'] {
   --info: #6c8aa6;
   --ink: #0b0b09;
   --line: rgba(250, 250, 250, 0.1);
+  /* Warm editorial paper in dark mode. */
+  --paper-warm: #0d0d0b;
+  --paper-warm-accent: #1a1814;
+  --paper-ink: #f5f2eb;
+  --paper-body: #c4bdb0;
+  --paper-muted: #8a8070;
+  --paper-line: rgba(245, 242, 235, 0.1);
 }
 
 html {
@@ -541,13 +555,14 @@ h2 {
     border-bottom: 0;
   }
 
-  /* Instant feedback while the next route streams in (loading.tsx). */
+  /* Instant feedback while the next route streams in (loading.tsx).
+     Theme-aware so a light homepage never flashes a black screen. */
   .page-loading-shell {
     position: relative;
     min-height: 100vh;
     overflow: hidden;
-    background: #000000;
-    color: rgba(250, 250, 250, 0.88);
+    background: var(--background);
+    color: var(--foreground);
   }
 
   .page-loading-bar {
@@ -557,7 +572,7 @@ h2 {
     z-index: 80;
     height: 2px;
     width: 38%;
-    background: linear-gradient(90deg, transparent, rgba(214, 208, 196, 0.95), rgba(250, 250, 250, 0.55));
+    background: linear-gradient(90deg, transparent, var(--accent), var(--muted));
     animation: page-loading-bar 1.1s ease-in-out infinite;
   }
 
@@ -590,7 +605,7 @@ h2 {
 
   .page-loading-label {
     margin: 0;
-    color: rgba(250, 250, 250, 0.42);
+    color: var(--muted);
     font-family: var(--font-plex), monospace;
     font-size: 0.68rem;
     letter-spacing: 0.14em;
@@ -607,7 +622,7 @@ h2 {
     display: block;
     height: 0.7rem;
     border-radius: 999px;
-    background: rgba(250, 250, 250, 0.06);
+    background: var(--line);
     animation: page-loading-pulse 1.4s ease-in-out infinite;
   }
 
@@ -2683,12 +2698,12 @@ h2 {
 
   /* Technical Brief, same paper register as the homepage (.home-research). */
   .brief-paper {
-    --background: #fafaf9;
-    --foreground: #1c1917;
-    --muted: #78716c;
-    --border: #e7e5e4;
-    --brief-body: #44403c;
-    --brief-faint: #a8a29e;
+    --background: var(--paper-warm);
+    --foreground: var(--paper-ink);
+    --muted: var(--paper-muted);
+    --border: var(--paper-line);
+    --brief-body: var(--paper-body);
+    --brief-faint: var(--paper-muted);
     background: var(--background);
     color: var(--foreground);
   }

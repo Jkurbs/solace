@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
+
 import Mark from '../Mark';
 
 export const metadata: Metadata = {
@@ -140,20 +143,10 @@ const sections: BriefSection[] = [
 
 export default function BriefPage() {
   return (
-    <main className="brief-paper relative min-h-screen overflow-x-hidden">
-      <header className="brief-paper-header fixed inset-x-0 top-0 z-40">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-5 py-4 md:px-8">
-          <Link href="/" className="solace-wordmark">
-            <Mark size={20} />
-            Solace
-          </Link>
-          <Link href="/" className="brief-paper-nav">
-            Home
-          </Link>
-        </div>
-      </header>
+    <main className="brief-paper relative min-h-screen overflow-x-hidden pt-16">
+      <SiteHeader variant="editorial" />
 
-      <article className="mx-auto max-w-4xl px-5 pb-24 pt-36 md:px-8">
+      <article className="mx-auto max-w-4xl px-5 pb-24 pt-12 md:px-8">
         <p className="brief-paper-kicker">Solace Technical Brief</p>
         <h1 className="brief-paper-title mt-5">What we build, and how to check it.</h1>
         <p className="brief-paper-meta mt-6">
@@ -330,13 +323,9 @@ export default function BriefPage() {
           ))}
         </div>
 
-        <div className="brief-paper-rule mt-20 flex flex-col gap-3 border-t pt-6 md:flex-row md:items-center md:justify-between">
-          <p className="brief-paper-foot">© 2026 Solace · Technical Brief V0.5</p>
-          <Link href="/" className="brief-paper-nav">
-            Return home
-          </Link>
-        </div>
       </article>
+
+      <SiteFooter variant="editorial" />
     </main>
   );
 }

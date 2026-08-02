@@ -1,19 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
 import { composeObservatorySnapshot } from '@/features/observatory/compose';
-import type {
-  ObservatoryActivity,
-  ObservatoryHealth,
-} from '@/features/observatory/types';
+import type { ObservatoryActivity, ObservatoryHealth } from '@/features/observatory/types';
 import {
   OBSERVATORY_HERMES_LEDGER_PATH,
   OBSERVATORY_PATH,
 } from '@/features/observatory/paths';
 import { DOCS_API_URL } from '@/lib/docs';
-
-import Mark from '../../Mark';
-import ThemeToggle from '../../ThemeToggle';
 
 export const metadata: Metadata = {
   title: 'Solace · Observatory · Hermes',
@@ -96,27 +92,8 @@ export default async function ObservatoryHermesPage() {
   }
 
   return (
-    <main className="obs-page">
-      <header className="obs-header">
-        <div className="obs-header-inner">
-          <Link href="/" className="hx-brand">
-            <Mark size={20} />
-            Solace
-          </Link>
-          <div className="obs-header-actions">
-            <Link href={OBSERVATORY_PATH} className="hx-btn hx-btn-secondary hx-btn-sm">
-              Observatory
-            </Link>
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hx-btn hx-btn-secondary hx-btn-sm">
-              Ledger
-            </Link>
-            <Link href="/hermes" className="hx-btn hx-btn-primary hx-btn-sm">
-              Product
-            </Link>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+    <main className="obs-page pt-16">
+      <SiteHeader variant="product" />
 
       <section className="hx-shell obs-hero">
         <p className="section-kicker">
@@ -203,17 +180,7 @@ export default async function ObservatoryHermesPage() {
         </aside>
       </section>
 
-      <section className="hx-shell">
-        <div className="hx-foot">
-          <p>Observatory · Hermes</p>
-          <span className="obs-foot-actions">
-            <ThemeToggle />
-            <Link href={OBSERVATORY_PATH} className="text-link">
-              All instruments
-            </Link>
-          </span>
-        </div>
-      </section>
+      <SiteFooter variant="product" />
     </main>
   );
 }

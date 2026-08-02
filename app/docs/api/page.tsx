@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 
-import Mark from '@/app/Mark';
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
 import { getHermesPublicMarketRead } from '@/features/hermes-market/read';
 import { hermesVersion } from '@/features/hermes-version';
 import { DOCS_API_URL, HERMES_MARKET_API_PATH, HERMES_MARKET_API_URL } from '@/lib/docs';
@@ -120,19 +120,7 @@ export default async function DocsApiPage() {
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerInner}>
-          <Link href={DOCS_API_URL} className={styles.brand}>
-            <Mark size={20} />
-            Solace
-          </Link>
-          <nav className={styles.nav} aria-label="Docs">
-            <a href="https://solace.fyi/hermes" className={styles.navLink}>Hermes</a>
-            <a href="https://solace.fyi/observatory/hermes/ledger" className={styles.navLink}>Ledger</a>
-            <a href="https://solace.fyi" className={styles.navLink}>solace.fyi</a>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader variant="product" />
 
       <section className={styles.hero}>
         <p className={styles.kicker}>docs.solace.fyi/api · {hermesVersion.label}</p>
@@ -269,17 +257,7 @@ export default async function DocsApiPage() {
         </div>
       </section>
 
-      <footer className={styles.footer}>
-        <p>
-          Hermes market API · {market.version} · docs.solace.fyi/api ·{' '}
-          <a href="https://solace.fyi/observatory/hermes/ledger" className={styles.footerLink}>
-            Decision ledger
-          </a>
-        </p>
-        <a href="https://solace.fyi/hermes" className={styles.footerLink}>
-          Back to Hermes
-        </a>
-      </footer>
+      <SiteFooter variant="product" />
     </main>
   );
 }

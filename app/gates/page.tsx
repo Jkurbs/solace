@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
 import {
   gateDomains,
   gateLadder,
@@ -14,9 +16,6 @@ import {
   type GateDomain,
   type GateStatus,
 } from '@/features/gates/conditions';
-
-import Mark from '../Mark';
-import ThemeToggle from '../ThemeToggle';
 
 export const metadata: Metadata = {
   title: 'Solace · Gate Board',
@@ -122,23 +121,8 @@ export default function GatesPage() {
   const next = nextCondition(working);
 
   return (
-    <main className="hx-page gates-page">
-      <header className="hx-header">
-        <div className="hx-header-inner">
-          <Link href="/" className="hx-brand">
-            <Mark size={20} />
-            Solace
-          </Link>
-          <div className="gates-header-actions">
-            <Link href="/brief#section-08" className="hx-btn hx-btn-secondary hx-btn-sm">
-              Brief §08
-            </Link>
-            <Link href="/observatory/hermes/ledger" className="hx-btn hx-btn-primary hx-btn-sm">
-              Ledger
-            </Link>
-          </div>
-        </div>
-      </header>
+    <main className="hx-page gates-page pt-16">
+      <SiteHeader variant="editorial" />
 
       <section className="hx-shell gates-hero">
         <p className="section-kicker">Earned, not declared</p>
@@ -260,17 +244,7 @@ export default function GatesPage() {
         </div>
       </section>
 
-      <section className="hx-shell">
-        <div className="hx-foot">
-          <p>Gate board</p>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
-            <ThemeToggle />
-            <Link href="/" className="text-link">
-              Return home
-            </Link>
-          </span>
-        </div>
-      </section>
+      <SiteFooter variant="editorial" />
     </main>
   );
 }

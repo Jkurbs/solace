@@ -3,6 +3,8 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
 import { getLatestPublishedArticle } from '@/features/articles/store';
 import type { ArticleRecord } from '@/features/articles/types';
 
@@ -84,114 +86,98 @@ export default async function ResearchPage() {
   const article = (await getLatestPublishedArticle()) ?? fallbackArticle;
 
   return (
-    <main className="brief-paper relative min-h-screen overflow-x-hidden">
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-black/10 bg-[rgba(247,242,232,0.86)] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 md:px-8">
-          <Link
-            href="/"
-            className="solace-wordmark text-[#1c1917]"
-          >
-            <Mark size={20} />
-            Solace
-          </Link>
-          <nav className="flex items-center gap-5 font-mono text-xs font-bold uppercase tracking-[0.2em] text-[#6b6354]">
-            <Link href="/brief" className="transition-colors hover:text-[#13110c]">
-              Brief
-            </Link>
-            <Link href="/" className="transition-colors hover:text-[#13110c]">
-              Home
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <main className="relative min-h-screen overflow-x-hidden bg-[var(--paper-warm)] pt-16 text-[var(--paper-ink)]">
+      <SiteHeader variant="editorial" />
 
-      <article className="mx-auto max-w-4xl px-5 pb-24 pt-36 md:px-8">
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.24em] text-[#7c7468]">
+      <article className="mx-auto max-w-4xl px-5 pb-24 pt-12 md:px-8">
+        <p className="font-mono text-[0.65rem] uppercase tracking-[0.24em] text-[var(--paper-muted)]">
           Solace Research
         </p>
 
-        <section className="mt-5 border-b border-black/10 pb-14">
-          <h1 className="max-w-3xl font-serif text-5xl font-medium leading-tight text-[#13110c] md:text-7xl">
+        <section className="mt-5 border-b border-[var(--paper-line)] pb-14">
+          <h1 className="max-w-3xl font-serif text-5xl font-medium leading-tight text-[var(--paper-ink)] md:text-7xl">
             Notes on markets under uncertainty.
           </h1>
-          <p className="mt-7 max-w-2xl text-lg leading-8 text-[#3f3a30]">
+          <p className="mt-7 max-w-2xl text-lg leading-8 text-[var(--paper-body)]">
             Public research from Solace. Short, inspectable language about market structure,
             uncertainty, and how capital moves.
           </p>
         </section>
 
-        <section className="mt-12 border-b border-black/10 pb-12">
+        <section className="mt-12 border-b border-[var(--paper-line)] pb-12">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-[#7c7468]">
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-[var(--paper-muted)]">
                 Featured
               </p>
-              <h2 className="mt-4 max-w-2xl font-serif text-4xl font-medium leading-tight text-[#13110c] md:text-5xl">
+              <h2 className="mt-4 max-w-2xl font-serif text-4xl font-medium leading-tight text-[var(--paper-ink)] md:text-5xl">
                 {article.title}
               </h2>
             </div>
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-[#6b6354]">
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-[var(--paper-muted)]">
               {article.label}
             </p>
           </div>
-          <p className="mt-5 max-w-2xl text-base leading-8 text-[#3f3a30]">{article.dek}</p>
-          <div className="mt-8 flex items-center gap-3 border-t border-black/10 pt-8">
-            <div className="grid h-10 w-10 place-items-center border border-black/10 bg-[#efe8d8] text-[#6b6354]">
+          <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--paper-body)]">{article.dek}</p>
+          <div className="mt-8 flex items-center gap-3 border-t border-[var(--paper-line)] pt-8">
+            <div className="grid h-10 w-10 place-items-center border border-[var(--paper-line)] bg-[var(--paper-warm-accent)] text-[var(--paper-muted)]">
               <Mark size={18} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#13110c]">{article.author}</p>
-              <p className="mt-0.5 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-[#7c7468]">
+              <p className="text-sm font-semibold text-[var(--paper-ink)]">{article.author}</p>
+              <p className="mt-0.5 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-[var(--paper-muted)]">
                 {article.handle}
               </p>
             </div>
           </div>
         </section>
 
-        <article className="border-b border-black/10 py-12">
+        <article className="border-b border-[var(--paper-line)] py-12">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
               a: ({ children, ...props }) => (
-                <a className="text-[#13110c] underline underline-offset-4" {...props}>
+                <a className="text-[var(--paper-ink)] underline underline-offset-4" {...props}>
                   {children}
                 </a>
               ),
               blockquote: ({ children }) => (
-                <blockquote className="my-7 border-l-2 border-black/20 pl-5 text-[#3f3a30]">{children}</blockquote>
+                <blockquote className="my-7 border-l-2 border-[var(--paper-line)] pl-5 text-[var(--paper-body)]">{children}</blockquote>
               ),
               code: ({ children }) => (
-                <code className="bg-black/5 px-1.5 py-0.5 font-mono text-sm text-[#13110c]">{children}</code>
+                <code className="bg-[var(--paper-ink)]/5 px-1.5 py-0.5 font-mono text-sm text-[var(--paper-ink)]">{children}</code>
               ),
               h2: ({ children }) => (
-                <h2 className="mt-12 font-serif text-3xl font-medium tracking-[-0.02em] text-[#13110c] first:mt-0 md:text-4xl">
+                <h2 className="mt-12 font-serif text-3xl font-medium tracking-[-0.02em] text-[var(--paper-ink)] first:mt-0 md:text-4xl">
                   {children}
                 </h2>
               ),
               li: ({ children }) => <li className="pl-1">{children}</li>,
-              ol: ({ children }) => <ol className="my-6 list-decimal space-y-2 pl-6 text-base leading-8 text-[#3f3a30]">{children}</ol>,
-              p: ({ children }) => <p className="mt-5 text-base leading-8 text-[#3f3a30] first:mt-0">{children}</p>,
-              strong: ({ children }) => <strong className="font-semibold text-[#13110c]">{children}</strong>,
-              ul: ({ children }) => <ul className="my-6 list-disc space-y-2 pl-6 text-base leading-8 text-[#3f3a30]">{children}</ul>,
+              ol: ({ children }) => <ol className="my-6 list-decimal space-y-2 pl-6 text-base leading-8 text-[var(--paper-body)]">{children}</ol>,
+              p: ({ children }) => <p className="mt-5 text-base leading-8 text-[var(--paper-body)] first:mt-0">{children}</p>,
+              strong: ({ children }) => <strong className="font-semibold text-[var(--paper-ink)]">{children}</strong>,
+              ul: ({ children }) => <ul className="my-6 list-disc space-y-2 pl-6 text-base leading-8 text-[var(--paper-body)]">{children}</ul>,
             }}
           >
             {article.body}
           </ReactMarkdown>
         </article>
 
-        <div className="mt-14 flex flex-col gap-5 border-t border-black/10 pt-6 md:flex-row md:items-center md:justify-between">
-          <p className="max-w-xl text-sm leading-6 text-[#6b6354]">
+        <div className="mt-14 flex flex-col gap-5 border-t border-[var(--paper-line)] pt-6 md:flex-row md:items-center md:justify-between">
+          <p className="max-w-xl text-sm leading-6 text-[var(--paper-muted)]">
             Public research only. This note does not publish weights, thresholds, live symbol
             examples, execution rules, or alert conditions.
           </p>
           <Link
             href="/brief"
-            className="font-mono text-xs uppercase tracking-[0.18em] text-[#6b6354] transition-colors hover:text-[#13110c]"
+            className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--paper-muted)] transition-colors hover:text-[var(--paper-ink)]"
           >
             Read the technical brief
           </Link>
         </div>
       </article>
+
+      <SiteFooter variant="editorial" />
     </main>
   );
 }

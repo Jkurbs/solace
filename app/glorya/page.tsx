@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
 import { gloryaEvaluatedNeeds, gloryaProcessScoreboard } from '@/features/glorya/evaluated-needs';
 import { gloryaPlaceLabel } from '@/features/glorya/types';
 import { OBSERVATORY_GLORYA_LEDGER_PATH } from '@/features/observatory/paths';
 
-import Mark from '../Mark';
-import ThemeToggle from '../ThemeToggle';
 import GloryaNeedField from '../GloryaNeedField';
 import GloryaScrollNudge from './GloryaScrollNudge';
 
@@ -26,28 +26,9 @@ export default function GloryaPage() {
   const needs = gloryaEvaluatedNeeds;
 
   return (
-    <main className="glorya-page">
+    <main className="glorya-page pt-16">
       <GloryaScrollNudge />
-      <header className="glorya-header">
-        <div className="glorya-header-inner">
-          <Link href="/" className="glorya-brand">
-            <Mark size={20} />
-            Solace
-          </Link>
-          <div className="glorya-header-actions">
-            <ThemeToggle />
-            <Link href="/hermes" className="glorya-link">
-              Hermes
-            </Link>
-            <Link href={OBSERVATORY_GLORYA_LEDGER_PATH} className="glorya-link">
-              Ledger
-            </Link>
-            <Link href="/#instruments" className="glorya-link">
-              Instruments
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader variant="product" />
 
       <section className="glorya-stage" aria-label="Evaluated needs field">
         <div className="glorya-stage-copy">
@@ -227,15 +208,7 @@ export default function GloryaPage() {
         </ul>
       </section>
 
-      <footer className="glorya-foot">
-        <p>Glorya · Solace instrument · evaluating</p>
-        <span className="glorya-foot-actions">
-          <ThemeToggle />
-          <Link href="/" className="glorya-link">
-            Return home
-          </Link>
-        </span>
-      </footer>
+      <SiteFooter variant="product" />
     </main>
   );
 }

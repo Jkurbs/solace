@@ -4,11 +4,11 @@ import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
 import { getNewsPost, newsPosts } from '@/features/news/posts';
 
-import Mark from '../../Mark';
 import NotePlate from '../../NotePlate';
-import ThemeToggle from '../../ThemeToggle';
 
 export function generateStaticParams() {
   return newsPosts.map((post) => ({ slug: post.slug }));
@@ -54,20 +54,10 @@ export default async function NewsPostPage({
   }
 
   return (
-    <main className="hx-page">
-      <header className="hx-header">
-        <div className="hx-header-inner">
-          <Link href="/" className="hx-brand">
-            <Mark size={20} />
-            Solace
-          </Link>
-          <Link href="/news" className="hx-btn hx-btn-secondary hx-btn-sm">
-            All news
-          </Link>
-        </div>
-      </header>
+    <main className="hx-page pt-16">
+      <SiteHeader variant="editorial" />
 
-      <article className="hx-shell max-w-3xl pb-24 pt-32 md:pt-36">
+      <article className="hx-shell max-w-3xl pb-24 pt-16 md:pt-20">
         <NotePlate seed={post.slug} tint={post.tint} label={post.label} />
 
         <p className="section-kicker mt-10">
@@ -96,10 +86,11 @@ export default async function NewsPostPage({
             <Link href="/brief" className="news-action-link">
               Read the technical brief
             </Link>
-            <ThemeToggle />
           </div>
         </div>
       </article>
+
+      <SiteFooter variant="editorial" />
     </main>
   );
 }

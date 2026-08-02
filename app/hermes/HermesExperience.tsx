@@ -1,14 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 import { DOCS_API_URL } from '@/lib/docs';
 
-import Mark from '../Mark';
-import ThemeToggle from '../ThemeToggle';
 import { ExperienceHermesButton, HermesOnboardingProvider } from './HermesOnboarding';
 
 export type HermesTimelineEntry = {
@@ -101,86 +100,6 @@ const pnlFormatter = new Intl.NumberFormat('en-US', {
   signDisplay: 'always',
   style: 'currency',
 });
-
-function Header() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  return (
-  <header className="hmk-header">
-    <div className="hmk-header-inner">
-      <Link href="/" className="hmk-brand" aria-label="Solace home">
-        <Mark size={18} className="site-mark" />
-        <span>Solace</span>
-      </Link>
-      <nav className="hmk-nav" aria-label="Primary">
-        <a href="#how">How it works</a>
-        <a href="#ledger">Ledger</a>
-        <a
-          href={DOCS_API_URL}
-          className="hmk-nav-api"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          API
-        </a>
-        <ExperienceHermesButton className="hmk-nav-btn">Simulate</ExperienceHermesButton>
-      </nav>
-      <div className="hmk-header-actions">
-        <ThemeToggle />
-        <ExperienceHermesButton className="hmk-btn hmk-btn-light hmk-btn-sm">
-          Experience Hermes
-        </ExperienceHermesButton>
-        <button
-          type="button"
-          className={`site-menu-button${menuOpen ? ' is-open' : ''}`}
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((o) => !o)}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
-      </div>
-    </div>
-    <AnimatePresence>
-      {menuOpen && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="hmk-menu"
-        >
-          <a href="#how" onClick={() => setMenuOpen(false)}>
-            How it works
-          </a>
-          <a href="#ledger" onClick={() => setMenuOpen(false)}>
-            Ledger
-          </a>
-          <a
-            href={DOCS_API_URL}
-            className="hmk-menu-api"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setMenuOpen(false)}
-          >
-            API
-          </a>
-          <ExperienceHermesButton
-            className="hmk-menu-btn"
-            onClick={() => setMenuOpen(false)}
-          >
-            Experience Hermes
-          </ExperienceHermesButton>
-          <Link href={OBSERVATORY_HERMES_LEDGER_PATH} onClick={() => setMenuOpen(false)}>
-            Observatory
-          </Link>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  </header>
-  );
-}
 
 function PhoneMock() {
   return (
@@ -316,8 +235,8 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
 
   return (
     <HermesOnboardingProvider>
-    <main className="hmk">
-      <Header />
+    <main className="hmk pt-16">
+      <SiteHeader variant="product" />
 
       {/* Hero */}
       <section className="hmk-hero">
@@ -528,19 +447,7 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
         </div>
       </section>
 
-      <footer className="hmk-foot">
-        <div className="hmk-shell hmk-foot-inner">
-          <p>
-            Hermes · {proof.hermesLabel} · Observe · Simulate · Allocate
-          </p>
-          <span className="hmk-foot-links">
-            <ThemeToggle />
-            <Link href="/">Home</Link>
-            <ExperienceHermesButton className="hmk-foot-sim">Simulate</ExperienceHermesButton>
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH}>Observatory</Link>
-          </span>
-        </div>
-      </footer>
+      <SiteFooter variant="product" />
     </main>
     </HermesOnboardingProvider>
   );

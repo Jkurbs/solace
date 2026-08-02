@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
+import { fetchKalshiBtcEthPredictions } from '@/features/oracle/kalshi';
 
 import { calibration } from '../calibration';
-import Mark from '../Mark';
-import ThemeToggle from '../ThemeToggle';
 import OracleExperience from './OracleExperience';
 import { resolvedQuestions } from './resolved-questions';
-import { fetchKalshiBtcEthPredictions } from '@/features/oracle/kalshi';
 
 export const metadata: Metadata = {
   title: 'Solace · Oracle',
@@ -28,24 +28,8 @@ export default async function OraclePage() {
   const isLive = feed.active.length > 0 && !feed.error;
 
   return (
-    <main className="oracle-shell hermes-paper min-h-screen text-foreground">
-      <header className="oracle-shell-header">
-        <div className="oracle-shell-header-inner">
-          <Link href="/" className="oracle-shell-brand" aria-label="Solace home">
-            <Mark size={18} className="site-mark" />
-            <span>Solace</span>
-          </Link>
-          <div className="oracle-shell-actions">
-            <ThemeToggle />
-            <Link href="/hermes" className="oracle-shell-link">
-              Hermes
-            </Link>
-            <Link href="/" className="oracle-shell-link">
-              Home
-            </Link>
-          </div>
-        </div>
-      </header>
+    <main className="oracle-shell hermes-paper min-h-screen pt-16 text-foreground">
+      <SiteHeader variant="product" />
 
       <OracleExperience
         resolved={calibration.resolved}
@@ -58,6 +42,8 @@ export default async function OraclePage() {
         feedError={feed.error}
         isLive={isLive}
       />
+
+      <SiteFooter variant="product" />
     </main>
   );
 }

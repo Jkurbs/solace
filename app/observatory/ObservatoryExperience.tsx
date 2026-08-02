@@ -20,9 +20,8 @@ import {
   type ObservatoryInstrumentId,
   parseObservatoryInstrument,
 } from '@/features/observatory/paths';
-
-import Mark from '../Mark';
-import ThemeToggle from '../ThemeToggle';
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
 
 export type HermesChainData = {
   rows: TrustLedgerDisplayRow[];
@@ -129,26 +128,8 @@ export default function ObservatoryExperience({
   const { process } = hermes.scoreboard;
 
   return (
-    <main className="hermes-paper ledger-doc obs-chain min-h-screen bg-background text-foreground antialiased">
-      <header className="hermes-paper-header">
-        <div className="hermes-paper-header-inner">
-          <Link href="/" className="hermes-paper-brand" aria-label="Solace home">
-            <Mark size={18} className="site-mark" />
-            <span>Solace</span>
-          </Link>
-          <nav className="hermes-paper-nav" aria-label="Primary">
-            <Link href="/hermes">Hermes</Link>
-            <Link href="/oracle">Oracle</Link>
-            <Link href="/glorya">Glorya</Link>
-          </nav>
-          <div className="hermes-paper-actions">
-            <ThemeToggle />
-            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary hermes-paper-btn-sm">
-              Enter Hermes
-            </Link>
-          </div>
-        </div>
-      </header>
+    <main className="hermes-paper ledger-doc obs-chain min-h-screen bg-background pt-16 text-foreground antialiased">
+      <SiteHeader variant="product" />
 
       <section className="hermes-paper-shell ledger-doc-intro obs-chain-intro">
         <p className="hermes-paper-kicker">Solace primitive</p>
@@ -284,16 +265,7 @@ export default function ObservatoryExperience({
         </div>
       </section>
 
-      <footer className="hermes-paper-foot">
-        <div className="hermes-paper-shell hermes-paper-foot-inner">
-          <p>Observatory · auditable chains · {instrument}</p>
-          <span className="hermes-paper-foot-links">
-            <ThemeToggle />
-            <Link href="/">Home</Link>
-            <Link href={copy.productHref}>{copy.productLabel}</Link>
-          </span>
-        </div>
-      </footer>
+      <SiteFooter variant="product" />
     </main>
   );
 }

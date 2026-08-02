@@ -4,10 +4,19 @@ type PageLoadingShellProps = {
   label?: string;
 };
 
-/** Instant route feedback while the next page's RSC payload is still in flight. */
+/** Instant route feedback while the next page's RSC payload is still in flight.
+ *  Theme-aware so the loading screen matches the user's chosen palette. */
 export default function PageLoadingShell({ label = 'Loading' }: PageLoadingShellProps) {
   return (
     <div className="page-loading-shell" role="status" aria-live="polite" aria-busy="true">
+      {/* Read theme before paint to avoid a flash of the wrong palette. */}
+      <script
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{
+          __html:
+            "try{var t=localStorage.getItem('solace-theme');document.documentElement.dataset.theme=t==='dark'?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}",
+        }}
+      />
       <div className="page-loading-bar" aria-hidden="true" />
       <div className="page-loading-inner">
         <div className="page-loading-brand">

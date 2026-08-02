@@ -4,55 +4,14 @@ import Link from 'next/link';
 import { useEffect, useState, useMemo } from 'react';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 
-import Mark from './Mark';
-import ThemeToggle from './ThemeToggle';
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
 import { gateDomains } from '@/features/gates/conditions';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
-import { OBSERVATORY_HERMES_LEDGER_PATH, OBSERVATORY_PATH } from '@/features/observatory/paths';
-import { DOCS_API_URL } from '@/lib/docs';
+import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
 import { calibration } from './calibration';
-
-const footerInstruments = [
-  { name: 'Hermes', status: 'Live', href: '/hermes' },
-  { name: 'Oracle', status: 'Live', href: '/oracle' },
-  { name: 'Simulation', status: 'In progress', href: '/gates#simulation' },
-  { name: 'Glorya', status: 'Evaluating', href: '/glorya' },
-] as const;
-
-const footerContactChannels = [
-  {
-    label: 'Enter Hermes',
-    detail: 'Simulation dashboard',
-    href: '/dashboard',
-    external: false,
-  },
-  {
-    label: 'hello@solace.fyi',
-    detail: 'General',
-    href: 'mailto:hello@solace.fyi',
-    external: false,
-  },
-  {
-    label: 'support@solace.fyi',
-    detail: 'Support',
-    href: 'mailto:support@solace.fyi',
-    external: false,
-  },
-  {
-    label: 'security@solace.fyi',
-    detail: 'Security',
-    href: 'mailto:security@solace.fyi',
-    external: false,
-  },
-  {
-    label: 'X @solacefyi',
-    detail: 'Public notes',
-    href: 'https://x.com/solacefyi',
-    external: true,
-  },
-] as const;
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -188,12 +147,22 @@ function PrimeRadiantLattice() {
   );
 }
 
+const HERO_SEEN_KEY = 'solace-hero-seen';
+
 /* ── Foundation: Holographic word reveal ── */
 function HolographicReveal({ text, className }: { text: string; className?: string }) {
   const reduceMotion = useReducedMotion();
   const words = useMemo(() => text.split(' '), [text]);
+  const [hasSeen, setHasSeen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.sessionStorage.getItem(HERO_SEEN_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
 
-  if (reduceMotion) {
+  if (reduceMotion || hasSeen) {
     return <h1 className={className}>{text}</h1>;
   }
 
@@ -206,6 +175,15 @@ function HolographicReveal({ text, className }: { text: string; className?: stri
             initial={{ opacity: 0, y: '110%', filter: 'blur(8px)' }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             transition={{ duration: 1.2, ease: easeOut, delay: 0.6 + i * 0.08 }}
+            onAnimationComplete={() => {
+              if (i === words.length - 1) {
+                try {
+                  window.sessionStorage.setItem(HERO_SEEN_KEY, '1');
+                } catch {
+                  // Ignore private-mode failures.
+                }
+              }
+            }}
           >
             {word}
           </motion.span>
@@ -223,58 +201,6 @@ function SealIcon({ className }: { className?: string }) {
       <circle cx="6" cy="6" r="2.5" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
       <circle cx="6" cy="6" r="0.8" fill="currentColor" opacity="0.5" />
     </svg>
-  );
-}
-
-function Header() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  return (
-    <header className="site-header-research">
-      <div className={`site-header-inner-research ${homeShell} px-5 md:px-0`}>
-        <Link href="/" className="site-wordmark-research" aria-label="Solace home">
-          <Mark size={18} className="site-mark" />
-          Solace
-        </Link>
-
-        <nav className="site-nav-research" aria-label="Primary navigation">
-          <Link href="/brief">Brief</Link>
-          <Link href="/research">Research</Link>
-          <Link href={OBSERVATORY_PATH}>Observatory</Link>
-          <Link href="/hermes">Instruments</Link>
-        </nav>
-
-        <div className="site-actions-research">
-          <ThemeToggle />
-          <button
-            type="button"
-            className={`site-menu-button${menuOpen ? ' is-open' : ''}`}
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((o) => !o)}
-          >
-            <span /><span /><span />
-          </button>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="site-menu-panel-research"
-          >
-            <div className={`${homeShell} px-5 py-6 flex flex-col gap-4`}>
-              <Link href="/brief" onClick={() => setMenuOpen(false)}>Brief</Link>
-              <Link href="/research" onClick={() => setMenuOpen(false)}>Research</Link>
-              <Link href={OBSERVATORY_PATH} onClick={() => setMenuOpen(false)}>Observatory</Link>
-              <Link href="/hermes" onClick={() => setMenuOpen(false)}>Instruments</Link>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
   );
 }
 
@@ -317,8 +243,8 @@ export default function HomeClient({
   const voice = hermesTelemetry ? hermesLiveVoice[hermesTelemetry.posture] : null;
 
   return (
-    <main className="home-research min-h-screen bg-background text-foreground antialiased selection:bg-foreground/10">
-      <Header />
+    <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
+      <SiteHeader variant="editorial" />
       {/* ── Hero ── */}
       <section className="hero-research relative overflow-hidden px-5 pt-12 pb-20 md:pt-16 md:pb-28 border-t border-border">
         <PrimeRadiantLattice />
@@ -589,88 +515,7 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="home-research-footer border-t border-border px-5 pt-14 pb-10 md:pt-20 md:pb-12">
-        <div className="home-research-footer-inner mx-auto max-w-5xl">
-          <div className="home-research-footer-grid">
-            <div className="home-research-footer-brand">
-              <p className="solace-wordmark text-xl">
-                <Mark size={20} className="site-mark" />
-                Solace
-              </p>
-              <p className="mt-4 text-sm text-muted leading-relaxed max-w-xs">
-                Independent research company building instruments that help capital, and eventually other domains, make better decisions under uncertainty.
-                Kept only when they survive contact with the world.
-              </p>
-              <p className="mt-6 text-xs text-muted font-mono tracking-wider uppercase">
-                Era I · The First Instrument · 2026
-              </p>
-              <p className="mt-2 text-xs text-muted">
-                Built by{' '}
-                <Link href="/brief#author" className="underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/50 hover:text-foreground transition-colors">
-                  Kerby Jean
-                </Link>
-              </p>
-            </div>
-
-            <div>
-              <p className="home-research-footer-heading">Research</p>
-              <ul className="home-research-footer-list">
-                <li><Link href="/brief">Technical brief</Link></li>
-                <li><Link href="/research">Research notes</Link></li>
-                <li><Link href="/news">News</Link></li>
-                <li><Link href={OBSERVATORY_PATH}>Observatory</Link></li>
-                <li><Link href={OBSERVATORY_HERMES_LEDGER_PATH}>Decision ledger</Link></li>
-                <li><Link href="/gates">Gate conditions</Link></li>
-                <li><a href={DOCS_API_URL}>Market API</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="home-research-footer-heading">Instruments</p>
-              <ul className="home-research-footer-list home-research-footer-instruments">
-                {footerInstruments.map((instrument) => (
-                  <li key={instrument.name}>
-                    <Link href={instrument.href}>{instrument.name}</Link>
-                    <span className="home-research-footer-status">{instrument.status}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <p className="home-research-footer-heading">Contact</p>
-              <ul className="home-research-footer-list home-research-footer-contact">
-                {footerContactChannels.map((channel) => (
-                  <li key={channel.href}>
-                    <span className="home-research-footer-channel-detail">{channel.detail}</span>
-                    {channel.external ? (
-                      <a href={channel.href} target="_blank" rel="noreferrer">
-                        {channel.label}
-                      </a>
-                    ) : channel.href.startsWith('mailto:') ? (
-                      <a href={channel.href}>{channel.label}</a>
-                    ) : (
-                      <Link href={channel.href}>{channel.label}</Link>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="home-research-footer-bottom">
-            <p className="text-xs text-muted">© 2026 Solace. All rights reserved.</p>
-            <div className="home-research-footer-legal">
-              <Link href="/terms">Terms</Link>
-              <Link href="/privacy">Privacy</Link>
-              <a href="mailto:privacy@solace.fyi">privacy@solace.fyi</a>
-              <a href="mailto:legal@solace.fyi">legal@solace.fyi</a>
-              <span className="home-research-footer-motto">Domains are earned</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter variant="editorial" />
     </main>
   );
 }
