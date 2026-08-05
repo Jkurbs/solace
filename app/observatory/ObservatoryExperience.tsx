@@ -6,8 +6,10 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import type { TrustLedgerDisplayRow } from '@/app/trust/TrustLedgerTable';
 import TrustLedgerTable from '@/app/trust/TrustLedgerTable';
-import TrustLivePnL from '@/app/trust/TrustLivePnL';
+import TrustLivePanel from '@/app/trust/TrustLivePanel';
 import { TrustLivePulseProvider } from '@/app/trust/TrustLivePulse';
+import LedgerVerifyStrip from '@/app/trust/LedgerVerifyStrip';
+import PostureRibbon from '@/app/trust/PostureRibbon';
 import ShareLedger from '@/app/trust/ShareLedger';
 import TrustScoreboard from '@/app/trust/TrustScoreboard';
 import type { ActivePrediction } from '@/app/oracle/active-predictions';
@@ -280,7 +282,13 @@ function HermesChain({ hermes }: { hermes: HermesChainData }) {
       initialHermesVersion={hermes.hermesVersion}
       livePosture={hermes.livePosture}
     >
-      <div className="ledger-doc-strip" aria-label="Live process">
+      {/*
+        Emotional job: a careful stranger can check the chain, see patience as character,
+        and keep live exposure separate from sealed history.
+      */}
+      <LedgerVerifyStrip />
+
+      <div className="ledger-doc-strip" aria-label="Process summary">
         <span>
           <em>Open · closed</em>
           <strong>
@@ -292,15 +300,22 @@ function HermesChain({ hermes }: { hermes: HermesChainData }) {
           <strong>{process.backfilled}</strong>
         </span>
         <span>
+          <em>Standing down</em>
+          <strong>{hermes.standDownRate}</strong>
+        </span>
+        <span>
           <em>Hermes</em>
           <strong>{hermes.hermesLabel}</strong>
         </span>
-        <span className="ledger-doc-strip-live">
-          <em>Live open PnL</em>
-          <span className="ledger-doc-live-pnl">
-            <TrustLivePnL />
-          </span>
-        </span>
+      </div>
+
+      <PostureRibbon rows={hermes.rows} />
+
+      <TrustLivePanel />
+
+      <div className="ledger-history-label">
+        <p className="ledger-history-kicker">Sealed history</p>
+        <p className="ledger-history-dek">Write-once chain · newest first · live exposure stays above</p>
       </div>
 
       <TrustLedgerTable rows={hermes.rows} />

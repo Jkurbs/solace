@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import TrustLiveRow from './TrustLiveRow';
-import { hasLiveExposure, useTrustLivePulse } from './TrustLivePulse';
+import LedgerRowDetail from './LedgerRowDetail';
 
 export type TrustLedgerDisplayRow = {
   row: string;
@@ -16,6 +15,8 @@ export type TrustLedgerDisplayRow = {
   pnlTone: 'pos' | 'neg' | null;
   note: string;
   rowHash: string | null;
+  prevHash: string | null;
+  resolutionHash: string | null;
   rowClass: string | null;
   eventType: string | null;
   ref: string | null;
@@ -26,10 +27,9 @@ const PAGE_SIZE = 20;
 const MIN_VISIBLE_ROWS = 7;
 
 export default function TrustLedgerTable({ rows }: { rows: TrustLedgerDisplayRow[] }) {
-  const { pulse } = useTrustLivePulse();
-  const showLive = hasLiveExposure(pulse);
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const [page, setPage] = useState(0);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const pageIndex = Math.min(page, totalPages - 1);
 
   useEffect(() => {
@@ -39,21 +39,31 @@ export default function TrustLedgerTable({ rows }: { rows: TrustLedgerDisplayRow
   }, [page, pageIndex]);
 
   const pageRows = useMemo(
-    () => rows.slice(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE),
+    () => rows.slice(pageIndex * PAGE_SIZE, (pageIndex + 1) * PAGE_SIZE),
     [pageIndex, rows],
   );
 
   const blankRows = useMemo(() => {
-    const filled = pageRows.length + (showLive ? 1 : 0);
+    const filled = pageRows.length;
 
     return Array.from({ length: Math.max(0, MIN_VISIBLE_ROWS - filled) }, (_, index) =>
       String(pageIndex * PAGE_SIZE + pageRows.length + index + 1),
     );
-  }, [pageIndex, pageRows.length, showLive]);
+  }, [pageIndex, pageRows.length]);
+
+  const selectedRow = useMemo(
+    () => (selectedId ? rows.find((row) => row.recordId === selectedId) ?? null : null),
+    [rows, selectedId],
+  );
 
   const rangeStart = rows.length === 0 ? 0 : pageIndex * PAGE_SIZE + 1;
   const rangeEnd = Math.min(rows.length, (pageIndex + 1) * PAGE_SIZE);
   const showPager = rows.length > PAGE_SIZE;
+
+  const toggleRow = (recordId: string) => {
+    if (recordId === 'HMS-000') return;
+    setSelectedId((current) => (current === recordId ? null : recordId));
+  };
 
   return (
     <>
@@ -71,48 +81,67 @@ export default function TrustLedgerTable({ rows }: { rows: TrustLedgerDisplayRow
             </tr>
           </thead>
           <tbody>
-            <TrustLiveRow />
-            {pageRows.map((row) => (
-              <tr
-                key={row.recordId}
-                className={
-                  row.rowClass === 'backfill'
-                    ? 'trust-row-backfill'
-                    : row.eventType === 'open'
-                      ? 'trust-row-open'
+            {pageRows.map((row) => {
+              const interactive = row.recordId !== 'HMS-000';
+              const selected = selectedId === row.recordId;
+
+              return (
+                <tr
+                  key={row.recordId}
+                  className={[
+                    row.rowClass === 'backfill' ? 'trust-row-backfill' : '',
+                    row.eventType === 'open' ? 'trust-row-open' : '',
+                    selected ? 'trust-row-selected' : '',
+                    interactive ? 'trust-row-interactive' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ') || undefined}
+                  onClick={interactive ? () => toggleRow(row.recordId) : undefined}
+                  onKeyDown={
+                    interactive
+                      ? (event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            toggleRow(row.recordId);
+                          }
+                        }
                       : undefined
-                }
-              >
-                <td className="trust-row-number">{row.row}</td>
-                <td>
-                  {row.sealedAt}
-                  <span className="trust-record-id" title={row.rowHash ?? undefined}>
-                    {row.recordId}
-                    {row.rowHash ? ` · ${row.rowHash.slice(0, 10)}` : ''}
-                    {row.ref ? ` · ref ${row.ref}` : ''}
-                  </span>
-                  {row.rowClass === 'backfill' ? (
-                    <span
-                      className="trust-tag"
-                      title="Recorded after the outcome was known; does not carry the sealed-first guarantee."
-                    >
-                      Backfill
+                  }
+                  tabIndex={interactive ? 0 : undefined}
+                  aria-expanded={interactive ? selected : undefined}
+                  aria-label={interactive ? `Open sealed detail for ${row.recordId}` : undefined}
+                >
+                  <td className="trust-row-number">{row.row}</td>
+                  <td>
+                    {row.sealedAt}
+                    <span className="trust-record-id" title={row.rowHash ?? undefined}>
+                      {row.recordId}
+                      {row.rowHash ? ` · ${row.rowHash.slice(0, 10)}` : ''}
+                      {row.ref ? ` · ref ${row.ref}` : ''}
                     </span>
-                  ) : null}
-                  {row.rowClass === 'system' ? <span className="trust-tag">System</span> : null}
-                  {row.hermesVersion ? (
-                    <span className="trust-tag" title={`Sealed under Hermes v${row.hermesVersion}`}>
-                      v{row.hermesVersion}
-                    </span>
-                  ) : null}
-                </td>
-                <td>{row.decision}</td>
-                <td>{row.posture}</td>
-                <td>{row.outcome}</td>
-                <td className={row.pnlTone ? `trust-pnl-${row.pnlTone}` : undefined}>{row.pnl}</td>
-                <td>{row.note}</td>
-              </tr>
-            ))}
+                    {row.rowClass === 'backfill' ? (
+                      <span
+                        className="trust-tag"
+                        title="Recorded after the outcome was known; does not carry the sealed-first guarantee."
+                      >
+                        Backfill
+                      </span>
+                    ) : null}
+                    {row.rowClass === 'system' ? <span className="trust-tag">System</span> : null}
+                    {row.hermesVersion ? (
+                      <span className="trust-tag" title={`Sealed under Hermes v${row.hermesVersion}`}>
+                        v{row.hermesVersion}
+                      </span>
+                    ) : null}
+                  </td>
+                  <td>{row.decision}</td>
+                  <td>{row.posture}</td>
+                  <td>{row.outcome}</td>
+                  <td className={row.pnlTone ? `trust-pnl-${row.pnlTone}` : undefined}>{row.pnl}</td>
+                  <td>{row.note}</td>
+                </tr>
+              );
+            })}
             {blankRows.map((row) => (
               <tr key={`blank-${row}`} className="trust-empty-row">
                 <td className="trust-row-number">{row}</td>
@@ -127,6 +156,12 @@ export default function TrustLedgerTable({ rows }: { rows: TrustLedgerDisplayRow
           </tbody>
         </table>
       </div>
+
+      {selectedRow ? (
+        <LedgerRowDetail row={selectedRow} onClose={() => setSelectedId(null)} />
+      ) : (
+        <p className="ledger-table-hint">Click any sealed row to see hashes, pairing, and the seal claim.</p>
+      )}
 
       {showPager ? (
         <div className="trust-pager" aria-label="Ledger pagination">
