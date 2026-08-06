@@ -159,17 +159,52 @@ export default function HomeClient({
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
-      {/* ── Hero: The Lattice as instrument, not decoration ──
-          Emotional job: settle a careful visitor on one living object that
-          makes Solace legible as systems for reading complexity. */}
-      <section className="hero-research hero-lattice-section relative overflow-hidden px-5 pt-14 pb-20 md:pt-20 md:pb-28 border-t border-border">
+      {/* ── Hero: Apple product-unit stack on mobile; two-column on desktop ──
+          Emotional job: settle a careful visitor on one living object —
+          type first, then The Lattice as the product stage. */}
+      <section className="hero-research hero-lattice-section relative overflow-hidden px-5 pt-12 pb-16 md:pt-20 md:pb-28 border-t border-border">
         <motion.div
           initial={heroInitial}
           animate="show"
           variants={stagger}
           className="hero-lattice-layout relative z-10 mx-auto max-w-6xl"
         >
-          {/* Mobile: Lattice sits behind as atmosphere. Desktop: right-side instrument. */}
+          <div className="hero-lattice-copy">
+            <motion.p
+              variants={fade}
+              className="hero-lattice-eyebrow"
+            >
+              Independent research
+            </motion.p>
+
+            <motion.h1
+              variants={fade}
+              className="hero-lattice-title"
+            >
+              Instruments for decision making under uncertainty.
+            </motion.h1>
+
+            {/* Short line for product-unit rhythm; full dek desktop. */}
+            <motion.p variants={fade} className="hero-lattice-sub">
+              Systems for reading complexity.
+            </motion.p>
+
+            <motion.p variants={fade} className="hero-lattice-dek">
+              Solace builds instruments for disciplined decision making under uncertainty.
+              Hermes, the first, allocates capital autonomously so it can compound without constant attention,
+              every decision sealed before the outcome and open to inspection.
+            </motion.p>
+
+            <motion.div variants={fade} className="hero-lattice-ctas">
+              <Link href="/hermes" className="hero-cta hero-cta-primary">
+                Meet Hermes
+              </Link>
+              <Link href="/brief" className="hero-cta hero-cta-secondary">
+                Read the brief
+              </Link>
+            </motion.div>
+          </div>
+
           <motion.figure
             variants={fade}
             className="hero-lattice-figure"
@@ -184,78 +219,31 @@ export default function HomeClient({
             </figcaption>
           </motion.figure>
 
-          {/* Copy stays as one block — title and description never split by the object. */}
-          <div className="hero-lattice-copy">
-            <motion.p
-              variants={fade}
-              className="text-xs uppercase tracking-[0.25em] text-muted"
-            >
-              Independent research
-            </motion.p>
-
-            <motion.h1
-              variants={fade}
-              className="mt-5 font-serif text-[clamp(2rem,4.2vw,3.35rem)] font-medium leading-[1.02] tracking-tight text-foreground"
-            >
-              Instruments for decision making under uncertainty.
-            </motion.h1>
-
-            <motion.p
-              variants={fade}
-              className="hero-lattice-dek mt-6 md:mt-8 max-w-xl text-lg md:text-xl leading-relaxed"
-            >
-              Solace builds instruments for disciplined decision making under uncertainty.
-              Hermes, the first, allocates capital autonomously so it can compound without constant attention,
-              every decision sealed before the outcome and open to inspection.
-            </motion.p>
-
-            {instruments.hermes.sealedDecisions != null &&
-              instruments.hermes.sealedDecisions > 0 && (
-                <motion.div variants={fade} className="hero-decision-count mt-8">
-                  <Link
-                    href={OBSERVATORY_HERMES_LEDGER_PATH}
-                    className="hero-decision-count-link group"
-                  >
-                    <span className="hero-decision-count-value font-mono tabular-nums">
-                      {instruments.hermes.sealedDecisions.toLocaleString('en-US')}
+          {instruments.hermes.sealedDecisions != null &&
+            instruments.hermes.sealedDecisions > 0 && (
+              <motion.div variants={fade} className="hero-decision-count">
+                <Link
+                  href={OBSERVATORY_HERMES_LEDGER_PATH}
+                  className="hero-decision-count-link group"
+                >
+                  <span className="hero-decision-count-value font-mono tabular-nums">
+                    {instruments.hermes.sealedDecisions.toLocaleString('en-US')}
+                  </span>
+                  <span className="hero-decision-count-copy">
+                    <span className="hero-decision-count-label">
+                      collective decisions sealed
                     </span>
-                    <span className="hero-decision-count-copy">
-                      <span className="hero-decision-count-label">
-                        collective decisions sealed
-                      </span>
-                      <span className="hero-decision-count-hint">
-                        Observatory ledger
-                        <span aria-hidden="true" className="opacity-60 transition-opacity group-hover:opacity-100">
-                          {' '}
-                          →
-                        </span>
+                    <span className="hero-decision-count-hint">
+                      Observatory ledger
+                      <span aria-hidden="true" className="opacity-60 transition-opacity group-hover:opacity-100">
+                        {' '}
+                        →
                       </span>
                     </span>
-                  </Link>
-                </motion.div>
-              )}
-
-            <motion.div
-              variants={fade}
-              className="mt-10 flex flex-wrap items-center gap-3 sm:gap-4"
-            >
-              <Link
-                href="/hermes"
-                className="inline-flex items-center gap-2 rounded-full border border-foreground bg-foreground px-5 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-background shadow-sm transition-opacity hover:opacity-90"
-              >
-                Meet Hermes
-                <span aria-hidden="true" className="text-[0.85em] opacity-70">
-                  →
-                </span>
-              </Link>
-              <Link
-                href="/brief"
-                className="inline-flex items-center gap-2 rounded-full border border-foreground/20 bg-background px-5 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-foreground shadow-sm transition-colors hover:border-foreground/45 hover:bg-foreground/[0.04]"
-              >
-                Read the brief
-              </Link>
-            </motion.div>
-          </div>
+                  </span>
+                </Link>
+              </motion.div>
+            )}
         </motion.div>
       </section>
 
@@ -287,12 +275,12 @@ export default function HomeClient({
         </motion.div>
       </section>
 
-      {/* ── Instruments ──
-          Emotional job: each instrument has a face you can recognize — device
-          portraits, not a directory list. Simulation stays a quieter line. */}
-      <section className="px-5 py-20 md:py-28 border-t border-border">
+      {/* ── Instruments: product units (Apple stack on mobile) ── */}
+      <section className="home-instruments-section px-5 py-16 md:py-28 border-t border-border">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-10 md:mb-12">Instruments</h2>
+          <h2 className="home-instruments-kicker text-xs uppercase tracking-[0.2em] text-muted mb-10 md:mb-12">
+            Instruments
+          </h2>
 
           <InstrumentPortraits
             hermes={instruments.hermes}
@@ -300,18 +288,21 @@ export default function HomeClient({
             oracleActiveCount={instruments.oracleActiveCount}
           />
 
-          <div className="mt-12 md:mt-14 max-w-4xl mx-auto border-t border-border">
-            <Link href="/gates#simulation" className="group block py-8">
-              <div className="flex items-baseline justify-between gap-4">
-                <div>
-                  <h3 className="font-serif text-xl md:text-2xl font-medium group-hover:opacity-70 transition-opacity">
+          <div className="home-simulation-unit mt-10 md:mt-14 max-w-4xl mx-auto border-t border-border">
+            <Link href="/gates#simulation" className="group block py-10 md:py-8 text-center md:text-left">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted mb-3 md:hidden">
+                In progress
+              </p>
+              <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-3 md:gap-4">
+                <div className="flex flex-col items-center md:items-start">
+                  <h3 className="font-serif text-[clamp(1.75rem,6vw,2rem)] md:text-2xl font-semibold md:font-medium tracking-tight group-hover:opacity-70 transition-opacity">
                     Simulation
                   </h3>
-                  <p className="mt-2 text-muted leading-relaxed max-w-xl">
+                  <p className="mt-2 text-muted leading-relaxed max-w-md md:max-w-xl text-[1rem] md:text-base">
                     Synthetic worlds. Same decision engine. Failures stay off the wire.
                   </p>
                 </div>
-                <span className="text-sm text-muted shrink-0">In progress</span>
+                <span className="hidden md:inline text-sm text-muted shrink-0">In progress</span>
               </div>
               <p className="mt-4 text-sm text-muted font-mono tabular-nums">
                 Gate progress · {simulationMetrics.met} of {simulationMetrics.total} conditions

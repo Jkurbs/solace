@@ -14985,11 +14985,10 @@ html.dark .home-research ::selection,
 }
 
 
-/* ── The Lattice (hero instrument) ──
-   Desktop: copy left, larger Lattice right.
-   Mobile: Lattice as hero atmosphere (background), copy on top. */
+/* ── Hero product unit (Apple-style stack on mobile) ──
+   Mobile:  title → short line → CTAs → Lattice stage → caption
+   Desktop: copy left | Lattice right  */
 .hero-lattice-section {
-  min-height: min(78vh, 46rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -14997,63 +14996,124 @@ html.dark .home-research ::selection,
 
 .hero-lattice-layout {
   width: 100%;
-  flex: 1 1 auto;
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-areas: 'copy';
-  align-items: center;
-  position: relative;
-  /* Fill section so mobile Lattice atmosphere covers the whole hero */
-  min-height: inherit;
+  grid-template-areas:
+    'copy'
+    'figure'
+    'metric';
+  gap: 1.75rem 0;
+  align-items: start;
+  justify-items: stretch;
 }
 
 .hero-lattice-copy {
   grid-area: copy;
-  position: relative;
-  z-index: 2;
   min-width: 0;
-  max-width: 36rem;
-  /* Soft paper wash so lattice lines don’t compete with type (esp. mobile). */
-  padding: 0.85rem 1rem 1.1rem 0;
-  border-radius: 0.5rem;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--background) 94%, transparent) 0%,
-    color-mix(in srgb, var(--background) 82%, transparent) 55%,
-    transparent 100%
-  );
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.hero-lattice-dek {
-  color: color-mix(in srgb, var(--foreground) 92%, var(--muted));
+.hero-lattice-eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
   font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hero-lattice-title {
+  margin: 0.85rem 0 0;
+  max-width: 22rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.85rem, 7.2vw, 2.45rem);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: var(--foreground);
+  text-wrap: balance;
+}
+
+/* Product-unit one-liner (mobile primary; desktop can hide) */
+.hero-lattice-sub {
+  margin: 0.85rem 0 0;
+  max-width: 20rem;
+  font-size: 1.05rem;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  color: var(--muted);
+}
+
+/* Full research dek — desktop only in the product-unit layout */
+.hero-lattice-dek {
+  display: none;
+  margin: 1.25rem 0 0;
+  max-width: 32rem;
+  color: color-mix(in srgb, var(--foreground) 88%, var(--muted));
+  font-size: 1.05rem;
+  font-weight: 400;
   letter-spacing: -0.011em;
   line-height: 1.55;
 }
 
+.hero-lattice-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 1.35rem;
+}
+
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.65rem;
+  padding: 0.55rem 1.2rem;
+  border-radius: 980px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.hero-cta-primary {
+  border: 1px solid var(--foreground);
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.hero-cta-primary:hover {
+  opacity: 0.9;
+}
+
+.hero-cta-secondary {
+  border: 1px solid color-mix(in srgb, var(--foreground) 28%, transparent);
+  background: transparent;
+  color: var(--foreground);
+}
+
+.hero-cta-secondary:hover {
+  border-color: color-mix(in srgb, var(--foreground) 55%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+
+/* Lattice as product stage — own row, full presence, never under type */
 .hero-lattice-figure {
-  /* Mobile default: full-bleed background instrument */
-  position: absolute;
-  inset: -8% -12% -4%;
-  width: auto;
-  height: auto;
-  margin: 0;
-  z-index: 0;
+  grid-area: figure;
+  position: relative;
+  width: min(100%, 26rem);
+  aspect-ratio: 1;
+  margin: 0.25rem auto 0;
   pointer-events: none;
-  opacity: 0.28;
-  /* Soft vignette so type stays legible */
-  -webkit-mask-image: radial-gradient(
-    ellipse 72% 68% at 55% 42%,
-    #000 18%,
-    rgba(0, 0, 0, 0.55) 55%,
-    transparent 78%
-  );
-  mask-image: radial-gradient(
-    ellipse 72% 68% at 55% 42%,
-    #000 18%,
-    rgba(0, 0, 0, 0.55) 55%,
-    transparent 78%
-  );
+  opacity: 1;
 }
 
 .hero-lattice {
@@ -15079,28 +15139,33 @@ html.dark .home-research ::selection,
   opacity: 1;
 }
 
-/* Decision count — process integrity, not performance theater */
+/* Caption under the product (process integrity, not theater) */
 .hero-decision-count {
+  grid-area: metric;
+  width: 100%;
   max-width: 22rem;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .hero-decision-count-link {
-  display: flex;
-  align-items: baseline;
-  gap: 0.85rem;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
   text-decoration: none;
   color: inherit;
-  border-left: 1px solid var(--border);
-  padding-left: 0.95rem;
-  transition: border-color 0.25s ease;
+  border: 0;
+  padding: 0;
+  transition: opacity 0.2s ease;
 }
 
 .hero-decision-count-link:hover {
-  border-left-color: color-mix(in srgb, var(--foreground) 35%, var(--border));
+  opacity: 0.75;
 }
 
 .hero-decision-count-value {
-  font-size: clamp(1.65rem, 3.2vw, 2.1rem);
+  font-size: clamp(1.5rem, 5vw, 1.85rem);
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1;
@@ -15110,35 +15175,21 @@ html.dark .home-research ::selection,
 .hero-decision-count-copy {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
+  align-items: center;
+  gap: 0.2rem;
 }
 
 .hero-decision-count-label {
-  font-size: 0.8rem;
-  line-height: 1.25;
-  color: var(--foreground);
-}
-
-.hero-decision-count-hint {
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 0.85rem;
+  line-height: 1.3;
   color: var(--muted);
 }
 
-html[data-theme='dark'] .hero-lattice-figure,
-html.dark .hero-lattice-figure,
-.dark .hero-lattice-figure {
-  opacity: 0.34;
-}
-
-@media (min-width: 900px) {
-  html[data-theme='dark'] .hero-lattice-figure,
-  html.dark .hero-lattice-figure,
-  .dark .hero-lattice-figure {
-    opacity: 1;
-  }
+.hero-decision-count-hint {
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -15147,76 +15198,89 @@ html.dark .hero-lattice-figure,
   }
 }
 
-@media (max-width: 899px) {
-  .hero-lattice-copy {
-    max-width: none;
-    padding: 1rem 0.75rem 1.25rem 0;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--background) 92%, transparent) 0%,
-      color-mix(in srgb, var(--background) 78%, transparent) 70%,
-      transparent 100%
-    );
-  }
-
-  .hero-lattice-dek {
-    font-weight: 600;
-    color: var(--foreground);
-    text-shadow:
-      0 0 1.75rem color-mix(in srgb, var(--background) 95%, transparent),
-      0 0 2.75rem color-mix(in srgb, var(--background) 80%, transparent);
-  }
-
-  .hero-lattice-figure {
-    opacity: 0.2;
-  }
-
-  .hero-lattice-section {
-    min-height: min(88vh, 40rem);
-  }
-}
-
+/* Desktop: copy | Lattice, metric under copy */
 @media (min-width: 900px) {
-  .hero-lattice-copy {
-    /* Desktop lattice sits beside copy — lighter wash is enough */
-    background: none;
-    padding: 0;
-  }
-
-  .hero-lattice-dek {
-    text-shadow: none;
-  }
-
-  .hero-lattice-layout {
-    grid-template-columns: minmax(0, 0.92fr) minmax(22rem, 1.15fr);
-    grid-template-areas: 'copy figure';
-    gap: 1.5rem 2.5rem;
-  }
-
-  .hero-lattice-figure {
-    grid-area: figure;
-    position: relative;
-    inset: auto;
-    width: 100%;
-    max-width: 40rem;
-    aspect-ratio: 1;
-    margin-left: auto;
-    margin-right: 0;
-    opacity: 1;
-    pointer-events: none;
-    -webkit-mask-image: none;
-    mask-image: none;
-    /* Slight bleed past the column so the sculpture feels larger */
-    transform: scale(1.08);
-    transform-origin: center right;
-  }
-
   .hero-lattice-section {
     min-height: min(82vh, 48rem);
   }
 
+  .hero-lattice-layout {
+    grid-template-columns: minmax(0, 0.95fr) minmax(22rem, 1.1fr);
+    grid-template-areas:
+      'copy figure'
+      'metric figure';
+    gap: 1.25rem 2.75rem;
+    align-items: center;
+  }
+
   .hero-lattice-copy {
-    text-shadow: none;
+    text-align: left;
+    align-items: flex-start;
+    max-width: 36rem;
+  }
+
+  .hero-lattice-title {
+    max-width: none;
+    font-size: clamp(2.1rem, 3.6vw, 3.15rem);
+    font-weight: 500;
+  }
+
+  .hero-lattice-sub {
+    display: none;
+  }
+
+  .hero-lattice-dek {
+    display: block;
+  }
+
+  .hero-lattice-ctas {
+    justify-content: flex-start;
+    margin-top: 1.75rem;
+  }
+
+  .hero-cta {
+    min-height: 2.75rem;
+    padding: 0.6rem 1.35rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .hero-lattice-figure {
+    width: 100%;
+    max-width: 40rem;
+    margin: 0 0 0 auto;
+    transform: scale(1.06);
+    transform-origin: center right;
+  }
+
+  .hero-decision-count {
+    margin: 0.5rem 0 0;
+    text-align: left;
+    max-width: 24rem;
+  }
+
+  .hero-decision-count-link {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.85rem;
+    border-left: 1px solid var(--border);
+    padding-left: 0.95rem;
+  }
+
+  .hero-decision-count-link:hover {
+    opacity: 1;
+    border-left-color: color-mix(in srgb, var(--foreground) 35%, var(--border));
+  }
+
+  .hero-decision-count-copy {
+    align-items: flex-start;
+  }
+
+  .hero-decision-count-label {
+    color: var(--foreground);
+    font-size: 0.8rem;
   }
 }
 
@@ -18859,6 +18923,16 @@ html[data-theme='dark'] .hermes-paper {
   max-width: 72rem;
 }
 
+.home-instruments-kicker {
+  text-align: center;
+}
+
+@media (min-width: 901px) {
+  .home-instruments-kicker {
+    text-align: left;
+  }
+}
+
 .obs-portrait {
   appearance: none;
   display: flex;
@@ -19093,17 +19167,18 @@ html[data-theme='dark'] .hermes-paper {
 
 .obs-portrait-caption {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.4rem;
   text-align: center;
   justify-items: center;
+  order: 2; /* desktop: caption under device */
 }
 
 .obs-portrait-caption strong {
   color: var(--foreground, #1c1917);
   font-family: var(--font-display), Georgia, serif;
-  font-size: 1.2rem;
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
   transition: color 0.2s ease;
 }
 
@@ -19118,16 +19193,35 @@ html[data-theme='dark'] .hermes-paper {
 
 .obs-portrait-desc {
   display: block;
-  max-width: 18.5rem;
-  margin-top: 0.15rem;
+  max-width: 20rem;
+  margin-top: 0.2rem;
   color: var(--muted, #78716c);
   font-family: var(--font-grotesk), Inter, system-ui, sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-style: normal;
   font-weight: 400;
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
   line-height: 1.45;
   text-transform: none;
+}
+
+/* Product-unit CTA (Apple-style pill under copy on mobile) */
+.obs-portrait-unit-cta {
+  display: none;
+  margin-top: 0.55rem;
+  padding: 0.5rem 1.15rem;
+  border-radius: 980px;
+  border: 1px solid var(--foreground, #1c1917);
+  background: var(--foreground, #1c1917);
+  color: var(--background, #fafaf9);
+  font-size: 0.88rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.obs-portrait-device {
+  order: 1;
 }
 
 .obs-portrait:hover .obs-portrait-caption strong {
@@ -19144,6 +19238,50 @@ html[data-theme='dark'] .obs-portrait-desc,
 html.dark .obs-portrait-desc,
 .dark .obs-portrait-desc {
   color: var(--muted, #a8a29e);
+}
+
+/* Mobile: Apple product stack — copy → CTA → device */
+@media (max-width: 900px) {
+  .home-portraits.obs-portraits {
+    grid-template-columns: 1fr;
+    max-width: 26rem;
+    gap: 3.5rem;
+  }
+
+  .obs-portrait.product-unit {
+    gap: 1.5rem;
+    padding: 0.5rem 0 1rem;
+  }
+
+  .obs-portrait.product-unit .obs-portrait-caption {
+    order: 1;
+    gap: 0.5rem;
+  }
+
+  .obs-portrait.product-unit .obs-portrait-caption strong {
+    font-size: clamp(1.85rem, 7vw, 2.25rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+
+  .obs-portrait.product-unit .obs-portrait-desc {
+    max-width: 19rem;
+    font-size: 1rem;
+    color: var(--muted);
+  }
+
+  .obs-portrait.product-unit .obs-portrait-unit-cta {
+    display: inline-flex;
+  }
+
+  .obs-portrait.product-unit .obs-portrait-device {
+    order: 2;
+  }
+
+  /* Screen CTA is redundant when unit CTA is above */
+  .obs-portrait.product-unit .obs-portrait-cta {
+    display: none;
+  }
 }
 
 @media (max-width: 1100px) {

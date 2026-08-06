@@ -119,7 +119,17 @@ export default function InstrumentPortraits({
 
   return (
     <div className="obs-portraits home-portraits" aria-label="Solace instruments">
-      <Link href="/hermes" className="obs-portrait is-link">
+      {/* Product units: copy above device on mobile (Apple stack); device first on desktop grid. */}
+      <Link href="/hermes" className="obs-portrait is-link product-unit">
+        <span className="obs-portrait-caption">
+          <strong>Hermes</strong>
+          <em>Capital allocation · Live</em>
+          <span className="obs-portrait-desc">
+            An autonomous instrument for capital allocation, built to grow what you
+            entrust it with, with discipline you can verify, not take on faith.
+          </span>
+          <span className="obs-portrait-unit-cta">Meet Hermes</span>
+        </span>
         <div className="obs-portrait-device is-hermes">
           <div className="obs-portrait-bezel">
             <div className="obs-portrait-screen">
@@ -174,17 +184,17 @@ export default function InstrumentPortraits({
             </div>
           </div>
         </div>
-        <span className="obs-portrait-caption">
-          <strong>Hermes</strong>
-          <em>Capital allocation · Live</em>
-          <span className="obs-portrait-desc">
-            An autonomous instrument for capital allocation, built to grow what you
-            entrust it with, with discipline you can verify, not take on faith.
-          </span>
-        </span>
       </Link>
 
-      <Link href="/oracle" className="obs-portrait is-link">
+      <Link href="/oracle" className="obs-portrait is-link product-unit">
+        <span className="obs-portrait-caption">
+          <strong>Oracle</strong>
+          <em>Belief under uncertainty · Live</em>
+          <span className="obs-portrait-desc">
+            Live probability over real events, scored against what actually happened.
+          </span>
+          <span className="obs-portrait-unit-cta">Open Oracle</span>
+        </span>
         <div className="obs-portrait-device is-oracle">
           <div className="obs-portrait-bezel">
             <div className="obs-portrait-screen">
@@ -215,16 +225,21 @@ export default function InstrumentPortraits({
             </div>
           </div>
         </div>
-        <span className="obs-portrait-caption">
-          <strong>Oracle</strong>
-          <em>Belief under uncertainty · Live</em>
-          <span className="obs-portrait-desc">
-            Live probability over real events, scored against what actually happened.
-          </span>
-        </span>
       </Link>
 
-      <Link href="/glorya" className="obs-portrait is-link" aria-label="Glorya — open instrument">
+      <Link
+        href="/glorya"
+        className="obs-portrait is-link product-unit"
+        aria-label="Glorya — open instrument"
+      >
+        <span className="obs-portrait-caption">
+          <strong>Glorya</strong>
+          <em>Humanitarian capital · Evaluating</em>
+          <span className="obs-portrait-desc">
+            Allocating humanitarian capital only when intervention can change the outcome.
+          </span>
+          <span className="obs-portrait-unit-cta">Open Glorya</span>
+        </span>
         <div className="obs-portrait-device is-glorya is-globe">
           <div className="obs-portrait-bezel">
             <div className="obs-portrait-screen is-globe-screen">
@@ -252,13 +267,6 @@ export default function InstrumentPortraits({
             </div>
           </div>
         </div>
-        <span className="obs-portrait-caption">
-          <strong>Glorya</strong>
-          <em>Humanitarian capital · Evaluating</em>
-          <span className="obs-portrait-desc">
-            Allocating humanitarian capital only when intervention can change the outcome.
-          </span>
-        </span>
       </Link>
     </div>
   );
