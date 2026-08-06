@@ -1,9 +1,18 @@
 import { listPublishedArticles } from '@/features/articles/store';
+import { gloryaProcessScoreboard } from '@/features/glorya/evaluated-needs';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
+import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
+import { computeLedgerScoreboard, formatPercent } from '@/features/hermes-ledger/scoreboard';
+import { listHermesLedgerProcessRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { newsPosts } from '@/features/news/posts';
+import { fetchKalshiBtcEthPredictions } from '@/features/oracle/kalshi';
 
-import HomeClient, { type HermesTelemetry, type ResearchItem } from './HomeClient';
+import HomeClient, {
+  type HermesTelemetry,
+  type HomeInstrumentSnapshot,
+  type ResearchItem,
+} from './HomeClient';
 
 const TELEMETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
@@ -73,11 +82,61 @@ const technicalBrief: ResearchItem = {
   date: '2026-07-01',
 };
 
+async function getHomeInstrumentSnapshot(): Promise<HomeInstrumentSnapshot> {
+  const [ledgerRows, openExposure, oracleFeed] = await Promise.all([
+    listHermesLedgerProcessRows(1500).catch(() => []),
+    getHermesOpenExposure().catch(() => null),
+    fetchKalshiBtcEthPredictions(20).catch(() => null),
+  ]);
+
+  const scoreboard = computeLedgerScoreboard(ledgerRows, {
+    liveOpenPaths: openExposure ? openExposure.positions.length : null,
+  });
+  const glorya = gloryaProcessScoreboard();
+
+  return {
+    hermes: {
+      posture: null,
+      pathsCount: null,
+      sealedDecisions: scoreboard.process.sealedDecisions,
+      standDownRate: formatPercent(scoreboard.process.standDownRate),
+      openPaths: scoreboard.process.openPaths,
+      openPnl: openExposure?.unrealizedPnl ?? null,
+    },
+    oracleActiveCount: oracleFeed?.activeCount ?? oracleFeed?.active.length ?? null,
+    glorya: {
+      evaluated: glorya.evaluated,
+      standingDown: glorya.standingDown,
+      standDownRate: glorya.standDownRate,
+    },
+  };
+}
+
 export default async function Home() {
-  const [articles, hermesTelemetry] = await Promise.all([
+  const [articles, hermesTelemetry, instruments] = await Promise.all([
     listPublishedArticles().catch(() => []),
     getHermesTelemetry(),
+    getHomeInstrumentSnapshot().catch(
+      (): HomeInstrumentSnapshot => ({
+        hermes: {
+          posture: null,
+          pathsCount: null,
+          sealedDecisions: null,
+          standDownRate: null,
+          openPaths: null,
+          openPnl: null,
+        },
+        oracleActiveCount: null,
+        glorya: { evaluated: 0, standingDown: 0, standDownRate: 0 },
+      }),
+    ),
   ]);
+
+  // Prefer live telemetry posture / path count on the Hermes card when fresh.
+  if (hermesTelemetry) {
+    instruments.hermes.posture = hermesTelemetry.posture;
+    instruments.hermes.pathsCount = hermesTelemetry.pathsCount;
+  }
 
   const researchFromDb: ResearchItem[] = articles.map((article) => ({
     kind: 'Research' as const,
@@ -113,5 +172,11 @@ export default async function Home() {
     researchItems.push(fallbackResearch);
   }
 
-  return <HomeClient hermesTelemetry={hermesTelemetry} researchItems={researchItems} />;
+  return (
+    <HomeClient
+      hermesTelemetry={hermesTelemetry}
+      instruments={instruments}
+      researchItems={researchItems}
+    />
+  );
 }

@@ -11,7 +11,7 @@ import type { HermesPublicPosture } from '@/features/hermes-public-reading/types
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
-import { calibration } from './calibration';
+import InstrumentPortraits from './InstrumentPortraits';
 import HeroLattice from './HeroLattice';
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
@@ -90,31 +90,22 @@ export type HermesTelemetry = {
   updatedAt: string;
 };
 
-const hermesLiveVoice: Record<HermesPublicPosture, { phrase: string; tone: string }> = {
-  DEPLOYED: { phrase: 'putting capital to work', tone: '#3d6b4f' },
-  SELECTIVE: { phrase: 'waiting for a cleaner opening', tone: '#8a7e6b' },
-  DEFENSIVE: { phrase: 'protecting capital first', tone: '#a67c52' },
-  STANDING_DOWN: { phrase: 'standing down', tone: '#6b6b6b' },
-  RISK_OFF: { phrase: 'paused by risk controls', tone: '#6b6b6b' },
+export type HomeInstrumentSnapshot = {
+  hermes: {
+    posture: string | null;
+    pathsCount: number | null;
+    sealedDecisions: number | null;
+    standDownRate: string | null;
+    openPaths: number | null;
+    openPnl: number | null;
+  };
+  oracleActiveCount: number | null;
+  glorya: {
+    evaluated: number;
+    standingDown: number;
+    standDownRate: number;
+  };
 };
-
-function formatReadingAge(updatedAt: string) {
-  const ageMs = Date.now() - new Date(updatedAt).getTime();
-  if (!Number.isFinite(ageMs) || ageMs < 0) return 'just now';
-  const minutes = Math.floor(ageMs / 60_000);
-  return minutes < 1 ? 'just now' : minutes < 60 ? `${minutes}m ago` : `${Math.floor(minutes / 60)}h ago`;
-}
-
-function ReadingAge({ updatedAt }: { updatedAt: string }) {
-  const [label, setLabel] = useState(() => formatReadingAge(updatedAt));
-  useEffect(() => {
-    const update = () => setLabel(formatReadingAge(updatedAt));
-    update();
-    const interval = window.setInterval(update, 60_000);
-    return () => window.clearInterval(interval);
-  }, [updatedAt]);
-  return <span suppressHydrationWarning>{label}</span>;
-}
 
 /* ── Foundation: Vault seal icon ── */
 function SealIcon({ className }: { className?: string }) {
@@ -129,9 +120,11 @@ function SealIcon({ className }: { className?: string }) {
 
 export default function HomeClient({
   hermesTelemetry,
+  instruments,
   researchItems,
 }: {
   hermesTelemetry: HermesTelemetry | null;
+  instruments: HomeInstrumentSnapshot;
   researchItems: ResearchItem[];
 }) {
   const reduceMotion = useReducedMotion();
@@ -162,8 +155,6 @@ export default function HomeClient({
       setWebglPaused(false);
     };
   }, []);
-
-  const voice = hermesTelemetry ? hermesLiveVoice[hermesTelemetry.posture] : null;
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
@@ -269,63 +260,24 @@ export default function HomeClient({
         </motion.div>
       </section>
 
-      {/* ── Instruments ── */}
+      {/* ── Instruments ──
+          Emotional job: each instrument has a face you can recognize — device
+          portraits, not a directory list. Simulation stays a quieter line. */}
       <section className="px-5 py-20 md:py-28 border-t border-border">
-        <div className={homeShell}>
-          <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-12">Instruments</h2>
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-10 md:mb-12">Instruments</h2>
 
-          <div className="divide-y divide-border">
-            <Link href="/hermes" className="group block py-8 first:pt-0">
-              <div className="flex items-baseline justify-between gap-4">
-                <div>
-                  <h3 className="font-serif text-2xl md:text-3xl font-medium group-hover:opacity-70 transition-opacity">
-                    Hermes
-                  </h3>
-                  <p className="mt-2 text-muted leading-relaxed max-w-xl">
-                    An autonomous instrument for capital allocation, built to grow what you
-                    entrust it with, with discipline you can verify, not take on faith.
-                  </p>
-                </div>
-                <span className="flex items-center gap-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
-                  <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
-                  Live
-                </span>
-              </div>
-              {hermesTelemetry && (
-                <p className="mt-4 text-sm text-muted font-mono tabular-nums">
-                  <span style={{ color: voice?.tone }}>{hermesTelemetry.posture}</span>
-                  {' · '}
-                  {hermesTelemetry.pathsCount} {hermesTelemetry.pathsCount === 1 ? 'market' : 'markets'} watched
-                  {' · '}
-                  <ReadingAge updatedAt={hermesTelemetry.updatedAt} />
-                </p>
-              )}
-            </Link>
+          <InstrumentPortraits
+            hermes={instruments.hermes}
+            glorya={instruments.glorya}
+            oracleActiveCount={instruments.oracleActiveCount}
+          />
 
-            <Link href="/oracle" className="group block py-8">
-              <div className="flex items-baseline justify-between gap-4">
-                <div>
-                  <h3 className="font-serif text-2xl md:text-3xl font-medium group-hover:opacity-70 transition-opacity">
-                    Oracle
-                  </h3>
-                  <p className="mt-2 text-muted leading-relaxed max-w-xl">
-                    Live probability over real events, scored against what actually happened.
-                  </p>
-                </div>
-                <span className="flex items-center gap-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
-                  <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
-                  Live
-                </span>
-              </div>
-              <p className="mt-4 text-sm text-muted font-mono tabular-nums">
-                {calibration.resolved} resolved · Brier {calibration.brier.toFixed(2)} · BTC / ETH
-              </p>
-            </Link>
-
+          <div className="mt-12 md:mt-14 max-w-4xl mx-auto border-t border-border">
             <Link href="/gates#simulation" className="group block py-8">
               <div className="flex items-baseline justify-between gap-4">
                 <div>
-                  <h3 className="font-serif text-2xl md:text-3xl font-medium group-hover:opacity-70 transition-opacity">
+                  <h3 className="font-serif text-xl md:text-2xl font-medium group-hover:opacity-70 transition-opacity">
                     Simulation
                   </h3>
                   <p className="mt-2 text-muted leading-relaxed max-w-xl">
@@ -336,23 +288,6 @@ export default function HomeClient({
               </div>
               <p className="mt-4 text-sm text-muted font-mono tabular-nums">
                 Gate progress · {simulationMetrics.met} of {simulationMetrics.total} conditions
-              </p>
-            </Link>
-
-            <Link href="/glorya" className="group block py-8">
-              <div className="flex items-baseline justify-between gap-4">
-                <div>
-                  <h3 className="font-serif text-2xl md:text-3xl font-medium group-hover:opacity-70 transition-opacity">
-                    Glorya
-                  </h3>
-                  <p className="mt-2 text-muted leading-relaxed max-w-xl">
-                    Allocating humanitarian capital only when intervention can change the outcome.
-                  </p>
-                </div>
-                <span className="text-sm text-muted shrink-0">Evaluating</span>
-              </div>
-              <p className="mt-4 text-sm text-muted font-mono tabular-nums">
-                Waiting on $1M revenue gate · no allocations yet
               </p>
             </Link>
           </div>

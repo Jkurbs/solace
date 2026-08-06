@@ -207,7 +207,9 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
 
       const arcMats: THREE.LineBasicMaterial[] = [];
       const arcGeos: THREE.BufferGeometry[] = [];
-      if (!compact && needsRef.current.length >= 2) {
+      // Arcs read as evaluation paths between needs — keep them in compact
+      // portraits so the home card shows “decisions,” not only a static globe.
+      if (needsRef.current.length >= 2) {
         const pairs: Array<[number, number, number]> = [
           [0, 1, 0xb090d0],
           [1, 3, 0x90c4e0],
@@ -219,12 +221,12 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
           if (!a || !b) continue;
           const pa = latLonToVector3(a.lat, a.lon, radius);
           const pb = latLonToVector3(b.lat, b.lon, radius);
-          const curvePts = greatCirclePoints(pa, pb, 64, 0.12 + Math.abs(a.lat - b.lat) * 0.0015);
+          const curvePts = greatCirclePoints(pa, pb, compact ? 48 : 64, 0.12 + Math.abs(a.lat - b.lat) * 0.0015);
           const geo = new THREE.BufferGeometry().setFromPoints(curvePts);
           const mat = new THREE.LineBasicMaterial({
             color: hex,
             transparent: true,
-            opacity: 0.26,
+            opacity: compact ? 0.32 : 0.26,
             depthWrite: false,
           });
           arcMats.push(mat);
