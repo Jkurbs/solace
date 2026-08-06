@@ -579,8 +579,11 @@ export default function HeroLattice({
       const cx = width * 0.5;
       const cy = height * 0.5;
       const minDim = Math.min(width, height);
-      const scale = minDim * 0.118;
-      const perspective = minDim * 0.9;
+      // Larger presence: fills the instrument plate without crowding edges.
+      // Mobile background plates are tall; prefer width-led scale there.
+      const widePlate = width / Math.max(height, 1) > 1.15;
+      const scale = minDim * (widePlate ? 0.155 : 0.148);
+      const perspective = minDim * 0.95;
 
       // Micro-breathe only in observe/wait — instrument is alive, not busy.
       const breatheBase =

@@ -169,6 +169,21 @@ export default function HomeClient({
           variants={stagger}
           className="hero-lattice-layout relative z-10 mx-auto max-w-6xl"
         >
+          {/* Mobile: Lattice sits behind as atmosphere. Desktop: right-side instrument. */}
+          <motion.figure
+            variants={fade}
+            className="hero-lattice-figure"
+            aria-label="The Lattice — a living structural instrument maintained by Hermes"
+          >
+            <HeroLattice
+              posture={hermesTelemetry?.posture ?? null}
+              pathsCount={hermesTelemetry?.pathsCount ?? null}
+            />
+            <figcaption className="sr-only">
+              The Lattice. A slowly evolving map of structure. Not a performance chart.
+            </figcaption>
+          </motion.figure>
+
           {/* Copy stays as one block — title and description never split by the object. */}
           <div className="hero-lattice-copy">
             <motion.p
@@ -194,6 +209,32 @@ export default function HomeClient({
               every decision sealed before the outcome and open to inspection.
             </motion.p>
 
+            {instruments.hermes.sealedDecisions != null &&
+              instruments.hermes.sealedDecisions > 0 && (
+                <motion.div variants={fade} className="hero-decision-count mt-8">
+                  <Link
+                    href={OBSERVATORY_HERMES_LEDGER_PATH}
+                    className="hero-decision-count-link group"
+                  >
+                    <span className="hero-decision-count-value font-mono tabular-nums">
+                      {instruments.hermes.sealedDecisions.toLocaleString('en-US')}
+                    </span>
+                    <span className="hero-decision-count-copy">
+                      <span className="hero-decision-count-label">
+                        collective decisions sealed
+                      </span>
+                      <span className="hero-decision-count-hint">
+                        Observatory ledger
+                        <span aria-hidden="true" className="opacity-60 transition-opacity group-hover:opacity-100">
+                          {' '}
+                          →
+                        </span>
+                      </span>
+                    </span>
+                  </Link>
+                </motion.div>
+              )}
+
             <motion.div
               variants={fade}
               className="mt-10 flex flex-wrap items-center gap-3 sm:gap-4"
@@ -215,20 +256,6 @@ export default function HomeClient({
               </Link>
             </motion.div>
           </div>
-
-          <motion.figure
-            variants={fade}
-            className="hero-lattice-figure"
-            aria-label="The Lattice — a living structural instrument maintained by Hermes"
-          >
-            <HeroLattice
-              posture={hermesTelemetry?.posture ?? null}
-              pathsCount={hermesTelemetry?.pathsCount ?? null}
-            />
-            <figcaption className="sr-only">
-              The Lattice. A slowly evolving map of structure. Not a performance chart.
-            </figcaption>
-          </motion.figure>
         </motion.div>
       </section>
 

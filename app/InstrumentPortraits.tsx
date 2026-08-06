@@ -177,6 +177,10 @@ export default function InstrumentPortraits({
         <span className="obs-portrait-caption">
           <strong>Hermes</strong>
           <em>Capital allocation · Live</em>
+          <span className="obs-portrait-desc">
+            An autonomous instrument for capital allocation, built to grow what you
+            entrust it with, with discipline you can verify, not take on faith.
+          </span>
         </span>
       </Link>
 
@@ -214,6 +218,9 @@ export default function InstrumentPortraits({
         <span className="obs-portrait-caption">
           <strong>Oracle</strong>
           <em>Belief under uncertainty · Live</em>
+          <span className="obs-portrait-desc">
+            Live probability over real events, scored against what actually happened.
+          </span>
         </span>
       </Link>
 
@@ -248,6 +255,9 @@ export default function InstrumentPortraits({
         <span className="obs-portrait-caption">
           <strong>Glorya</strong>
           <em>Humanitarian capital · Evaluating</em>
+          <span className="obs-portrait-desc">
+            Allocating humanitarian capital only when intervention can change the outcome.
+          </span>
         </span>
       </Link>
     </div>

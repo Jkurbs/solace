@@ -1,6 +1,7 @@
 import { listPublishedArticles } from '@/features/articles/store';
 import { gloryaProcessScoreboard } from '@/features/glorya/evaluated-needs';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
+import { getHermesLedgerPulse } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { newsPosts } from '@/features/news/posts';
 
@@ -110,17 +111,21 @@ const technicalBrief: ResearchItem = {
 
 /**
  * Home instrument cards: cheap sync + telemetry only.
- * Full ledger scans and Kalshi belong on Observatory / Oracle — not the homepage
- * build path (those were blowing the 60s page generation budget).
+ * Sealed-decision count comes from the ledger pulse (head count), not a full
+ * table walk — same artery as Observatory row presence.
+ * Full ledger scans and Kalshi stay off the homepage build path.
  */
-function getHomeInstrumentSnapshot(telemetry: HermesTelemetry | null): HomeInstrumentSnapshot {
+function getHomeInstrumentSnapshot(
+  telemetry: HermesTelemetry | null,
+  sealedDecisions: number | null,
+): HomeInstrumentSnapshot {
   const glorya = gloryaProcessScoreboard();
 
   return {
     hermes: {
       posture: telemetry?.posture ?? null,
       pathsCount: telemetry?.pathsCount ?? null,
-      sealedDecisions: null,
+      sealedDecisions,
       standDownRate: null,
       openPaths: telemetry?.deployedCount ?? null,
       openPnl: null,
@@ -137,12 +142,16 @@ function getHomeInstrumentSnapshot(telemetry: HermesTelemetry | null): HomeInstr
 export default async function Home() {
   const emptyArticles: Awaited<ReturnType<typeof listPublishedArticles>> = [];
 
-  const [articles, hermesTelemetry] = await Promise.all([
+  const [articles, hermesTelemetry, ledgerPulse] = await Promise.all([
     withTimeout(listPublishedArticles().catch(() => emptyArticles), HOME_FETCH_BUDGET_MS, emptyArticles),
     withTimeout(getHermesTelemetry().catch(() => null), HOME_FETCH_BUDGET_MS, null),
+    withTimeout(getHermesLedgerPulse().catch(() => null), HOME_FETCH_BUDGET_MS, null),
   ]);
 
-  const instruments = getHomeInstrumentSnapshot(hermesTelemetry);
+  const sealedDecisions =
+    ledgerPulse && ledgerPulse.rowCount > 0 ? ledgerPulse.rowCount : null;
+
+  const instruments = getHomeInstrumentSnapshot(hermesTelemetry, sealedDecisions);
 
   const researchFromDb: ResearchItem[] = articles.map((article) => ({
     kind: 'Research' as const,
