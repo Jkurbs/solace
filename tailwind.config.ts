@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 export default {
+  // lib/theme keeps html.dark in sync with data-theme — class strategy is enough.
   darkMode: "class",
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",

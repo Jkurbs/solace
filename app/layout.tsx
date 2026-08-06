@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -52,12 +55,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <body className="antialiased">
-        {/* Theme boot before first paint: light paper default; dark only if chosen. */}
+        {/* Theme boot before first paint: data-theme + .dark class stay in sync. */}
         <script
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{
-            __html:
-              "try{var t=localStorage.getItem('solace-theme');document.documentElement.dataset.theme=t==='dark'?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}",
+            __html: THEME_BOOT_SCRIPT,
           }}
         />
         <script

@@ -1,4 +1,5 @@
 import Mark from '@/app/Mark';
+import { THEME_BOOT_SCRIPT } from '@/lib/theme';
 
 type PageLoadingShellProps = {
   label?: string;
@@ -13,8 +14,7 @@ export default function PageLoadingShell({ label = 'Loading' }: PageLoadingShell
       <script
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{
-          __html:
-            "try{var t=localStorage.getItem('solace-theme');document.documentElement.dataset.theme=t==='dark'?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}",
+          __html: THEME_BOOT_SCRIPT,
         }}
       />
       <div className="page-loading-bar" aria-hidden="true" />

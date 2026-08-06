@@ -14,6 +14,7 @@
 import { useEffect, useRef } from 'react';
 
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
+import { THEME_CHANGE_EVENT } from '@/lib/theme';
 import { getRenderPixelRatio } from '@/lib/webgl-dpr';
 import {
   isWebglPaused,
@@ -831,14 +832,18 @@ export default function HeroLattice({
       else tryStartLoop();
     });
 
-    const themeObserver = new MutationObserver(() => {
+    const redrawTheme = () => {
+      // Re-read ink from CSS variables after light/dark swap.
       draw(reducedMotion ? seed * 40 + 12 : (performance.now() - startedAt) / 1000, 0);
-    });
+    };
+
+    const themeObserver = new MutationObserver(redrawTheme);
     themeObserver.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class'],
+      attributeFilter: ['class', 'data-theme'],
     });
 
+    window.addEventListener(THEME_CHANGE_EVENT, redrawTheme);
     document.addEventListener('visibilitychange', onDocVisibility);
 
     resize();
@@ -864,6 +869,7 @@ export default function HeroLattice({
       stopLoop();
       unsubPause();
       document.removeEventListener('visibilitychange', onDocVisibility);
+      window.removeEventListener(THEME_CHANGE_EVENT, redrawTheme);
       resizeObserver.disconnect();
       visibilityWatch.disconnect();
       themeObserver.disconnect();

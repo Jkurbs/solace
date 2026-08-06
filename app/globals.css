@@ -33,7 +33,9 @@
   --font-plex: var(--font-geist-mono), "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
-html[data-theme='dark'] {
+/* Dark: set via html[data-theme='dark'] and/or html.dark (kept in sync by lib/theme). */
+html[data-theme='dark'],
+html.dark {
   color-scheme: dark;
   --background: #0a0a0a;
   --surface: #111111;
@@ -50,15 +52,13 @@ html[data-theme='dark'] {
   --info: #6c8aa6;
   --ink: #0b0b09;
   --line: rgba(250, 250, 250, 0.1);
-  /* Public site chrome stays light in dark mode so the header and footer never
-     turn into a dark strip over page content. Dashboard/product surfaces can
-     still use the global dark palette through --background/--foreground. */
-  --paper-warm: #f7f5ef;
-  --paper-warm-accent: #efe8d8;
-  --paper-ink: #13110c;
-  --paper-body: #3f3a30;
-  --paper-muted: #6b6354;
-  --paper-line: rgba(19, 17, 12, 0.1);
+  /* Paper chrome follows site dark mode so header/nav match the page. */
+  --paper-warm: #0c0a09;
+  --paper-warm-accent: #1c1917;
+  --paper-ink: #f5f5f4;
+  --paper-body: #d6d3d1;
+  --paper-muted: #a8a29e;
+  --paper-line: rgba(245, 245, 244, 0.12);
 }
 
 html {
@@ -78,7 +78,8 @@ body {
   background: rgba(28, 25, 23, 0.1);
 }
 
-html[data-theme='dark'] ::selection {
+html[data-theme='dark'] ::selection,
+html.dark ::selection {
   background: rgba(214, 208, 196, 0.28);
 }
 
@@ -14885,14 +14886,19 @@ html[data-theme='light'] .obs-honesty-list strong {
 }
 
 
-/* Research aesthetic overrides */
+/* Research aesthetic overrides — follow site theme (data-theme + .dark). */
 .home-research {
   --background: #fafaf9;        /* warm paper white */
   --foreground: #1c1917;        /* soft ink */
   --muted: #78716c;             /* warm gray */
   --border: #e7e5e4;            /* hairline rule */
+  background: var(--background);
+  color: var(--foreground);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
+html[data-theme='dark'] .home-research,
+html.dark .home-research,
 .dark .home-research {
   --background: #0c0a09;
   --foreground: #f5f5f4;
@@ -14971,6 +14977,9 @@ section h3 {
 ::selection {
   background: rgba(28, 25, 23, 0.08);
 }
+html[data-theme='dark'] .home-research ::selection,
+html.dark .home-research ::selection,
+.dark .home-research ::selection,
 .dark ::selection {
   background: rgba(245, 245, 244, 0.15);
 }
@@ -15118,8 +15127,18 @@ section h3 {
   color: var(--muted);
 }
 
+html[data-theme='dark'] .hero-lattice-figure,
+html.dark .hero-lattice-figure,
 .dark .hero-lattice-figure {
   opacity: 0.34;
+}
+
+@media (min-width: 900px) {
+  html[data-theme='dark'] .hero-lattice-figure,
+  html.dark .hero-lattice-figure,
+  .dark .hero-lattice-figure {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -19115,10 +19134,14 @@ html[data-theme='dark'] .hermes-paper {
   color: #3d6b4f;
 }
 
+html[data-theme='dark'] .obs-portrait:hover .obs-portrait-caption strong,
+html.dark .obs-portrait:hover .obs-portrait-caption strong,
 .dark .obs-portrait:hover .obs-portrait-caption strong {
   color: #6b9b7a;
 }
 
+html[data-theme='dark'] .obs-portrait-desc,
+html.dark .obs-portrait-desc,
 .dark .obs-portrait-desc {
   color: var(--muted, #a8a29e);
 }

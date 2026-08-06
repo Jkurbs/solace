@@ -110,7 +110,7 @@ export default function SiteHeader({ variant = 'paper' }: { variant?: SiteHeader
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-40 border-b ${bg} backdrop-blur-xl transition-shadow duration-300 ${border} ${text}`}
+      className={`site-header fixed inset-x-0 top-0 z-40 border-b ${bg} backdrop-blur-xl transition-[background-color,border-color,color,box-shadow] duration-300 ${border} ${text}`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 md:px-8">
         <Link

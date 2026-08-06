@@ -4,28 +4,35 @@ import type { ReactNode, RefObject } from 'react';
 import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 
+import { THEME_CHANGE_EVENT, readSiteTheme, type SiteTheme } from '@/lib/theme';
+
 export const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
-export type SiteTheme = 'dark' | 'light';
+export type { SiteTheme };
 
 export function useSiteTheme() {
-  const [theme, setTheme] = useState<SiteTheme>(() => {
-    if (typeof document === 'undefined') {
-      return 'dark';
-    }
-
-    return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
-  });
+  const [theme, setTheme] = useState<SiteTheme>('light');
 
   useEffect(() => {
-    const read = () => (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark') as SiteTheme;
+    setTheme(readSiteTheme());
 
-    setTheme(read());
+    const onChange = (event: Event) => {
+      const detail = (event as CustomEvent<SiteTheme>).detail;
+      if (detail === 'light' || detail === 'dark') setTheme(detail);
+      else setTheme(readSiteTheme());
+    };
 
-    const observer = new MutationObserver(() => setTheme(read()));
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    const observer = new MutationObserver(() => setTheme(readSiteTheme()));
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme', 'class'],
+    });
+    window.addEventListener(THEME_CHANGE_EVENT, onChange);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener(THEME_CHANGE_EVENT, onChange);
+    };
   }, []);
 
   return theme;
