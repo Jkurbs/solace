@@ -159,9 +159,9 @@ export default function HomeClient({
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
-      {/* ── Hero + Charter: one continuous unit ──
-          Emotional job: the Lattice is the instrument; the charter is why
-          it can be trusted — same stage, no second sales section. */}
+      {/* ── Hero: product unit + Lattice in a contrast screen ──
+          Emotional job: settle on one living object; screen contrast
+          makes the instrument read as hardware, not wallpaper. */}
       <section className="hero-research hero-lattice-section relative overflow-hidden px-5 pt-12 pb-16 md:pt-20 md:pb-24 border-t border-border">
         <motion.div
           initial={heroInitial}
@@ -210,10 +210,14 @@ export default function HomeClient({
             className="hero-lattice-figure"
             aria-label="The Lattice — a living structural instrument maintained by Hermes"
           >
-            <HeroLattice
-              posture={hermesTelemetry?.posture ?? null}
-              pathsCount={hermesTelemetry?.pathsCount ?? null}
-            />
+            <div className="hero-lattice-screen">
+              <div className="hero-lattice-screen-inner">
+                <HeroLattice
+                  posture={hermesTelemetry?.posture ?? null}
+                  pathsCount={hermesTelemetry?.pathsCount ?? null}
+                />
+              </div>
+            </div>
             <figcaption className="sr-only">
               The Lattice. A slowly evolving map of structure. Not a performance chart.
             </figcaption>
@@ -244,37 +248,6 @@ export default function HomeClient({
                 </Link>
               </motion.div>
             )}
-        </motion.div>
-
-        {/* Charter — same section as the Lattice, founding principle under the instrument */}
-        <motion.div
-          initial={heroInitial}
-          animate="show"
-          variants={stagger}
-          className="hero-charter relative z-10 mx-auto max-w-2xl"
-        >
-          <motion.div variants={fade} className="hero-charter-rule" aria-hidden="true" />
-          <motion.div variants={fade}>
-            <SealIcon className="hero-charter-seal w-10 h-10 md:w-11 md:h-11 text-muted mx-auto" />
-          </motion.div>
-          <motion.p variants={fade} className="hero-charter-kicker">
-            Charter
-          </motion.p>
-          <motion.p variants={fade} className="hero-charter-body">
-            Every decision any live instrument makes is recorded in a sealed ledger before the
-            outcome is known. Each ledger can be inspected in the Observatory.
-          </motion.p>
-          <motion.div variants={fade} className="hero-charter-actions">
-            <Link
-              href={OBSERVATORY_HERMES_LEDGER_PATH}
-              className="hero-cta hero-cta-secondary"
-            >
-              Inspect the Observatory
-              <span aria-hidden="true" className="ml-1.5 text-[0.85em] opacity-60">
-                →
-              </span>
-            </Link>
-          </motion.div>
         </motion.div>
       </section>
 
@@ -310,6 +283,30 @@ export default function HomeClient({
               <p className="mt-4 text-sm text-muted font-mono tabular-nums">
                 Gate progress · {simulationMetrics.met} of {simulationMetrics.total} conditions
               </p>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Charter: after instruments — founding principle ── */}
+      <section className="home-charter-section px-5 py-16 md:py-24 border-t border-border">
+        <div className="hero-charter mx-auto max-w-2xl">
+          <div className="hero-charter-rule" aria-hidden="true" />
+          <SealIcon className="hero-charter-seal w-10 h-10 md:w-11 md:h-11 text-muted mx-auto" />
+          <p className="hero-charter-kicker">Charter</p>
+          <p className="hero-charter-body">
+            Every decision any live instrument makes is recorded in a sealed ledger before the
+            outcome is known. Each ledger can be inspected in the Observatory.
+          </p>
+          <div className="hero-charter-actions">
+            <Link
+              href={OBSERVATORY_HERMES_LEDGER_PATH}
+              className="hero-cta hero-cta-secondary"
+            >
+              Inspect the Observatory
+              <span aria-hidden="true" className="ml-1.5 text-[0.85em] opacity-60">
+                →
+              </span>
             </Link>
           </div>
         </div>

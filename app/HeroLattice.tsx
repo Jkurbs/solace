@@ -880,7 +880,8 @@ export default function HeroLattice({
     <div
       ref={mountRef}
       className={className ?? 'hero-lattice'}
-      style={{ color: 'var(--foreground)' }}
+      // Ink contrasts the screen plate (light ink on dark screen / dark ink on light).
+      style={{ color: 'var(--lattice-ink)' }}
     >
       <canvas ref={canvasRef} className="hero-lattice-canvas" aria-hidden="true" />
     </div>
