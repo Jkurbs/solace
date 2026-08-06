@@ -3,13 +3,12 @@
 /**
  * The Lattice — homepage hero instrument.
  *
- * Pushed to Canvas 2D limit:
- *   - Half-res bloom pass with Gaussian blur
- *   - Per-element shadow halos (nodes, pulses, strong edges)
- *   - Atmospheric fog via z-depth
- *   - Film grain + vignette overlay
- *   - Smooth color transitions with cinematic flash
- *   - Posture-driven spectral identity
+ * Cognitive grammar (honest fiction over public signals):
+ *   OBSERVE → NOTICE → PROPAGATE → SETTLE → WAIT
+ *
+ * Geometry barely moves. Energy moves.
+ * Confidence reduces motion (stillness = certainty).
+ * Not a performance chart; not a perpetual demo loop.
  */
 
 import { useEffect, useRef } from 'react';
@@ -22,26 +21,85 @@ import {
   subscribeWebglPause,
 } from '@/lib/webgl-lifecycle';
 
-/* ── Types ── */
-type Palette = { r: number; g: number; b: number; name?: string };
-
+/**
+ * Posture → cognition profile.
+ * exploration: how often and how far the cycle searches (0–1)
+ * confidence: stillness of geometry + settle depth (0–1)
+ * pulseAmp: energy brightness on wires
+ */
 type CognitionProfile = {
   exploration: number;
   confidence: number;
   pulseAmp: number;
+  /** Mean WAIT duration (seconds) before next cycle. */
   waitMean: number;
+  /** Max simultaneous edge pulses. */
   maxPulses: number;
 };
 
+const postureCognition: Record<HermesPublicPosture, CognitionProfile> = {
+  // Working: more probes, still settles hard after.
+  DEPLOYED: {
+    exploration: 0.72,
+    confidence: 0.78,
+    pulseAmp: 1,
+    waitMean: 9,
+    maxPulses: 5,
+  },
+  // Looking for a cleaner opening: exploratory, less settled.
+  SELECTIVE: {
+    exploration: 0.88,
+    confidence: 0.48,
+    pulseAmp: 0.92,
+    waitMean: 6.5,
+    maxPulses: 7,
+  },
+  // Protecting first: shorter probes, longer rest.
+  DEFENSIVE: {
+    exploration: 0.45,
+    confidence: 0.7,
+    pulseAmp: 0.7,
+    waitMean: 11,
+    maxPulses: 4,
+  },
+  // Standing down is competence — almost frozen instrument.
+  STANDING_DOWN: {
+    exploration: 0.18,
+    confidence: 0.92,
+    pulseAmp: 0.42,
+    waitMean: 16,
+    maxPulses: 2,
+  },
+  RISK_OFF: {
+    exploration: 0.14,
+    confidence: 0.95,
+    pulseAmp: 0.35,
+    waitMean: 18,
+    maxPulses: 1,
+  },
+};
+
+const defaultCognition: CognitionProfile = {
+  exploration: 0.55,
+  confidence: 0.62,
+  pulseAmp: 0.75,
+  waitMean: 10,
+  maxPulses: 4,
+};
+
 type Phase = 'observe' | 'notice' | 'propagate' | 'settle' | 'wait';
+
 type Vec3 = { x: number; y: number; z: number };
+
 type Role = 'stable' | 'exploratory' | 'bridge' | 'ephemeral';
 
 type Node = {
   rest: Vec3;
   phase: number;
   role: Role;
+  /** Persistent attention residual (memory). */
   memory: number;
+  /** Live activation this frame (0–1). */
   activation: number;
 };
 
@@ -49,12 +107,15 @@ type Edge = {
   a: number;
   b: number;
   kind: 1 | 2;
+  /** Structural strength 0–1 (reorganizes rarely). */
   strength: number;
+  /** Recent traffic residual (decay = learning trace). */
   memory: number;
 };
 
 type Pulse = {
   edgeIndex: number;
+  /** 0 → 1 along edge (a→b or reverse). */
   t: number;
   speed: number;
   amp: number;
@@ -65,79 +126,17 @@ type Pulse = {
 
 type Trace = {
   edgeIndex: number;
+  /** Residual brightness after a pulse passed. */
   glow: number;
-};
-
-type Particle = {
-  x: number;
-  y: number;
-  z: number;
-  vx: number;
-  vy: number;
-  vz: number;
-  life: number;
-  maxLife: number;
-  size: number;
-};
-
-type Glyph = {
-  x: number;
-  y: number;
-  symbol: string;
-  opacity: number;
-  drift: number;
-  size: number;
-  born: number;
-};
-
-type Annotation = {
-  text: string;
-  x: number;
-  y: number;
-  opacity: number;
-  born: number;
-  duration: number;
 };
 
 export type HeroLatticeProps = {
   posture?: HermesPublicPosture | null;
+  /** Markets watched / paths under review — scales probe breadth slightly. */
   pathsCount?: number | null;
   className?: string;
 };
 
-/* ── Constants ── */
-const GLYPHS = ['∑', '∂', '∇', '∫', 'π', 'φ', '∞', '≈', '±', '√', 'δ', 'λ', 'ω', 'θ'];
-const PHASE_LABELS: Record<Phase, string> = {
-  observe: 'OBSERVING',
-  notice: 'NOTICING',
-  propagate: 'PROPAGATING',
-  settle: 'SETTLING',
-  wait: 'WAITING',
-};
-
-const posturePalette: Record<HermesPublicPosture, Palette> = {
-  DEPLOYED:      { r: 218, g: 165, b:  85, name: 'amber' },
-  SELECTIVE:     { r: 135, g: 206, b: 235, name: 'cyan' },
-  DEFENSIVE:     { r: 176, g: 196, b: 222, name: 'steel' },
-  STANDING_DOWN: { r: 147, g: 112, b: 219, name: 'violet' },
-  RISK_OFF:      { r: 178, g: 102, b: 102, name: 'arterial' },
-};
-
-const defaultPalette: Palette = { r: 200, g: 195, b: 188, name: 'bone' };
-
-const postureCognition: Record<HermesPublicPosture, CognitionProfile> = {
-  DEPLOYED:      { exploration: 0.72, confidence: 0.78, pulseAmp: 1,    waitMean: 9,  maxPulses: 5 },
-  SELECTIVE:     { exploration: 0.88, confidence: 0.48, pulseAmp: 0.92, waitMean: 6.5, maxPulses: 7 },
-  DEFENSIVE:     { exploration: 0.45, confidence: 0.70, pulseAmp: 0.70, waitMean: 11, maxPulses: 4 },
-  STANDING_DOWN: { exploration: 0.18, confidence: 0.92, pulseAmp: 0.42, waitMean: 16, maxPulses: 2 },
-  RISK_OFF:      { exploration: 0.14, confidence: 0.95, pulseAmp: 0.35, waitMean: 18, maxPulses: 1 },
-};
-
-const defaultCognition: CognitionProfile = {
-  exploration: 0.55, confidence: 0.62, pulseAmp: 0.75, waitMean: 10, maxPulses: 4,
-};
-
-/* ── Math Helpers ── */
 function hash01(n: number): number {
   const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
@@ -150,43 +149,6 @@ function daySeed(): number {
   return day * 0.017 + d.getUTCFullYear() * 0.31;
 }
 
-function lerp(a: number, b: number, t: number) {
-  return a + (b - a) * t;
-}
-
-function smoothstep(t: number) {
-  return t * t * (3 - 2 * t);
-}
-
-function lerpColor(
-  a: { r: number; g: number; b: number },
-  b: { r: number; g: number; b: number },
-  t: number,
-): { r: number; g: number; b: number } {
-  const s = smoothstep(t);
-  return {
-    r: Math.round(lerp(a.r, b.r, s)),
-    g: Math.round(lerp(a.g, b.g, s)),
-    b: Math.round(lerp(a.b, b.b, s)),
-  };
-}
-
-function rotateY(p: Vec3, a: number): Vec3 {
-  const c = Math.cos(a), s = Math.sin(a);
-  return { x: p.x * c + p.z * s, y: p.y, z: -p.x * s + p.z * c };
-}
-
-function rotateX(p: Vec3, a: number): Vec3 {
-  const c = Math.cos(a), s = Math.sin(a);
-  return { x: p.x, y: p.y * c - p.z * s, z: p.y * s + p.z * c };
-}
-
-function project(p: Vec3, scale: number, cx: number, cy: number, perspective: number) {
-  const z = p.z * scale;
-  const depth = perspective / (perspective - z);
-  return { x: cx + p.x * scale * depth, y: cy - p.y * scale * depth, depth, z };
-}
-
 function roleFor(x: number, y: number, z: number, phase: number): Role {
   const r2 = x * x + y * y + z * z;
   if (r2 <= 1) return 'stable';
@@ -195,7 +157,6 @@ function roleFor(x: number, y: number, z: number, phase: number): Role {
   return 'exploratory';
 }
 
-/* ── Lattice Builder ── */
 function buildLattice(extent = 2): { nodes: Node[]; edges: Edge[] } {
   const nodes: Node[] = [];
   const indexOf = new Map<string, number>();
@@ -206,12 +167,12 @@ function buildLattice(extent = 2): { nodes: Node[]; edges: Edge[] } {
       for (let z = -extent; z <= extent; z++) {
         const r2 = x * x + y * y + z * z;
         if (r2 > extent * extent + 0.5) continue;
-        const ph = hash01(x * 19.1 + y * 7.3 + z * 3.7 + 1.1);
+        const phase = hash01(x * 19.1 + y * 7.3 + z * 3.7 + 1.1);
         indexOf.set(key(x, y, z), nodes.length);
         nodes.push({
           rest: { x, y, z },
-          phase: ph,
-          role: roleFor(x, y, z, ph),
+          phase,
+          role: roleFor(x, y, z, phase),
           memory: 0,
           activation: 0,
         });
@@ -223,15 +184,19 @@ function buildLattice(extent = 2): { nodes: Node[]; edges: Edge[] } {
   const seen = new Set<string>();
 
   const tryEdge = (i: number, j: number, kind: 1 | 2) => {
-    const a = Math.min(i, j), b = Math.max(i, j);
+    const a = Math.min(i, j);
+    const b = Math.max(i, j);
     const id = `${a}-${b}`;
     if (seen.has(id)) return;
     seen.add(id);
-    const pa = nodes[a].phase, pb = nodes[b].phase;
+    const pa = nodes[a].phase;
+    const pb = nodes[b].phase;
     const base = kind === 1 ? 0.55 : 0.28;
     const strength = base + 0.35 * hash01(a * 13.7 + b * 5.3 + kind);
     edges.push({
-      a, b, kind,
+      a,
+      b,
+      kind,
       strength: Math.min(1, strength * (0.85 + 0.3 * ((pa + pb) * 0.5))),
       memory: 0,
     });
@@ -239,15 +204,24 @@ function buildLattice(extent = 2): { nodes: Node[]; edges: Edge[] } {
 
   for (let i = 0; i < nodes.length; i++) {
     const { x, y, z } = nodes[i].rest;
-    for (const [dx, dy, dz] of [[1,0,0],[0,1,0],[0,0,1]] as const) {
-      const j = indexOf.get(key(x+dx, y+dy, z+dz));
+    for (const [dx, dy, dz] of [
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1],
+    ] as const) {
+      const j = indexOf.get(key(x + dx, y + dy, z + dz));
       if (j !== undefined) tryEdge(i, j, 1);
     }
     if ((x + y + z) % 2 === 0) {
       for (const [dx, dy, dz] of [
-        [1,1,0],[1,-1,0],[1,0,1],[1,0,-1],[0,1,1],[0,1,-1],
+        [1, 1, 0],
+        [1, -1, 0],
+        [1, 0, 1],
+        [1, 0, -1],
+        [0, 1, 1],
+        [0, 1, -1],
       ] as const) {
-        const j = indexOf.get(key(x+dx, y+dy, z+dz));
+        const j = indexOf.get(key(x + dx, y + dy, z + dz));
         if (j !== undefined) tryEdge(i, j, 2);
       }
     }
@@ -256,28 +230,70 @@ function buildLattice(extent = 2): { nodes: Node[]; edges: Edge[] } {
   return { nodes, edges };
 }
 
+function rotateY(p: Vec3, a: number): Vec3 {
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return { x: p.x * c + p.z * s, y: p.y, z: -p.x * s + p.z * c };
+}
+
+function rotateX(p: Vec3, a: number): Vec3 {
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return { x: p.x, y: p.y * c - p.z * s, z: p.y * s + p.z * c };
+}
+
+function project(p: Vec3, scale: number, cx: number, cy: number, perspective: number) {
+  const z = p.z * scale;
+  const depth = perspective / (perspective - z);
+  return {
+    x: cx + p.x * scale * depth,
+    y: cy - p.y * scale * depth,
+    depth,
+    z,
+  };
+}
+
+function parseInk(color: string): { r: number; g: number; b: number } {
+  const rgb = color.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+  if (rgb) return { r: +rgb[1], g: +rgb[2], b: +rgb[3] };
+  const hex = color.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (hex) {
+    let h = hex[1];
+    if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+    return {
+      r: parseInt(h.slice(0, 2), 16),
+      g: parseInt(h.slice(2, 4), 16),
+      b: parseInt(h.slice(4, 6), 16),
+    };
+  }
+  return { r: 28, g: 25, b: 23 };
+}
+
 function adjacency(edges: Edge[], n: number): number[][] {
   const adj: number[][] = Array.from({ length: n }, () => []);
-  edges.forEach((e, i) => { adj[e.a].push(i); adj[e.b].push(i); });
+  edges.forEach((e, i) => {
+    adj[e.a].push(i);
+    adj[e.b].push(i);
+  });
   return adj;
 }
 
-function eStrengthNear(es: Edge[], nodeIndex: number): number {
-  let s = 0, c = 0;
-  for (const e of es) {
-    if (e.a === nodeIndex || e.b === nodeIndex) { s += e.strength; c++; }
-  }
-  return c ? s / c : 0.5;
-}
-
+/** Soft reorg: strengthen paths near focus, weaken idle exploratory edges. */
 function reorganize(
-  nodes: Node[], edges: Edge[], focus: number, exploration: number, rng: () => number,
+  nodes: Node[],
+  edges: Edge[],
+  focus: number,
+  exploration: number,
+  rng: () => number,
 ) {
   for (let i = 0; i < edges.length; i++) {
     const e = edges[i];
     const nearFocus =
-      e.a === focus || e.b === focus ||
-      nodes[e.a].activation > 0.2 || nodes[e.b].activation > 0.2 || e.memory > 0.15;
+      e.a === focus ||
+      e.b === focus ||
+      nodes[e.a].activation > 0.2 ||
+      nodes[e.b].activation > 0.2 ||
+      e.memory > 0.15;
 
     if (nearFocus) {
       e.strength = Math.min(1, e.strength + 0.08 + rng() * 0.1 * exploration);
@@ -289,21 +305,6 @@ function reorganize(
   }
 }
 
-/* ── Grain Texture ── */
-function createGrainCanvas(): HTMLCanvasElement {
-  const c = document.createElement('canvas');
-  c.width = 256; c.height = 256;
-  const ctx = c.getContext('2d')!;
-  const img = ctx.createImageData(256, 256);
-  for (let i = 0; i < img.data.length; i += 4) {
-    const v = Math.random() * 255;
-    img.data[i] = v; img.data[i+1] = v; img.data[i+2] = v; img.data[i+3] = 255;
-  }
-  ctx.putImageData(img, 0, 0);
-  return c;
-}
-
-/* ── Component ── */
 export default function HeroLattice({
   posture = null,
   pathsCount = null,
@@ -329,6 +330,7 @@ export default function HeroLattice({
     const seed = daySeed();
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // Deterministic PRNG for cognition (reproducible within session day).
     let rngState = (seed * 10000 + 17) | 0;
     const rng = () => {
       rngState = (rngState * 1664525 + 1013904223) | 0;
@@ -340,40 +342,9 @@ export default function HeroLattice({
     let lastFrame = startedAt;
     let inView = true;
     let pageVisible = !document.hidden;
+    let ink = parseInk(getComputedStyle(mount).color);
 
-    /* Color & Transition */
-    let currentInk: { r: number; g: number; b: number } = { ...defaultPalette };
-    let targetInk: { r: number; g: number; b: number } = posture
-      ? { ...posturePalette[posture] }
-      : { ...defaultPalette };
-    let transitionT = 0;
-    let transitionActive = false;
-
-    /* Mouse */
-    const mouse = { x: -1000, y: -1000, active: false };
-    const onMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      mouse.x = e.clientX - rect.left;
-      mouse.y = e.clientY - rect.top;
-      mouse.active = true;
-    };
-    const onMouseLeave = () => { mouse.active = false; };
-    const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        const rect = canvas.getBoundingClientRect();
-        mouse.x = e.touches[0].clientX - rect.left;
-        mouse.y = e.touches[0].clientY - rect.top;
-        mouse.active = true;
-      }
-    };
-    const onTouchEnd = () => { mouse.active = false; };
-
-    mount.addEventListener('mousemove', onMouseMove);
-    mount.addEventListener('mouseleave', onMouseLeave);
-    mount.addEventListener('touchmove', onTouchMove, { passive: true });
-    mount.addEventListener('touchend', onTouchEnd);
-
-    /* Cognitive State */
+    // ── Cognitive state machine ──
     let phase: Phase = 'observe';
     let phaseT = 0;
     let phaseDur = 4;
@@ -386,27 +357,10 @@ export default function HeroLattice({
     let rotX = 0.42 + Math.sin(seed * 1.7) * 0.08;
     let prevPosture: HermesPublicPosture | null | undefined = postureRef.current;
 
-    /* Atmosphere */
-    const particles: Particle[] = [];
-    for (let i = 0; i < 24; i++) {
-      particles.push({
-        x: rng() * 2 - 1, y: rng() * 2 - 1, z: rng() * 2 - 1,
-        vx: (rng() - 0.5) * 0.06, vy: (rng() - 0.5) * 0.06, vz: (rng() - 0.5) * 0.03,
-        life: rng() * 100, maxLife: 100 + rng() * 150, size: 0.4 + rng() * 1.2,
-      });
-    }
-
-    let glyphs: Glyph[] = [];
-    let annotations: Annotation[] = [];
-
-    /* Offscreen canvases */
-    const bloomCanvas = document.createElement('canvas');
-    const bloomCtx = bloomCanvas.getContext('2d')!;
-    const grainCanvas = createGrainCanvas();
-
     const profile = (): CognitionProfile => {
       const p = postureRef.current;
       const base = p ? postureCognition[p] : defaultCognition;
+      // Slightly broader probes when more markets are watched (public signal only).
       const paths = pathsRef.current ?? 0;
       const breadth = Math.min(0.2, Math.max(0, paths) * 0.015);
       return {
@@ -417,6 +371,7 @@ export default function HeroLattice({
     };
 
     const pickFocus = (cog: CognitionProfile) => {
+      // Prefer exploratory / bridge when searching; stable when confident.
       const weights = nodes.map((n) => {
         if (cog.confidence > 0.8 && n.role === 'stable') return 2.2;
         if (cog.exploration > 0.6 && n.role === 'exploratory') return 2.4;
@@ -436,16 +391,9 @@ export default function HeroLattice({
     const enterPhase = (next: Phase, cog: CognitionProfile) => {
       phase = next;
       phaseT = 0;
-
-      annotations.push({
-        text: PHASE_LABELS[next],
-        x: 0, y: 0, opacity: 0,
-        born: performance.now(),
-        duration: 1.2,
-      });
-
       switch (next) {
         case 'observe':
+          // Almost frozen watching. Longer when confident.
           phaseDur = 3.2 + cog.confidence * 4.5 + rng() * 1.5;
           break;
         case 'notice':
@@ -458,7 +406,10 @@ export default function HeroLattice({
         case 'propagate': {
           pulses = [];
           const startEdges = adj[focusNode];
-          const budget = Math.max(1, Math.round(cog.maxPulses * (0.55 + cog.exploration * 0.45)));
+          const budget = Math.max(
+            1,
+            Math.round(cog.maxPulses * (0.55 + cog.exploration * 0.45)),
+          );
           const shuffled = [...startEdges].sort(() => rng() - 0.5);
           for (let i = 0; i < Math.min(budget, shuffled.length); i++) {
             const ei = shuffled[i];
@@ -466,7 +417,8 @@ export default function HeroLattice({
             if (e.strength < 0.12) continue;
             const forward = e.a === focusNode;
             pulses.push({
-              edgeIndex: ei, t: 0,
+              edgeIndex: ei,
+              t: 0,
               speed: 0.55 + rng() * 0.55 + cog.exploration * 0.35,
               amp: (0.55 + rng() * 0.45) * cog.pulseAmp,
               forward,
@@ -478,6 +430,7 @@ export default function HeroLattice({
           break;
         }
         case 'settle':
+          // Rare structural reorg — not every cycle.
           cyclesSinceReorg += 1;
           const shouldReorg =
             cyclesSinceReorg >= 3 + Math.floor(rng() * 3) ||
@@ -487,20 +440,12 @@ export default function HeroLattice({
             cyclesSinceReorg = 0;
           }
           prevPosture = postureRef.current;
-
-          const glyphCount = 2 + Math.floor(rng() * 3 * cog.confidence);
-          for (let g = 0; g < glyphCount; g++) {
-            glyphs.push({
-              x: 0, y: 0,
-              symbol: GLYPHS[Math.floor(rng() * GLYPHS.length)],
-              opacity: 0, drift: 8 + rng() * 12,
-              size: 8 + rng() * 6, born: performance.now(),
-            });
-          }
           phaseDur = 1.4 + cog.confidence * 2.2;
           break;
         case 'wait':
-          phaseDur = cog.waitMean * (0.75 + rng() * 0.5) * (0.85 + cog.confidence * 0.35);
+          // Silence. Confidence stretches the rest.
+          phaseDur =
+            cog.waitMean * (0.75 + rng() * 0.5) * (0.85 + cog.confidence * 0.35);
           break;
       }
     };
@@ -522,53 +467,36 @@ export default function HeroLattice({
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      bloomCanvas.width = Math.floor(width * dpr * 0.5);
-      bloomCanvas.height = Math.floor(height * dpr * 0.5);
     };
 
     const stepCognition = (dt: number, cog: CognitionProfile) => {
       phaseT += dt;
       if (phaseT >= phaseDur) advancePhase(cog);
 
-      /* Color transition */
-      const newTarget = postureRef.current
-        ? { ...posturePalette[postureRef.current] }
-        : { ...defaultPalette };
-      if (newTarget.r !== targetInk.r || newTarget.g !== targetInk.g || newTarget.b !== targetInk.b) {
-        targetInk = newTarget;
-        transitionActive = true;
-        transitionT = 0;
-      }
-      if (transitionActive) {
-        transitionT += dt * 1.2;
-        if (transitionT >= 1) {
-          transitionT = 1;
-          transitionActive = false;
-          currentInk = { ...targetInk };
-        } else {
-          currentInk = lerpColor(currentInk, targetInk, transitionT);
-        }
-      }
-
+      // Memory decay (learning leaves traces, then fades).
       const memDecay = Math.exp(-dt * 0.12);
       for (const n of nodes) {
         n.memory *= memDecay;
+        // Soft activation decay outside active phases.
         if (phase === 'observe' || phase === 'wait' || phase === 'settle') {
           n.activation *= Math.exp(-dt * (phase === 'settle' ? 1.2 : 0.55));
         }
       }
-      for (const e of edges) e.memory *= Math.exp(-dt * 0.18);
+      for (const e of edges) {
+        e.memory *= Math.exp(-dt * 0.18);
+      }
       traces = traces
         .map((t) => ({ ...t, glow: t.glow * Math.exp(-dt * 0.55) }))
         .filter((t) => t.glow > 0.02);
 
+      // NOTICE: focus node flickers.
       if (phase === 'notice') {
         const flicker = 0.65 + 0.35 * Math.sin(phaseT * 14);
         nodes[focusNode].activation = flicker;
         attentionNode = focusNode;
       }
 
+      // PROPAGATE: energy along edges.
       if (phase === 'propagate' || pulses.length > 0) {
         const next: Pulse[] = [];
         for (const p of pulses) {
@@ -576,6 +504,7 @@ export default function HeroLattice({
           const e = edges[p.edgeIndex];
           e.memory = Math.min(1, e.memory + p.amp * dt * 0.8);
 
+          // Mid-edge: light the local nodes a bit.
           if (p.t > 0.15 && p.t < 0.9) {
             const mid = p.t;
             nodes[e.a].activation = Math.max(
@@ -593,6 +522,7 @@ export default function HeroLattice({
             continue;
           }
 
+          // Arrived — leave a trace; maybe hop.
           traces.push({ edgeIndex: p.edgeIndex, glow: p.amp * 0.85 });
           const toNode = p.forward ? e.b : e.a;
           nodes[toNode].activation = Math.max(nodes[toNode].activation, p.amp);
@@ -603,14 +533,18 @@ export default function HeroLattice({
             const candidates = adj[toNode]
               .filter((ei) => ei !== p.edgeIndex && edges[ei].strength > 0.14)
               .sort((a, b) => edges[b].strength - edges[a].strength);
-            const take = Math.min(1 + (rng() < cog.exploration ? 1 : 0), candidates.length);
+            const take = Math.min(
+              1 + (rng() < cog.exploration ? 1 : 0),
+              candidates.length,
+            );
             for (let k = 0; k < take; k++) {
               if (next.length >= cog.maxPulses + 2) break;
               const ei = candidates[k];
               const ne = edges[ei];
               const forward = ne.a === toNode;
               next.push({
-                edgeIndex: ei, t: 0,
+                edgeIndex: ei,
+                t: 0,
                 speed: p.speed * (0.85 + rng() * 0.25),
                 amp: p.amp * (0.72 + rng() * 0.18),
                 forward,
@@ -623,39 +557,11 @@ export default function HeroLattice({
         pulses = next;
       }
 
+      // Geometry: glacial drift only — confidence freezes spin.
+      // Stillness is the visual language of certainty.
       const spin = 0.004 + (1 - cog.confidence) * 0.018;
       rotY += dt * spin;
       rotX = 0.42 + Math.sin(seed * 1.7) * 0.08 + Math.sin(rotY * 0.35) * 0.03;
-
-      for (const pt of particles) {
-        pt.x += pt.vx * dt;
-        pt.y += pt.vy * dt;
-        pt.z += pt.vz * dt;
-        pt.life += dt * 60;
-        if (pt.life > pt.maxLife) {
-          pt.x = rng() * 2 - 1; pt.y = rng() * 2 - 1; pt.z = rng() * 2 - 1;
-          pt.life = 0;
-        }
-      }
-
-      const now = performance.now();
-      glyphs = glyphs
-        .map((g) => ({
-          ...g,
-          opacity: Math.min(0.35, (now - g.born) / 400) *
-                   Math.max(0, 1 - (now - g.born - 2000) / 2000),
-        }))
-        .filter((g) => g.opacity > 0.005);
-
-      annotations = annotations
-        .map((a) => ({
-          ...a,
-          opacity:
-            now - a.born < 300
-              ? (now - a.born) / 300
-              : Math.max(0, 1 - (now - a.born - a.duration * 300) / (a.duration * 700)),
-        }))
-        .filter((a) => a.opacity > 0.005);
     };
 
     const draw = (timeSec: number, dt: number) => {
@@ -663,40 +569,44 @@ export default function HeroLattice({
       const height = mount.clientHeight;
       if (width < 2 || height < 2) return;
 
+      ink = parseInk(getComputedStyle(mount).color);
       const cog = profile();
-      if (!reducedMotion) stepCognition(dt, cog);
+
+      if (!reducedMotion) {
+        stepCognition(dt, cog);
+      }
 
       const cx = width * 0.5;
       const cy = height * 0.5;
       const minDim = Math.min(width, height);
+      // Larger presence: fills the instrument plate without crowding edges.
+      // Mobile background plates are tall; prefer width-led scale there.
       const widePlate = width / Math.max(height, 1) > 1.15;
       const scale = minDim * (widePlate ? 0.155 : 0.148);
       const perspective = minDim * 0.95;
 
+      // Micro-breathe only in observe/wait — instrument is alive, not busy.
       const breatheBase =
         phase === 'observe' || phase === 'wait'
           ? 0.97 + 0.03 * Math.sin(timeSec * 0.35 + seed)
           : 0.94 + 0.06 * Math.sin(timeSec * 0.5 + seed);
       const presence = 0.5 + 0.5 * cog.pulseAmp;
 
-      const ink = currentInk;
-      const inkStr = `${ink.r},${ink.g},${ink.b}`;
-
-      /* ── Clear & Background ── */
       ctx.clearRect(0, 0, width, height);
 
-      /* Ambient core */
-      const coreAlpha = 0.03 * presence * breatheBase + (phase === 'propagate' ? 0.02 * cog.pulseAmp : 0);
+      const coreAlpha =
+        0.03 * presence * breatheBase +
+        (phase === 'propagate' ? 0.02 * cog.pulseAmp : 0);
       const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, minDim * 0.38);
-      core.addColorStop(0, `rgba(${inkStr},${coreAlpha})`);
-      core.addColorStop(0.55, `rgba(${inkStr},${coreAlpha * 0.35})`);
-      core.addColorStop(1, `rgba(${inkStr},0)`);
+      core.addColorStop(0, `rgba(${ink.r}, ${ink.g}, ${ink.b}, ${coreAlpha})`);
+      core.addColorStop(0.55, `rgba(${ink.r}, ${ink.g}, ${ink.b}, ${coreAlpha * 0.35})`);
+      core.addColorStop(1, `rgba(${ink.r}, ${ink.g}, ${ink.b}, 0)`);
       ctx.fillStyle = core;
       ctx.fillRect(0, 0, width, height);
 
-      /* ── Project Nodes ── */
       type Proj = { x: number; y: number; depth: number; z: number; i: number };
       const projected: Proj[] = nodes.map((node, i) => {
+        // Geometry almost fixed. Tiny settle from activation, not continuous jitter.
         const pull = node.activation * 0.03 * (1 - cog.confidence * 0.5);
         let p: Vec3 = {
           x: node.rest.x + pull * Math.sin(node.phase * 6.2),
@@ -706,132 +616,14 @@ export default function HeroLattice({
         p = rotateY(p, rotY);
         p = rotateX(p, rotX);
         const pr = project(p, scale, cx, cy, perspective);
-
-        if (mouse.active) {
-          const mdx = pr.x - mouse.x;
-          const mdy = pr.y - mouse.y;
-          const mdist = Math.hypot(mdx, mdy);
-          const influence = Math.max(0, 1 - mdist / 120);
-          if (influence > 0) {
-            node.activation = Math.min(1, node.activation + influence * 0.4 * dt * 4);
-          }
-        }
         return { ...pr, i };
       });
 
+      // Attention dimming: non-focus regions slightly quieter during notice/propagate.
       const attentionActive = phase === 'notice' || phase === 'propagate';
       const att = projected[attentionNode];
 
-      /* ── Bloom Pass (half-res) ── */
-      bloomCtx.clearRect(0, 0, bloomCanvas.width, bloomCanvas.height);
-      const bloomScaleX = bloomCanvas.width / width;
-      const bloomScaleY = bloomCanvas.height / height;
-
-      // Bright edges
-      for (const e of edges) {
-        if (e.memory < 0.2 && e.strength < 0.6) continue;
-        const pa = projected[e.a];
-        const pb = projected[e.b];
-        if (!pa || !pb) continue;
-        const bax = pa.x * bloomScaleX;
-        const bay = pa.y * bloomScaleY;
-        const bbx = pb.x * bloomScaleX;
-        const bby = pb.y * bloomScaleY;
-
-        bloomCtx.beginPath();
-        bloomCtx.moveTo(bax, bay);
-        bloomCtx.lineTo(bbx, bby);
-        const bright = Math.min(1, e.memory * 1.5 + e.strength * 0.5);
-        bloomCtx.strokeStyle = `rgba(${inkStr},${bright * 0.4})`;
-        bloomCtx.lineWidth = (e.kind === 1 ? 3 : 2) * bloomScaleX;
-        bloomCtx.lineCap = 'round';
-        bloomCtx.stroke();
-      }
-
-      // Bright nodes
-      for (const pr of projected) {
-        const node = nodes[pr.i];
-        if (node.activation < 0.3 && node.memory < 0.3) continue;
-        const bright = Math.max(node.activation, node.memory * 0.7);
-        const bx = pr.x * bloomScaleX;
-        const by = pr.y * bloomScaleY;
-        const br = (1.5 + bright * 3) * bloomScaleX;
-
-        const g = bloomCtx.createRadialGradient(bx, by, 0, bx, by, br * 4);
-        g.addColorStop(0, `rgba(${inkStr},${bright * 0.5})`);
-        g.addColorStop(1, `rgba(${inkStr},0)`);
-        bloomCtx.fillStyle = g;
-        bloomCtx.beginPath();
-        bloomCtx.arc(bx, by, br * 4, 0, Math.PI * 2);
-        bloomCtx.fill();
-      }
-
-      // Pulses
-      for (const p of pulses) {
-        const e = edges[p.edgeIndex];
-        const pa = projected[e.a];
-        const pb = projected[e.b];
-        if (!pa || !pb) continue;
-        const t = p.forward ? p.t : 1 - p.t;
-        const x = (pa.x + (pb.x - pa.x) * t) * bloomScaleX;
-        const y = (pa.y + (pb.y - pa.y) * t) * bloomScaleY;
-        const r = (2 + p.amp * 3) * bloomScaleX;
-
-        const g = bloomCtx.createRadialGradient(x, y, 0, x, y, r * 5);
-        g.addColorStop(0, `rgba(${inkStr},${0.6 * p.amp * cog.pulseAmp})`);
-        g.addColorStop(1, `rgba(${inkStr},0)`);
-        bloomCtx.fillStyle = g;
-        bloomCtx.beginPath();
-        bloomCtx.arc(x, y, r * 5, 0, Math.PI * 2);
-        bloomCtx.fill();
-      }
-
-      // Blur & composite bloom
-      bloomCtx.filter = 'blur(6px)';
-      bloomCtx.globalCompositeOperation = 'copy';
-      bloomCtx.drawImage(bloomCanvas, 0, 0);
-      bloomCtx.filter = 'none';
-      bloomCtx.globalCompositeOperation = 'source-over';
-
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.drawImage(bloomCanvas, 0, 0, width, height);
-      ctx.restore();
-
-      /* ── Particle Dust ── */
-      for (const pt of particles) {
-        let pp = rotateY(rotateX({ x: pt.x, y: pt.y, z: pt.z }, rotX), rotY);
-        const pr = project(pp, scale * 1.4, cx, cy, perspective);
-        const lifeRatio = pt.life / pt.maxLife;
-        const pAlpha = Math.sin(lifeRatio * Math.PI) * 0.1 * presence * breatheBase * pr.depth;
-        if (pAlpha < 0.01) continue;
-
-        ctx.save();
-        ctx.shadowBlur = 4;
-        ctx.shadowColor = `rgba(${inkStr},${pAlpha * 0.5})`;
-        ctx.beginPath();
-        ctx.arc(pr.x, pr.y, pt.size * pr.depth, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${inkStr},${pAlpha})`;
-        ctx.fill();
-        ctx.restore();
-
-        let nearestDist = Infinity;
-        let nearestNode = -1;
-        for (let ni = 0; ni < projected.length; ni++) {
-          const nd = Math.hypot(projected[ni].x - pr.x, projected[ni].y - pr.y);
-          if (nd < nearestDist && nd < 60) { nearestDist = nd; nearestNode = ni; }
-        }
-        if (nearestNode >= 0 && nodes[nearestNode].activation > 0.1) {
-          ctx.beginPath();
-          ctx.moveTo(pr.x, pr.y);
-          ctx.lineTo(projected[nearestNode].x, projected[nearestNode].y);
-          ctx.strokeStyle = `rgba(${inkStr},${pAlpha * 0.25})`;
-          ctx.lineWidth = 0.3;
-          ctx.stroke();
-        }
-      }
-
-      /* ── Edges (sharp pass with shadow glow) ── */
+      // Edges (structure + memory + energy traces).
       const edgeOrder = edges
         .map((e, edgeIndex) => {
           const pa = projected[e.a];
@@ -847,12 +639,12 @@ export default function HeroLattice({
         const kindWeight = e.kind === 1 ? 1 : 0.45;
         const mem = e.memory;
         let alpha =
-          (0.06 + 0.2 * e.strength * presence) *
-          kindWeight *
-          breatheBase *
-          (0.55 + 0.45 * depthFade);
+          (0.06 + 0.2 * e.strength * presence) * kindWeight * breatheBase * (0.55 + 0.45 * depthFade);
+
+        // Memory traces: learning residual on wires.
         alpha += mem * 0.22 * cog.pulseAmp;
 
+        // Attention: slightly dim edges far from focus during active thought.
         if (attentionActive && att) {
           const midX = (pa.x + pb.x) * 0.5;
           const midY = (pa.y + pb.y) * 0.5;
@@ -860,6 +652,7 @@ export default function HeroLattice({
           alpha *= 1 - Math.min(0.45, dist * 0.7);
         }
 
+        // Active pulse residual on this edge.
         const tr = traces.find((t) => t.edgeIndex === edgeIndex);
         if (tr) alpha += tr.glow * 0.35;
 
@@ -868,22 +661,13 @@ export default function HeroLattice({
         ctx.beginPath();
         ctx.moveTo(pa.x, pa.y);
         ctx.lineTo(pb.x, pb.y);
-
-        if (mem > 0.3 || e.strength > 0.7) {
-          ctx.shadowBlur = 3 + mem * 4;
-          ctx.shadowColor = `rgba(${inkStr},${Math.min(0.3, alpha * 0.5)})`;
-        } else {
-          ctx.shadowBlur = 0;
-        }
-
-        ctx.strokeStyle = `rgba(${inkStr},${Math.min(0.6, alpha)})`;
+        ctx.strokeStyle = `rgba(${ink.r}, ${ink.g}, ${ink.b}, ${Math.min(0.55, alpha)})`;
         ctx.lineWidth = e.kind === 1 ? 1 : 0.65;
         ctx.lineCap = 'round';
         ctx.stroke();
-        ctx.shadowBlur = 0;
       }
 
-      /* ── Energy Pulses (sharp + halo) ── */
+      // Energy pulses on wires (the computation).
       for (const p of pulses) {
         const e = edges[p.edgeIndex];
         const pa = projected[e.a];
@@ -892,35 +676,39 @@ export default function HeroLattice({
         const x = pa.x + (pb.x - pa.x) * t;
         const y = pa.y + (pb.y - pa.y) * t;
         const r = 1.6 + p.amp * 2.2;
-
-        ctx.save();
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = `rgba(${inkStr},${0.4 * p.amp})`;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r * 5);
+        g.addColorStop(0, `rgba(${ink.r}, ${ink.g}, ${ink.b}, ${0.55 * p.amp * cog.pulseAmp})`);
+        g.addColorStop(0.35, `rgba(${ink.r}, ${ink.g}, ${ink.b}, ${0.18 * p.amp})`);
+        g.addColorStop(1, `rgba(${ink.r}, ${ink.g}, ${ink.b}, 0)`);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 5, 0, Math.PI * 2);
+        ctx.fill();
         ctx.beginPath();
         ctx.arc(x, y, r * 0.55, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${inkStr},${Math.min(0.95, 0.5 + p.amp * 0.45)})`;
+        ctx.fillStyle = `rgba(${ink.r}, ${ink.g}, ${ink.b}, ${Math.min(0.9, 0.5 + p.amp * 0.4)})`;
         ctx.fill();
-        ctx.restore();
       }
 
-      /* ── Nodes (with depth-of-field + shadow halos) ── */
+      // Nodes.
       const nodeOrder = [...projected].sort((a, b) => a.z - b.z);
       for (const pr of nodeOrder) {
         const node = nodes[pr.i];
         const roleMul =
-          node.role === 'stable' ? 1.05 :
-          node.role === 'bridge' ? 0.95 :
-          node.role === 'ephemeral' ? 0.75 + node.activation * 0.4 : 0.9;
-
-        const dofFade = 0.4 + 0.6 * pr.depth;
+          node.role === 'stable'
+            ? 1.05
+            : node.role === 'bridge'
+              ? 0.95
+              : node.role === 'ephemeral'
+                ? 0.75 + node.activation * 0.4
+                : 0.9;
 
         let alpha =
           (0.16 + 0.28 * presence) *
           roleMul *
           breatheBase *
           (0.5 + 0.5 * pr.depth) *
-          (0.55 + 0.45 * Math.max(0.35, eStrengthNear(edges, pr.i))) *
-          dofFade;
+          (0.55 + 0.45 * Math.max(0.35, eStrengthNear(edges, pr.i)));
 
         alpha += node.memory * 0.2;
         alpha += node.activation * 0.45 * cog.pulseAmp;
@@ -928,9 +716,12 @@ export default function HeroLattice({
         if (attentionActive && pr.i !== attentionNode && node.activation < 0.15) {
           alpha *= 0.72;
         }
+
+        // Ephemeral nodes can nearly vanish when unused (structure changing mind).
         if (node.role === 'ephemeral' && node.memory < 0.08 && node.activation < 0.05) {
           alpha *= 0.35;
         }
+
         if (alpha < 0.03) continue;
 
         const baseR =
@@ -940,99 +731,58 @@ export default function HeroLattice({
           (0.9 + 0.1 * cog.pulseAmp);
 
         if (node.activation > 0.25 || node.memory > 0.25) {
-          ctx.save();
-          ctx.shadowBlur = 6 + node.activation * 8;
-          ctx.shadowColor = `rgba(${inkStr},${Math.min(0.4, alpha * 0.3)})`;
+          const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, baseR * 5);
+          g.addColorStop(
+            0,
+            `rgba(${ink.r}, ${ink.g}, ${ink.b}, ${Math.min(0.35, alpha * 0.4)})`,
+          );
+          g.addColorStop(1, `rgba(${ink.r}, ${ink.g}, ${ink.b}, 0)`);
+          ctx.fillStyle = g;
           ctx.beginPath();
-          ctx.arc(pr.x, pr.y, baseR * 1.2, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${inkStr},${Math.min(0.5, alpha * 0.25)})`;
+          ctx.arc(pr.x, pr.y, baseR * 5, 0, Math.PI * 2);
           ctx.fill();
-          ctx.restore();
         }
 
         ctx.beginPath();
         ctx.arc(pr.x, pr.y, baseR, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${inkStr},${Math.min(0.9, alpha)})`;
+        ctx.fillStyle = `rgba(${ink.r}, ${ink.g}, ${ink.b}, ${Math.min(0.88, alpha)})`;
         ctx.fill();
       }
 
-      /* ── Glyphs ── */
-      const now = performance.now();
-      for (const g of glyphs) {
-        if (!att) continue;
-        const age = now - g.born;
-        const gy = att.y - (age / 1000) * g.drift;
-        const gx = att.x + Math.sin(age * 0.002 + g.born) * 10;
-
-        ctx.save();
-        ctx.globalAlpha = g.opacity * 0.25;
-        ctx.font = `${g.size}px ui-monospace, SFMono-Regular, Menlo, monospace`;
-        ctx.fillStyle = `rgb(${inkStr})`;
-        ctx.textAlign = 'center';
-        ctx.fillText(g.symbol, gx, gy);
-        ctx.restore();
-      }
-
-      /* ── Annotations ── */
-      for (const a of annotations) {
-        if (!att) continue;
-        ctx.save();
-        ctx.globalAlpha = a.opacity * 0.15;
-        ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
-        ctx.fillStyle = `rgb(${inkStr})`;
-        ctx.textAlign = 'center';
-        ctx.fillText(a.text, att.x, att.y - 18);
-        ctx.restore();
-      }
-
-      /* ── Housing Ring ── */
+      // Instrument housing ring — quieter during wait.
       const ringR = minDim * 0.36;
       const ringA =
-        (0.045 + (phase === 'propagate' ? 0.03 : 0)) *
-        presence *
-        (phase === 'wait' ? 0.75 : 1);
+        (0.045 + (phase === 'propagate' ? 0.03 : 0)) * presence * (phase === 'wait' ? 0.75 : 1);
       ctx.beginPath();
       ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(${inkStr},${ringA})`;
+      ctx.strokeStyle = `rgba(${ink.r}, ${ink.g}, ${ink.b}, ${ringA})`;
       ctx.lineWidth = 1;
       ctx.stroke();
 
       const tickAlpha = ringA * 1.15;
-      ctx.strokeStyle = `rgba(${inkStr},${tickAlpha})`;
+      ctx.strokeStyle = `rgba(${ink.r}, ${ink.g}, ${ink.b}, ${tickAlpha})`;
       for (let k = 0; k < 4; k++) {
         const ang = (k * Math.PI) / 2 + rotY * 0.12;
-        const c0 = Math.cos(ang), s0 = Math.sin(ang);
+        const c0 = Math.cos(ang);
+        const s0 = Math.sin(ang);
         ctx.beginPath();
         ctx.moveTo(cx + c0 * (ringR - 6), cy + s0 * (ringR - 6));
         ctx.lineTo(cx + c0 * (ringR + 4), cy + s0 * (ringR + 4));
         ctx.stroke();
       }
-
-      /* ── Vignette ── */
-      const vig = ctx.createRadialGradient(cx, cy, minDim * 0.25, cx, cy, minDim * 0.65);
-      vig.addColorStop(0, 'rgba(0,0,0,0)');
-      vig.addColorStop(1, `rgba(0,0,0,${0.35 + (1 - presence) * 0.2})`);
-      ctx.fillStyle = vig;
-      ctx.fillRect(0, 0, width, height);
-
-      /* ── Film Grain ── */
-      ctx.save();
-      ctx.globalAlpha = 0.035;
-      ctx.globalCompositeOperation = 'overlay';
-      const pat = ctx.createPattern(grainCanvas, 'repeat');
-      if (pat) {
-        ctx.fillStyle = pat;
-        ctx.fillRect(0, 0, width, height);
-      }
-      ctx.restore();
-
-      /* ── Transition Flash ── */
-      if (transitionActive) {
-        const flash = Math.sin(transitionT * Math.PI) * 0.06;
-        ctx.fillStyle = `rgba(${inkStr},${flash})`;
-        ctx.fillRect(0, 0, width, height);
-      }
     };
+
+    function eStrengthNear(es: Edge[], nodeIndex: number): number {
+      let s = 0;
+      let c = 0;
+      for (const e of es) {
+        if (e.a === nodeIndex || e.b === nodeIndex) {
+          s += e.strength;
+          c += 1;
+        }
+      }
+      return c ? s / c : 0.5;
+    }
 
     const stopLoop = () => {
       if (frameId !== null) {
@@ -1042,7 +792,10 @@ export default function HeroLattice({
     };
 
     const animate = (now: number) => {
-      if (!canRun()) { frameId = null; return; }
+      if (!canRun()) {
+        frameId = null;
+        return;
+      }
       const dt = Math.min(0.05, (now - lastFrame) / 1000);
       lastFrame = now;
       const t = (now - startedAt) / 1000;
@@ -1091,9 +844,11 @@ export default function HeroLattice({
     resize();
     resizeObserver.observe(mount);
 
+    // Start mid-observe so first paint is still, not mid-pulse.
     enterPhase('observe', profile());
 
     if (reducedMotion) {
+      // Settled instrument snapshot — confident stillness.
       for (const e of edges) e.memory = e.strength * 0.15;
       nodes[focusNode].memory = 0.2;
       draw(seed * 40 + 12, 0);
@@ -1109,10 +864,6 @@ export default function HeroLattice({
       stopLoop();
       unsubPause();
       document.removeEventListener('visibilitychange', onDocVisibility);
-      mount.removeEventListener('mousemove', onMouseMove);
-      mount.removeEventListener('mouseleave', onMouseLeave);
-      mount.removeEventListener('touchmove', onTouchMove);
-      mount.removeEventListener('touchend', onTouchEnd);
       resizeObserver.disconnect();
       visibilityWatch.disconnect();
       themeObserver.disconnect();
