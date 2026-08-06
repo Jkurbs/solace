@@ -15026,7 +15026,7 @@ html.dark .home-research ::selection,
   z-index: 2;
   min-width: 0;
   /* Leave the right band for Lattice art (Stripe-style) */
-  max-width: min(100%, 18.5rem);
+  max-width: min(100%, 20.5rem);
   padding-right: 0;
   text-align: left;
   display: flex;
@@ -15044,37 +15044,37 @@ html.dark .home-research ::selection,
 }
 
 .hero-lattice-title {
-  margin: 0.75rem 0 0;
+  margin: 0.85rem 0 0;
   max-width: none;
   font-family: var(--font-display), Georgia, serif;
-  font-size: clamp(1.55rem, 6.2vw, 2.15rem);
+  font-size: clamp(2.05rem, 8.2vw, 2.85rem);
   font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
+  line-height: 1.06;
+  letter-spacing: -0.035em;
   color: var(--foreground);
   text-wrap: balance;
 }
 
 /* Product-unit one-liner (mobile primary; desktop can hide) */
 .hero-lattice-sub {
-  margin: 0.75rem 0 0;
-  max-width: 16rem;
-  font-size: 0.98rem;
+  margin: 0.95rem 0 0;
+  max-width: 18rem;
+  font-size: clamp(1.1rem, 3.8vw, 1.3rem);
   font-weight: 400;
-  line-height: 1.35;
-  letter-spacing: -0.015em;
+  line-height: 1.4;
+  letter-spacing: -0.018em;
   color: var(--muted);
 }
 
 /* Full research dek — desktop only in the product-unit layout */
 .hero-lattice-dek {
   display: none;
-  margin: 1.25rem 0 0;
-  max-width: 32rem;
+  margin: 1.35rem 0 0;
+  max-width: 34rem;
   color: color-mix(in srgb, var(--foreground) 88%, var(--muted));
-  font-size: 1.05rem;
+  font-size: clamp(1.15rem, 1.6vw, 1.35rem);
   font-weight: 400;
-  letter-spacing: -0.011em;
+  letter-spacing: -0.012em;
   line-height: 1.55;
 }
 
@@ -15328,7 +15328,7 @@ html.dark .home-research ::selection,
 
   .hero-lattice-title {
     max-width: none;
-    font-size: clamp(2.1rem, 3.6vw, 3.15rem);
+    font-size: clamp(2.55rem, 4.4vw, 3.75rem);
     font-weight: 500;
   }
 

@@ -180,7 +180,7 @@ export default function HomeClient({
               variants={fade}
               className="hero-lattice-title"
             >
-              Instruments for decision making under uncertainty.
+              Instruments that helps you make better decisions under uncertainty.
             </motion.h1>
 
             {/* Short line for product-unit rhythm; full dek desktop. */}
