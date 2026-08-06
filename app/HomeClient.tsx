@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 
 import SiteFooter from '@/components/site-footer';
@@ -12,6 +12,7 @@ import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
 import { calibration } from './calibration';
+import HeroLattice from './HeroLattice';
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -115,84 +116,6 @@ function ReadingAge({ updatedAt }: { updatedAt: string }) {
   return <span suppressHydrationWarning>{label}</span>;
 }
 
-/* ── Foundation: Prime Radiant lattice ── */
-function PrimeRadiantLattice() {
-  return (
-    <div className="radiant-container" aria-hidden="true">
-      <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" className="radiant-svg">
-        <g className="radiant-ring radiant-ring-slow">
-          <path d="M200 40L360 200L200 360L40 200Z" stroke="currentColor" strokeWidth="0.5" />
-          <path d="M200 40L200 360" stroke="currentColor" strokeWidth="0.5" />
-          <path d="M40 200L360 200" stroke="currentColor" strokeWidth="0.5" />
-          <path d="M200 40L280 200L200 280L120 200Z" stroke="currentColor" strokeWidth="0.5" />
-          <circle cx="200" cy="200" r="120" stroke="currentColor" strokeWidth="0.3" opacity="0.5" />
-          <circle cx="200" cy="200" r="80" stroke="currentColor" strokeWidth="0.3" opacity="0.3" />
-          <circle cx="200" cy="40" r="2" fill="currentColor" opacity="0.6" />
-          <circle cx="360" cy="200" r="2" fill="currentColor" opacity="0.6" />
-          <circle cx="200" cy="360" r="2" fill="currentColor" opacity="0.6" />
-          <circle cx="40" cy="200" r="2" fill="currentColor" opacity="0.6" />
-          <circle cx="200" cy="200" r="3" fill="currentColor" opacity="0.8" />
-        </g>
-        <g className="radiant-ring radiant-ring-reverse">
-          <path d="M200 100L300 200L200 300L100 200Z" stroke="currentColor" strokeWidth="0.5" />
-          <path d="M200 100L200 300" stroke="currentColor" strokeWidth="0.5" />
-          <path d="M100 200L300 200" stroke="currentColor" strokeWidth="0.5" />
-          <circle cx="200" cy="100" r="1.5" fill="currentColor" opacity="0.5" />
-          <circle cx="300" cy="200" r="1.5" fill="currentColor" opacity="0.5" />
-          <circle cx="200" cy="300" r="1.5" fill="currentColor" opacity="0.5" />
-          <circle cx="100" cy="200" r="1.5" fill="currentColor" opacity="0.5" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-const HERO_SEEN_KEY = 'solace-hero-seen';
-
-/* ── Foundation: Holographic word reveal ── */
-function HolographicReveal({ text, className }: { text: string; className?: string }) {
-  const reduceMotion = useReducedMotion();
-  const words = useMemo(() => text.split(' '), [text]);
-  const [hasSeen, setHasSeen] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      return window.sessionStorage.getItem(HERO_SEEN_KEY) === '1';
-    } catch {
-      return false;
-    }
-  });
-
-  if (reduceMotion || hasSeen) {
-    return <h1 className={className}>{text}</h1>;
-  }
-
-  return (
-    <h1 className={className} aria-label={text}>
-      {words.map((word, i) => (
-        <span key={i} className="inline-block overflow-hidden mr-[0.3em]">
-          <motion.span
-            className="inline-block radiant-text"
-            initial={{ opacity: 0, y: '110%', filter: 'blur(8px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            transition={{ duration: 1.2, ease: easeOut, delay: 0.6 + i * 0.08 }}
-            onAnimationComplete={() => {
-              if (i === words.length - 1) {
-                try {
-                  window.sessionStorage.setItem(HERO_SEEN_KEY, '1');
-                } catch {
-                  // Ignore private-mode failures.
-                }
-              }
-            }}
-          >
-            {word}
-          </motion.span>
-        </span>
-      ))}
-    </h1>
-  );
-}
-
 /* ── Foundation: Vault seal icon ── */
 function SealIcon({ className }: { className?: string }) {
   return (
@@ -245,54 +168,76 @@ export default function HomeClient({
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader variant="ink" />
-      {/* ── Hero ── */}
-      <section className="hero-research relative overflow-hidden px-5 pt-12 pb-20 md:pt-16 md:pb-28 border-t border-border">
-        <PrimeRadiantLattice />
-
+      {/* ── Hero: The Lattice as instrument, not decoration ──
+          Emotional job: settle a careful visitor on one living object that
+          makes Solace legible as systems for reading complexity. */}
+      <section className="hero-research hero-lattice-section relative overflow-hidden px-5 pt-14 pb-20 md:pt-20 md:pb-28 border-t border-border">
         <motion.div
           initial={heroInitial}
           animate="show"
           variants={stagger}
-          className={`relative z-10 ${homeShell}`}
+          className="hero-lattice-layout relative z-10 mx-auto max-w-6xl"
         >
-          <motion.p
-            variants={fade}
-            className="text-xs uppercase tracking-[0.25em] text-muted mb-8"
-          >
-            Independent research
-          </motion.p>
-
-          <HolographicReveal
-            text="Instruments for decision making under uncertainty."
-            className="font-serif text-[clamp(2.6rem,6vw,5rem)] font-medium leading-[0.95] tracking-tight"
-          />
-
-          <motion.p
-            variants={fade}
-            className="mt-8 text-lg md:text-xl text-muted leading-relaxed max-w-2xl"
-          >
-            Solace builds instruments for disciplined decision making under uncertainty. 
-            Hermes, the first, allocates capital autonomously so it can compound without constant attention, 
-            every decision sealed before the outcome and open to inspection.
-          </motion.p>
-
-          <motion.div variants={fade} className="mt-10 flex flex-wrap items-center gap-3 sm:gap-4">
-            <Link
-              href="/hermes"
-              className="inline-flex items-center gap-2 rounded-full border border-foreground bg-foreground px-5 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-background shadow-sm transition-opacity hover:opacity-90"
+          {/* Copy stays as one block — title and description never split by the object. */}
+          <div className="hero-lattice-copy">
+            <motion.p
+              variants={fade}
+              className="text-xs uppercase tracking-[0.25em] text-muted"
             >
-              Meet Hermes
-              <span aria-hidden="true" className="text-[0.85em] opacity-70">
-                →
-              </span>
-            </Link>
-            <Link
-              href="/brief"
-              className="inline-flex items-center gap-2 rounded-full border border-foreground/20 bg-background px-5 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-foreground shadow-sm transition-colors hover:border-foreground/45 hover:bg-foreground/[0.04]"
+              Independent research
+            </motion.p>
+
+            <motion.h1
+              variants={fade}
+              className="mt-5 font-serif text-[clamp(2rem,4.2vw,3.35rem)] font-medium leading-[1.02] tracking-tight text-foreground"
             >
-              Read the brief
-            </Link>
-          </motion.div>
+              Instruments for decision making under uncertainty.
+            </motion.h1>
+
+            <motion.p
+              variants={fade}
+              className="mt-6 md:mt-8 max-w-xl text-lg md:text-xl text-muted leading-relaxed"
+            >
+              Solace builds instruments for disciplined decision making under uncertainty.
+              Hermes, the first, allocates capital autonomously so it can compound without constant attention,
+              every decision sealed before the outcome and open to inspection.
+            </motion.p>
+
+            <motion.div
+              variants={fade}
+              className="mt-10 flex flex-wrap items-center gap-3 sm:gap-4"
+            >
+              <Link
+                href="/hermes"
+                className="inline-flex items-center gap-2 rounded-full border border-foreground bg-foreground px-5 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-background shadow-sm transition-opacity hover:opacity-90"
+              >
+                Meet Hermes
+                <span aria-hidden="true" className="text-[0.85em] opacity-70">
+                  →
+                </span>
+              </Link>
+              <Link
+                href="/brief"
+                className="inline-flex items-center gap-2 rounded-full border border-foreground/20 bg-background px-5 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-foreground shadow-sm transition-colors hover:border-foreground/45 hover:bg-foreground/[0.04]"
+              >
+                Read the brief
+              </Link>
+            </motion.div>
+          </div>
+
+          <motion.figure
+            variants={fade}
+            className="hero-lattice-figure"
+            aria-label="The Lattice — a living structural instrument maintained by Hermes"
+          >
+            <HeroLattice
+              posture={hermesTelemetry?.posture ?? null}
+              pathsCount={hermesTelemetry?.pathsCount ?? null}
+            />
+            <figcaption className="sr-only">
+              The Lattice. A slowly evolving map of structure. Not a performance chart.
+            </figcaption>
+          </motion.figure>
         </motion.div>
       </section>
 

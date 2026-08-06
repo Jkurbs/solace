@@ -18,12 +18,13 @@ import type { LedgerScoreboard } from '@/features/hermes-ledger/scoreboard';
 import type { GloryaEvaluatedNeed } from '@/features/glorya/types';
 import { gloryaPlaceLabel } from '@/features/glorya/types';
 import {
-  OBSERVATORY_INSTRUMENTS,
   type ObservatoryInstrumentId,
   parseObservatoryInstrument,
 } from '@/features/observatory/paths';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+
+import InstrumentPortraits from './InstrumentPortraits';
 
 export type HermesChainData = {
   rows: TrustLedgerDisplayRow[];
@@ -142,36 +143,36 @@ export default function ObservatoryExperience({
         </p>
 
         <div className="obs-chain-selector-block">
-          <label className="obs-chain-selector-label" htmlFor="obs-instrument">
-            Showing
-          </label>
-          <div className="obs-chain-selector-row">
-            <select
-              id="obs-instrument"
-              className="obs-chain-select"
-              value={instrument}
-              disabled={pending}
-              onChange={(event) => setInstrument(event.target.value as ObservatoryInstrumentId)}
-            >
-              {OBSERVATORY_INSTRUMENTS.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                  {item.status ? ` · ${item.status}` : ''}
-                </option>
-              ))}
-            </select>
+          <p className="obs-chain-selector-label" id="obs-instrument-label">
+            Instruments
+          </p>
+          <InstrumentPortraits
+            instrument={instrument}
+            pending={pending}
+            hermes={hermes}
+            oracle={oracle}
+            glorya={glorya}
+            onSelect={setInstrument}
+          />
+          <div className="obs-chain-selector-footer">
+            <p className="obs-chain-selector-hint">
+              Select an instrument to inspect its sealed chain. Same Observatory. Same discipline.
+            </p>
             <Link href={copy.productHref} className="obs-chain-product-link">
               {copy.productLabel}
               <span aria-hidden="true">→</span>
             </Link>
           </div>
-          <p className="obs-chain-selector-hint">
-            Change the instrument to swap the chain. Same Observatory. Same discipline.
-          </p>
         </div>
       </section>
 
-      <section className="hermes-paper-shell ledger-doc-sheet-section" aria-label={`${copy.title}`}>
+      <section
+        className="hermes-paper-shell ledger-doc-sheet-section"
+        aria-label={`${copy.title}`}
+        id={`obs-panel-${instrument}`}
+        role="tabpanel"
+        aria-labelledby={`obs-tab-${instrument}`}
+      >
         <div className={`ledger-doc-sheet obs-chain-sheet${pending ? ' is-pending' : ''}`}>
           <div className="ledger-doc-head">
             <div className="ledger-doc-head-main">
