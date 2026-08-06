@@ -15126,7 +15126,7 @@ html.dark .home-research ::selection,
 .hero-lattice-figure {
   grid-area: figure;
   position: relative;
-  width: min(100%, 17.5rem);
+  width: min(100%, 22rem);
   aspect-ratio: 1;
   margin: 0.25rem auto 0;
   pointer-events: none;
@@ -15307,7 +15307,7 @@ html.dark .home-research ::selection,
   }
 
   .hero-lattice-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(14rem, 20rem);
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 26rem);
     grid-template-areas:
       'copy figure'
       'metric figure';
@@ -15351,7 +15351,7 @@ html.dark .home-research ::selection,
 
   .hero-lattice-figure {
     width: 100%;
-    max-width: 19rem;
+    max-width: 24rem;
     margin: 0 0 0 auto;
     transform: none;
   }
