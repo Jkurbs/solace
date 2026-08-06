@@ -158,7 +158,7 @@ export default function HomeClient({
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
-      <SiteHeader variant="ink" />
+      <SiteHeader />
       {/* ── Hero: The Lattice as instrument, not decoration ──
           Emotional job: settle a careful visitor on one living object that
           makes Solace legible as systems for reading complexity. */}
@@ -422,7 +422,7 @@ export default function HomeClient({
         </div>
       </section>
 
-      <SiteFooter variant="ink" />
+      <SiteFooter />
     </main>
   );
 }

@@ -236,7 +236,7 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
   return (
     <HermesOnboardingProvider>
     <main className="hmk pt-16">
-      <SiteHeader variant="ink" />
+      <SiteHeader />
 
       {/* Hero */}
       <section className="hmk-hero">
@@ -447,7 +447,7 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
         </div>
       </section>
 
-      <SiteFooter variant="ink" />
+      <SiteFooter />
     </main>
     </HermesOnboardingProvider>
   );

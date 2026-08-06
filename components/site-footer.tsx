@@ -22,7 +22,8 @@ const instrumentLinks = [
   { label: 'Glorya', href: '/glorya', status: 'Evaluating' },
 ] as const;
 
-export default function SiteFooter({ variant = 'paper' }: { variant?: SiteFooterVariant }) {
+/** Dark ink footer is the site standard. Paper remains for rare light-only embeds. */
+export default function SiteFooter({ variant = 'ink' }: { variant?: SiteFooterVariant }) {
   const isInk = variant === 'ink';
   const bg = isInk ? 'bg-[#0a0a0a]' : 'bg-[var(--paper-warm)]';
   const text = isInk ? 'text-white' : 'text-[var(--paper-ink)]';

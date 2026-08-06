@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Mark from '@/app/Mark';
 import ThemeToggle from '@/app/ThemeToggle';
 
+/** Paper (Observatory) is the site standard. Ink is only for rare full-bleed dark heroes. */
 export type SiteHeaderVariant = 'paper' | 'ink';
 
 const navItems = [
