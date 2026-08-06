@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 import { gloryaEvaluatedNeeds } from '@/features/glorya/evaluated-needs';
 
@@ -42,26 +43,79 @@ function formatPosture(posture: string | null) {
     .join(' ');
 }
 
+type LiveHermesPulse = {
+  openPaths: number | null;
+  openPnl: number | null;
+  sealedDecisions: number | null;
+};
+
 /**
  * Homepage instrument identity portraits (device cards).
  * Hermes / Oracle: product phone metrics. Glorya: the need-field globe deciding.
+ *
+ * Live Hermes numbers hydrate client-side from the lightweight pulse API so the
+ * homepage build never walks the full ledger or hits Kalshi.
  */
 export default function InstrumentPortraits({
   hermes,
   glorya,
   oracleActiveCount = null,
 }: HomeInstrumentPortraitsProps) {
-  const liveHasExposure = hermes.openPnl !== null && (hermes.openPaths ?? 0) > 0;
+  const [live, setLive] = useState<LiveHermesPulse>({
+    openPaths: hermes.openPaths,
+    openPnl: hermes.openPnl,
+    sealedDecisions: hermes.sealedDecisions,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const load = async () => {
+      try {
+        const response = await fetch(`/api/hermes/ledger-pulse?ts=${Date.now()}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+        const pulse = (await response.json()) as {
+          paths?: number;
+          unrealizedPnl?: number | null;
+          rowCount?: number;
+        };
+        if (cancelled) return;
+        setLive({
+          openPaths: typeof pulse.paths === 'number' ? pulse.paths : null,
+          openPnl: typeof pulse.unrealizedPnl === 'number' ? pulse.unrealizedPnl : null,
+          sealedDecisions: typeof pulse.rowCount === 'number' ? pulse.rowCount : null,
+        });
+      } catch {
+        // Keep SSR snapshot; never block the card on pulse failure.
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
+
+  const openPaths = live.openPaths ?? hermes.openPaths;
+  const openPnl = live.openPnl ?? hermes.openPnl;
+  const sealedDecisions = live.sealedDecisions ?? hermes.sealedDecisions;
+
+  const liveHasExposure = openPnl !== null && (openPaths ?? 0) > 0;
   const openLabel =
-    hermes.openPaths === null
+    openPaths === null
       ? hermes.pathsCount === null
         ? '—'
         : hermes.pathsCount === 1
           ? '1 watched'
           : `${hermes.pathsCount} watched`
-      : hermes.openPaths === 1
+      : openPaths === 1
         ? '1 open'
-        : `${hermes.openPaths} open`;
+        : `${openPaths} open`;
 
   return (
     <div className="obs-portraits home-portraits" aria-label="Solace instruments">
@@ -78,27 +132,27 @@ export default function InstrumentPortraits({
                   {liveHasExposure ? 'Live open exposure' : 'Hermes · founder capital'}
                 </span>
                 <strong className="obs-portrait-value">
-                  {liveHasExposure && hermes.openPnl !== null
-                    ? pnlFormatter.format(hermes.openPnl)
-                    : hermes.sealedDecisions !== null
-                      ? hermes.sealedDecisions.toLocaleString('en-US')
+                  {liveHasExposure && openPnl !== null
+                    ? pnlFormatter.format(openPnl)
+                    : sealedDecisions !== null
+                      ? sealedDecisions.toLocaleString('en-US')
                       : '—'}
                 </strong>
                 <span
                   className={`obs-portrait-delta${
-                    liveHasExposure && hermes.openPnl !== null
-                      ? hermes.openPnl > 0
+                    liveHasExposure && openPnl !== null
+                      ? openPnl > 0
                         ? ' is-pos'
-                        : hermes.openPnl < 0
+                        : openPnl < 0
                           ? ' is-neg'
                           : ''
                       : ''
                   }`}
                 >
-                  {liveHasExposure && hermes.openPnl !== null
+                  {liveHasExposure && openPnl !== null
                     ? 'Unrealized · not a sealed row'
-                    : hermes.sealedDecisions !== null
-                      ? 'Sealed decisions on chain'
+                    : sealedDecisions !== null
+                      ? 'Rows on public chain'
                       : 'Capital that decides for itself'}
                 </span>
                 <div className="obs-portrait-rows">

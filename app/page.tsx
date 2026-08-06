@@ -1,12 +1,8 @@
 import { listPublishedArticles } from '@/features/articles/store';
 import { gloryaProcessScoreboard } from '@/features/glorya/evaluated-needs';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
-import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
-import { computeLedgerScoreboard, formatPercent } from '@/features/hermes-ledger/scoreboard';
-import { listHermesLedgerProcessRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { newsPosts } from '@/features/news/posts';
-import { fetchKalshiBtcEthPredictions } from '@/features/oracle/kalshi';
 
 import HomeClient, {
   type HermesTelemetry,
@@ -15,6 +11,8 @@ import HomeClient, {
 } from './HomeClient';
 
 const TELEMETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+/** Keep home SSR/ISR under platform build budgets (no full ledger / Kalshi). */
+const HOME_FETCH_BUDGET_MS = 8_000;
 
 // The freshness contract: telemetry renders only while a feed is fresh.
 // A stale or missing feed hides the cells entirely, never a fake pulse.
@@ -61,6 +59,34 @@ async function getHermesTelemetry(): Promise<HermesTelemetry | null> {
   return fresh[0] ?? null;
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        resolve(fallback);
+      }
+    }, ms);
+
+    promise
+      .then((value) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve(value);
+        }
+      })
+      .catch(() => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve(fallback);
+        }
+      });
+  });
+}
+
 // Refresh the research strip every 5 minutes without making the page dynamic.
 export const revalidate = 300;
 
@@ -82,28 +108,24 @@ const technicalBrief: ResearchItem = {
   date: '2026-07-01',
 };
 
-async function getHomeInstrumentSnapshot(): Promise<HomeInstrumentSnapshot> {
-  const [ledgerRows, openExposure, oracleFeed] = await Promise.all([
-    listHermesLedgerProcessRows(1500).catch(() => []),
-    getHermesOpenExposure().catch(() => null),
-    fetchKalshiBtcEthPredictions(20).catch(() => null),
-  ]);
-
-  const scoreboard = computeLedgerScoreboard(ledgerRows, {
-    liveOpenPaths: openExposure ? openExposure.positions.length : null,
-  });
+/**
+ * Home instrument cards: cheap sync + telemetry only.
+ * Full ledger scans and Kalshi belong on Observatory / Oracle — not the homepage
+ * build path (those were blowing the 60s page generation budget).
+ */
+function getHomeInstrumentSnapshot(telemetry: HermesTelemetry | null): HomeInstrumentSnapshot {
   const glorya = gloryaProcessScoreboard();
 
   return {
     hermes: {
-      posture: null,
-      pathsCount: null,
-      sealedDecisions: scoreboard.process.sealedDecisions,
-      standDownRate: formatPercent(scoreboard.process.standDownRate),
-      openPaths: scoreboard.process.openPaths,
-      openPnl: openExposure?.unrealizedPnl ?? null,
+      posture: telemetry?.posture ?? null,
+      pathsCount: telemetry?.pathsCount ?? null,
+      sealedDecisions: null,
+      standDownRate: null,
+      openPaths: telemetry?.deployedCount ?? null,
+      openPnl: null,
     },
-    oracleActiveCount: oracleFeed?.activeCount ?? oracleFeed?.active.length ?? null,
+    oracleActiveCount: null,
     glorya: {
       evaluated: glorya.evaluated,
       standingDown: glorya.standingDown,
@@ -113,30 +135,14 @@ async function getHomeInstrumentSnapshot(): Promise<HomeInstrumentSnapshot> {
 }
 
 export default async function Home() {
-  const [articles, hermesTelemetry, instruments] = await Promise.all([
-    listPublishedArticles().catch(() => []),
-    getHermesTelemetry(),
-    getHomeInstrumentSnapshot().catch(
-      (): HomeInstrumentSnapshot => ({
-        hermes: {
-          posture: null,
-          pathsCount: null,
-          sealedDecisions: null,
-          standDownRate: null,
-          openPaths: null,
-          openPnl: null,
-        },
-        oracleActiveCount: null,
-        glorya: { evaluated: 0, standingDown: 0, standDownRate: 0 },
-      }),
-    ),
+  const emptyArticles: Awaited<ReturnType<typeof listPublishedArticles>> = [];
+
+  const [articles, hermesTelemetry] = await Promise.all([
+    withTimeout(listPublishedArticles().catch(() => emptyArticles), HOME_FETCH_BUDGET_MS, emptyArticles),
+    withTimeout(getHermesTelemetry().catch(() => null), HOME_FETCH_BUDGET_MS, null),
   ]);
 
-  // Prefer live telemetry posture / path count on the Hermes card when fresh.
-  if (hermesTelemetry) {
-    instruments.hermes.posture = hermesTelemetry.posture;
-    instruments.hermes.pathsCount = hermesTelemetry.pathsCount;
-  }
+  const instruments = getHomeInstrumentSnapshot(hermesTelemetry);
 
   const researchFromDb: ResearchItem[] = articles.map((article) => ({
     kind: 'Research' as const,
