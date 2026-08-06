@@ -285,17 +285,17 @@ function rgba(c: Rgb, a: number): string {
   return `rgba(${c.r | 0}, ${c.g | 0}, ${c.b | 0}, ${a})`;
 }
 
-/** Sleek lattice palette — cool structure + Solace green + pulse cyan/violet. */
+/** Bright lattice palette — vivid structure + Solace green + pulse cyan/violet. */
 const PALETTE = {
-  structure: { r: 88, g: 96, b: 112 }, // cool slate
-  stable: { r: 61, g: 107, b: 79 }, // Solace green
-  exploratory: { r: 92, g: 120, b: 168 }, // steel blue
-  bridge: { r: 110, g: 98, b: 168 }, // soft violet
-  ephemeral: { r: 130, g: 140, b: 148 }, // pale steel
-  energy: { r: 72, g: 168, b: 188 }, // teal-cyan pulse
-  energyHot: { r: 168, g: 140, b: 220 }, // lilac hot path
-  memory: { r: 90, g: 140, b: 150 }, // residual teal
-  core: { r: 100, g: 130, b: 155 },
+  structure: { r: 120, g: 132, b: 168 }, // bright cool slate
+  stable: { r: 52, g: 196, b: 120 }, // vivid Solace green
+  exploratory: { r: 72, g: 148, b: 255 }, // electric blue
+  bridge: { r: 168, g: 120, b: 255 }, // bright violet
+  ephemeral: { r: 160, g: 176, b: 200 }, // pale ice
+  energy: { r: 48, g: 220, b: 240 }, // hot cyan pulse
+  energyHot: { r: 220, g: 140, b: 255 }, // magenta-lilac
+  memory: { r: 64, g: 200, b: 210 }, // bright teal residual
+  core: { r: 100, g: 170, b: 240 },
 } as const;
 
 function roleColor(role: Role): Rgb {
@@ -615,9 +615,9 @@ export default function HeroLattice({
 
       baseInk = parseInk(getComputedStyle(mount).color);
       const cog = profile();
-      // Slightly lean palette toward page ink so light/dark stay harmonious.
-      const structure = mixRgb(PALETTE.structure, baseInk, 0.22);
-      const coreCol = mixRgb(PALETTE.core, baseInk, 0.15);
+      // Light lean toward page ink — keep chroma high.
+      const structure = mixRgb(PALETTE.structure, baseInk, 0.1);
+      const coreCol = mixRgb(PALETTE.core, baseInk, 0.08);
 
       if (!reducedMotion) {
         stepCognition(dt, cog);
@@ -640,11 +640,11 @@ export default function HeroLattice({
       ctx.clearRect(0, 0, width, height);
 
       const coreAlpha =
-        0.055 * presence * breatheBase +
-        (phase === 'propagate' ? 0.04 * cog.pulseAmp : 0);
+        0.1 * presence * breatheBase +
+        (phase === 'propagate' ? 0.07 * cog.pulseAmp : 0);
       const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, minDim * 0.42);
       core.addColorStop(0, rgba(coreCol, coreAlpha));
-      core.addColorStop(0.45, rgba(mixRgb(PALETTE.stable, coreCol, 0.4), coreAlpha * 0.4));
+      core.addColorStop(0.4, rgba(mixRgb(PALETTE.stable, coreCol, 0.45), coreAlpha * 0.55));
       core.addColorStop(1, rgba(coreCol, 0));
       ctx.fillStyle = core;
       ctx.fillRect(0, 0, width, height);
@@ -684,10 +684,10 @@ export default function HeroLattice({
         const kindWeight = e.kind === 1 ? 1 : 0.45;
         const mem = e.memory;
         let alpha =
-          (0.08 + 0.24 * e.strength * presence) * kindWeight * breatheBase * (0.55 + 0.45 * depthFade);
+          (0.12 + 0.32 * e.strength * presence) * kindWeight * breatheBase * (0.55 + 0.45 * depthFade);
 
         // Memory traces: learning residual on wires.
-        alpha += mem * 0.28 * cog.pulseAmp;
+        alpha += mem * 0.38 * cog.pulseAmp;
 
         // Attention: slightly dim edges far from focus during active thought.
         if (attentionActive && att) {
@@ -699,21 +699,21 @@ export default function HeroLattice({
 
         // Active pulse residual on this edge.
         const tr = traces.find((t) => t.edgeIndex === edgeIndex);
-        if (tr) alpha += tr.glow * 0.4;
+        if (tr) alpha += tr.glow * 0.5;
 
         if (alpha < 0.015) continue;
 
         // Structure = slate; memory / residual traffic tints teal-violet.
-        let edgeCol = mixRgb(structure, roleColor(nodes[e.a].role), 0.35);
-        edgeCol = mixRgb(edgeCol, roleColor(nodes[e.b].role), 0.25);
-        if (mem > 0.08) edgeCol = mixRgb(edgeCol, PALETTE.memory, Math.min(0.7, mem));
-        if (tr) edgeCol = mixRgb(edgeCol, PALETTE.energy, tr.glow * 0.65);
+        let edgeCol = mixRgb(structure, roleColor(nodes[e.a].role), 0.5);
+        edgeCol = mixRgb(edgeCol, roleColor(nodes[e.b].role), 0.35);
+        if (mem > 0.08) edgeCol = mixRgb(edgeCol, PALETTE.memory, Math.min(0.85, mem * 1.1));
+        if (tr) edgeCol = mixRgb(edgeCol, PALETTE.energy, Math.min(0.9, tr.glow * 0.85));
 
         ctx.beginPath();
         ctx.moveTo(pa.x, pa.y);
         ctx.lineTo(pb.x, pb.y);
-        ctx.strokeStyle = rgba(edgeCol, Math.min(0.62, alpha));
-        ctx.lineWidth = e.kind === 1 ? 1.05 : 0.7;
+        ctx.strokeStyle = rgba(edgeCol, Math.min(0.78, alpha));
+        ctx.lineWidth = e.kind === 1 ? 1.15 : 0.8;
         ctx.lineCap = 'round';
         ctx.stroke();
       }
@@ -727,18 +727,18 @@ export default function HeroLattice({
         const x = pa.x + (pb.x - pa.x) * t;
         const y = pa.y + (pb.y - pa.y) * t;
         const r = 1.6 + p.amp * 2.2;
-        const pulseCol = mixRgb(PALETTE.energy, PALETTE.energyHot, p.amp * 0.55);
-        const g = ctx.createRadialGradient(x, y, 0, x, y, r * 5.5);
-        g.addColorStop(0, rgba(pulseCol, 0.7 * p.amp * cog.pulseAmp));
-        g.addColorStop(0.3, rgba(PALETTE.energy, 0.22 * p.amp));
+        const pulseCol = mixRgb(PALETTE.energy, PALETTE.energyHot, p.amp * 0.6);
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r * 6);
+        g.addColorStop(0, rgba(pulseCol, 0.88 * p.amp * cog.pulseAmp));
+        g.addColorStop(0.28, rgba(PALETTE.energy, 0.38 * p.amp));
         g.addColorStop(1, rgba(pulseCol, 0));
         ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.arc(x, y, r * 5.5, 0, Math.PI * 2);
+        ctx.arc(x, y, r * 6, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(x, y, r * 0.55, 0, Math.PI * 2);
-        ctx.fillStyle = rgba(mixRgb(pulseCol, { r: 255, g: 255, b: 255 }, 0.35), Math.min(0.95, 0.55 + p.amp * 0.4));
+        ctx.arc(x, y, r * 0.6, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(mixRgb(pulseCol, { r: 255, g: 255, b: 255 }, 0.45), Math.min(0.98, 0.7 + p.amp * 0.3));
         ctx.fill();
       }
 
@@ -756,14 +756,14 @@ export default function HeroLattice({
                 : 0.9;
 
         let alpha =
-          (0.18 + 0.32 * presence) *
+          (0.26 + 0.42 * presence) *
           roleMul *
           breatheBase *
           (0.5 + 0.5 * pr.depth) *
           (0.55 + 0.45 * Math.max(0.35, eStrengthNear(edges, pr.i)));
 
-        alpha += node.memory * 0.22;
-        alpha += node.activation * 0.5 * cog.pulseAmp;
+        alpha += node.memory * 0.3;
+        alpha += node.activation * 0.6 * cog.pulseAmp;
 
         if (attentionActive && pr.i !== attentionNode && node.activation < 0.15) {
           alpha *= 0.72;
@@ -782,35 +782,35 @@ export default function HeroLattice({
           (1 + node.activation * 0.35) *
           (0.9 + 0.1 * cog.pulseAmp);
 
-        let nodeCol = mixRgb(roleColor(node.role), structure, 0.2);
+        let nodeCol = mixRgb(roleColor(node.role), structure, 0.08);
         if (node.activation > 0.2) {
-          nodeCol = mixRgb(nodeCol, PALETTE.energy, node.activation * 0.55);
+          nodeCol = mixRgb(nodeCol, PALETTE.energy, node.activation * 0.7);
         }
         if (node.memory > 0.2) {
-          nodeCol = mixRgb(nodeCol, PALETTE.memory, node.memory * 0.35);
+          nodeCol = mixRgb(nodeCol, PALETTE.memory, node.memory * 0.45);
         }
 
         if (node.activation > 0.25 || node.memory > 0.25) {
-          const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, baseR * 5.5);
-          g.addColorStop(0, rgba(nodeCol, Math.min(0.42, alpha * 0.5)));
+          const g = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, baseR * 6);
+          g.addColorStop(0, rgba(nodeCol, Math.min(0.55, alpha * 0.65)));
           g.addColorStop(1, rgba(nodeCol, 0));
           ctx.fillStyle = g;
           ctx.beginPath();
-          ctx.arc(pr.x, pr.y, baseR * 5.5, 0, Math.PI * 2);
+          ctx.arc(pr.x, pr.y, baseR * 6, 0, Math.PI * 2);
           ctx.fill();
         }
 
         ctx.beginPath();
         ctx.arc(pr.x, pr.y, baseR, 0, Math.PI * 2);
-        ctx.fillStyle = rgba(nodeCol, Math.min(0.9, alpha));
+        ctx.fillStyle = rgba(nodeCol, Math.min(0.95, alpha));
         ctx.fill();
       }
 
       // Soft instrument ring — slate with a green whisper.
       const ringR = minDim * 0.36;
       const ringA =
-        (0.05 + (phase === 'propagate' ? 0.04 : 0)) * presence * (phase === 'wait' ? 0.75 : 1);
-      const ringCol = mixRgb(structure, PALETTE.stable, 0.35);
+        (0.08 + (phase === 'propagate' ? 0.06 : 0)) * presence * (phase === 'wait' ? 0.75 : 1);
+      const ringCol = mixRgb(structure, PALETTE.stable, 0.5);
       ctx.beginPath();
       ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
       ctx.strokeStyle = rgba(ringCol, ringA);
