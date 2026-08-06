@@ -37,9 +37,9 @@ function HeaderLink({
   variant?: SiteHeaderVariant;
 }) {
   const isExternal = href.startsWith('http');
-  const muted = variant === 'ink' ? 'text-white/56' : 'text-[var(--paper-muted)]';
-  const hover = variant === 'ink' ? 'hover:text-white' : 'hover:text-[var(--paper-ink)]';
-  const ink = variant === 'ink' ? 'bg-white' : 'bg-[var(--paper-ink)]';
+  const muted = variant === 'ink' ? 'text-white/56' : 'text-[var(--muted)]';
+  const hover = variant === 'ink' ? 'hover:text-white' : 'hover:text-[var(--foreground)]';
+  const ink = variant === 'ink' ? 'bg-white' : 'bg-[var(--foreground)]';
 
   const classes = mobile
     ? `group relative py-2 font-mono text-sm font-medium uppercase tracking-[0.14em] ${muted} transition-colors ${hover}`
@@ -99,14 +99,16 @@ export default function SiteHeader({ variant = 'paper' }: { variant?: SiteHeader
   const isInk = variant === 'ink';
   const bg = isInk
     ? 'bg-[#0a0a0a]/80'
-    : 'bg-[var(--paper-warm)]/85';
-  const text = isInk ? 'text-white' : 'text-[var(--paper-ink)]';
+    : 'bg-[var(--background)]/88';
+  const text = isInk ? 'text-white' : 'text-[var(--foreground)]';
   const border = scrolled
     ? isInk
       ? 'border-white/10 shadow-[0_1px_24px_rgba(0,0,0,0.35)]'
-      : 'border-[var(--paper-line)] shadow-[0_1px_20px_rgba(19,17,12,0.04)]'
+      : 'border-[var(--border)] shadow-[0_1px_20px_rgba(28,25,23,0.04)]'
     : 'border-transparent';
-  const menuBg = isInk ? 'bg-[#0a0a0a] border-white/10' : 'bg-[var(--paper-warm)] border-[var(--paper-line)]';
+  const menuBg = isInk
+    ? 'bg-[#0a0a0a] border-white/10'
+    : 'bg-[var(--background)] border-[var(--border)]';
 
   return (
     <header

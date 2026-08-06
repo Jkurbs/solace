@@ -57,7 +57,7 @@ export default function ThemeToggle({ variant = 'paper' }: { variant?: ThemeTogg
       className={`theme-toggle inline-flex flex-0 items-center justify-center w-[1.35rem] h-[1.35rem] rounded-full border bg-transparent cursor-pointer transition-colors duration-200 ${
         isInk
           ? 'border-white/20 text-white/75 hover:border-white/50 hover:text-white'
-          : 'border-[var(--paper-line)] text-[var(--paper-muted)] hover:border-[var(--paper-ink)]/35 hover:text-[var(--paper-ink)]'
+          : 'border-[var(--border)] text-[var(--muted)] hover:border-[var(--foreground)]/35 hover:text-[var(--foreground)]'
       }`}
       onClick={toggle}
       aria-label={label}

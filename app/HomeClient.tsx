@@ -159,10 +159,10 @@ export default function HomeClient({
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
-      {/* ── Hero: Apple product-unit stack on mobile; two-column on desktop ──
-          Emotional job: settle a careful visitor on one living object —
-          type first, then The Lattice as the product stage. */}
-      <section className="hero-research hero-lattice-section relative overflow-hidden px-5 pt-12 pb-16 md:pt-20 md:pb-28 border-t border-border">
+      {/* ── Hero + Charter: one continuous unit ──
+          Emotional job: the Lattice is the instrument; the charter is why
+          it can be trusted — same stage, no second sales section. */}
+      <section className="hero-research hero-lattice-section relative overflow-hidden px-5 pt-12 pb-16 md:pt-20 md:pb-24 border-t border-border">
         <motion.div
           initial={heroInitial}
           animate="show"
@@ -245,33 +245,36 @@ export default function HomeClient({
               </motion.div>
             )}
         </motion.div>
-      </section>
 
-      {/* ── Preamble: the founding principle ── */}
-      <section className="preamble px-5 pt-20 pb-12 md:pt-28 md:pb-16">
+        {/* Charter — same section as the Lattice, founding principle under the instrument */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: easeOut, delay: 0.2 }}
-          className="max-w-2xl mx-auto text-center"
+          initial={heroInitial}
+          animate="show"
+          variants={stagger}
+          className="hero-charter relative z-10 mx-auto max-w-2xl"
         >
-          <SealIcon className="w-12 h-12 text-muted mx-auto mb-8" />
-          <p className="text-xs uppercase tracking-[0.3em] text-muted mb-6">Charter</p>
-          <p className="font-serif text-[clamp(1.4rem,3.2vw,2.2rem)] leading-snug text-foreground">
-            Every decision any live instruments makes is recorded in a sealed ledger before the outcome is known. Each ledger can be inspected in the Observatory.
-          </p>
-          <div className="mt-10 flex flex-col items-center gap-4">
-            <div className="w-8 h-px bg-border" />
+          <motion.div variants={fade} className="hero-charter-rule" aria-hidden="true" />
+          <motion.div variants={fade}>
+            <SealIcon className="hero-charter-seal w-10 h-10 md:w-11 md:h-11 text-muted mx-auto" />
+          </motion.div>
+          <motion.p variants={fade} className="hero-charter-kicker">
+            Charter
+          </motion.p>
+          <motion.p variants={fade} className="hero-charter-body">
+            Every decision any live instrument makes is recorded in a sealed ledger before the
+            outcome is known. Each ledger can be inspected in the Observatory.
+          </motion.p>
+          <motion.div variants={fade} className="hero-charter-actions">
             <Link
               href={OBSERVATORY_HERMES_LEDGER_PATH}
-              className="home-charter-cta inline-flex items-center gap-2 rounded-full border border-foreground/20 bg-background px-5 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-foreground shadow-sm transition-colors hover:border-foreground/45 hover:bg-foreground/[0.04]"
+              className="hero-cta hero-cta-secondary"
             >
               Inspect the Observatory
-              <span aria-hidden="true" className="text-[0.85em] opacity-60">
+              <span aria-hidden="true" className="ml-1.5 text-[0.85em] opacity-60">
                 →
               </span>
             </Link>
-          </div>
+          </motion.div>
         </motion.div>
       </section>
 
