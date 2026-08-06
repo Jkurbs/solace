@@ -14899,11 +14899,8 @@ html[data-theme='light'] .obs-honesty-list strong {
   --foreground: #1c1917;        /* soft ink */
   --muted: #78716c;             /* warm gray */
   --border: #e7e5e4;            /* hairline rule */
-  /* Lattice screen: dark plate on light page */
-  --lattice-screen-bg: #0c0c0e;
-  --lattice-screen-bezel: #18181b;
-  --lattice-screen-glow: rgba(0, 0, 0, 0.28);
-  --lattice-ink: #e7e5e4;
+  /* Lattice draws on page paper — ink follows theme (no plate). */
+  --lattice-ink: #1c1917;
   background: var(--background);
   color: var(--foreground);
   transition: background-color 0.25s ease, color 0.25s ease;
@@ -14916,11 +14913,7 @@ html.dark .home-research,
   --foreground: #f5f5f4;
   --muted: #a8a29e;
   --border: #292524;
-  /* Lattice screen: light plate on dark page */
-  --lattice-screen-bg: #f5f5f4;
-  --lattice-screen-bezel: #e7e5e4;
-  --lattice-screen-glow: rgba(0, 0, 0, 0.18);
-  --lattice-ink: #1c1917;
+  --lattice-ink: #f5f5f4;
 }
 
 /* Editorial measure */
@@ -15002,13 +14995,15 @@ html.dark .home-research ::selection,
 }
 
 
-/* ── Hero product unit (Apple-style stack on mobile) ──
-   Mobile:  title → short line → CTAs → Lattice stage → caption
+/* ── Hero ──
+   Mobile: Stripe-scale Lattice band top-right (no plate), copy left
    Desktop: copy left | Lattice right  */
 .hero-lattice-section {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  /* Allow the band to breathe; section already clips edge bleed */
+  min-height: min(72vh, 34rem);
 }
 
 .hero-lattice-layout {
@@ -15017,20 +15012,26 @@ html.dark .home-research ::selection,
   grid-template-columns: 1fr;
   grid-template-areas:
     'copy'
-    'figure'
     'metric';
-  gap: 1.75rem 0;
+  gap: 1.5rem 0;
   align-items: start;
   justify-items: stretch;
+  position: relative;
+  min-height: inherit;
 }
 
 .hero-lattice-copy {
   grid-area: copy;
+  position: relative;
+  z-index: 2;
   min-width: 0;
-  text-align: center;
+  /* Leave the right band for Lattice art (Stripe-style) */
+  max-width: min(100%, 18.5rem);
+  padding-right: 0;
+  text-align: left;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .hero-lattice-eyebrow {
@@ -15043,12 +15044,12 @@ html.dark .home-research ::selection,
 }
 
 .hero-lattice-title {
-  margin: 0.85rem 0 0;
-  max-width: 22rem;
+  margin: 0.75rem 0 0;
+  max-width: none;
   font-family: var(--font-display), Georgia, serif;
-  font-size: clamp(1.85rem, 7.2vw, 2.45rem);
+  font-size: clamp(1.55rem, 6.2vw, 2.15rem);
   font-weight: 600;
-  line-height: 1.08;
+  line-height: 1.1;
   letter-spacing: -0.03em;
   color: var(--foreground);
   text-wrap: balance;
@@ -15056,9 +15057,9 @@ html.dark .home-research ::selection,
 
 /* Product-unit one-liner (mobile primary; desktop can hide) */
 .hero-lattice-sub {
-  margin: 0.85rem 0 0;
-  max-width: 20rem;
-  font-size: 1.05rem;
+  margin: 0.75rem 0 0;
+  max-width: 16rem;
+  font-size: 0.98rem;
   font-weight: 400;
   line-height: 1.35;
   letter-spacing: -0.015em;
@@ -15081,9 +15082,9 @@ html.dark .home-research ::selection,
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  margin-top: 1.35rem;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  margin-top: 1.25rem;
 }
 
 .hero-cta {
@@ -15122,24 +15123,26 @@ html.dark .home-research ::selection,
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
 }
 
-/* Lattice plate — plain contrast screen (simpler + rounder than instrument phones) */
+/* Lattice band — no plate; large edge-bleed graphic like Stripe color bands */
 .hero-lattice-figure {
-  grid-area: figure;
-  position: relative;
-  width: min(100%, 22rem);
+  position: absolute;
+  top: -6%;
+  right: -22%;
+  z-index: 0;
+  width: min(92vw, 28rem);
+  height: min(92vw, 28rem);
   aspect-ratio: 1;
-  margin: 0.25rem auto 0;
+  margin: 0;
   pointer-events: none;
-  opacity: 1;
+  opacity: 0.92;
 }
 
 .hero-lattice-screen {
   position: absolute;
   inset: 0;
   box-sizing: border-box;
-  /* No device bezel — one plain surface */
   padding: 0;
-  border-radius: 2.35rem;
+  border-radius: 0;
   background: transparent;
   box-shadow: none;
 }
@@ -15148,10 +15151,9 @@ html.dark .home-research ::selection,
   position: relative;
   width: 100%;
   height: 100%;
-  overflow: hidden;
-  border-radius: 2.35rem;
-  background: var(--lattice-screen-bg);
-  transition: background-color 0.25s ease;
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
 }
 
 .hero-lattice {
@@ -15180,16 +15182,18 @@ html.dark .home-research ::selection,
 /* Caption under the product (process integrity, not theater) */
 .hero-decision-count {
   grid-area: metric;
+  position: relative;
+  z-index: 2;
   width: 100%;
   max-width: 22rem;
-  margin: 0 auto;
-  text-align: center;
+  margin: 0;
+  text-align: left;
 }
 
 .hero-decision-count-link {
   display: inline-flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.35rem;
   text-decoration: none;
   color: inherit;
@@ -15213,7 +15217,7 @@ html.dark .home-research ::selection,
 .hero-decision-count-copy {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.2rem;
 }
 
@@ -15319,6 +15323,7 @@ html.dark .home-research ::selection,
     text-align: left;
     align-items: flex-start;
     max-width: 36rem;
+    padding-right: 0;
   }
 
   .hero-lattice-title {
@@ -15349,16 +15354,33 @@ html.dark .home-research ::selection,
     text-transform: uppercase;
   }
 
+  .hero-lattice-section {
+    min-height: auto;
+  }
+
+  .hero-lattice-layout {
+    min-height: 0;
+  }
+
   .hero-lattice-figure {
+    position: relative;
+    top: auto;
+    right: auto;
+    grid-area: figure;
     width: 100%;
-    max-width: 24rem;
+    max-width: 26rem;
+    height: auto;
     margin: 0 0 0 auto;
     transform: none;
+    opacity: 1;
+    z-index: 1;
   }
 
   .hero-lattice-screen,
   .hero-lattice-screen-inner {
-    border-radius: 2.65rem;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
   }
 
   .hero-decision-count {

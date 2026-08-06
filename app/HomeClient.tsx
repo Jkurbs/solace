@@ -159,9 +159,8 @@ export default function HomeClient({
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
-      {/* ── Hero: product unit + Lattice in a contrast screen ──
-          Emotional job: settle on one living object; screen contrast
-          makes the instrument read as hardware, not wallpaper. */}
+      {/* ── Hero: Lattice as large edge band (Stripe-scale on mobile) ──
+          No plate — ink on paper. Mobile: huge top-right bleed. Desktop: right column. */}
       <section className="hero-research hero-lattice-section relative overflow-hidden px-5 pt-12 pb-16 md:pt-20 md:pb-24 border-t border-border">
         <motion.div
           initial={heroInitial}
