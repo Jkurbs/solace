@@ -202,7 +202,7 @@ export default function HomeClient({
 
             <motion.p
               variants={fade}
-              className="mt-6 md:mt-8 max-w-xl text-lg md:text-xl text-muted leading-relaxed"
+              className="hero-lattice-dek mt-6 md:mt-8 max-w-xl text-lg md:text-xl leading-relaxed"
             >
               Solace builds instruments for disciplined decision making under uncertainty.
               Hermes, the first, allocates capital autonomously so it can compound without constant attention,
