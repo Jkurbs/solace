@@ -23,7 +23,8 @@ const particleVertexShader = `
     vAlpha = aAlpha;
 
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = clamp(aScale * (25.0 / -mvPosition.z), 1.0, 3.5);
+    // Increased point size rendering range for thicker, more visible structure
+    gl_PointSize = clamp(aScale * (35.0 / -mvPosition.z), 1.5, 4.8);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
@@ -52,21 +53,23 @@ export default function HermesLiquidityFieldRender({
     if (!container) return;
 
     const isMobile = window.innerWidth < 768;
-    const count = isMobile ? Math.floor(maxParticles * 0.25) : maxParticles;
+    const count = isMobile ? Math.floor(maxParticles * 0.35) : maxParticles;
 
-    // Responsive anchors and scaling
-    const shapeCenterX = isMobile ? 0.8 : 5.5;
-    const shapeCenterY = isMobile ? -2.2 : 0.0;
-    const scaleFactor = isMobile ? 0.65 : 1.0;
+    // --- Dynamic Positioning & Scaling ---
+    // Scaled up geometry size: desktop gets 1.45 multiplier, mobile gets 0.95
+    const shapeCenterX = isMobile ? 0.5 : 5.0;
+    const shapeCenterY = isMobile ? -1.8 : 0.0;
+    const scaleFactor = isMobile ? 0.95 : 1.45;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
-      isMobile ? 60 : 50,
+      isMobile ? 58 : 48,
       container.clientWidth / container.clientHeight,
       0.1,
       100
     );
-    camera.position.set(0, 0, isMobile ? 18 : 15);
+    // Moved camera closer to enlarge foreground perspective
+    camera.position.set(0, 0, isMobile ? 15 : 12);
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -121,9 +124,9 @@ export default function HermesLiquidityFieldRender({
       const rand = Math.random();
 
       // 1. Noise Field (Dispersed State)
-      const nx = isMobile ? (Math.random() - 0.5) * 12 : (Math.random() - 0.3) * 18;
-      const ny = (Math.random() - 0.5) * (isMobile ? 18 : 14);
-      const nz = (Math.random() - 0.5) * 6;
+      const nx = isMobile ? (Math.random() - 0.5) * 14 : (Math.random() - 0.2) * 22;
+      const ny = (Math.random() - 0.5) * (isMobile ? 20 : 16);
+      const nz = (Math.random() - 0.5) * 8;
 
       noisePositions[i3] = nx;
       noisePositions[i3 + 1] = ny;
@@ -132,23 +135,23 @@ export default function HermesLiquidityFieldRender({
       currentPositions[i3 + 1] = ny;
       currentPositions[i3 + 2] = nz;
 
-      // 2. Shape A: Globe / Sphere
-      const sphereRadius = 3.8 * scaleFactor;
+      // 2. Shape A: Globe / Sphere (Larger base radius: 3.8 -> 5.2)
+      const sphereRadius = 3.6 * scaleFactor;
       const phi = Math.acos(-1 + (2 * i) / count);
       const theta = Math.sqrt(count * Math.PI) * phi;
       globeTargets[i3] = shapeCenter.x + sphereRadius * Math.cos(theta) * Math.sin(phi);
       globeTargets[i3 + 1] = shapeCenter.y + sphereRadius * Math.sin(theta) * Math.sin(phi);
       globeTargets[i3 + 2] = shapeCenter.z + sphereRadius * Math.cos(phi);
 
-      // 3. Shape B: Lorenz Attractor
-      const lorenzScale = 0.16 * scaleFactor;
+      // 3. Shape B: Lorenz Attractor (Larger scale multiplier: 0.16 -> 0.24)
+      const lorenzScale = 0.165 * scaleFactor;
       lorenzTargets[i3] = shapeCenter.x + rawLorenz[i3] * lorenzScale;
       lorenzTargets[i3 + 1] = shapeCenter.y + rawLorenz[i3 + 1] * lorenzScale;
       lorenzTargets[i3 + 2] = shapeCenter.z + rawLorenz[i3 + 2] * lorenzScale;
 
-      // 4. Shape C: Concentric Gyroscopic Seal Rings
+      // 4. Shape C: Concentric Gyroscopic Seal Rings (Expanded ring radii)
       const ringIndex = i % 3;
-      const radii = [2.2 * scaleFactor, 3.4 * scaleFactor, 4.6 * scaleFactor];
+      const radii = [2.2 * scaleFactor, 3.3 * scaleFactor, 4.4 * scaleFactor];
       const radius = radii[ringIndex];
       const angle = (i / (count / 3)) * Math.PI * 2;
       const rx = radius * Math.cos(angle);
@@ -169,29 +172,24 @@ export default function HermesLiquidityFieldRender({
       }
 
       // --- Color Assignments per Phase ---
-      // Phase 0: Globe (Teal + Slate)
       const c0 = tealColor.clone().lerp(slateColor, rand * 0.4);
       globeColors[i3] = c0.r; globeColors[i3 + 1] = c0.g; globeColors[i3 + 2] = c0.b;
 
-      // Phase 1: Lorenz (Amber + Teal)
       const c1 = amberColor.clone().lerp(tealColor, rand * 0.6);
       lorenzColors[i3] = c1.r; lorenzColors[i3 + 1] = c1.g; lorenzColors[i3 + 2] = c1.b;
 
-      // Phase 2: Seal (Bronze + Emerald)
       const c2 = bronzeColor.clone().lerp(emeraldColor, rand * 0.35);
       sealColors[i3] = c2.r; sealColors[i3 + 1] = c2.g; sealColors[i3 + 2] = c2.b;
 
-      // Phase 3: Noise Field (Teal + Bronze base)
       const c3 = tealColor.clone().lerp(bronzeColor, rand);
       noiseColors[i3] = c3.r; noiseColors[i3 + 1] = c3.g; noiseColors[i3 + 2] = c3.b;
 
-      // Set initial colors
       currentColors[i3] = c3.r;
       currentColors[i3 + 1] = c3.g;
       currentColors[i3 + 2] = c3.b;
 
-      scales[i] = Math.random() * 1.2 + 0.6;
-      alphas[i] = Math.random() * 0.35 + 0.15;
+      scales[i] = Math.random() * 1.4 + 0.8;
+      alphas[i] = Math.random() * 0.4 + 0.2;
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
@@ -270,7 +268,6 @@ export default function HermesLiquidityFieldRender({
         let noiseDampen = 1.0;
 
         if (phaseIndex === 0) {
-          // Noise -> Globe
           targetX = THREE.MathUtils.lerp(nx, gx, ease);
           targetY = THREE.MathUtils.lerp(ny, gy, ease);
           targetZ = THREE.MathUtils.lerp(nz, gz, ease);
@@ -281,7 +278,6 @@ export default function HermesLiquidityFieldRender({
 
           noiseDampen = 1.0 - ease;
         } else if (phaseIndex === 1) {
-          // Globe -> Lorenz
           targetX = THREE.MathUtils.lerp(gx, lxPos, ease);
           targetY = THREE.MathUtils.lerp(gy, lyPos, ease);
           targetZ = THREE.MathUtils.lerp(gz, lzPos, ease);
@@ -292,7 +288,6 @@ export default function HermesLiquidityFieldRender({
 
           noiseDampen = 0.1;
         } else if (phaseIndex === 2) {
-          // Lorenz -> Seal
           targetX = THREE.MathUtils.lerp(lxPos, sx, ease);
           targetY = THREE.MathUtils.lerp(lyPos, sy, ease);
           targetZ = THREE.MathUtils.lerp(lzPos, sz, ease);
@@ -303,7 +298,6 @@ export default function HermesLiquidityFieldRender({
 
           noiseDampen = 0.1;
         } else {
-          // Seal -> Dispersed Noise
           targetX = THREE.MathUtils.lerp(sx, nx, ease);
           targetY = THREE.MathUtils.lerp(sy, ny, ease);
           targetZ = THREE.MathUtils.lerp(sz, nz, ease);
@@ -315,7 +309,6 @@ export default function HermesLiquidityFieldRender({
           noiseDampen = ease;
         }
 
-        // Ambient fluid noise movement
         const n1 = noise3D(nx * 0.1, ny * 0.1, elapsedTime * 0.03);
         const n2 = noise3D(ny * 0.1 + mouse.x * 0.2, nz * 0.1 + mouse.y * 0.2, elapsedTime * 0.03);
 
@@ -331,7 +324,6 @@ export default function HermesLiquidityFieldRender({
       posAttr.needsUpdate = true;
       colorAttr.needsUpdate = true;
 
-      // System rotation
       particleSystem.rotation.y = elapsedTime * 0.012 + mouse.x * 0.01;
       particleSystem.rotation.x = Math.sin(elapsedTime * 0.008) * 0.04;
 
