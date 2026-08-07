@@ -19,6 +19,31 @@ const postureEnergy: Record<HermesPublicPosture, number> = {
   RISK_OFF: 0.28,
 };
 
+// ── GPU tier detection ──────────────────────────────────────────────
+// Adapts DPR and frame pacing so low-end devices don't choke on the
+// full 7-layer dust + 3-layer bokeh shader.
+function detectGpuTier(): 'low' | 'mid' | 'high' {
+  const canvas = document.createElement('canvas');
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) return 'low';
+
+  const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+  const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : '';
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isLowPower = /Mali-4|Mali-3|Adreno 3|PowerVR SGX|Intel HD/i.test(renderer);
+  const isHighEnd = /Apple M|Apple GPU|NVIDIA|AMD|RTX|GTX/i.test(renderer) && !isMobile;
+
+  if (isHighEnd) return 'high';
+  if (isMobile || isLowPower) return 'low';
+  return 'mid';
+}
+
+const TIER_CONFIG = {
+  low:  { dprCap: 1 },
+  mid:  { dprCap: 1.5 },
+  high: { dprCap: 2 },
+} as const;
+
 const vertexShader = `
   varying vec2 vUv;
 
@@ -483,6 +508,10 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       mount.removeChild(mount.firstChild);
     }
 
+    // ── Performance tiering ─────────────────────────────────────────
+    const tier = detectGpuTier();
+    const cfg = TIER_CONFIG[tier];
+
     let renderer: THREE.WebGLRenderer;
 
     try {
@@ -490,7 +519,7 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
         antialias: false,
         alpha: true,
         premultipliedAlpha: false,
-        powerPreference: 'high-performance',
+        powerPreference: tier === 'low' ? 'low-power' : 'high-performance',
         preserveDrawingBuffer: new URLSearchParams(window.location.search).has('verify-webgl'),
       });
     } catch {
@@ -572,7 +601,8 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
     const resize = () => {
       const width = Math.max(1, mount.clientWidth);
       const height = Math.max(1, mount.clientHeight);
-      const dpr = getRenderPixelRatio(3);
+      // Cap DPR by tier so low-end GPUs don't melt on Retina displays.
+      const dpr = Math.min(getRenderPixelRatio(3), cfg.dprCap);
       const w = Math.max(1, Math.floor(width));
       const h = Math.max(1, Math.floor(height));
 
@@ -610,9 +640,35 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       pointerHost.addEventListener('pointerleave', onPointerLeave);
     }
 
+    // Touch: single-finger passive probe so scrolling isn't blocked on mobile.
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        const rect = mount.getBoundingClientRect();
+        pointerState.tx = (t.clientX - rect.left) / rect.width;
+        pointerState.ty = 1 - (t.clientY - rect.top) / rect.height;
+        pointerState.glowTarget = 1;
+      }
+    };
+    const onTouchEnd = () => {
+      pointerState.glowTarget = 0;
+    };
+    if (pointerHost && !reducedMotion) {
+      window.addEventListener('touchstart', onTouchStart, { passive: true });
+      pointerHost.addEventListener('touchend', onTouchEnd);
+    }
+
     // Cloud-only hero: no path re-evaluation epochs (paths are not drawn).
+    // ── Frame skip & FPS monitoring for low-end devices ─────────────
+    let lastFrame = startedAt;
+    let frameCount = 0;
+    let fpsAccumulator = 0;
+    let skipCounter = 0;
+    let currentSkip = tier === 'low' ? 1 : 0;
+
     const render = () => {
-      const elapsed = (performance.now() - startedAt) / 1000;
+      const now = performance.now();
+      const elapsed = (now - startedAt) / 1000;
       uniforms.uTime.value = elapsed;
 
       pointerState.x += (pointerState.tx - pointerState.x) * 0.09;
@@ -623,6 +679,24 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       uniforms.uPathFade.value = 0;
 
       renderer.render(scene, camera);
+
+      // Adaptive frame skip: if average FPS drops below 25 for 2s, skip frames.
+      if (tier === 'low') {
+        const dt = now - lastFrame;
+        lastFrame = now;
+        frameCount++;
+        fpsAccumulator += dt;
+        if (fpsAccumulator > 2000) {
+          const avgFps = frameCount / (fpsAccumulator / 1000);
+          if (avgFps < 25 && currentSkip < 2) {
+            currentSkip++;
+          } else if (avgFps > 35 && currentSkip > 0) {
+            currentSkip--;
+          }
+          frameCount = 0;
+          fpsAccumulator = 0;
+        }
+      }
     };
 
     const stopLoop = () => {
@@ -642,8 +716,14 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
         frameId = null;
         return;
       }
-      render();
       frameId = window.requestAnimationFrame(animate);
+      // Low-end: render every Nth frame when struggling.
+      if (tier === 'low' && currentSkip > 0) {
+        skipCounter++;
+        if (skipCounter <= currentSkip) return;
+        skipCounter = 0;
+      }
+      render();
     };
 
     const resizeObserver = new ResizeObserver(() => {
@@ -695,6 +775,8 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       if (pointerHost) {
         pointerHost.removeEventListener('pointermove', onPointerMove as EventListener);
         pointerHost.removeEventListener('pointerleave', onPointerLeave);
+        window.removeEventListener('touchstart', onTouchStart);
+        pointerHost.removeEventListener('touchend', onTouchEnd);
       }
 
       resizeObserver.disconnect();
