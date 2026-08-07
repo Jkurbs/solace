@@ -159,13 +159,11 @@ export default function HomeClient({
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
-      {/* ── Hero: decision dust nebula (psychohistory atmosphere) ──
-          Dual-tone gold/teal dust, layered depth, posture-tempered.
-          Emotional job: structure emerging from uncertainty — never a screensaver. */}
+      {/* ── Hero: decision dust nebula ── */}
       <section className="hero-research hero-particle-section relative overflow-hidden">
-        <div className="hero-particle-stage" aria-hidden="true">
-          <HermesLiquidityFieldRender posture={hermesTelemetry?.posture} />
-          <div className="hero-particle-vignette" />
+        <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
+          <HermesLiquidityFieldRender maxParticles={30000} />
+          <div className="hero-particle-vignette absolute inset-0 pointer-events-none" />
         </div>
 
         <motion.div
@@ -231,8 +229,8 @@ export default function HomeClient({
         </motion.div>
       </section>
 
-      {/* ── Instruments: product units (Apple stack on mobile) ── */}
-      <section className="home-instruments-section px-5 py-16 md:py-28">
+      {/* ── Instruments ── */}
+      <section className="home-instruments-section px-5 py-16 md:py-28 border-t border-border">
         <div className="mx-auto max-w-6xl">
           <h2 className="home-instruments-kicker text-xs uppercase tracking-[0.2em] text-muted mb-10 md:mb-12">
             Instruments
@@ -268,7 +266,7 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── Charter: after instruments — founding principle ── */}
+      {/* ── Charter ── */}
       <section className="home-charter-section px-5 py-16 md:py-24 border-t border-border">
         <div className="hero-charter mx-auto max-w-2xl">
           <div className="hero-charter-rule" aria-hidden="true" />
