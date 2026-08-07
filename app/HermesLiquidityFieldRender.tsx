@@ -87,15 +87,19 @@ const fragmentShader = `
     return f * breathe;
   }
 
-  // Stripe-band density: many grains per cell, near-solid swarm in the band.
+  // Moving grains: density stays anchored in screen space (cloud never empties);
+  // only the grain pattern slides/rolls through the mass.
   vec3 dustLayer(vec2 w, float scale, float drift, float weight, float seed, float radMul) {
-    vec2 q = w + vec2(uTime * drift, uTime * drift * 0.12);
+    vec2 flow = vec2(uTime * drift * 1.6, uTime * drift * -0.4);
+    float swirl = uTime * (0.12 + seed * 0.015);
+    // Pattern advection (visible motion) without moving density away.
+    vec2 q = w + flow;
+    q += vec2(sin(q.y * 2.8 + swirl), cos(q.x * 2.2 - swirl * 0.7)) * 0.028;
     vec2 g = q * vec2(scale, scale * 0.92);
     vec2 cell = floor(g);
     vec2 fr = fract(g);
 
     vec3 acc = vec3(0.0);
-    // 5 grains per cell — multiplies effective particle count.
     for (int n = 0; n < 5; n++) {
       float fn = float(n);
       float rnd = hash(cell * 1.13 + seed + fn * 17.3);
@@ -103,30 +107,27 @@ const fragmentShader = `
         hash(cell + vec2(7.1 + fn, 3.7) + seed),
         hash(cell + vec2(2.3, 9.2 + fn * 1.7) + seed)
       ) * 0.92 + 0.04;
-      vec2 sampleW = (cell + pp) / vec2(scale, scale * 0.92) - vec2(uTime * drift, uTime * drift * 0.12);
+      // Density from stable screen position — not from advected coords.
+      float fc = fieldAt(w);
+      float dens = smoothstep(0.0, 0.22, max(fc, 0.55));
+      float spawn = step(rnd, dens * 0.35 + 0.82);
 
-      float fc = fieldAt(sampleW);
-      float dens = smoothstep(0.0, 0.28, fc);
-      // Near-guaranteed spawn inside the mass.
-      float spawn = step(rnd, dens * 0.55 + 0.72);
-
-      // Tighter grains — pack the swarm.
       float radius = mix(0.0025, 0.012, hash(cell + 5.5 + seed + fn)) * radMul;
       float pt = smoothstep(radius, radius * 0.04, length(fr - pp));
-      float tw = 0.62 + 0.38 * sin(uTime * (0.4 + rnd * 1.4) + rnd * 23.0 + fn);
+      float tw = 0.55 + 0.45 * sin(uTime * (0.9 + rnd * 2.0) + rnd * 23.0 + fn);
 
       float temp = smoothstep(0.04, 0.5, fc);
       vec3 warm = mix(vec3(1.0, 0.72, 0.42), vec3(1.0, 0.94, 0.78), smoothstep(0.35, 0.95, fc));
       vec3 cold = vec3(0.55, 0.78, 0.98);
       vec3 dcol = mix(cold, warm, temp);
-      acc += dcol * spawn * pt * tw * weight * (0.55 + fc * 1.15);
+      acc += dcol * spawn * pt * tw * weight * (0.6 + fc * 1.1);
     }
     return acc;
   }
 
-  // Soft out-of-focus grains (fills residual gaps).
   vec3 bokeh(vec2 w, float scale, float drift, float seed) {
-    vec2 q = w + vec2(uTime * drift, uTime * drift * 0.35);
+    vec2 flow = vec2(uTime * drift * 1.4, uTime * drift * 0.55);
+    vec2 q = w + flow;
     vec2 g = q * scale;
     vec2 cell = floor(g);
     vec2 fr = fract(g);
@@ -135,7 +136,7 @@ const fragmentShader = `
     for (int n = 0; n < 3; n++) {
       float fn = float(n);
       float rnd = hash(cell * 1.31 + seed + fn * 9.1);
-      float spawn = step(rnd, 0.78);
+      float spawn = step(rnd, 0.82);
       vec2 pp = vec2(
         hash(cell + vec2(3.1 + fn, 8.7) + seed),
         hash(cell + vec2(9.4, 2.2 + fn) + seed)
@@ -143,53 +144,58 @@ const fragmentShader = `
 
       float r = mix(0.03, 0.1, hash(cell + 6.8 + seed + fn));
       float disc = smoothstep(r, r * 0.3, length(fr - pp));
-      float tw = 0.55 + 0.45 * sin(uTime * (0.25 + rnd) + rnd * 31.0);
+      float tw = 0.5 + 0.5 * sin(uTime * (0.55 + rnd * 1.4) + rnd * 31.0);
 
-      float fc = fieldAt((cell + pp) / scale - vec2(uTime * drift, uTime * drift * 0.35));
+      float fc = fieldAt(w);
       vec3 col = mix(vec3(0.5, 0.7, 0.9), vec3(1.0, 0.84, 0.58), smoothstep(0.06, 0.4, fc));
       acc += col * spawn * disc * tw * 0.11;
     }
     return acc;
   }
 
-  // Right-side stream mask — concentrated mass on the right half of the hero.
+  // Persistent right-side mass — sways gently, never leaves the frame.
   float stripeBand(vec2 w) {
-    float t = uTime * 0.035;
-    // Primary mass: right column, gently diagonal, tight width.
-    float right = smoothstep(0.42, 0.58, w.x);
-    float coreX = 0.72 + sin(t * 0.8) * 0.03;
-    float coreY = 0.48 + cos(t * 0.6) * 0.04;
-    vec2 d = (w - vec2(coreX, coreY)) * vec2(1.55, 1.15);
-    // Rotate slightly so the stream leans like Stripe bands.
-    float ang = -0.45 + sin(t) * 0.05;
+    float t = uTime * 0.08;
+    float right = smoothstep(0.40, 0.54, w.x);
+    // Anchored on the right; only small sway (no large travel that empties).
+    float coreX = 0.74 + sin(t * 0.45) * 0.028;
+    float coreY = 0.50 + cos(t * 0.38) * 0.04;
+    vec2 d = (w - vec2(coreX, coreY)) * vec2(1.45, 1.05);
+    float ang = -0.42 + sin(t * 0.5) * 0.06;
     float ca = cos(ang);
     float sa = sin(ang);
     vec2 r = vec2(d.x * ca - d.y * sa, d.x * sa + d.y * ca);
-    // Tight elliptical core (bring particles closer together).
-    float ellipse = length(r * vec2(1.85, 1.05));
-    float core = smoothstep(0.52, 0.12, ellipse);
-    // Secondary ribbon slightly offset for depth, still right-weighted.
-    float ribbon = smoothstep(0.38, 0.12, length((w - vec2(0.82, 0.62 + sin(t * 1.1) * 0.03)) * vec2(2.4, 1.6)));
-    float band = max(core, ribbon * 0.72) * right;
-    band *= 0.82 + 0.22 * fbm(w * 4.2 + vec2(t * 0.4, -t * 0.25));
+    float ellipse = length(r * vec2(1.7, 0.95));
+    float core = smoothstep(0.58, 0.1, ellipse);
+    float ribbon = smoothstep(
+      0.42,
+      0.1,
+      length((w - vec2(0.84 + sin(t * 0.4) * 0.02, 0.60 + cos(t * 0.5) * 0.035)) * vec2(2.2, 1.45))
+    );
+    // Floor so the band never fully collapses.
+    float band = max(core, ribbon * 0.75) * right;
+    band = max(band, right * 0.42);
+    band *= 0.88 + 0.14 * fbm(w * 3.5 + vec2(t * 0.5, -t * 0.35));
     return clamp(band, 0.0, 1.0);
   }
 
-  // Cloud-only, Stripe-band concentration: near-solid particle streams on white.
+  // Cloud-only, flowing right-side stream on white — always present.
   void main() {
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
     float aspect = uResolution.x / max(uResolution.y, 1.0);
     float mobile = 1.0 - smoothstep(0.94, 1.22, aspect);
 
+    // Stable layout coords for density (so the cloud doesn't drift away).
     vec2 w = uv;
     w.x = mix(w.x, 0.22 + w.x * 0.78, mobile);
 
-    w += vec2(sin(uTime * 0.011), cos(uTime * 0.0083)) * 0.01;
-    w = (w - 0.5) * (1.0 + 0.006 * sin(uTime * 0.007)) + 0.5;
+    // Soft breathe only — no large translation of the whole field.
+    w += vec2(sin(uTime * 0.045), cos(uTime * 0.038)) * 0.008;
+    w = (w - 0.5) * (1.0 + 0.006 * sin(uTime * 0.04)) + 0.5;
 
     vec2 toWell = w - uWell;
     float wr = length(toWell * vec2(1.3, 1.0));
-    vec2 wWarp = w - (toWell / max(wr, 0.001)) * 0.012 * exp(-wr * wr / 0.05);
+    vec2 wWarp = w - (toWell / max(wr, 0.001)) * 0.01 * exp(-wr * wr / 0.05);
 
     vec2 toPtr = uv - uPointer;
     float prd = length(toPtr * vec2(1.2, 1.0));
@@ -199,24 +205,26 @@ const fragmentShader = `
 
     vec3 paper = vec3(1.0, 1.0, 1.0);
     float band = stripeBand(w);
-    float f = fieldAt(wWarp + ptrPar * 0.15);
-    f = max(f, band * 0.85);
+    // Field density anchored to stable w (not sliding off-screen).
+    float f = max(fieldAt(wWarp + ptrPar * 0.1), band * 0.9);
+    f = max(f, 0.45 * smoothstep(0.42, 0.62, w.x));
 
-    vec2 clumpDrift = vec2(uTime * 0.012, -uTime * 0.005);
+    vec2 clumpDrift = vec2(uTime * 0.035, -uTime * 0.022);
     float clump = fbm(w * 2.2 + clumpDrift);
-    clump = smoothstep(0.12, 0.48, clump);
-    float mass = clamp(max(clump, band * 0.95) * (0.55 + 0.55 * f), 0.0, 1.0);
+    clump = smoothstep(0.1, 0.45, clump);
+    // Mass never drops to zero on the right.
+    float mass = clamp(max(clump, band) * (0.65 + 0.45 * f), 0.35, 1.0);
 
     float clumpTowardLight = fbm((w + vec2(-0.45, 0.9) * 0.04) * 2.2 + clumpDrift);
     clumpTowardLight = smoothstep(0.2, 0.55, clumpTowardLight);
-    float cloudLight = 0.55 + 0.9 * smoothstep(0.25, -0.3, clumpTowardLight - clump);
+    float cloudLight = 0.6 + 0.85 * smoothstep(0.25, -0.3, clumpTowardLight - clump);
 
     vec3 ember = vec3(0.58, 0.34, 0.18);
     vec3 amber = vec3(0.95, 0.62, 0.32);
     vec3 pale = vec3(0.98, 0.9, 0.78);
     vec3 violet = vec3(0.72, 0.55, 0.95);
     vec3 coral = vec3(0.98, 0.48, 0.42);
-    float hue = fract(w.x * 0.55 - w.y * 0.35 + uTime * 0.015);
+    float hue = fract(w.x * 0.55 - w.y * 0.35 + uTime * 0.025);
     vec3 bandPigment = mix(amber, coral, smoothstep(0.0, 0.35, hue));
     bandPigment = mix(bandPigment, violet, smoothstep(0.35, 0.7, hue));
     bandPigment = mix(bandPigment, pale, smoothstep(0.7, 1.0, hue));
@@ -225,39 +233,40 @@ const fragmentShader = `
     haze = mix(haze, pale, smoothstep(0.65, 0.98, f));
     haze = mix(haze, bandPigment, band * 0.55);
 
-    float body = pow(max(f, 0.0), 1.15) * mass * cloudLight;
-    body = clamp(body * 1.55, 0.0, 1.0);
-    vec3 color = mix(paper, haze, body * 0.55);
+    float body = pow(max(f, 0.0), 1.05) * mass * cloudLight;
+    body = clamp(max(body * 1.45, band * 0.55), 0.0, 1.0);
+    vec3 color = mix(paper, haze, body * 0.6);
 
-    // Dense pack on the right: higher scales + smaller grains = closer together.
-    float dustBoost = (1.05 + 1.55 * mass) * cloudLight * (0.92 + 0.18 * uEnergy) * (0.35 + 0.85 * band);
+    // Grain pattern slides through a persistent cloud (never empties).
+    float dustBoost = (1.1 + 1.4 * mass) * cloudLight * (0.92 + 0.18 * uEnergy) * (0.5 + 0.7 * band);
     vec3 dust =
-      dustLayer(wWarp + ptrPar * 0.15, 140.0, 0.0015, 1.15, 0.0, 0.7) * dustBoost +
-      dustLayer(wWarp + ptrPar * 0.35, 240.0, 0.0024, 1.3, 7.0, 0.85) * dustBoost +
-      dustLayer(wWarp + ptrPar * 0.6, 380.0, 0.0036, 1.4, 17.0, 1.05) * dustBoost +
-      dustLayer(wWarp + ptrPar * 0.9, 560.0, 0.005, 1.45, 31.0, 1.3) * dustBoost +
-      dustLayer(wWarp + ptrPar * 1.25, 780.0, 0.0068, 1.35, 53.0, 1.65) * dustBoost +
-      dustLayer(wWarp + ptrPar * 1.7, 1050.0, 0.009, 1.2, 79.0, 2.1) * dustBoost * mass +
-      dustLayer(wWarp + ptrPar * 2.2, 1400.0, 0.012, 1.05, 101.0, 2.6) * mass * 1.25;
-    float dustAmt = clamp(dot(dust, vec3(0.33)) * 3.8 * (0.25 + 0.9 * band), 0.0, 0.99);
+      dustLayer(wWarp + ptrPar * 0.15, 140.0, 0.006, 1.15, 0.0, 0.7) * dustBoost +
+      dustLayer(wWarp + ptrPar * 0.35, 240.0, 0.01, 1.3, 7.0, 0.85) * dustBoost +
+      dustLayer(wWarp + ptrPar * 0.6, 380.0, 0.015, 1.4, 17.0, 1.05) * dustBoost +
+      dustLayer(wWarp + ptrPar * 0.9, 560.0, 0.02, 1.45, 31.0, 1.3) * dustBoost +
+      dustLayer(wWarp + ptrPar * 1.25, 780.0, 0.026, 1.35, 53.0, 1.65) * dustBoost +
+      dustLayer(wWarp + ptrPar * 1.7, 1050.0, 0.034, 1.2, 79.0, 2.1) * dustBoost * mass +
+      dustLayer(wWarp + ptrPar * 2.2, 1400.0, 0.044, 1.05, 101.0, 2.6) * mass * 1.25;
+    float dustAmt = clamp(dot(dust, vec3(0.33)) * 3.8 * (0.4 + 0.75 * band), 0.0, 0.99);
     color = mix(color, min(dust * 0.92 + color * 0.1, vec3(1.0)), dustAmt);
 
     vec3 bok =
-      bokeh(w + ptrPar * 1.8, 16.0, 0.004, 3.0) * 1.25 +
-      bokeh(w + ptrPar * 2.1, 11.0, 0.006, 23.0) * 1.15 +
-      bokeh(w + ptrPar * 2.4, 7.5, 0.0085, 47.0) * 1.05;
-    float bokAmt = clamp(dot(bok, vec3(0.33)) * 2.8 * mass * band, 0.0, 0.55);
+      bokeh(w + ptrPar * 1.8, 16.0, 0.014, 3.0) * 1.25 +
+      bokeh(w + ptrPar * 2.1, 11.0, 0.02, 23.0) * 1.15 +
+      bokeh(w + ptrPar * 2.4, 7.5, 0.026, 47.0) * 1.05;
+    float bokAmt = clamp(dot(bok, vec3(0.33)) * 2.8 * mass * max(band, 0.5), 0.0, 0.55);
     color = mix(color, min(color + bok * 0.7, vec3(1.0)), bokAmt);
 
-    // Harder right isolation — left stays paper; mass hugs the right.
-    float rightGate = smoothstep(0.38, 0.55, uv.x);
-    color = mix(paper, color, clamp(band * 1.05 * rightGate + body * 0.08 * rightGate, 0.0, 1.0));
+    // Right isolation with a guaranteed floor — cloud always shows on the right.
+    float rightGate = smoothstep(0.36, 0.52, uv.x);
+    float presence = clamp(max(band, 0.55) * rightGate + body * 0.25 * rightGate, 0.0, 1.0);
+    color = mix(paper, color, presence);
 
     color = mix(color, min(color * 1.04 + vec3(0.06, 0.03, 0.01) * probe, vec3(1.0)), probe * 0.35 * rightGate);
 
-    // Extra clear zone for copy on the left.
-    float leftFade = smoothstep(0.28, 0.52, uv.x);
-    color = mix(paper, color, leftFade);
+    // Copy zone on the left stays clear; right stays filled.
+    float leftFade = smoothstep(0.26, 0.5, uv.x);
+    color = mix(paper, color, max(leftFade, rightGate * 0.85));
 
     float grain = hash13(vec3(gl_FragCoord.xy, uTime * 18.0)) - 0.5;
     color += grain * 0.0035;
