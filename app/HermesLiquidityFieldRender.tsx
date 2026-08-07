@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
+import { THEME_CHANGE_EVENT, readSiteTheme } from '@/lib/theme';
 import { getRenderPixelRatio } from '@/lib/webgl-dpr';
 import { isWebglPaused, observeWebglMountVisibility, subscribeWebglPause } from '@/lib/webgl-lifecycle';
 
@@ -43,6 +44,8 @@ const fragmentShader = `
   uniform float uPointerGlow;
   uniform float uPathFade;
   uniform float uEnergy;
+  // 0 = light paper, 1 = dark void
+  uniform float uDarkMode;
 
   const int MAX_PATHS = 6;
 
@@ -87,9 +90,9 @@ const fragmentShader = `
     return f * breathe;
   }
 
-  // ── Decision dust (psychohistory atmosphere) ─────────────────────────
-  // Dual populations: warm (human judgment) + cool (systematic discipline).
-  // Density is screen-anchored so the cloud never empties; only grain drifts.
+  // ── Isolated particles only (right mass, Solace palette) ─────────────
+  // No god-rays, haze body, or stars — grain alone. Emerald ↔ teal transitions.
+
   vec3 dustLayer(
     vec2 w,
     float scale,
@@ -97,202 +100,234 @@ const fragmentShader = `
     float weight,
     float seed,
     float radMul,
-    float warmBias // 0 = cool teal, 1 = warm gold
+    float coolBias
   ) {
-    vec2 flow = vec2(uTime * drift * 0.85, uTime * drift * -0.22);
-    float swirl = uTime * (0.07 + seed * 0.01);
+    vec2 flow = vec2(uTime * drift * 0.75, uTime * drift * -0.2);
+    float swirl = uTime * (0.06 + seed * 0.01);
     vec2 q = w + flow;
-    q += vec2(sin(q.y * 2.4 + swirl), cos(q.x * 1.9 - swirl * 0.65)) * 0.018;
+    q += vec2(sin(q.y * 2.4 + swirl), cos(q.x * 1.9 - swirl * 0.65)) * 0.016;
     vec2 g = q * vec2(scale, scale * 0.9);
     vec2 cell = floor(g);
     vec2 fr = fract(g);
 
     vec3 acc = vec3(0.0);
-    for (int n = 0; n < 4; n++) {
+    // Density only: more candidates + higher spawn. Grain look unchanged.
+    for (int n = 0; n < 12; n++) {
       float fn = float(n);
       float rnd = hash(cell * 1.13 + seed + fn * 17.3);
       vec2 pp = vec2(
         hash(cell + vec2(7.1 + fn, 3.7) + seed),
         hash(cell + vec2(2.3, 9.2 + fn * 1.7) + seed)
-      ) * 0.88 + 0.06;
+      ) * 0.9 + 0.05;
 
-      // Anchored density — cloud body stays.
       float fc = fieldAt(w);
-      float dens = smoothstep(0.0, 0.28, max(fc, 0.5));
-      float spawn = step(rnd, dens * 0.4 + 0.72);
+      float dens = smoothstep(0.0, 0.32, max(fc, 0.42));
+      float spawn = step(rnd, dens * 0.35 + 0.78);
 
-      // Soft, matte grains (dust through old glass — not neon sparks).
-      float radius = mix(0.01, 0.038, hash(cell + 5.5 + seed + fn)) * radMul;
-      float pt = smoothstep(radius, radius * 0.12, length(fr - pp));
-      // Slower twinkle when energy is low (standing down → stiller).
-      float twRate = mix(0.35, 1.1, uEnergy);
-      float tw = 0.62 + 0.38 * sin(uTime * twRate * (0.4 + rnd) + rnd * 19.0 + fn);
+      float radius = mix(0.005, 0.022, hash(cell + 5.5 + seed + fn)) * radMul;
+      float d = length(fr - pp);
+      float pt = smoothstep(radius, radius * 0.1, d);
+      float bloom = exp(-d * d / max(radius * radius * 3.2, 1e-5));
+      float twRate = mix(0.35, 1.0, uEnergy);
+      float tw = 0.6 + 0.4 * sin(uTime * twRate * (0.45 + rnd) + rnd * 19.0 + fn);
 
-      // Muted dual-tone: warm amber/gold vs soft teal (never neon).
-      vec3 gold = vec3(0.78, 0.62, 0.42);
-      vec3 amber = vec3(0.72, 0.55, 0.38);
-      vec3 warmGray = vec3(0.62, 0.58, 0.52);
-      vec3 teal = vec3(0.42, 0.58, 0.62);
-      vec3 softCyan = vec3(0.48, 0.62, 0.66);
-      vec3 warm = mix(warmGray, mix(amber, gold, smoothstep(0.2, 0.85, fc)), 0.85);
-      vec3 cool = mix(teal, softCyan, smoothstep(0.15, 0.8, fc));
-      // Population split by seed + warmBias (two independent swarms).
-      float pop = step(0.5, hash(cell + seed * 3.1 + fn));
-      float warmMix = mix(1.0 - pop, pop, warmBias);
-      // High energy (DEPLOYED): more warm dance; low: cooler, grayer stillness.
-      warmMix = mix(warmMix * 0.55, warmMix, 0.35 + 0.65 * uEnergy);
-      vec3 dcol = mix(cool, warm, warmMix);
-      // Standing down desaturates toward warm gray dust.
-      dcol = mix(dcol, warmGray, (1.0 - uEnergy) * 0.45);
+      // Solace palette: forest emerald → soft sage → cool teal → pale ink.
+      vec3 emerald = vec3(0.24, 0.48, 0.36);   // ~#3d6b4f family
+      vec3 sage = vec3(0.42, 0.58, 0.48);
+      vec3 teal = vec3(0.38, 0.58, 0.62);
+      vec3 mist = vec3(0.55, 0.66, 0.68);
+      vec3 ink = vec3(0.32, 0.36, 0.38);
 
-      acc += dcol * spawn * pt * tw * weight * (0.5 + fc * 0.9);
+      float spat = 0.5 + 0.5 * sin(w.x * 4.2 + w.y * 3.0 + seed * 1.7 + fn * 0.6);
+      float densTone = smoothstep(0.1, 0.8, fc);
+      float breathe = 0.5 + 0.5 * sin(uTime * (0.1 + rnd * 0.06) + rnd * 5.0);
+      // Continuous cool↔green mix (good transitions).
+      float tMix = clamp(
+        0.3 + coolBias * 0.35 + spat * 0.2 + densTone * 0.15 + breathe * 0.08,
+        0.05,
+        0.95
+      );
+      // High energy: richer emerald; standing down: cooler mist/gray.
+      tMix = mix(tMix * 0.55 + 0.2, tMix, 0.35 + 0.65 * uEnergy);
+
+      vec3 greenSide = mix(emerald, sage, smoothstep(0.15, 0.85, fc + tw * 0.1));
+      vec3 coolSide = mix(teal, mist, smoothstep(0.1, 0.8, fc));
+      vec3 dcol = mix(coolSide, greenSide, tMix);
+      // Soft bridge mid-tones.
+      float mid = 1.0 - abs(tMix - 0.5) * 2.0;
+      dcol = mix(dcol, mix(sage, teal, 0.5), mid * 0.3);
+      dcol = mix(dcol, ink, (1.0 - uEnergy) * 0.35);
+
+      float grain = max(pt, bloom * 0.75);
+      acc += dcol * spawn * grain * tw * weight * (0.5 + fc * 1.15);
     }
     return acc;
   }
 
-  // Large, soft foreground dust (blurred, slow).
+  // Soft larger grains for depth (still particles, no haze volume).
   vec3 softBloom(vec2 w, float scale, float drift, float seed) {
-    vec2 flow = vec2(uTime * drift * 0.55, uTime * drift * 0.2);
+    vec2 flow = vec2(uTime * drift * 0.45, uTime * drift * 0.16);
     vec2 q = w + flow;
     vec2 g = q * scale;
     vec2 cell = floor(g);
     vec2 fr = fract(g);
     vec3 acc = vec3(0.0);
-    for (int n = 0; n < 2; n++) {
+    for (int n = 0; n < 3; n++) {
       float fn = float(n);
       float rnd = hash(cell * 1.4 + seed + fn * 11.0);
-      float spawn = step(rnd, 0.55);
+      float spawn = step(rnd, 0.72);
       vec2 pp = vec2(
         hash(cell + vec2(2.1 + fn, 8.0) + seed),
         hash(cell + vec2(5.5, 1.2 + fn) + seed)
-      ) * 0.7 + 0.15;
-      float r = mix(0.12, 0.28, hash(cell + 4.0 + seed + fn));
-      float disc = smoothstep(r, r * 0.25, length(fr - pp));
-      float tw = 0.7 + 0.3 * sin(uTime * 0.25 + rnd * 12.0);
-      vec3 col = mix(vec3(0.72, 0.58, 0.4), vec3(0.55, 0.6, 0.58), rnd);
-      acc += col * spawn * disc * tw * 0.07;
+      ) * 0.65 + 0.18;
+      float r = mix(0.1, 0.26, hash(cell + 4.0 + seed + fn));
+      float disc = exp(-dot(fr - pp, fr - pp) / max(r * r * 0.6, 1e-5));
+      float tw = 0.7 + 0.3 * sin(uTime * 0.2 + rnd * 10.0);
+      vec3 emerald = vec3(0.3, 0.5, 0.4);
+      vec3 teal = vec3(0.4, 0.55, 0.58);
+      float tMix = smoothstep(0.2, 0.8, rnd + 0.1 * sin(uTime * 0.12 + fn));
+      tMix = mix(tMix * 0.6, tMix, 0.4 + 0.6 * uEnergy);
+      vec3 col = mix(teal, emerald, tMix);
+      acc += col * spawn * disc * tw * 0.06;
     }
     return acc;
   }
 
-  // Persistent right-side nebula — sways gently, never leaves.
-  float stripeBand(vec2 w) {
-    float t = uTime * 0.06;
-    float right = smoothstep(0.38, 0.52, w.x);
-    float coreX = 0.74 + sin(t * 0.4) * 0.022;
-    float coreY = 0.50 + cos(t * 0.32) * 0.035;
-    vec2 d = (w - vec2(coreX, coreY)) * vec2(1.35, 1.0);
-    float ang = -0.4 + sin(t * 0.45) * 0.05;
-    float ca = cos(ang);
-    float sa = sin(ang);
-    vec2 r = vec2(d.x * ca - d.y * sa, d.x * sa + d.y * ca);
-    float ellipse = length(r * vec2(1.55, 0.9));
-    float core = smoothstep(0.62, 0.08, ellipse);
-    float ribbon = smoothstep(
-      0.45,
-      0.08,
-      length((w - vec2(0.84 + sin(t * 0.35) * 0.015, 0.58 + cos(t * 0.4) * 0.03)) * vec2(2.0, 1.35))
-    );
-    float band = max(core, ribbon * 0.7) * right;
-    band = max(band, right * 0.48);
-    band *= 0.9 + 0.12 * fbm(w * 3.2 + vec2(t * 0.35, -t * 0.28));
-    return clamp(band, 0.0, 1.0);
+  // Same sculptural right mass as before (size/placement).
+  float cloudMass(vec2 w) {
+    float t = uTime * 0.055;
+    float right = smoothstep(0.28, 0.48, w.x);
+    vec2 c1 = vec2(0.72 + sin(t * 0.35) * 0.03, 0.48 + cos(t * 0.28) * 0.04);
+    float e1 = length((w - c1) * vec2(1.15, 0.95));
+    float m1 = smoothstep(0.72, 0.08, e1);
+    vec2 c2 = vec2(0.82 + cos(t * 0.3) * 0.025, 0.62 + sin(t * 0.4) * 0.03);
+    float e2 = length((w - c2) * vec2(1.5, 1.2));
+    float m2 = smoothstep(0.48, 0.06, e2);
+    vec2 c3 = vec2(0.68 + sin(t * 0.25) * 0.02, 0.32 + cos(t * 0.33) * 0.025);
+    float e3 = length((w - c3) * vec2(1.6, 1.35));
+    float m3 = smoothstep(0.42, 0.05, e3);
+    float mass = max(m1, max(m2 * 0.85, m3 * 0.7)) * right;
+    mass *= 0.75 + 0.35 * fbm(w * 2.8 + vec2(t * 0.4, -t * 0.3));
+    mass = max(mass, right * 0.35 * smoothstep(0.35, 0.7, fbm(w * 1.6 + t * 0.2)));
+    return clamp(mass, 0.0, 1.0);
   }
 
-  // Living nebula of decision dust — dual-tone, layered, posture-tempered.
   void main() {
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
     float aspect = uResolution.x / max(uResolution.y, 1.0);
     float mobile = 1.0 - smoothstep(0.94, 1.22, aspect);
 
     vec2 w = uv;
-    w.x = mix(w.x, 0.2 + w.x * 0.8, mobile);
+    w.x = mix(w.x, 0.12 + w.x * 0.88, mobile);
 
-    // Soft breathe only (patience, not screensaver thrash).
-    float still = mix(0.35, 1.0, uEnergy); // standing down → slower
-    w += vec2(sin(uTime * 0.03 * still), cos(uTime * 0.025 * still)) * 0.006;
-    w = (w - 0.5) * (1.0 + 0.004 * sin(uTime * 0.028 * still)) + 0.5;
+    float still = mix(0.4, 1.0, uEnergy);
+    w += vec2(sin(uTime * 0.032 * still), cos(uTime * 0.026 * still)) * 0.008;
+    w = (w - 0.5) * (1.0 + 0.006 * sin(uTime * 0.028 * still)) + 0.5;
+
+    vec2 curl = vec2(
+      fbm(w * 1.6 + vec2(uTime * 0.04, 1.7)) - 0.5,
+      fbm(w * 1.6 + vec2(2.9, uTime * 0.035)) - 0.5
+    );
+    vec2 wFlow = w + curl * 0.022;
 
     vec2 toWell = w - uWell;
-    float wr = length(toWell * vec2(1.3, 1.0));
-    vec2 wWarp = w - (toWell / max(wr, 0.001)) * 0.008 * exp(-wr * wr / 0.05);
+    float wr = length(toWell * vec2(1.25, 1.0));
+    vec2 wWarp = wFlow - (toWell / max(wr, 0.001)) * 0.01 * exp(-wr * wr / 0.05);
 
-    // Particles gently avoid the cursor — alive, not a toy.
+    // Particles ease away from cursor.
     vec2 toPtr = uv - uPointer;
-    float prd = length(toPtr * vec2(1.2, 1.0));
-    float probe = exp(-prd * prd / 0.018) * uPointerGlow;
-    wWarp += (toPtr / max(prd, 0.001)) * 0.014 * probe;
+    float prd = length(toPtr * vec2(1.15, 1.0));
+    float probe = exp(-prd * prd / 0.02) * uPointerGlow;
+    wWarp += (toPtr / max(prd, 0.001)) * 0.012 * probe;
     vec2 ptrPar = (vec2(0.5) - uPointer) * 0.01 * uPointerGlow;
 
-    vec3 paper = vec3(1.0, 1.0, 1.0);
-    float band = stripeBand(w);
-    float f = max(fieldAt(wWarp + ptrPar * 0.08), band * 0.88);
-    f = max(f, 0.48 * smoothstep(0.4, 0.6, w.x));
+    // Theme plate matches site tokens: --background light #fafaf9 / dark #0a0a0a.
+    vec3 plateLight = vec3(0.980, 0.980, 0.976); // #fafaf9
+    vec3 plateDark = vec3(0.039, 0.039, 0.039);  // #0a0a0a
+    vec3 plate = mix(plateLight, plateDark, uDarkMode);
+
+    float mass = cloudMass(wFlow);
+    float f = max(fieldAt(wWarp + ptrPar * 0.08), mass * 0.92);
+    f = max(f, 0.4 * smoothstep(0.32, 0.55, w.x));
 
     vec2 clumpDrift = vec2(uTime * 0.022 * still, -uTime * 0.014 * still);
-    float clump = fbm(w * 2.0 + clumpDrift);
-    clump = smoothstep(0.12, 0.48, clump);
-    float mass = clamp(max(clump, band) * (0.7 + 0.4 * f), 0.4, 1.0);
+    float clump = fbm(wFlow * 2.0 + clumpDrift);
+    clump = smoothstep(0.16, 0.52, clump);
+    float density = clamp(max(mass, clump * 0.85) * (0.55 + 0.55 * f), 0.0, 1.0);
 
-    float clumpTowardLight = fbm((w + vec2(-0.4, 0.85) * 0.035) * 2.0 + clumpDrift);
-    clumpTowardLight = smoothstep(0.22, 0.55, clumpTowardLight);
-    float cloudLight = 0.62 + 0.7 * smoothstep(0.25, -0.28, clumpTowardLight - clump);
+    float clumpL = fbm((wFlow + vec2(-0.45, 0.85) * 0.04) * 2.0 + clumpDrift);
+    clumpL = smoothstep(0.2, 0.55, clumpL);
+    float cloudLight = 0.45 + 0.95 * smoothstep(0.3, -0.25, clumpL - clump);
 
-    // Soft volumetric body — muted warm dust, not neon haze.
-    vec3 bodyWarm = vec3(0.72, 0.58, 0.44);
-    vec3 bodyCool = vec3(0.52, 0.6, 0.62);
-    vec3 bodyCol = mix(bodyCool, bodyWarm, 0.4 + 0.45 * uEnergy);
-    float body = pow(max(f, 0.0), 1.05) * mass * cloudLight;
-    body = clamp(max(body * 1.2, band * 0.5), 0.0, 1.0);
-    vec3 color = mix(paper, bodyCol, body * 0.28);
+    // Spatial temperature for emerald↔teal transitions across the mass.
+    float tempField = 0.5
+      + 0.2 * sin(w.x * 3.5 + uTime * 0.08)
+      + 0.16 * cos(w.y * 3.0 - uTime * 0.06)
+      + 0.14 * fbm(w * 2.2 + vec2(uTime * 0.035, -uTime * 0.025));
+    tempField = clamp(tempField, 0.0, 1.0);
+    tempField = mix(tempField * 0.6 + 0.15, tempField, 0.4 + 0.6 * uEnergy);
 
-    // ── Three atmospheric layers ──
-    // Background: tiny, faster cool grains (systematic texture)
-    // Midground: medium dual-tone (connections / judgment)
-    // Foreground: large, slow, warm soft blooms (human memory)
-    float energyDrift = mix(0.45, 1.0, uEnergy);
-    float dustBoost = (0.85 + 1.1 * mass) * cloudLight * (0.75 + 0.3 * uEnergy) * (0.55 + 0.6 * band);
+    float energyDrift = mix(0.5, 1.0, uEnergy);
+    float dustBoost = (0.95 + 1.5 * density) * cloudLight * (0.75 + 0.35 * uEnergy);
 
-    vec3 bgCool =
-      dustLayer(wWarp + ptrPar * 0.2, 520.0, 0.028 * energyDrift, 0.7, 2.0, 0.55, 0.15) * dustBoost +
-      dustLayer(wWarp + ptrPar * 0.35, 780.0, 0.036 * energyDrift, 0.65, 41.0, 0.7, 0.2) * dustBoost;
-    vec3 midDual =
-      dustLayer(wWarp + ptrPar * 0.12, 180.0, 0.012 * energyDrift, 1.05, 0.0, 0.95, 0.55) * dustBoost +
-      dustLayer(wWarp + ptrPar * 0.25, 280.0, 0.016 * energyDrift, 1.15, 11.0, 1.1, 0.5) * dustBoost +
-      dustLayer(wWarp + ptrPar * 0.45, 400.0, 0.02 * energyDrift, 1.1, 29.0, 1.25, 0.45) * dustBoost;
-    vec3 fgWarm =
-      dustLayer(wWarp + ptrPar * 0.08, 90.0, 0.006 * energyDrift, 1.0, 7.0, 1.6, 0.85) * dustBoost * 0.85 +
-      softBloom(w + ptrPar * 1.2, 7.5, 0.008 * energyDrift, 3.0) * (0.7 + 0.4 * mass);
+    // Same layer stack — denser only via dustLayer spawn count (not boost/mass).
+    vec3 dust =
+      dustLayer(wWarp + ptrPar * 0.1, 100.0, 0.007 * energyDrift, 1.15, 0.0, 1.35, mix(0.25, 0.55, tempField)) * dustBoost +
+      dustLayer(wWarp + ptrPar * 0.22, 170.0, 0.011 * energyDrift, 1.3, 9.0, 1.15, mix(0.3, 0.6, tempField)) * dustBoost +
+      dustLayer(wWarp + ptrPar * 0.4, 280.0, 0.016 * energyDrift, 1.35, 19.0, 1.0, mix(0.35, 0.65, tempField)) * dustBoost +
+      dustLayer(wWarp + ptrPar * 0.65, 420.0, 0.022 * energyDrift, 1.25, 37.0, 0.88, mix(0.4, 0.7, tempField)) * dustBoost +
+      dustLayer(wWarp + ptrPar * 0.95, 640.0, 0.03 * energyDrift, 1.1, 53.0, 0.72, mix(0.45, 0.75, tempField)) * dustBoost +
+      dustLayer(wWarp + ptrPar * 1.35, 940.0, 0.038 * energyDrift, 0.9, 71.0, 0.58, mix(0.5, 0.8, tempField)) * dustBoost * density +
+      softBloom(wFlow + ptrPar * 1.1, 6.0, 0.009 * energyDrift, 2.0) * density * 0.9 +
+      softBloom(wFlow + ptrPar * 1.5, 4.2, 0.012 * energyDrift, 18.0) * density * 0.7;
 
-    float bgAmt = clamp(dot(bgCool, vec3(0.33)) * 2.4 * (0.35 + 0.65 * band), 0.0, 0.75);
-    float midAmt = clamp(dot(midDual, vec3(0.33)) * 2.8 * (0.4 + 0.7 * band), 0.0, 0.9);
-    float fgAmt = clamp(dot(fgWarm, vec3(0.33)) * 2.2 * mass, 0.0, 0.7);
+    // Dark: additive dust on void. Light: mix pigment onto paper (no wash-out).
+    vec3 color;
+    if (uDarkMode > 0.5) {
+      color = plate;
+      color += dust * 0.92;
+      vec3 washGreen = vec3(0.32, 0.52, 0.42);
+      vec3 washTeal = vec3(0.4, 0.55, 0.58);
+      vec3 wash = mix(washTeal, washGreen, tempField);
+      color = mix(color, color + wash * 0.08 * density, 0.55);
+      color += vec3(0.45, 0.7, 0.65) * probe * density * 0.12;
+    } else {
+      color = plate;
+      float dustAmt = clamp(dot(dust, vec3(0.33)) * 2.6 * (0.35 + 0.7 * density), 0.0, 0.95);
+      color = mix(color, min(dust * 0.95 + color * 0.2, vec3(1.0)), dustAmt);
+      vec3 washGreen = vec3(0.45, 0.62, 0.52);
+      vec3 washTeal = vec3(0.5, 0.62, 0.64);
+      vec3 wash = mix(washTeal, washGreen, tempField);
+      color = mix(color, mix(color, wash, 0.4), density * 0.35);
+      color = mix(color, min(color * 1.02 + vec3(0.04, 0.06, 0.05) * probe, vec3(1.0)), probe * 0.25);
+    }
 
-    color = mix(color, min(bgCool * 0.9 + color * 0.25, vec3(1.0)), bgAmt * 0.85);
-    color = mix(color, min(midDual * 0.88 + color * 0.15, vec3(1.0)), midAmt);
-    color = mix(color, min(fgWarm * 0.95 + color * 0.2, vec3(1.0)), fgAmt * 0.75);
+    // Left calm for copy; right holds the particle mass.
+    float leftFade = smoothstep(0.0, 0.4, uv.x);
+    float rightGate = smoothstep(0.3, 0.48, uv.x);
+    float presence = clamp(density * rightGate + 0.15 * rightGate, 0.0, 1.0);
 
-    // Standing down: slightly more crystalline stillness (less bright thrash).
-    color = mix(color, mix(color, paper, 0.12), (1.0 - uEnergy) * 0.2);
+    if (uDarkMode > 0.5) {
+      color *= mix(0.22, 1.0, mix(0.4, 1.0, leftFade));
+      color *= mix(0.0, 1.0, presence);
+      float vert = smoothstep(0.0, 0.1, uv.y) * smoothstep(1.0, 0.85, uv.y);
+      color *= 0.75 + 0.25 * vert;
+      color = pow(max(color, 0.0), vec3(0.92));
+      float lum = dot(color, vec3(0.299, 0.587, 0.114));
+      color = mix(color * vec3(0.88, 1.0, 1.05), color, smoothstep(0.0, 0.3, lum));
+    } else {
+      // Light: clear plate on the left, full dust on the right.
+      color = mix(plate, color, max(leftFade, presence * 0.95));
+      float vert = smoothstep(0.0, 0.08, uv.y) * smoothstep(1.0, 0.9, uv.y);
+      color = mix(color, plate, (1.0 - vert) * 0.08);
+    }
 
-    // Right isolation — calm eye on the left for the headline.
-    float rightGate = smoothstep(0.34, 0.5, uv.x);
-    float presence = clamp(max(band, 0.58) * rightGate + body * 0.22 * rightGate, 0.0, 1.0);
-    color = mix(paper, color, presence);
-
-    // Cursor: gentle avoidance highlight, not plaything glow.
-    color = mix(color, min(color * 1.02 + vec3(0.04, 0.03, 0.015) * probe, vec3(1.0)), probe * 0.22 * rightGate);
-
-    float leftFade = smoothstep(0.24, 0.48, uv.x);
-    color = mix(paper, color, max(leftFade, rightGate * 0.88));
-
-    // Page-load coalesce: dust gathers from thin air over ~3s.
-    float birth = smoothstep(0.0, 3.0, uTime);
+    float birth = smoothstep(0.0, 2.6, uTime);
     birth = birth * birth * (3.0 - 2.0 * birth);
-    color = mix(paper, color, birth);
+    color = mix(plate, color, birth);
 
-    float grain = hash13(vec3(gl_FragCoord.xy, uTime * 10.0)) - 0.5;
-    color += grain * 0.0025;
+    float grain = hash13(vec3(gl_FragCoord.xy, uTime * 12.0)) - 0.5;
+    color += grain * mix(0.004, 0.008, uDarkMode);
     color = clamp(color, 0.0, 1.0);
 
     gl_FragColor = vec4(color, 1.0);
@@ -569,6 +604,7 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       uPointerGlow: { value: 0 },
       uPathFade: { value: 1 },
       uEnergy: { value: posture ? postureEnergy[posture] : 1 },
+      uDarkMode: { value: readSiteTheme() === 'dark' ? 1 : 0 },
     };
     const material = new THREE.ShaderMaterial({
       uniforms,
@@ -585,9 +621,16 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
     let pageVisible = typeof document !== 'undefined' ? !document.hidden : true;
     const canRun = () => inView && pageVisible && !isWebglPaused() && !reducedMotion;
 
+    const applyThemeClear = () => {
+      const dark = readSiteTheme() === 'dark';
+      uniforms.uDarkMode.value = dark ? 1 : 0;
+      // Match globals.css --background exactly so CSS underlay and GL plate agree.
+      renderer.setClearColor(dark ? 0x0a0a0a : 0xfafaf9, 1);
+    };
+
     scene.add(mesh);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.setClearColor(0xffffff, 1);
+    applyThemeClear();
     renderer.domElement.className = 'hermes-render-canvas';
     renderer.domElement.dataset.hermesRender = 'liquidity-field';
     mount.appendChild(renderer.domElement);
@@ -644,6 +687,11 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       uniforms.uPointer.value.set(pointerState.x, pointerState.y);
       uniforms.uPointerGlow.value = pointerState.glow;
       uniforms.uPathFade.value = 0;
+      // Stay in sync with site theme without remounting the field.
+      const dark = readSiteTheme() === 'dark';
+      if ((uniforms.uDarkMode.value > 0.5) !== dark) {
+        applyThemeClear();
+      }
 
       renderer.render(scene, camera);
     };
@@ -695,6 +743,17 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
 
     document.addEventListener('visibilitychange', onDocVisibility);
 
+    const onThemeChange = () => {
+      applyThemeClear();
+      render();
+    };
+    window.addEventListener(THEME_CHANGE_EVENT, onThemeChange);
+    const themeObserver = new MutationObserver(onThemeChange);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme'],
+    });
+
     resize();
     resizeObserver.observe(mount);
 
@@ -714,6 +773,8 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       stopLoop();
       unsubPause();
       document.removeEventListener('visibilitychange', onDocVisibility);
+      window.removeEventListener(THEME_CHANGE_EVENT, onThemeChange);
+      themeObserver.disconnect();
 
       if (pointerHost) {
         pointerHost.removeEventListener('pointermove', onPointerMove as EventListener);
