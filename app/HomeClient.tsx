@@ -159,9 +159,9 @@ export default function HomeClient({
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
-      {/* ── Hero: Hermes liquidity field (posture-driven) ──
-          Liquidity terrain, dust, candidate paths — judgment quiets with posture.
-          Emotional job: the market as a living field, not a static chart. */}
+      {/* ── Hero: decision dust nebula (psychohistory atmosphere) ──
+          Dual-tone gold/teal dust, layered depth, posture-tempered.
+          Emotional job: structure emerging from uncertainty — never a screensaver. */}
       <section className="hero-research hero-particle-section relative overflow-hidden border-t border-border">
         <div className="hero-particle-stage" aria-hidden="true">
           <HermesLiquidityFieldRender posture={hermesTelemetry?.posture} />

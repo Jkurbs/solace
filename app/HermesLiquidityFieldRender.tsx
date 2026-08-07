@@ -19,31 +19,6 @@ const postureEnergy: Record<HermesPublicPosture, number> = {
   RISK_OFF: 0.28,
 };
 
-// ── GPU tier detection ──────────────────────────────────────────────
-// Adapts DPR and frame pacing so low-end devices don't choke on the
-// full 7-layer dust + 3-layer bokeh shader.
-function detectGpuTier(): 'low' | 'mid' | 'high' {
-  const canvas = document.createElement('canvas');
-  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-  if (!gl) return 'low';
-
-  const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-  const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : '';
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const isLowPower = /Mali-4|Mali-3|Adreno 3|PowerVR SGX|Intel HD/i.test(renderer);
-  const isHighEnd = /Apple M|Apple GPU|NVIDIA|AMD|RTX|GTX/i.test(renderer) && !isMobile;
-
-  if (isHighEnd) return 'high';
-  if (isMobile || isLowPower) return 'low';
-  return 'mid';
-}
-
-const TIER_CONFIG = {
-  low:  { dprCap: 1 },
-  mid:  { dprCap: 1.5 },
-  high: { dprCap: 2 },
-} as const;
-
 const vertexShader = `
   varying vec2 vUv;
 
@@ -112,189 +87,212 @@ const fragmentShader = `
     return f * breathe;
   }
 
-  // Moving grains: density stays anchored in screen space (cloud never empties);
-  // only the grain pattern slides/rolls through the mass.
-  vec3 dustLayer(vec2 w, float scale, float drift, float weight, float seed, float radMul) {
-    vec2 flow = vec2(uTime * drift * 1.6, uTime * drift * -0.4);
-    float swirl = uTime * (0.12 + seed * 0.015);
-    // Pattern advection (visible motion) without moving density away.
+  // ── Decision dust (psychohistory atmosphere) ─────────────────────────
+  // Dual populations: warm (human judgment) + cool (systematic discipline).
+  // Density is screen-anchored so the cloud never empties; only grain drifts.
+  vec3 dustLayer(
+    vec2 w,
+    float scale,
+    float drift,
+    float weight,
+    float seed,
+    float radMul,
+    float warmBias // 0 = cool teal, 1 = warm gold
+  ) {
+    vec2 flow = vec2(uTime * drift * 0.85, uTime * drift * -0.22);
+    float swirl = uTime * (0.07 + seed * 0.01);
     vec2 q = w + flow;
-    q += vec2(sin(q.y * 2.8 + swirl), cos(q.x * 2.2 - swirl * 0.7)) * 0.028;
-    vec2 g = q * vec2(scale, scale * 0.92);
+    q += vec2(sin(q.y * 2.4 + swirl), cos(q.x * 1.9 - swirl * 0.65)) * 0.018;
+    vec2 g = q * vec2(scale, scale * 0.9);
     vec2 cell = floor(g);
     vec2 fr = fract(g);
 
     vec3 acc = vec3(0.0);
-    for (int n = 0; n < 5; n++) {
+    for (int n = 0; n < 4; n++) {
       float fn = float(n);
       float rnd = hash(cell * 1.13 + seed + fn * 17.3);
       vec2 pp = vec2(
         hash(cell + vec2(7.1 + fn, 3.7) + seed),
         hash(cell + vec2(2.3, 9.2 + fn * 1.7) + seed)
-      ) * 0.92 + 0.04;
-      // Density from stable screen position — not from advected coords.
+      ) * 0.88 + 0.06;
+
+      // Anchored density — cloud body stays.
       float fc = fieldAt(w);
-      float dens = smoothstep(0.0, 0.22, max(fc, 0.55));
-      float spawn = step(rnd, dens * 0.35 + 0.82);
+      float dens = smoothstep(0.0, 0.28, max(fc, 0.5));
+      float spawn = step(rnd, dens * 0.4 + 0.72);
 
-      float radius = mix(0.0025, 0.012, hash(cell + 5.5 + seed + fn)) * radMul;
-      float pt = smoothstep(radius, radius * 0.04, length(fr - pp));
-      float tw = 0.55 + 0.45 * sin(uTime * (0.9 + rnd * 2.0) + rnd * 23.0 + fn);
+      // Soft, matte grains (dust through old glass — not neon sparks).
+      float radius = mix(0.01, 0.038, hash(cell + 5.5 + seed + fn)) * radMul;
+      float pt = smoothstep(radius, radius * 0.12, length(fr - pp));
+      // Slower twinkle when energy is low (standing down → stiller).
+      float twRate = mix(0.35, 1.1, uEnergy);
+      float tw = 0.62 + 0.38 * sin(uTime * twRate * (0.4 + rnd) + rnd * 19.0 + fn);
 
-      float temp = smoothstep(0.04, 0.5, fc);
-      vec3 warm = mix(vec3(1.0, 0.72, 0.42), vec3(1.0, 0.94, 0.78), smoothstep(0.35, 0.95, fc));
-      vec3 cold = vec3(0.55, 0.78, 0.98);
-      vec3 dcol = mix(cold, warm, temp);
-      acc += dcol * spawn * pt * tw * weight * (0.6 + fc * 1.1);
+      // Muted dual-tone: warm amber/gold vs soft teal (never neon).
+      vec3 gold = vec3(0.78, 0.62, 0.42);
+      vec3 amber = vec3(0.72, 0.55, 0.38);
+      vec3 warmGray = vec3(0.62, 0.58, 0.52);
+      vec3 teal = vec3(0.42, 0.58, 0.62);
+      vec3 softCyan = vec3(0.48, 0.62, 0.66);
+      vec3 warm = mix(warmGray, mix(amber, gold, smoothstep(0.2, 0.85, fc)), 0.85);
+      vec3 cool = mix(teal, softCyan, smoothstep(0.15, 0.8, fc));
+      // Population split by seed + warmBias (two independent swarms).
+      float pop = step(0.5, hash(cell + seed * 3.1 + fn));
+      float warmMix = mix(1.0 - pop, pop, warmBias);
+      // High energy (DEPLOYED): more warm dance; low: cooler, grayer stillness.
+      warmMix = mix(warmMix * 0.55, warmMix, 0.35 + 0.65 * uEnergy);
+      vec3 dcol = mix(cool, warm, warmMix);
+      // Standing down desaturates toward warm gray dust.
+      dcol = mix(dcol, warmGray, (1.0 - uEnergy) * 0.45);
+
+      acc += dcol * spawn * pt * tw * weight * (0.5 + fc * 0.9);
     }
     return acc;
   }
 
-  vec3 bokeh(vec2 w, float scale, float drift, float seed) {
-    vec2 flow = vec2(uTime * drift * 1.4, uTime * drift * 0.55);
+  // Large, soft foreground dust (blurred, slow).
+  vec3 softBloom(vec2 w, float scale, float drift, float seed) {
+    vec2 flow = vec2(uTime * drift * 0.55, uTime * drift * 0.2);
     vec2 q = w + flow;
     vec2 g = q * scale;
     vec2 cell = floor(g);
     vec2 fr = fract(g);
-
     vec3 acc = vec3(0.0);
-    for (int n = 0; n < 3; n++) {
+    for (int n = 0; n < 2; n++) {
       float fn = float(n);
-      float rnd = hash(cell * 1.31 + seed + fn * 9.1);
-      float spawn = step(rnd, 0.82);
+      float rnd = hash(cell * 1.4 + seed + fn * 11.0);
+      float spawn = step(rnd, 0.55);
       vec2 pp = vec2(
-        hash(cell + vec2(3.1 + fn, 8.7) + seed),
-        hash(cell + vec2(9.4, 2.2 + fn) + seed)
-      ) * 0.85 + 0.08;
-
-      float r = mix(0.03, 0.1, hash(cell + 6.8 + seed + fn));
-      float disc = smoothstep(r, r * 0.3, length(fr - pp));
-      float tw = 0.5 + 0.5 * sin(uTime * (0.55 + rnd * 1.4) + rnd * 31.0);
-
-      float fc = fieldAt(w);
-      vec3 col = mix(vec3(0.5, 0.7, 0.9), vec3(1.0, 0.84, 0.58), smoothstep(0.06, 0.4, fc));
-      acc += col * spawn * disc * tw * 0.11;
+        hash(cell + vec2(2.1 + fn, 8.0) + seed),
+        hash(cell + vec2(5.5, 1.2 + fn) + seed)
+      ) * 0.7 + 0.15;
+      float r = mix(0.12, 0.28, hash(cell + 4.0 + seed + fn));
+      float disc = smoothstep(r, r * 0.25, length(fr - pp));
+      float tw = 0.7 + 0.3 * sin(uTime * 0.25 + rnd * 12.0);
+      vec3 col = mix(vec3(0.72, 0.58, 0.4), vec3(0.55, 0.6, 0.58), rnd);
+      acc += col * spawn * disc * tw * 0.07;
     }
     return acc;
   }
 
-  // Persistent right-side mass — sways gently, never leaves the frame.
+  // Persistent right-side nebula — sways gently, never leaves.
   float stripeBand(vec2 w) {
-    float t = uTime * 0.08;
-    float right = smoothstep(0.40, 0.54, w.x);
-    // Anchored on the right; only small sway (no large travel that empties).
-    float coreX = 0.74 + sin(t * 0.45) * 0.028;
-    float coreY = 0.50 + cos(t * 0.38) * 0.04;
-    vec2 d = (w - vec2(coreX, coreY)) * vec2(1.45, 1.05);
-    float ang = -0.42 + sin(t * 0.5) * 0.06;
+    float t = uTime * 0.06;
+    float right = smoothstep(0.38, 0.52, w.x);
+    float coreX = 0.74 + sin(t * 0.4) * 0.022;
+    float coreY = 0.50 + cos(t * 0.32) * 0.035;
+    vec2 d = (w - vec2(coreX, coreY)) * vec2(1.35, 1.0);
+    float ang = -0.4 + sin(t * 0.45) * 0.05;
     float ca = cos(ang);
     float sa = sin(ang);
     vec2 r = vec2(d.x * ca - d.y * sa, d.x * sa + d.y * ca);
-    float ellipse = length(r * vec2(1.7, 0.95));
-    float core = smoothstep(0.58, 0.1, ellipse);
+    float ellipse = length(r * vec2(1.55, 0.9));
+    float core = smoothstep(0.62, 0.08, ellipse);
     float ribbon = smoothstep(
-      0.42,
-      0.1,
-      length((w - vec2(0.84 + sin(t * 0.4) * 0.02, 0.60 + cos(t * 0.5) * 0.035)) * vec2(2.2, 1.45))
+      0.45,
+      0.08,
+      length((w - vec2(0.84 + sin(t * 0.35) * 0.015, 0.58 + cos(t * 0.4) * 0.03)) * vec2(2.0, 1.35))
     );
-    // Floor so the band never fully collapses.
-    float band = max(core, ribbon * 0.75) * right;
-    band = max(band, right * 0.42);
-    band *= 0.88 + 0.14 * fbm(w * 3.5 + vec2(t * 0.5, -t * 0.35));
+    float band = max(core, ribbon * 0.7) * right;
+    band = max(band, right * 0.48);
+    band *= 0.9 + 0.12 * fbm(w * 3.2 + vec2(t * 0.35, -t * 0.28));
     return clamp(band, 0.0, 1.0);
   }
 
-  // Cloud-only, flowing right-side stream on white — always present.
+  // Living nebula of decision dust — dual-tone, layered, posture-tempered.
   void main() {
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
     float aspect = uResolution.x / max(uResolution.y, 1.0);
     float mobile = 1.0 - smoothstep(0.94, 1.22, aspect);
 
-    // Stable layout coords for density (so the cloud doesn't drift away).
     vec2 w = uv;
-    w.x = mix(w.x, 0.22 + w.x * 0.78, mobile);
+    w.x = mix(w.x, 0.2 + w.x * 0.8, mobile);
 
-    // Soft breathe only — no large translation of the whole field.
-    w += vec2(sin(uTime * 0.045), cos(uTime * 0.038)) * 0.008;
-    w = (w - 0.5) * (1.0 + 0.006 * sin(uTime * 0.04)) + 0.5;
+    // Soft breathe only (patience, not screensaver thrash).
+    float still = mix(0.35, 1.0, uEnergy); // standing down → slower
+    w += vec2(sin(uTime * 0.03 * still), cos(uTime * 0.025 * still)) * 0.006;
+    w = (w - 0.5) * (1.0 + 0.004 * sin(uTime * 0.028 * still)) + 0.5;
 
     vec2 toWell = w - uWell;
     float wr = length(toWell * vec2(1.3, 1.0));
-    vec2 wWarp = w - (toWell / max(wr, 0.001)) * 0.01 * exp(-wr * wr / 0.05);
+    vec2 wWarp = w - (toWell / max(wr, 0.001)) * 0.008 * exp(-wr * wr / 0.05);
 
+    // Particles gently avoid the cursor — alive, not a toy.
     vec2 toPtr = uv - uPointer;
     float prd = length(toPtr * vec2(1.2, 1.0));
-    float probe = exp(-prd * prd / 0.02) * uPointerGlow;
-    wWarp -= (toPtr / max(prd, 0.001)) * 0.01 * probe;
-    vec2 ptrPar = (vec2(0.5) - uPointer) * 0.014 * uPointerGlow;
+    float probe = exp(-prd * prd / 0.018) * uPointerGlow;
+    wWarp += (toPtr / max(prd, 0.001)) * 0.014 * probe;
+    vec2 ptrPar = (vec2(0.5) - uPointer) * 0.01 * uPointerGlow;
 
     vec3 paper = vec3(1.0, 1.0, 1.0);
     float band = stripeBand(w);
-    // Field density anchored to stable w (not sliding off-screen).
-    float f = max(fieldAt(wWarp + ptrPar * 0.1), band * 0.9);
-    f = max(f, 0.45 * smoothstep(0.42, 0.62, w.x));
+    float f = max(fieldAt(wWarp + ptrPar * 0.08), band * 0.88);
+    f = max(f, 0.48 * smoothstep(0.4, 0.6, w.x));
 
-    vec2 clumpDrift = vec2(uTime * 0.035, -uTime * 0.022);
-    float clump = fbm(w * 2.2 + clumpDrift);
-    clump = smoothstep(0.1, 0.45, clump);
-    // Mass never drops to zero on the right.
-    float mass = clamp(max(clump, band) * (0.65 + 0.45 * f), 0.35, 1.0);
+    vec2 clumpDrift = vec2(uTime * 0.022 * still, -uTime * 0.014 * still);
+    float clump = fbm(w * 2.0 + clumpDrift);
+    clump = smoothstep(0.12, 0.48, clump);
+    float mass = clamp(max(clump, band) * (0.7 + 0.4 * f), 0.4, 1.0);
 
-    float clumpTowardLight = fbm((w + vec2(-0.45, 0.9) * 0.04) * 2.2 + clumpDrift);
-    clumpTowardLight = smoothstep(0.2, 0.55, clumpTowardLight);
-    float cloudLight = 0.6 + 0.85 * smoothstep(0.25, -0.3, clumpTowardLight - clump);
+    float clumpTowardLight = fbm((w + vec2(-0.4, 0.85) * 0.035) * 2.0 + clumpDrift);
+    clumpTowardLight = smoothstep(0.22, 0.55, clumpTowardLight);
+    float cloudLight = 0.62 + 0.7 * smoothstep(0.25, -0.28, clumpTowardLight - clump);
 
-    vec3 ember = vec3(0.58, 0.34, 0.18);
-    vec3 amber = vec3(0.95, 0.62, 0.32);
-    vec3 pale = vec3(0.98, 0.9, 0.78);
-    vec3 violet = vec3(0.72, 0.55, 0.95);
-    vec3 coral = vec3(0.98, 0.48, 0.42);
-    float hue = fract(w.x * 0.55 - w.y * 0.35 + uTime * 0.025);
-    vec3 bandPigment = mix(amber, coral, smoothstep(0.0, 0.35, hue));
-    bandPigment = mix(bandPigment, violet, smoothstep(0.35, 0.7, hue));
-    bandPigment = mix(bandPigment, pale, smoothstep(0.7, 1.0, hue));
-
-    vec3 haze = mix(ember, amber, smoothstep(0.1, 0.65, f));
-    haze = mix(haze, pale, smoothstep(0.65, 0.98, f));
-    haze = mix(haze, bandPigment, band * 0.55);
-
+    // Soft volumetric body — muted warm dust, not neon haze.
+    vec3 bodyWarm = vec3(0.72, 0.58, 0.44);
+    vec3 bodyCool = vec3(0.52, 0.6, 0.62);
+    vec3 bodyCol = mix(bodyCool, bodyWarm, 0.4 + 0.45 * uEnergy);
     float body = pow(max(f, 0.0), 1.05) * mass * cloudLight;
-    body = clamp(max(body * 1.45, band * 0.55), 0.0, 1.0);
-    vec3 color = mix(paper, haze, body * 0.6);
+    body = clamp(max(body * 1.2, band * 0.5), 0.0, 1.0);
+    vec3 color = mix(paper, bodyCol, body * 0.28);
 
-    // Grain pattern slides through a persistent cloud (never empties).
-    float dustBoost = (1.1 + 1.4 * mass) * cloudLight * (0.92 + 0.18 * uEnergy) * (0.5 + 0.7 * band);
-    vec3 dust =
-      dustLayer(wWarp + ptrPar * 0.15, 140.0, 0.006, 1.15, 0.0, 0.7) * dustBoost +
-      dustLayer(wWarp + ptrPar * 0.35, 240.0, 0.01, 1.3, 7.0, 0.85) * dustBoost +
-      dustLayer(wWarp + ptrPar * 0.6, 380.0, 0.015, 1.4, 17.0, 1.05) * dustBoost +
-      dustLayer(wWarp + ptrPar * 0.9, 560.0, 0.02, 1.45, 31.0, 1.3) * dustBoost +
-      dustLayer(wWarp + ptrPar * 1.25, 780.0, 0.026, 1.35, 53.0, 1.65) * dustBoost +
-      dustLayer(wWarp + ptrPar * 1.7, 1050.0, 0.034, 1.2, 79.0, 2.1) * dustBoost * mass +
-      dustLayer(wWarp + ptrPar * 2.2, 1400.0, 0.044, 1.05, 101.0, 2.6) * mass * 1.25;
-    float dustAmt = clamp(dot(dust, vec3(0.33)) * 3.8 * (0.4 + 0.75 * band), 0.0, 0.99);
-    color = mix(color, min(dust * 0.92 + color * 0.1, vec3(1.0)), dustAmt);
+    // ── Three atmospheric layers ──
+    // Background: tiny, faster cool grains (systematic texture)
+    // Midground: medium dual-tone (connections / judgment)
+    // Foreground: large, slow, warm soft blooms (human memory)
+    float energyDrift = mix(0.45, 1.0, uEnergy);
+    float dustBoost = (0.85 + 1.1 * mass) * cloudLight * (0.75 + 0.3 * uEnergy) * (0.55 + 0.6 * band);
 
-    vec3 bok =
-      bokeh(w + ptrPar * 1.8, 16.0, 0.014, 3.0) * 1.25 +
-      bokeh(w + ptrPar * 2.1, 11.0, 0.02, 23.0) * 1.15 +
-      bokeh(w + ptrPar * 2.4, 7.5, 0.026, 47.0) * 1.05;
-    float bokAmt = clamp(dot(bok, vec3(0.33)) * 2.8 * mass * max(band, 0.5), 0.0, 0.55);
-    color = mix(color, min(color + bok * 0.7, vec3(1.0)), bokAmt);
+    vec3 bgCool =
+      dustLayer(wWarp + ptrPar * 0.2, 520.0, 0.028 * energyDrift, 0.7, 2.0, 0.55, 0.15) * dustBoost +
+      dustLayer(wWarp + ptrPar * 0.35, 780.0, 0.036 * energyDrift, 0.65, 41.0, 0.7, 0.2) * dustBoost;
+    vec3 midDual =
+      dustLayer(wWarp + ptrPar * 0.12, 180.0, 0.012 * energyDrift, 1.05, 0.0, 0.95, 0.55) * dustBoost +
+      dustLayer(wWarp + ptrPar * 0.25, 280.0, 0.016 * energyDrift, 1.15, 11.0, 1.1, 0.5) * dustBoost +
+      dustLayer(wWarp + ptrPar * 0.45, 400.0, 0.02 * energyDrift, 1.1, 29.0, 1.25, 0.45) * dustBoost;
+    vec3 fgWarm =
+      dustLayer(wWarp + ptrPar * 0.08, 90.0, 0.006 * energyDrift, 1.0, 7.0, 1.6, 0.85) * dustBoost * 0.85 +
+      softBloom(w + ptrPar * 1.2, 7.5, 0.008 * energyDrift, 3.0) * (0.7 + 0.4 * mass);
 
-    // Right isolation with a guaranteed floor — cloud always shows on the right.
-    float rightGate = smoothstep(0.36, 0.52, uv.x);
-    float presence = clamp(max(band, 0.55) * rightGate + body * 0.25 * rightGate, 0.0, 1.0);
+    float bgAmt = clamp(dot(bgCool, vec3(0.33)) * 2.4 * (0.35 + 0.65 * band), 0.0, 0.75);
+    float midAmt = clamp(dot(midDual, vec3(0.33)) * 2.8 * (0.4 + 0.7 * band), 0.0, 0.9);
+    float fgAmt = clamp(dot(fgWarm, vec3(0.33)) * 2.2 * mass, 0.0, 0.7);
+
+    color = mix(color, min(bgCool * 0.9 + color * 0.25, vec3(1.0)), bgAmt * 0.85);
+    color = mix(color, min(midDual * 0.88 + color * 0.15, vec3(1.0)), midAmt);
+    color = mix(color, min(fgWarm * 0.95 + color * 0.2, vec3(1.0)), fgAmt * 0.75);
+
+    // Standing down: slightly more crystalline stillness (less bright thrash).
+    color = mix(color, mix(color, paper, 0.12), (1.0 - uEnergy) * 0.2);
+
+    // Right isolation — calm eye on the left for the headline.
+    float rightGate = smoothstep(0.34, 0.5, uv.x);
+    float presence = clamp(max(band, 0.58) * rightGate + body * 0.22 * rightGate, 0.0, 1.0);
     color = mix(paper, color, presence);
 
-    color = mix(color, min(color * 1.04 + vec3(0.06, 0.03, 0.01) * probe, vec3(1.0)), probe * 0.35 * rightGate);
+    // Cursor: gentle avoidance highlight, not plaything glow.
+    color = mix(color, min(color * 1.02 + vec3(0.04, 0.03, 0.015) * probe, vec3(1.0)), probe * 0.22 * rightGate);
 
-    // Copy zone on the left stays clear; right stays filled.
-    float leftFade = smoothstep(0.26, 0.5, uv.x);
-    color = mix(paper, color, max(leftFade, rightGate * 0.85));
+    float leftFade = smoothstep(0.24, 0.48, uv.x);
+    color = mix(paper, color, max(leftFade, rightGate * 0.88));
 
-    float grain = hash13(vec3(gl_FragCoord.xy, uTime * 18.0)) - 0.5;
-    color += grain * 0.0035;
+    // Page-load coalesce: dust gathers from thin air over ~3s.
+    float birth = smoothstep(0.0, 3.0, uTime);
+    birth = birth * birth * (3.0 - 2.0 * birth);
+    color = mix(paper, color, birth);
+
+    float grain = hash13(vec3(gl_FragCoord.xy, uTime * 10.0)) - 0.5;
+    color += grain * 0.0025;
     color = clamp(color, 0.0, 1.0);
 
     gl_FragColor = vec4(color, 1.0);
@@ -508,10 +506,6 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       mount.removeChild(mount.firstChild);
     }
 
-    // ── Performance tiering ─────────────────────────────────────────
-    const tier = detectGpuTier();
-    const cfg = TIER_CONFIG[tier];
-
     let renderer: THREE.WebGLRenderer;
 
     try {
@@ -519,7 +513,7 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
         antialias: false,
         alpha: true,
         premultipliedAlpha: false,
-        powerPreference: tier === 'low' ? 'low-power' : 'high-performance',
+        powerPreference: 'high-performance',
         preserveDrawingBuffer: new URLSearchParams(window.location.search).has('verify-webgl'),
       });
     } catch {
@@ -601,8 +595,7 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
     const resize = () => {
       const width = Math.max(1, mount.clientWidth);
       const height = Math.max(1, mount.clientHeight);
-      // Cap DPR by tier so low-end GPUs don't melt on Retina displays.
-      const dpr = Math.min(getRenderPixelRatio(3), cfg.dprCap);
+      const dpr = getRenderPixelRatio(3);
       const w = Math.max(1, Math.floor(width));
       const h = Math.max(1, Math.floor(height));
 
@@ -640,35 +633,9 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       pointerHost.addEventListener('pointerleave', onPointerLeave);
     }
 
-    // Touch: single-finger passive probe so scrolling isn't blocked on mobile.
-    const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        const t = e.touches[0];
-        const rect = mount.getBoundingClientRect();
-        pointerState.tx = (t.clientX - rect.left) / rect.width;
-        pointerState.ty = 1 - (t.clientY - rect.top) / rect.height;
-        pointerState.glowTarget = 1;
-      }
-    };
-    const onTouchEnd = () => {
-      pointerState.glowTarget = 0;
-    };
-    if (pointerHost && !reducedMotion) {
-      window.addEventListener('touchstart', onTouchStart, { passive: true });
-      pointerHost.addEventListener('touchend', onTouchEnd);
-    }
-
     // Cloud-only hero: no path re-evaluation epochs (paths are not drawn).
-    // ── Frame skip & FPS monitoring for low-end devices ─────────────
-    let lastFrame = startedAt;
-    let frameCount = 0;
-    let fpsAccumulator = 0;
-    let skipCounter = 0;
-    let currentSkip = tier === 'low' ? 1 : 0;
-
     const render = () => {
-      const now = performance.now();
-      const elapsed = (now - startedAt) / 1000;
+      const elapsed = (performance.now() - startedAt) / 1000;
       uniforms.uTime.value = elapsed;
 
       pointerState.x += (pointerState.tx - pointerState.x) * 0.09;
@@ -679,24 +646,6 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       uniforms.uPathFade.value = 0;
 
       renderer.render(scene, camera);
-
-      // Adaptive frame skip: if average FPS drops below 25 for 2s, skip frames.
-      if (tier === 'low') {
-        const dt = now - lastFrame;
-        lastFrame = now;
-        frameCount++;
-        fpsAccumulator += dt;
-        if (fpsAccumulator > 2000) {
-          const avgFps = frameCount / (fpsAccumulator / 1000);
-          if (avgFps < 25 && currentSkip < 2) {
-            currentSkip++;
-          } else if (avgFps > 35 && currentSkip > 0) {
-            currentSkip--;
-          }
-          frameCount = 0;
-          fpsAccumulator = 0;
-        }
-      }
     };
 
     const stopLoop = () => {
@@ -716,14 +665,8 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
         frameId = null;
         return;
       }
-      frameId = window.requestAnimationFrame(animate);
-      // Low-end: render every Nth frame when struggling.
-      if (tier === 'low' && currentSkip > 0) {
-        skipCounter++;
-        if (skipCounter <= currentSkip) return;
-        skipCounter = 0;
-      }
       render();
+      frameId = window.requestAnimationFrame(animate);
     };
 
     const resizeObserver = new ResizeObserver(() => {
@@ -775,8 +718,6 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       if (pointerHost) {
         pointerHost.removeEventListener('pointermove', onPointerMove as EventListener);
         pointerHost.removeEventListener('pointerleave', onPointerLeave);
-        window.removeEventListener('touchstart', onTouchStart);
-        pointerHost.removeEventListener('touchend', onTouchEnd);
       }
 
       resizeObserver.disconnect();
