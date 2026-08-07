@@ -94,29 +94,76 @@ export default function HermesLiquidityFieldRender({
     const scales = new Float32Array(count);
     const alphas = new Float32Array(count);
 
-    const tealColor = new THREE.Color('#0d9488');
-    const bronzeColor = posture === 'DEFENSIVE' ? new THREE.Color('#c2410c') : new THREE.Color('#b45309');
-    const amberColor = new THREE.Color('#f59e0b');
-    const slateColor = new THREE.Color('#64748b');
-    const emeraldColor = new THREE.Color('#10b981');
+    // Dark Mode helper
+    const checkIsDark = () =>
+      document.documentElement.classList.contains('dark') ||
+      window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    let isDark = checkIsDark();
+
+    // Theme adaptive base palettes
+    const getThemeColors = (dark: boolean) => ({
+      teal: new THREE.Color(dark ? '#14b8a6' : '#0d9488'),
+      bronze:
+        posture === 'DEFENSIVE'
+          ? new THREE.Color(dark ? '#fb923c' : '#c2410c')
+          : new THREE.Color(dark ? '#f59e0b' : '#b45309'),
+      amber: new THREE.Color(dark ? '#fcd34d' : '#f59e0b'),
+      slate: new THREE.Color(dark ? '#94a3b8' : '#64748b'),
+      emerald: new THREE.Color(dark ? '#34d399' : '#10b981'),
+    });
+
+    let activePalette = getThemeColors(isDark);
 
     const shapeCenter = new THREE.Vector3(shapeCenterX, shapeCenterY, 0);
 
     // --- Lorenz Attractor ---
-    let lx = 0.1, ly = 0.0, lz = 0.0;
+    let lx = 0.1,
+      ly = 0.0,
+      lz = 0.0;
     const dt = 0.008;
     const rawLorenz: number[] = [];
     for (let j = 0; j < count; j++) {
       const dx = 10 * (ly - lx) * dt;
       const dy = (lx * (28 - lz) - ly) * dt;
       const dz = (lx * ly - (8 / 3) * lz) * dt;
-      lx += dx; ly += dy; lz += dz;
+      lx += dx;
+      ly += dy;
+      lz += dz;
       rawLorenz.push(lx, ly, lz - 24);
     }
 
+    const rebuildColors = () => {
+      const { teal, bronze, amber, slate, emerald } = activePalette;
+
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        const rand = Math.random();
+
+        const c0 = teal.clone().lerp(slate, rand * 0.4);
+        globeColors[i3] = c0.r;
+        globeColors[i3 + 1] = c0.g;
+        globeColors[i3 + 2] = c0.b;
+
+        const c1 = amber.clone().lerp(teal, rand * 0.6);
+        lorenzColors[i3] = c1.r;
+        lorenzColors[i3 + 1] = c1.g;
+        lorenzColors[i3 + 2] = c1.b;
+
+        const c2 = bronze.clone().lerp(emerald, rand * 0.35);
+        sealColors[i3] = c2.r;
+        sealColors[i3 + 1] = c2.g;
+        sealColors[i3 + 2] = c2.b;
+
+        const c3 = teal.clone().lerp(bronze, rand);
+        noiseColors[i3] = c3.r;
+        noiseColors[i3 + 1] = c3.g;
+        noiseColors[i3 + 2] = c3.b;
+      }
+    };
+
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
-      const rand = Math.random();
 
       // 1. Dispersed Noise
       const nx = isMobile ? (Math.random() - 0.5) * 14 : (Math.random() - 0.2) * 22;
@@ -166,26 +213,11 @@ export default function HermesLiquidityFieldRender({
         sealTargets[i3 + 2] = shapeCenter.z + ry * Math.sin(-Math.PI / 3);
       }
 
-      // Palette Setup
-      const c0 = tealColor.clone().lerp(slateColor, rand * 0.4);
-      globeColors[i3] = c0.r; globeColors[i3 + 1] = c0.g; globeColors[i3 + 2] = c0.b;
-
-      const c1 = amberColor.clone().lerp(tealColor, rand * 0.6);
-      lorenzColors[i3] = c1.r; lorenzColors[i3 + 1] = c1.g; lorenzColors[i3 + 2] = c1.b;
-
-      const c2 = bronzeColor.clone().lerp(emeraldColor, rand * 0.35);
-      sealColors[i3] = c2.r; sealColors[i3 + 1] = c2.g; sealColors[i3 + 2] = c2.b;
-
-      const c3 = tealColor.clone().lerp(bronzeColor, rand);
-      noiseColors[i3] = c3.r; noiseColors[i3 + 1] = c3.g; noiseColors[i3 + 2] = c3.b;
-
-      currentColors[i3] = c3.r;
-      currentColors[i3 + 1] = c3.g;
-      currentColors[i3 + 2] = c3.b;
-
       scales[i] = Math.random() * 1.4 + 0.8;
-      alphas[i] = Math.random() * 0.4 + 0.2;
+      alphas[i] = isDark ? Math.random() * 0.5 + 0.35 : Math.random() * 0.4 + 0.2;
     }
+
+    rebuildColors();
 
     geometry.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
     geometry.setAttribute('aColor', new THREE.BufferAttribute(currentColors, 3));
@@ -203,6 +235,20 @@ export default function HermesLiquidityFieldRender({
     const particleSystem = new THREE.Points(geometry, material);
     scene.add(particleSystem);
 
+    // Observe dark mode class mutations on <html> element
+    const themeObserver = new MutationObserver(() => {
+      const darkNow = checkIsDark();
+      if (darkNow !== isDark) {
+        isDark = darkNow;
+        activePalette = getThemeColors(isDark);
+        rebuildColors();
+      }
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
     const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
     const handleMouseMove = (e: MouseEvent) => {
       mouse.targetX = (e.clientX / window.innerWidth) * 2 - 1;
@@ -217,17 +263,18 @@ export default function HermesLiquidityFieldRender({
       animationFrameId = requestAnimationFrame(renderLoop);
       const elapsedTime = clock.getElapsedTime();
 
-      mouse.x += (mouse.targetX - mouse.x) * 0.03;
-      mouse.y += (mouse.targetY - mouse.y) * 0.03;
+      // Mouse tracking interpolation (slowed down slightly)
+      mouse.x += (mouse.targetX - mouse.x) * 0.015;
+      mouse.y += (mouse.targetY - mouse.y) * 0.015;
 
-      const phaseDuration = 8; // Shorter 8s phase cycles
+      // Slower phase cycles: 16s per stage (64s full loop)
+      const phaseDuration = 16;
       const totalCycle = (elapsedTime % (phaseDuration * 4)) / phaseDuration;
-      
+
       const phaseIndex = Math.floor(totalCycle);
       const phaseProgress = totalCycle - phaseIndex;
 
-      // Fast Exponential Snap Curve (easeOutExpo)
-      // Rapidly snaps to 95%+ in the first 1-2 seconds, then locks firmly in place
+      // Ease out exponential curve for state snaps
       const snapEase = phaseProgress === 1 ? 1 : 1 - Math.pow(2, -10 * phaseProgress);
 
       const posAttr = geometry.attributes.position as THREE.BufferAttribute;
@@ -263,7 +310,6 @@ export default function HermesLiquidityFieldRender({
         let cg = noiseColors[i3 + 1];
         let cb = noiseColors[i3 + 2];
 
-        // Kill noise distortion almost completely once locked in for razor-sharp definition
         let noiseDampen = 1.0;
 
         if (phaseIndex === 0) {
@@ -308,8 +354,9 @@ export default function HermesLiquidityFieldRender({
           noiseDampen = snapEase;
         }
 
-        const n1 = noise3D(nx * 0.1, ny * 0.1, elapsedTime * 0.03);
-        const n2 = noise3D(ny * 0.1 + mouse.x * 0.2, nz * 0.1 + mouse.y * 0.2, elapsedTime * 0.03);
+        // Slower 3D Noise speed (0.012 vs original 0.03)
+        const n1 = noise3D(nx * 0.1, ny * 0.1, elapsedTime * 0.012);
+        const n2 = noise3D(ny * 0.1 + mouse.x * 0.2, nz * 0.1 + mouse.y * 0.2, elapsedTime * 0.012);
 
         posArray[i3] = targetX + Math.cos(n1 * Math.PI) * 0.3 * noiseDampen;
         posArray[i3 + 1] = targetY + Math.sin(n2 * Math.PI) * 0.3 * noiseDampen;
@@ -323,8 +370,9 @@ export default function HermesLiquidityFieldRender({
       posAttr.needsUpdate = true;
       colorAttr.needsUpdate = true;
 
-      particleSystem.rotation.y = elapsedTime * 0.012 + mouse.x * 0.01;
-      particleSystem.rotation.x = Math.sin(elapsedTime * 0.008) * 0.04;
+      // Slower overall rotation
+      particleSystem.rotation.y = elapsedTime * 0.005 + mouse.x * 0.008;
+      particleSystem.rotation.x = Math.sin(elapsedTime * 0.003) * 0.03;
 
       renderer.render(scene, camera);
     };
@@ -341,6 +389,7 @@ export default function HermesLiquidityFieldRender({
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      themeObserver.disconnect();
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
       if (container.contains(renderer.domElement)) {
@@ -355,7 +404,7 @@ export default function HermesLiquidityFieldRender({
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 h-full w-full pointer-events-none bg-white"
+      className="absolute inset-0 h-full w-full pointer-events-none"
       aria-hidden="true"
     />
   );
