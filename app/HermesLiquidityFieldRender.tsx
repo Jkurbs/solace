@@ -87,252 +87,183 @@ const fragmentShader = `
     return f * breathe;
   }
 
-  // One layer of liquidity dust: hashed point lattice whose spawn probability
-  // follows the field density, so the terrain literally is the data.
+  // Stripe-band density: many grains per cell, near-solid swarm in the band.
   vec3 dustLayer(vec2 w, float scale, float drift, float weight, float seed, float radMul) {
-    vec2 q = w + vec2(uTime * drift, 0.0);
-    vec2 g = q * vec2(scale, scale * 0.86);
+    vec2 q = w + vec2(uTime * drift, uTime * drift * 0.12);
+    vec2 g = q * vec2(scale, scale * 0.92);
     vec2 cell = floor(g);
     vec2 fr = fract(g);
 
-    float rnd = hash(cell * 1.13 + seed);
-    vec2 pp = vec2(hash(cell + vec2(7.1, 3.7) + seed), hash(cell + vec2(2.3, 9.2) + seed)) * 0.8 + 0.1;
-    vec2 sampleW = (cell + pp) / vec2(scale, scale * 0.86) - vec2(uTime * drift, 0.0);
+    vec3 acc = vec3(0.0);
+    // 5 grains per cell — multiplies effective particle count.
+    for (int n = 0; n < 5; n++) {
+      float fn = float(n);
+      float rnd = hash(cell * 1.13 + seed + fn * 17.3);
+      vec2 pp = vec2(
+        hash(cell + vec2(7.1 + fn, 3.7) + seed),
+        hash(cell + vec2(2.3, 9.2 + fn * 1.7) + seed)
+      ) * 0.92 + 0.04;
+      vec2 sampleW = (cell + pp) / vec2(scale, scale * 0.92) - vec2(uTime * drift, uTime * drift * 0.12);
 
-    float fc = fieldAt(sampleW);
-    float dens = smoothstep(0.02, 0.7, fc);
-    float spawn = step(rnd, dens * 0.48 + 0.045);
+      float fc = fieldAt(sampleW);
+      float dens = smoothstep(0.0, 0.28, fc);
+      // Near-guaranteed spawn inside the mass.
+      float spawn = step(rnd, dens * 0.55 + 0.72);
 
-    float radius = mix(0.014, 0.055, hash(cell + 5.5 + seed)) * radMul;
-    float pt = smoothstep(radius, radius * 0.1, length(fr - pp));
-    float tw = 0.55 + 0.45 * sin(uTime * (0.5 + rnd * 1.7) + rnd * 23.0);
+      // Tighter grains — pack the swarm.
+      float radius = mix(0.0025, 0.012, hash(cell + 5.5 + seed + fn)) * radMul;
+      float pt = smoothstep(radius, radius * 0.04, length(fr - pp));
+      float tw = 0.62 + 0.38 * sin(uTime * (0.4 + rnd * 1.4) + rnd * 23.0 + fn);
 
-    // Deep liquidity glitters warm gold; thin liquidity scatters cold blue.
-    float temp = smoothstep(0.05, 0.42, fc);
-    vec3 warm = mix(vec3(1.0, 0.74, 0.46), vec3(1.0, 0.93, 0.76), smoothstep(0.4, 0.95, fc));
-    vec3 cold = vec3(0.5, 0.76, 0.95);
-    vec3 dcol = mix(cold, warm, temp);
-    return dcol * spawn * pt * tw * weight * (0.3 + fc * 1.1 + (1.0 - temp) * 0.25);
+      float temp = smoothstep(0.04, 0.5, fc);
+      vec3 warm = mix(vec3(1.0, 0.72, 0.42), vec3(1.0, 0.94, 0.78), smoothstep(0.35, 0.95, fc));
+      vec3 cold = vec3(0.55, 0.78, 0.98);
+      vec3 dcol = mix(cold, warm, temp);
+      acc += dcol * spawn * pt * tw * weight * (0.55 + fc * 1.15);
+    }
+    return acc;
   }
 
-  // Soft out-of-focus foreground particles, prestige-cinema depth of field.
+  // Soft out-of-focus grains (fills residual gaps).
   vec3 bokeh(vec2 w, float scale, float drift, float seed) {
     vec2 q = w + vec2(uTime * drift, uTime * drift * 0.35);
     vec2 g = q * scale;
     vec2 cell = floor(g);
     vec2 fr = fract(g);
 
-    float rnd = hash(cell * 1.31 + seed);
-    float spawn = step(rnd, 0.13);
-    vec2 pp = vec2(hash(cell + vec2(3.1, 8.7) + seed), hash(cell + vec2(9.4, 2.2) + seed)) * 0.7 + 0.15;
+    vec3 acc = vec3(0.0);
+    for (int n = 0; n < 3; n++) {
+      float fn = float(n);
+      float rnd = hash(cell * 1.31 + seed + fn * 9.1);
+      float spawn = step(rnd, 0.78);
+      vec2 pp = vec2(
+        hash(cell + vec2(3.1 + fn, 8.7) + seed),
+        hash(cell + vec2(9.4, 2.2 + fn) + seed)
+      ) * 0.85 + 0.08;
 
-    float r = mix(0.14, 0.3, hash(cell + 6.8 + seed));
-    float disc = smoothstep(r, r * 0.4, length(fr - pp));
-    float tw = 0.55 + 0.45 * sin(uTime * (0.25 + rnd) + rnd * 31.0);
+      float r = mix(0.03, 0.1, hash(cell + 6.8 + seed + fn));
+      float disc = smoothstep(r, r * 0.3, length(fr - pp));
+      float tw = 0.55 + 0.45 * sin(uTime * (0.25 + rnd) + rnd * 31.0);
 
-    float fc = fieldAt((cell + pp) / scale - vec2(uTime * drift, uTime * drift * 0.35));
-    vec3 col = mix(vec3(0.45, 0.66, 0.85), vec3(1.0, 0.82, 0.55), smoothstep(0.06, 0.4, fc));
-    return col * spawn * disc * tw * 0.055;
+      float fc = fieldAt((cell + pp) / scale - vec2(uTime * drift, uTime * drift * 0.35));
+      vec3 col = mix(vec3(0.5, 0.7, 0.9), vec3(1.0, 0.84, 0.58), smoothstep(0.06, 0.4, fc));
+      acc += col * spawn * disc * tw * 0.11;
+    }
+    return acc;
   }
 
+  // Right-side stream mask — concentrated mass on the right half of the hero.
+  float stripeBand(vec2 w) {
+    float t = uTime * 0.035;
+    // Primary mass: right column, gently diagonal, tight width.
+    float right = smoothstep(0.42, 0.58, w.x);
+    float coreX = 0.72 + sin(t * 0.8) * 0.03;
+    float coreY = 0.48 + cos(t * 0.6) * 0.04;
+    vec2 d = (w - vec2(coreX, coreY)) * vec2(1.55, 1.15);
+    // Rotate slightly so the stream leans like Stripe bands.
+    float ang = -0.45 + sin(t) * 0.05;
+    float ca = cos(ang);
+    float sa = sin(ang);
+    vec2 r = vec2(d.x * ca - d.y * sa, d.x * sa + d.y * ca);
+    // Tight elliptical core (bring particles closer together).
+    float ellipse = length(r * vec2(1.85, 1.05));
+    float core = smoothstep(0.52, 0.12, ellipse);
+    // Secondary ribbon slightly offset for depth, still right-weighted.
+    float ribbon = smoothstep(0.38, 0.12, length((w - vec2(0.82, 0.62 + sin(t * 1.1) * 0.03)) * vec2(2.4, 1.6)));
+    float band = max(core, ribbon * 0.72) * right;
+    band *= 0.82 + 0.22 * fbm(w * 4.2 + vec2(t * 0.4, -t * 0.25));
+    return clamp(band, 0.0, 1.0);
+  }
+
+  // Cloud-only, Stripe-band concentration: near-solid particle streams on white.
   void main() {
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
     float aspect = uResolution.x / max(uResolution.y, 1.0);
     float mobile = 1.0 - smoothstep(0.94, 1.22, aspect);
 
-    // World coordinates: crop into the right portion of the field on narrow screens.
     vec2 w = uv;
-    w.x = mix(w.x, 0.30 + w.x * 0.70, mobile);
+    w.x = mix(w.x, 0.22 + w.x * 0.78, mobile);
 
-    // Slow camera drift + breathe: minutes-long, so the framing is never
-    // quite the same twice. Film, not wallpaper.
-    w += vec2(sin(uTime * 0.011), cos(uTime * 0.0083)) * 0.012;
-    w = (w - 0.5) * (1.0 + 0.008 * sin(uTime * 0.007)) + 0.5;
+    w += vec2(sin(uTime * 0.011), cos(uTime * 0.0083)) * 0.01;
+    w = (w - 0.5) * (1.0 + 0.006 * sin(uTime * 0.007)) + 0.5;
 
-    // Gentle lensing pull toward the dominant liquidity well, mass bends the view.
     vec2 toWell = w - uWell;
     float wr = length(toWell * vec2(1.3, 1.0));
-    vec2 wWarp = w - (toWell / max(wr, 0.001)) * 0.014 * exp(-wr * wr / 0.045);
+    vec2 wWarp = w - (toWell / max(wr, 0.001)) * 0.012 * exp(-wr * wr / 0.05);
 
-    // Pointer probe: attention gently bends and lights the field under it.
     vec2 toPtr = uv - uPointer;
     float prd = length(toPtr * vec2(1.2, 1.0));
     float probe = exp(-prd * prd / 0.02) * uPointerGlow;
-    wWarp -= (toPtr / max(prd, 0.001)) * 0.008 * probe;
+    wWarp -= (toPtr / max(prd, 0.001)) * 0.01 * probe;
+    vec2 ptrPar = (vec2(0.5) - uPointer) * 0.014 * uPointerGlow;
 
-    // Holographic parallax: depth layers slide against the pointer, so the
-    // scene reads as a projection you can lean around, not a flat image.
-    vec2 ptrPar = (vec2(0.5) - uPointer) * 0.016 * uPointerGlow;
+    vec3 paper = vec3(1.0, 1.0, 1.0);
+    float band = stripeBand(w);
+    float f = fieldAt(wWarp + ptrPar * 0.15);
+    f = max(f, band * 0.85);
 
-    vec3 color = vec3(0.003, 0.0045, 0.0075);
+    vec2 clumpDrift = vec2(uTime * 0.012, -uTime * 0.005);
+    float clump = fbm(w * 2.2 + clumpDrift);
+    clump = smoothstep(0.12, 0.48, clump);
+    float mass = clamp(max(clump, band * 0.95) * (0.55 + 0.55 * f), 0.0, 1.0);
 
-    // Cold nebula floor, the void leans deep teal-blue, never dead black.
-    float neb = noise(w * 2.4 + vec2(uTime * 0.012, 0.0)) * 0.6 + noise(w * 5.1) * 0.4;
-    color += vec3(0.008, 0.016, 0.026) * neb * 0.7;
+    float clumpTowardLight = fbm((w + vec2(-0.45, 0.9) * 0.04) * 2.2 + clumpDrift);
+    clumpTowardLight = smoothstep(0.2, 0.55, clumpTowardLight);
+    float cloudLight = 0.55 + 0.9 * smoothstep(0.25, -0.3, clumpTowardLight - clump);
 
-    // Billowing cloud structure: low-frequency fbm clumps the dust into
-    // weather instead of uniform texture.
-    vec2 clumpDrift = vec2(uTime * 0.009, -uTime * 0.004);
-    float clump = fbm(w * 3.1 + clumpDrift);
-    clump = smoothstep(0.4, 0.76, clump);
+    vec3 ember = vec3(0.58, 0.34, 0.18);
+    vec3 amber = vec3(0.95, 0.62, 0.32);
+    vec3 pale = vec3(0.98, 0.9, 0.78);
+    vec3 violet = vec3(0.72, 0.55, 0.95);
+    vec3 coral = vec3(0.98, 0.48, 0.42);
+    float hue = fract(w.x * 0.55 - w.y * 0.35 + uTime * 0.015);
+    vec3 bandPigment = mix(amber, coral, smoothstep(0.0, 0.35, hue));
+    bandPigment = mix(bandPigment, violet, smoothstep(0.35, 0.7, hue));
+    bandPigment = mix(bandPigment, pale, smoothstep(0.7, 1.0, hue));
 
-    // Pseudo self-shadowing: sample the cloud density toward the light source;
-    // less material toward the light means this part of the cloud is lit.
-    float clumpTowardLight = fbm((w + vec2(-0.5, 0.86) * 0.05) * 3.1 + clumpDrift);
-    clumpTowardLight = smoothstep(0.36, 0.72, clumpTowardLight);
-    float cloudLight = 0.45 + 1.0 * smoothstep(0.3, -0.35, clumpTowardLight - clump);
+    vec3 haze = mix(ember, amber, smoothstep(0.1, 0.65, f));
+    haze = mix(haze, pale, smoothstep(0.65, 0.98, f));
+    haze = mix(haze, bandPigment, band * 0.55);
 
-    // God-ray: a soft volumetric shaft raking down toward the dominant well.
-    vec2 rayOrigin = vec2(0.3, 1.3);
-    vec2 rayDir = normalize(vec2(0.5, -0.86));
-    vec2 rel = w - rayOrigin;
-    float along = max(dot(rel, rayDir), 0.0);
-    float across = abs(rel.x * rayDir.y - rel.y * rayDir.x);
-    float shaft = exp(-across * across / (0.014 + along * 0.07)) * exp(-along * 1.05);
-    shaft *= 0.7 + 0.3 * fbm(vec2(along * 3.0 - uTime * 0.018, across * 9.0));
-    color += vec3(1.0, 0.92, 0.72) * shaft * 0.11 * (0.5 + 0.5 * uEnergy);
+    float body = pow(max(f, 0.0), 1.15) * mass * cloudLight;
+    body = clamp(body * 1.55, 0.0, 1.0);
+    vec3 color = mix(paper, haze, body * 0.55);
 
-    // === LIQUIDITY HAZE (the field itself as glowing terrain) ===
-    float f = fieldAt(wWarp + ptrPar * 0.2);
-    vec3 ember = vec3(0.45, 0.20, 0.08);
-    vec3 amber = vec3(1.0, 0.62, 0.28);
-    vec3 pale = vec3(1.0, 0.87, 0.64);
-    vec3 haze = mix(ember, amber, smoothstep(0.15, 0.7, f));
-    haze = mix(haze, pale, smoothstep(0.72, 0.98, f));
+    // Dense pack on the right: higher scales + smaller grains = closer together.
+    float dustBoost = (1.05 + 1.55 * mass) * cloudLight * (0.92 + 0.18 * uEnergy) * (0.35 + 0.85 * band);
+    vec3 dust =
+      dustLayer(wWarp + ptrPar * 0.15, 140.0, 0.0015, 1.15, 0.0, 0.7) * dustBoost +
+      dustLayer(wWarp + ptrPar * 0.35, 240.0, 0.0024, 1.3, 7.0, 0.85) * dustBoost +
+      dustLayer(wWarp + ptrPar * 0.6, 380.0, 0.0036, 1.4, 17.0, 1.05) * dustBoost +
+      dustLayer(wWarp + ptrPar * 0.9, 560.0, 0.005, 1.45, 31.0, 1.3) * dustBoost +
+      dustLayer(wWarp + ptrPar * 1.25, 780.0, 0.0068, 1.35, 53.0, 1.65) * dustBoost +
+      dustLayer(wWarp + ptrPar * 1.7, 1050.0, 0.009, 1.2, 79.0, 2.1) * dustBoost * mass +
+      dustLayer(wWarp + ptrPar * 2.2, 1400.0, 0.012, 1.05, 101.0, 2.6) * mass * 1.25;
+    float dustAmt = clamp(dot(dust, vec3(0.33)) * 3.8 * (0.25 + 0.9 * band), 0.0, 0.99);
+    color = mix(color, min(dust * 0.92 + color * 0.1, vec3(1.0)), dustAmt);
 
-    // Order-book ladder striations: thin horizontal price levels in the glow.
-    float ladder = 0.95 + 0.05 * sin(w.y * 190.0 + noise(w * 4.0) * 4.0);
-    color += haze * pow(f, 2.6) * 0.36 * ladder * (0.4 + 0.9 * clump) * cloudLight;
+    vec3 bok =
+      bokeh(w + ptrPar * 1.8, 16.0, 0.004, 3.0) * 1.25 +
+      bokeh(w + ptrPar * 2.1, 11.0, 0.006, 23.0) * 1.15 +
+      bokeh(w + ptrPar * 2.4, 7.5, 0.0085, 47.0) * 1.05;
+    float bokAmt = clamp(dot(bok, vec3(0.33)) * 2.8 * mass * band, 0.0, 0.55);
+    color = mix(color, min(color + bok * 0.7, vec3(1.0)), bokAmt);
 
-    // Cold counter-haze where the field thins: teal breath in the void.
-    color += vec3(0.05, 0.13, 0.19) * (1.0 - smoothstep(0.05, 0.4, f)) * (0.3 + 0.7 * clump) * 0.5;
+    // Harder right isolation — left stays paper; mass hugs the right.
+    float rightGate = smoothstep(0.38, 0.55, uv.x);
+    color = mix(paper, color, clamp(band * 1.05 * rightGate + body * 0.08 * rightGate, 0.0, 1.0));
 
-    // === LIQUIDITY DUST (three depths, clumped into clouds, lit by the shaft) ===
-    float dustBoost = (0.2 + 1.3 * clump) * (1.0 + shaft * 2.0) * cloudLight * (0.6 + 0.4 * uEnergy);
-    color += dustLayer(wWarp + ptrPar * 0.5, 30.0, 0.0028, 0.4, 0.0, 1.0) * dustBoost;
-    color += dustLayer(wWarp + ptrPar * 1.0, 58.0, 0.0046, 0.62, 17.0, 1.4) * dustBoost;
-    color += dustLayer(wWarp + ptrPar * 1.7, 104.0, 0.0072, 0.9, 41.0, 2.2) * dustBoost;
+    color = mix(color, min(color * 1.04 + vec3(0.06, 0.03, 0.01) * probe, vec3(1.0)), probe * 0.35 * rightGate);
 
-    // Micro-glitter that gives the cloud masses their billowing body.
-    color += dustLayer(wWarp + ptrPar * 2.2, 175.0, 0.0095, 0.75, 71.0, 3.6) * clump * clump * (1.5 + shaft * 2.0);
-
-    // === CANDIDATE PRICE PATHS ===
-    // Accumulated separately so re-evaluation epochs can fade the whole
-    // reading down to the bare field and redraw it.
-    vec3 pathCol = vec3(0.0);
-    float survivorGlow = 0.0;
-    for (int i = 0; i < MAX_PATHS; i++) {
-      if (float(i) >= uNumPaths) break;
-      float row = (float(i) + 0.5) / uNumPaths;
-
-      vec4 pd = texture2D(uPaths, vec2(w.x, row));
-      float py = pd.r;
-      float alive = pd.g;
-      float bright = pd.b;
-      float fray = pd.a;
-
-      float dxs = 4.0 / 512.0;
-      float py2 = texture2D(uPaths, vec2(min(w.x + dxs, 1.0), row)).r;
-      float slope = (py2 - py) / dxs;
-      float corr = inversesqrt(1.0 + slope * slope * (uResolution.y * uResolution.y) / (uResolution.x * uResolution.x));
-      // Signed CSS-pixel distance from the path spine, so filaments can wind
-      // around it; weights stay constant across display densities.
-      float sPix = (uv.y - py) * uResolution.y * corr / uPixelRatio;
-      float dPix = abs(sPix);
-
-      bool isSurvivor = abs(float(i) - uSurvivor) < 0.5;
-
-      if (isSurvivor) {
-        float halo = exp(-dPix * dPix / (14.0 * 14.0));
-        float wide = exp(-dPix * dPix / (52.0 * 52.0));
-
-        // Prime-Radiant stroke: hairline filaments braided tight around the
-        // spine. Crossings glitter where strands overlap.
-        float fil = 0.0;
-        for (int k = 0; k < 4; k++) {
-          float fk = float(k);
-          float fph = hash(vec2(fk * 2.3 + 1.0, float(i))) * 6.2831;
-          float amp = 1.1 + fk * 0.85;
-          float off = sin(w.x * (7.0 + fk * 3.1) + fph + uTime * (0.22 + fk * 0.07)) * amp
-                    + sin(w.x * (17.0 + fk * 5.3) - fph * 1.7 + uTime * 0.13) * amp * 0.35;
-          float d = sPix - off;
-          float shimmer = 0.75 + 0.25 * sin(w.x * 40.0 + fph * 3.0 + uTime * 0.6);
-          fil += exp(-d * d / (0.85 * 0.85)) * shimmer;
-        }
-
-        // Energy pulse traveling along the surviving path.
-        float ph = fract(uTime * 0.042);
-        float pdist = w.x - ph;
-        float pulse = exp(-pdist * pdist / 0.0032);
-        float headY = texture2D(uPaths, vec2(ph, row)).r;
-        float headD = length(vec2((w.x - ph) * uResolution.x, (uv.y - headY) * uResolution.y)) / uPixelRatio;
-        float head = exp(-headD * headD / (26.0 * 26.0));
-
-        float energize = 1.0 + 1.4 * pulse;
-        pathCol += vec3(1.0, 0.89, 0.64) * fil * 0.44 * energize;
-        pathCol += vec3(1.0, 0.68, 0.32) * halo * 0.2 * energize;
-        pathCol += vec3(1.0, 0.64, 0.3) * wide * 0.08;
-        pathCol += vec3(1.0, 0.88, 0.68) * head * 0.55;
-        survivorGlow = max(survivorGlow, halo);
-      } else {
-        float halo = exp(-dPix * dPix / (10.0 * 10.0));
-
-        // Candidates are looser bundles; as one nears rejection its strands
-        // splay apart, the reading unravels before its light goes out.
-        float splay = 1.0 + fray * fray * 6.5;
-        float fil = 0.0;
-        for (int k = 0; k < 4; k++) {
-          float fk = float(k);
-          float fph = hash(vec2(float(i) * 3.1 + fk, fk * 1.7 + 2.0)) * 6.2831;
-          float amp = (1.5 + fk * 1.0) * splay;
-          float off = sin(w.x * (8.0 + fk * 3.3) + fph + uTime * (0.2 + fk * 0.06)) * amp
-                    + sin(w.x * (19.0 + fk * 4.7) - fph * 1.7 + uTime * 0.12) * amp * 0.35;
-          float d = sPix - off;
-          fil += exp(-d * d / (0.8 * 0.8));
-        }
-
-        vec3 cCol = mix(vec3(0.9, 0.42, 0.16), vec3(1.0, 0.68, 0.34), bright);
-        pathCol += cCol * (fil * 0.36 + halo * 0.15) * (0.5 + 0.4 * bright) * alive * (1.0 - fray * 0.25);
-      }
-    }
-    color += pathCol * uPathFade * uEnergy;
-
-    // === FOREGROUND BOKEH (out-of-focus dust drifting past the lens) ===
-    color += bokeh(w + ptrPar * 2.8, 5.5, 0.006, 3.0);
-    color += bokeh(w + ptrPar * 2.8, 3.2, 0.0095, 23.0);
-
-    // Bid/ask thermal split: warm below the survivor's altitude, cool above.
-    float side = smoothstep(-0.16, 0.16, w.y - 0.52);
-    color *= mix(vec3(1.03, 0.995, 0.95), vec3(0.965, 1.0, 1.05), side);
-
-    // The field brightens where it is being read.
-    color *= 1.0 + probe * 0.32;
-    color += vec3(1.0, 0.88, 0.62) * probe * pow(f, 1.5) * 0.18;
-
-    // === GRADE (prestige filmic: teal shadows, cream highlights) ===
-    float leftFade = smoothstep(0.0, 0.30, uv.x);
-    color *= mix(mix(0.34, 0.62, mobile), 1.0, leftFade);
-
-    float vert = smoothstep(0.0, 0.18, uv.y) * smoothstep(1.0, 0.78, uv.y);
-    color *= 0.72 + 0.28 * vert;
-
-    color = pow(max(color, 0.0), vec3(0.88));
-
-    float lum = dot(color, vec3(0.299, 0.587, 0.114));
-    color = mix(color * vec3(0.82, 0.97, 1.22), color, smoothstep(0.0, 0.3, lum));
-    color = mix(color, color * vec3(1.06, 1.0, 0.9), smoothstep(0.45, 0.95, lum) * 0.5);
+    // Extra clear zone for copy on the left.
+    float leftFade = smoothstep(0.28, 0.52, uv.x);
+    color = mix(paper, color, leftFade);
 
     float grain = hash13(vec3(gl_FragCoord.xy, uTime * 18.0)) - 0.5;
-    color += grain * 0.009;
+    color += grain * 0.0035;
+    color = clamp(color, 0.0, 1.0);
 
-    color = min(color * 1.06 + 0.003, vec3(1.0));
-
-    // Luminance-keyed alpha: bright content is opaque, empty void is a thin
-    // veil, so the continuous sky's stars shine through the section's air.
-    float alphaLum = dot(color, vec3(0.299, 0.587, 0.114));
-    float alpha = clamp(0.18 + alphaLum * 5.5, 0.0, 1.0);
-
-    gl_FragColor = vec4(color / max(alpha, 0.02), alpha);
+    gl_FragColor = vec4(color, 1.0);
   }
 `;
 
@@ -394,14 +325,16 @@ function buildField(rand: () => number) {
       const u = i / (FIELD_W - 1);
       const v = j / (FIELD_H - 1);
 
-      let value = 0;
+      // Floor + wells: denser continuous medium so particle spawn stays high
+      // across the frame (Foundation-style swarm, not sparse peaks).
+      let value = 0.22;
       for (const well of WELLS) {
-        const dx = (u - well.x) / well.sx;
-        const dy = (v - well.y) / well.sy;
-        value += well.a * Math.exp(-0.5 * (dx * dx + dy * dy));
+        const dx = (u - well.x) / (well.sx * 1.15);
+        const dy = (v - well.y) / (well.sy * 1.15);
+        value += well.a * 1.2 * Math.exp(-0.5 * (dx * dx + dy * dy));
       }
 
-      value += latticeAt(u, v) * 0.3 + latticeAt((u * 2.7) % 1, (v * 2.3) % 1) * 0.16;
+      value += latticeAt(u, v) * 0.38 + latticeAt((u * 2.7) % 1, (v * 2.3) % 1) * 0.22;
 
       data[j * FIELD_W + i] = value;
       if (value > max) max = value;
@@ -622,7 +555,7 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
 
     scene.add(mesh);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.setClearColor(0x000000, 0);
+    renderer.setClearColor(0xffffff, 1);
     renderer.domElement.className = 'hermes-render-canvas';
     renderer.domElement.dataset.hermesRender = 'liquidity-field';
     mount.appendChild(renderer.domElement);
@@ -643,9 +576,14 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       uniforms.uPixelRatio.value = dpr;
     };
 
-    // Pointer probe: eased toward the cursor while it is over the card.
+    // Pointer probe: eased toward the cursor while over the host surface
+    // (instrument card, homepage hero stage, or the mount itself).
     const pointerState = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5, glow: 0, glowTarget: 0 };
-    const card = mount.closest('.inst-card');
+    const pointerHost =
+      mount.closest('.inst-card') ??
+      mount.closest('.hero-particle-section') ??
+      mount.closest('.hero-particle-stage') ??
+      mount;
 
     const onPointerMove = (event: PointerEvent) => {
       const rect = mount.getBoundingClientRect();
@@ -658,18 +596,12 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       pointerState.glowTarget = 0;
     };
 
-    if (card && !reducedMotion) {
-      card.addEventListener('pointermove', onPointerMove as EventListener);
-      card.addEventListener('pointerleave', onPointerLeave);
+    if (pointerHost && !reducedMotion) {
+      pointerHost.addEventListener('pointermove', onPointerMove as EventListener);
+      pointerHost.addEventListener('pointerleave', onPointerLeave);
     }
 
-    // Re-evaluation epochs: the candidate paths fade down to the bare field,
-    // the engine redraws them (new candidates, new survivor), and the new
-    // reading fades back in. The world persists; the judgment refreshes.
-    const EPOCH = 36;
-    const EPOCH_FADE = 1.15;
-    let swappedEpoch = -1;
-
+    // Cloud-only hero: no path re-evaluation epochs (paths are not drawn).
     const render = () => {
       const elapsed = (performance.now() - startedAt) / 1000;
       uniforms.uTime.value = elapsed;
@@ -679,26 +611,7 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       pointerState.glow += (pointerState.glowTarget - pointerState.glow) * 0.055;
       uniforms.uPointer.value.set(pointerState.x, pointerState.y);
       uniforms.uPointerGlow.value = pointerState.glow;
-
-      if (!reducedMotion) {
-        const phase = elapsed % EPOCH;
-        const epochIndex = Math.floor(elapsed / EPOCH);
-        let fade = 1;
-        if (phase > EPOCH - EPOCH_FADE * 2) {
-          fade =
-            phase < EPOCH - EPOCH_FADE
-              ? 1 - (phase - (EPOCH - EPOCH_FADE * 2)) / EPOCH_FADE
-              : (phase - (EPOCH - EPOCH_FADE)) / EPOCH_FADE;
-        }
-        if (phase >= EPOCH - EPOCH_FADE && swappedEpoch !== epochIndex) {
-          swappedEpoch = epochIndex;
-          const next = buildPaths(fieldData, epochRand);
-          pathData.set(next.texture);
-          pathTexture.needsUpdate = true;
-          uniforms.uSurvivor.value = next.survivor;
-        }
-        uniforms.uPathFade.value = fade * fade * (3 - 2 * fade);
-      }
+      uniforms.uPathFade.value = 0;
 
       renderer.render(scene, camera);
     };
@@ -770,9 +683,9 @@ export default function HermesLiquidityFieldRender({ posture }: { posture?: Herm
       unsubPause();
       document.removeEventListener('visibilitychange', onDocVisibility);
 
-      if (card) {
-        card.removeEventListener('pointermove', onPointerMove as EventListener);
-        card.removeEventListener('pointerleave', onPointerLeave);
+      if (pointerHost) {
+        pointerHost.removeEventListener('pointermove', onPointerMove as EventListener);
+        pointerHost.removeEventListener('pointerleave', onPointerLeave);
       }
 
       resizeObserver.disconnect();

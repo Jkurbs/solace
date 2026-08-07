@@ -12,7 +12,7 @@ import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
 import InstrumentPortraits from './InstrumentPortraits';
-import HeroLattice from './HeroLattice';
+import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -159,94 +159,75 @@ export default function HomeClient({
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
-      {/* ── Hero: Lattice as large edge band (Stripe-scale on mobile) ──
-          No plate — ink on paper. Mobile: huge top-right bleed. Desktop: right column. */}
-      <section className="hero-research hero-lattice-section relative overflow-hidden px-5 pt-12 pb-16 md:pt-20 md:pb-24 border-t border-border">
+      {/* ── Hero: Hermes liquidity field (posture-driven) ──
+          Liquidity terrain, dust, candidate paths — judgment quiets with posture.
+          Emotional job: the market as a living field, not a static chart. */}
+      <section className="hero-research hero-particle-section relative overflow-hidden border-t border-border">
+        <div className="hero-particle-stage" aria-hidden="true">
+          <HermesLiquidityFieldRender posture={hermesTelemetry?.posture} />
+          <div className="hero-particle-vignette" />
+        </div>
+
         <motion.div
           initial={heroInitial}
           animate="show"
           variants={stagger}
-          className="hero-lattice-layout relative z-10 mx-auto max-w-6xl"
+          className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-20 md:pt-24 md:pb-28"
         >
-          <div className="hero-lattice-copy">
-            <motion.p
-              variants={fade}
-              className="hero-lattice-eyebrow"
-            >
+          <div className="hero-particle-copy">
+            <motion.p variants={fade} className="hero-particle-eyebrow">
               Independent research
             </motion.p>
 
-            <motion.h1
-              variants={fade}
-              className="hero-lattice-title"
-            >
-              Instruments that helps you make better decisions under uncertainty.
+            <motion.h1 variants={fade} className="hero-particle-title">
+              Instruments that help you make better decisions under uncertainty.
             </motion.h1>
 
-            {/* Short line for product-unit rhythm; full dek desktop. */}
-            <motion.p variants={fade} className="hero-lattice-sub">
+            <motion.p variants={fade} className="hero-particle-sub">
               Systems for reading complexity.
             </motion.p>
 
-            <motion.p variants={fade} className="hero-lattice-dek">
+            <motion.p variants={fade} className="hero-particle-dek">
               Solace builds instruments for disciplined decision making under uncertainty.
               Hermes, the first, allocates capital autonomously so it can compound without constant attention,
               every decision sealed before the outcome and open to inspection.
             </motion.p>
 
-            <motion.div variants={fade} className="hero-lattice-ctas">
-              <Link href="/hermes" className="hero-cta hero-cta-primary">
+            <motion.div variants={fade} className="hero-particle-ctas">
+              <Link href="/hermes" className="hero-cta hero-cta-primary hero-cta-on-void">
                 Meet Hermes
               </Link>
-              <Link href="/brief" className="hero-cta hero-cta-secondary">
+              <Link href="/brief" className="hero-cta hero-cta-secondary hero-cta-on-void">
                 Read the brief
               </Link>
             </motion.div>
-          </div>
 
-          <motion.figure
-            variants={fade}
-            className="hero-lattice-figure"
-            aria-label="The Lattice — a living structural instrument maintained by Hermes"
-          >
-            <div className="hero-lattice-screen">
-              <div className="hero-lattice-screen-inner">
-                <HeroLattice
-                  posture={hermesTelemetry?.posture ?? null}
-                  pathsCount={hermesTelemetry?.pathsCount ?? null}
-                />
-              </div>
-            </div>
-            <figcaption className="sr-only">
-              The Lattice. A slowly evolving map of structure. Not a performance chart.
-            </figcaption>
-          </motion.figure>
-
-          {instruments.hermes.sealedDecisions != null &&
-            instruments.hermes.sealedDecisions > 0 && (
-              <motion.div variants={fade} className="hero-decision-count">
-                <Link
-                  href={OBSERVATORY_HERMES_LEDGER_PATH}
-                  className="hero-decision-count-link group"
-                >
-                  <span className="hero-decision-count-value font-mono tabular-nums">
-                    {instruments.hermes.sealedDecisions.toLocaleString('en-US')}
-                  </span>
-                  <span className="hero-decision-count-copy">
-                    <span className="hero-decision-count-label">
-                      collective decisions sealed
+            {instruments.hermes.sealedDecisions != null &&
+              instruments.hermes.sealedDecisions > 0 && (
+                <motion.div variants={fade} className="hero-decision-count hero-decision-on-void">
+                  <Link
+                    href={OBSERVATORY_HERMES_LEDGER_PATH}
+                    className="hero-decision-count-link group"
+                  >
+                    <span className="hero-decision-count-value font-mono tabular-nums">
+                      {instruments.hermes.sealedDecisions.toLocaleString('en-US')}
                     </span>
-                    <span className="hero-decision-count-hint">
-                      Observatory ledger
-                      <span aria-hidden="true" className="opacity-60 transition-opacity group-hover:opacity-100">
-                        {' '}
-                        →
+                    <span className="hero-decision-count-copy">
+                      <span className="hero-decision-count-label">
+                        collective decisions sealed
+                      </span>
+                      <span className="hero-decision-count-hint">
+                        Observatory ledger
+                        <span aria-hidden="true" className="opacity-60 transition-opacity group-hover:opacity-100">
+                          {' '}
+                          →
+                        </span>
                       </span>
                     </span>
-                  </span>
-                </Link>
-              </motion.div>
-            )}
+                  </Link>
+                </motion.div>
+              )}
+          </div>
         </motion.div>
       </section>
 
