@@ -23,7 +23,6 @@ const particleVertexShader = `
     vAlpha = aAlpha;
 
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    // Increased point size rendering range for thicker, more visible structure
     gl_PointSize = clamp(aScale * (35.0 / -mvPosition.z), 1.5, 4.8);
     gl_Position = projectionMatrix * mvPosition;
   }
@@ -55,8 +54,6 @@ export default function HermesLiquidityFieldRender({
     const isMobile = window.innerWidth < 768;
     const count = isMobile ? Math.floor(maxParticles * 0.35) : maxParticles;
 
-    // --- Dynamic Positioning & Scaling ---
-    // Scaled up geometry size: desktop gets 1.45 multiplier, mobile gets 0.95
     const shapeCenterX = isMobile ? 0.5 : 5.0;
     const shapeCenterY = isMobile ? -1.8 : 0.0;
     const scaleFactor = isMobile ? 0.95 : 1.45;
@@ -68,7 +65,6 @@ export default function HermesLiquidityFieldRender({
       0.1,
       100
     );
-    // Moved camera closer to enlarge foreground perspective
     camera.position.set(0, 0, isMobile ? 15 : 12);
 
     const renderer = new THREE.WebGLRenderer({
@@ -98,7 +94,6 @@ export default function HermesLiquidityFieldRender({
     const scales = new Float32Array(count);
     const alphas = new Float32Array(count);
 
-    // Color Palette Definitions
     const tealColor = new THREE.Color('#0d9488');
     const bronzeColor = posture === 'DEFENSIVE' ? new THREE.Color('#c2410c') : new THREE.Color('#b45309');
     const amberColor = new THREE.Color('#f59e0b');
@@ -107,7 +102,7 @@ export default function HermesLiquidityFieldRender({
 
     const shapeCenter = new THREE.Vector3(shapeCenterX, shapeCenterY, 0);
 
-    // --- Pre-computing Lorenz Attractor Points ---
+    // --- Lorenz Attractor ---
     let lx = 0.1, ly = 0.0, lz = 0.0;
     const dt = 0.008;
     const rawLorenz: number[] = [];
@@ -123,7 +118,7 @@ export default function HermesLiquidityFieldRender({
       const i3 = i * 3;
       const rand = Math.random();
 
-      // 1. Noise Field (Dispersed State)
+      // 1. Dispersed Noise
       const nx = isMobile ? (Math.random() - 0.5) * 14 : (Math.random() - 0.2) * 22;
       const ny = (Math.random() - 0.5) * (isMobile ? 20 : 16);
       const nz = (Math.random() - 0.5) * 8;
@@ -135,7 +130,7 @@ export default function HermesLiquidityFieldRender({
       currentPositions[i3 + 1] = ny;
       currentPositions[i3 + 2] = nz;
 
-      // 2. Shape A: Globe / Sphere (Larger base radius: 3.8 -> 5.2)
+      // 2. Tight Globe
       const sphereRadius = 3.6 * scaleFactor;
       const phi = Math.acos(-1 + (2 * i) / count);
       const theta = Math.sqrt(count * Math.PI) * phi;
@@ -143,13 +138,13 @@ export default function HermesLiquidityFieldRender({
       globeTargets[i3 + 1] = shapeCenter.y + sphereRadius * Math.sin(theta) * Math.sin(phi);
       globeTargets[i3 + 2] = shapeCenter.z + sphereRadius * Math.cos(phi);
 
-      // 3. Shape B: Lorenz Attractor (Larger scale multiplier: 0.16 -> 0.24)
+      // 3. Tight Lorenz
       const lorenzScale = 0.165 * scaleFactor;
       lorenzTargets[i3] = shapeCenter.x + rawLorenz[i3] * lorenzScale;
       lorenzTargets[i3 + 1] = shapeCenter.y + rawLorenz[i3 + 1] * lorenzScale;
       lorenzTargets[i3 + 2] = shapeCenter.z + rawLorenz[i3 + 2] * lorenzScale;
 
-      // 4. Shape C: Concentric Gyroscopic Seal Rings (Expanded ring radii)
+      // 4. Tight Gyroscopic Seal Rings
       const ringIndex = i % 3;
       const radii = [2.2 * scaleFactor, 3.3 * scaleFactor, 4.4 * scaleFactor];
       const radius = radii[ringIndex];
@@ -171,7 +166,7 @@ export default function HermesLiquidityFieldRender({
         sealTargets[i3 + 2] = shapeCenter.z + ry * Math.sin(-Math.PI / 3);
       }
 
-      // --- Color Assignments per Phase ---
+      // Palette Setup
       const c0 = tealColor.clone().lerp(slateColor, rand * 0.4);
       globeColors[i3] = c0.r; globeColors[i3 + 1] = c0.g; globeColors[i3 + 2] = c0.b;
 
@@ -225,12 +220,15 @@ export default function HermesLiquidityFieldRender({
       mouse.x += (mouse.targetX - mouse.x) * 0.03;
       mouse.y += (mouse.targetY - mouse.y) * 0.03;
 
-      const phaseDuration = 12;
+      const phaseDuration = 8; // Shorter 8s phase cycles
       const totalCycle = (elapsedTime % (phaseDuration * 4)) / phaseDuration;
       
       const phaseIndex = Math.floor(totalCycle);
       const phaseProgress = totalCycle - phaseIndex;
-      const ease = phaseProgress * phaseProgress * (3 - 2 * phaseProgress);
+
+      // Fast Exponential Snap Curve (easeOutExpo)
+      // Rapidly snaps to 95%+ in the first 1-2 seconds, then locks firmly in place
+      const snapEase = phaseProgress === 1 ? 1 : 1 - Math.pow(2, -10 * phaseProgress);
 
       const posAttr = geometry.attributes.position as THREE.BufferAttribute;
       const posArray = posAttr.array as Float32Array;
@@ -265,55 +263,56 @@ export default function HermesLiquidityFieldRender({
         let cg = noiseColors[i3 + 1];
         let cb = noiseColors[i3 + 2];
 
+        // Kill noise distortion almost completely once locked in for razor-sharp definition
         let noiseDampen = 1.0;
 
         if (phaseIndex === 0) {
-          targetX = THREE.MathUtils.lerp(nx, gx, ease);
-          targetY = THREE.MathUtils.lerp(ny, gy, ease);
-          targetZ = THREE.MathUtils.lerp(nz, gz, ease);
+          targetX = THREE.MathUtils.lerp(nx, gx, snapEase);
+          targetY = THREE.MathUtils.lerp(ny, gy, snapEase);
+          targetZ = THREE.MathUtils.lerp(nz, gz, snapEase);
 
-          cr = THREE.MathUtils.lerp(noiseColors[i3], globeColors[i3], ease);
-          cg = THREE.MathUtils.lerp(noiseColors[i3 + 1], globeColors[i3 + 1], ease);
-          cb = THREE.MathUtils.lerp(noiseColors[i3 + 2], globeColors[i3 + 2], ease);
+          cr = THREE.MathUtils.lerp(noiseColors[i3], globeColors[i3], snapEase);
+          cg = THREE.MathUtils.lerp(noiseColors[i3 + 1], globeColors[i3 + 1], snapEase);
+          cb = THREE.MathUtils.lerp(noiseColors[i3 + 2], globeColors[i3 + 2], snapEase);
 
-          noiseDampen = 1.0 - ease;
+          noiseDampen = Math.max(0, 1.0 - snapEase * 1.2);
         } else if (phaseIndex === 1) {
-          targetX = THREE.MathUtils.lerp(gx, lxPos, ease);
-          targetY = THREE.MathUtils.lerp(gy, lyPos, ease);
-          targetZ = THREE.MathUtils.lerp(gz, lzPos, ease);
+          targetX = THREE.MathUtils.lerp(gx, lxPos, snapEase);
+          targetY = THREE.MathUtils.lerp(gy, lyPos, snapEase);
+          targetZ = THREE.MathUtils.lerp(gz, lzPos, snapEase);
 
-          cr = THREE.MathUtils.lerp(globeColors[i3], lorenzColors[i3], ease);
-          cg = THREE.MathUtils.lerp(globeColors[i3 + 1], lorenzColors[i3 + 1], ease);
-          cb = THREE.MathUtils.lerp(globeColors[i3 + 2], lorenzColors[i3 + 2], ease);
+          cr = THREE.MathUtils.lerp(globeColors[i3], lorenzColors[i3], snapEase);
+          cg = THREE.MathUtils.lerp(globeColors[i3 + 1], lorenzColors[i3 + 1], snapEase);
+          cb = THREE.MathUtils.lerp(globeColors[i3 + 2], lorenzColors[i3 + 2], snapEase);
 
-          noiseDampen = 0.1;
+          noiseDampen = 0.02;
         } else if (phaseIndex === 2) {
-          targetX = THREE.MathUtils.lerp(lxPos, sx, ease);
-          targetY = THREE.MathUtils.lerp(lyPos, sy, ease);
-          targetZ = THREE.MathUtils.lerp(lzPos, sz, ease);
+          targetX = THREE.MathUtils.lerp(lxPos, sx, snapEase);
+          targetY = THREE.MathUtils.lerp(lyPos, sy, snapEase);
+          targetZ = THREE.MathUtils.lerp(lzPos, sz, snapEase);
 
-          cr = THREE.MathUtils.lerp(lorenzColors[i3], sealColors[i3], ease);
-          cg = THREE.MathUtils.lerp(lorenzColors[i3 + 1], sealColors[i3 + 1], ease);
-          cb = THREE.MathUtils.lerp(lorenzColors[i3 + 2], sealColors[i3 + 2], ease);
+          cr = THREE.MathUtils.lerp(lorenzColors[i3], sealColors[i3], snapEase);
+          cg = THREE.MathUtils.lerp(lorenzColors[i3 + 1], sealColors[i3 + 1], snapEase);
+          cb = THREE.MathUtils.lerp(lorenzColors[i3 + 2], sealColors[i3 + 2], snapEase);
 
-          noiseDampen = 0.1;
+          noiseDampen = 0.02;
         } else {
-          targetX = THREE.MathUtils.lerp(sx, nx, ease);
-          targetY = THREE.MathUtils.lerp(sy, ny, ease);
-          targetZ = THREE.MathUtils.lerp(sz, nz, ease);
+          targetX = THREE.MathUtils.lerp(sx, nx, snapEase);
+          targetY = THREE.MathUtils.lerp(sy, ny, snapEase);
+          targetZ = THREE.MathUtils.lerp(sz, nz, snapEase);
 
-          cr = THREE.MathUtils.lerp(sealColors[i3], noiseColors[i3], ease);
-          cg = THREE.MathUtils.lerp(sealColors[i3 + 1], noiseColors[i3 + 1], ease);
-          cb = THREE.MathUtils.lerp(sealColors[i3 + 2], noiseColors[i3 + 2], ease);
+          cr = THREE.MathUtils.lerp(sealColors[i3], noiseColors[i3], snapEase);
+          cg = THREE.MathUtils.lerp(sealColors[i3 + 1], noiseColors[i3 + 1], snapEase);
+          cb = THREE.MathUtils.lerp(sealColors[i3 + 2], noiseColors[i3 + 2], snapEase);
 
-          noiseDampen = ease;
+          noiseDampen = snapEase;
         }
 
         const n1 = noise3D(nx * 0.1, ny * 0.1, elapsedTime * 0.03);
         const n2 = noise3D(ny * 0.1 + mouse.x * 0.2, nz * 0.1 + mouse.y * 0.2, elapsedTime * 0.03);
 
-        posArray[i3] = targetX + Math.cos(n1 * Math.PI) * 0.4 * noiseDampen;
-        posArray[i3 + 1] = targetY + Math.sin(n2 * Math.PI) * 0.4 * noiseDampen;
+        posArray[i3] = targetX + Math.cos(n1 * Math.PI) * 0.3 * noiseDampen;
+        posArray[i3 + 1] = targetY + Math.sin(n2 * Math.PI) * 0.3 * noiseDampen;
         posArray[i3 + 2] = targetZ;
 
         colorArray[i3] = cr;
