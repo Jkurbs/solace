@@ -162,7 +162,7 @@ export default function HomeClient({
       {/* ── Hero: decision dust nebula (psychohistory atmosphere) ──
           Dual-tone gold/teal dust, layered depth, posture-tempered.
           Emotional job: structure emerging from uncertainty — never a screensaver. */}
-      <section className="hero-research hero-particle-section relative overflow-hidden border-t border-border">
+      <section className="hero-research hero-particle-section relative overflow-hidden">
         <div className="hero-particle-stage" aria-hidden="true">
           <HermesLiquidityFieldRender posture={hermesTelemetry?.posture} />
           <div className="hero-particle-vignette" />
@@ -232,7 +232,7 @@ export default function HomeClient({
       </section>
 
       {/* ── Instruments: product units (Apple stack on mobile) ── */}
-      <section className="home-instruments-section px-5 py-16 md:py-28 border-t border-border">
+      <section className="home-instruments-section px-5 py-16 md:py-28">
         <div className="mx-auto max-w-6xl">
           <h2 className="home-instruments-kicker text-xs uppercase tracking-[0.2em] text-muted mb-10 md:mb-12">
             Instruments

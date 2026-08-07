@@ -15003,6 +15003,7 @@ html.dark .home-research ::selection,
   color: var(--foreground, #1c1917);
   isolation: isolate;
   touch-action: pan-y;
+  border: none;
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
