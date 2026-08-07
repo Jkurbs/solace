@@ -178,11 +178,11 @@ export default function HomeClient({
             </motion.p>
 
             <motion.h1 variants={fade} className="hero-particle-title">
-              Instruments that help you make better decisions under uncertainty.
+              Instruments for decisions when you can't predict the future.
             </motion.h1>
 
             <motion.p variants={fade} className="hero-particle-sub">
-              Systems for reading complexity.
+              Solace reads market liquidity, models event probabilities, and enforces strict safety gates before capital moves and logging every decision to an uneditable public ledger.
             </motion.p>
 
             <motion.p variants={fade} className="hero-particle-dek">
