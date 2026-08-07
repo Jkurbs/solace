@@ -40,22 +40,22 @@ const homepageQuestions = [
   {
     question: 'What is Solace?',
     answer:
-      'An independent research company building instruments that improve decision-making under uncertainty. Hermes is the first. It begins with capital because markets give rapid feedback for learning.',
+      'An independent research company building instruments for disciplined decision-making under uncertainty. Hermes is the first. It begins with capital because financial markets provide rapid, ungameable feedback for learning.',
   },
   {
     question: 'What is Hermes?',
     answer:
-      'An autonomous instrument designed to make better capital allocation decisions on your behalf, so your capital can compound without requiring your constant attention. Every decision is sealed on a public ledger you can check.',
+      'An autonomous instrument that evaluates market liquidity, timing, and regime character to make capital allocation decisions on your behalf. Every decision is sealed on a cryptographically hashed public ledger before the outcome is known.',
   },
   {
     question: 'Does Hermes manage customer funds?',
     answer:
-      'Not yet. You can observe the public ledger and enter Hermes with simulation capital. Real capital is limited. When you ask to allocate, Solace adds you to the waitlist.',
+      'Not yet. Hermes currently allocates founder capital only. You can observe the public decision ledger in real time or test strategies using simulation capital. Real capital access opens in stages via a waitlist.',
   },
   {
     question: 'How do I enter Hermes?',
     answer:
-      'Open the dashboard to run simulation capital. No application form. Watch the public ledger anytime. Real capital access is a separate waitlist when you choose to allocate.',
+      'Open the dashboard to run simulation capital with zero friction. You can inspect the public ledger anytime. When you are ready to allocate real capital, submit a request via the account dashboard waitlist.',
   },
 ];
 
@@ -182,13 +182,11 @@ export default function HomeClient({
             </motion.h1>
 
             <motion.p variants={fade} className="hero-particle-sub">
-              Solace reads market liquidity, models event probabilities, and enforces strict safety gates before capital moves and logging every decision to an uneditable public ledger.
+              Solace reads market liquidity, models event probabilities, and enforces strict gate conditions before capital moves—logging every decision to an uneditable public ledger.
             </motion.p>
 
             <motion.p variants={fade} className="hero-particle-dek">
-              Solace builds instruments for disciplined decision making under uncertainty.
-              Hermes, the first, allocates capital autonomously so it can compound without constant attention,
-              every decision sealed before the outcome and open to inspection.
+              Hermes, the first instrument, evaluates market structure and allocates capital autonomously under strict risk gates, with every decision hashed and sealed prior to resolution.
             </motion.p>
 
             <motion.div variants={fade} className="hero-particle-ctas">
