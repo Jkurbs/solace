@@ -7692,25 +7692,30 @@ h2 {
 
 
   /* --- PUBLIC LEDGER SHEET, Research Edition --- */
-  /* Paper sheet: own chrome so dark site header/footer/text-link do not bleed. */
+  /* Theme-aware chrome: tokens follow html[data-theme] / site CSS vars. */
   .trust-page {
-    --trust-bg: #fafaf9;
-    --trust-ink: #1c1917;
-    --trust-muted: #78716c;
-    --trust-faint: #a8a29e;
-    --trust-line: #e7e5e4;
-    --trust-line-soft: #f0eeec;
-    --trust-surface: #ffffff;
-    --trust-live: #3d6b4f;
-    --trust-neg: #b45a52;
-    --trust-warm: #a67c52;
+    --trust-bg: var(--background);
+    --trust-ink: var(--foreground);
+    --trust-muted: var(--muted);
+    --trust-faint: var(--faint);
+    --trust-line: var(--border);
+    --trust-line-soft: color-mix(in srgb, var(--border) 70%, transparent);
+    --trust-surface: var(--card);
+    --trust-live: var(--success);
+    --trust-neg: #c45c5c;
+    --trust-warm: var(--warning);
     background: var(--trust-bg);
     color: var(--trust-ink);
   }
 
+  html[data-theme='light'] .trust-page,
+  html:not([data-theme='dark']):not(.dark) .trust-page {
+    --trust-neg: #b45a52;
+  }
+
   .trust-page .hx-header {
     border-bottom-color: var(--trust-line);
-    background: rgba(250, 250, 249, 0.88);
+    background: color-mix(in srgb, var(--trust-bg) 88%, transparent);
     backdrop-filter: blur(14px) saturate(1.05);
     -webkit-backdrop-filter: blur(14px) saturate(1.05);
   }
@@ -7721,14 +7726,14 @@ h2 {
   }
 
   .trust-page .hx-btn-secondary {
-    border-color: rgba(28, 25, 23, 0.18);
+    border-color: color-mix(in srgb, var(--trust-ink) 18%, transparent);
     background: transparent;
     color: var(--trust-muted);
   }
 
   .trust-page .hx-btn-secondary:hover {
-    border-color: rgba(28, 25, 23, 0.35);
-    background: rgba(28, 25, 23, 0.04);
+    border-color: color-mix(in srgb, var(--trust-ink) 35%, transparent);
+    background: color-mix(in srgb, var(--trust-ink) 4%, transparent);
     color: var(--trust-ink);
   }
 
@@ -7739,8 +7744,8 @@ h2 {
   }
 
   .trust-page .hx-btn-primary:hover {
-    border-color: #292524;
-    background: #292524;
+    border-color: color-mix(in srgb, var(--trust-ink) 88%, var(--trust-muted));
+    background: color-mix(in srgb, var(--trust-ink) 88%, var(--trust-muted));
     color: var(--trust-bg);
   }
 
@@ -7809,7 +7814,7 @@ h2 {
   .trust-ledger-note {
     max-width: 42rem;
     margin: 0.7rem 0 0;
-    color: #57534e;
+    color: var(--trust-muted, var(--muted));
     font-size: 0.95rem;
     line-height: 1.6;
   }
@@ -8070,7 +8075,7 @@ h2 {
   .trust-score-grid-secondary .trust-score-cell strong {
     font-size: 1.05rem;
     font-weight: 600;
-    color: #44403c;
+    color: var(--paper-body, var(--trust-ink, var(--foreground)));
   }
 
   .trust-scoreboard-actions {
@@ -8163,10 +8168,10 @@ h2 {
   }
 
   .trust-ledger-table td {
-    color: #44403c;
+    color: var(--paper-body, var(--trust-muted, var(--muted)));
     font-size: 0.88rem;
     line-height: 1.5;
-    background: var(--trust-surface, #ffffff);
+    background: var(--trust-surface, var(--card));
   }
 
   .trust-ledger-table th:last-child,
@@ -8408,7 +8413,7 @@ h2 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 6rem;
   min-height: 2.65rem;
-  border-bottom: 1px solid #f0eeec;
+  border-bottom: 1px solid var(--trust-line-soft, var(--border));
 }
 
 .trust-info-table li:last-child {
@@ -8423,14 +8428,14 @@ h2 {
 }
 
 .trust-info-table li span {
-  color: #44403c;
+  color: var(--paper-body, var(--trust-muted, var(--muted)));
   font-size: 0.9rem;
 }
 
 .trust-info-table li em {
   justify-content: center;
-  border-left: 1px solid #f0eeec;
-  color: #a8a29e;
+  border-left: 1px solid var(--trust-line-soft, var(--border));
+  color: var(--trust-faint, var(--faint));
 }
 
 /* Simple sheet */
@@ -8442,7 +8447,7 @@ h2 {
 .trust-simple-sheet th,
 .trust-simple-sheet td {
   padding: 0.85rem 1.2rem;
-  border-bottom: 1px solid #f0eeec;
+  border-bottom: 1px solid var(--trust-line-soft, var(--border));
   text-align: left;
   vertical-align: top;
 }
@@ -8454,9 +8459,9 @@ h2 {
 
   .trust-simple-sheet th {
     width: 14rem;
-    border-right: 1px solid var(--trust-line-soft, #f0eeec);
-    background: var(--trust-bg, #fafaf9);
-    color: var(--trust-muted, #78716c);
+    border-right: 1px solid var(--trust-line-soft, var(--border));
+    background: var(--trust-bg, var(--background));
+    color: var(--trust-muted, var(--muted));
     font-family: var(--font-plex), monospace;
     font-size: 0.65rem;
     font-weight: 500;
@@ -8465,7 +8470,7 @@ h2 {
   }
 
   .trust-simple-sheet td {
-    color: #44403c;
+    color: var(--paper-body, var(--trust-muted, var(--muted)));
     font-size: 0.92rem;
     line-height: 1.5;
   }
@@ -8479,7 +8484,7 @@ h2 {
   max-width: 44rem;
   margin: 0;
   padding: 0 1.2rem 1rem;
-  color: #78716c;
+  color: var(--trust-muted, var(--muted));
   font-size: 0.9rem;
   line-height: 1.65;
 }
@@ -8489,9 +8494,10 @@ h2 {
   margin: 0 1.2rem 1rem;
   padding: 1rem 1.2rem;
   overflow-x: auto;
-  border: 1px solid #e7e5e4;
+  border: 1px solid var(--trust-line, var(--border));
   border-radius: 0.4rem;
-  background: #fafaf9;
+  background: var(--trust-bg, var(--background));
+  color: var(--trust-ink, var(--foreground));
 }
 
 .trust-verify pre button {
@@ -8499,10 +8505,10 @@ h2 {
   top: 0.6rem;
   right: 0.7rem;
   padding: 0.3rem 0.65rem;
-  border: 1px solid #e7e5e4;
+  border: 1px solid var(--trust-line, var(--border));
   border-radius: 0.3rem;
-  background: #ffffff;
-  color: #a8a29e;
+  background: var(--trust-surface, var(--card));
+  color: var(--trust-faint, var(--faint));
   font-family: var(--font-plex), monospace;
   font-size: 0.56rem;
   font-weight: 500;
@@ -8513,12 +8519,12 @@ h2 {
 }
 
 .trust-verify pre button:hover {
-  border-color: #3d6b4f;
-  color: #3d6b4f;
+  border-color: var(--trust-live, var(--success));
+  color: var(--trust-live, var(--success));
 }
 
 .trust-verify code {
-  color: #57534e;
+  color: var(--paper-body, var(--trust-muted, var(--muted)));
   font-family: var(--font-plex), monospace;
   font-size: 0.8rem;
   line-height: 1.9;
@@ -8530,22 +8536,22 @@ h2 {
 
 .trust-verify-run button {
   padding: 0.55rem 1rem;
-  border: 1px solid #e7e5e4;
+  border: 1px solid var(--trust-line, var(--border));
   border-radius: 0.4rem;
-  background: #ffffff;
-  color: #57534e;
+  background: var(--trust-surface, var(--card));
+  color: var(--paper-body, var(--trust-muted, var(--muted)));
   font-family: var(--font-plex), monospace;
   font-size: 0.68rem;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
 
 .trust-verify-run button:hover {
-  border-color: #3d6b4f;
-  color: #3d6b4f;
+  border-color: var(--trust-live, var(--success));
+  color: var(--trust-live, var(--success));
 }
 
 .trust-verify-run button:disabled {
@@ -15575,12 +15581,12 @@ html.dark .home-research ::selection,
    Hermes product page, paper light, X Money rhythm
    ═══════════════════════════════════════════════════════════ */
 .hermes-paper {
-  --background: #fafaf9;
-  --foreground: #1c1917;
-  --muted: #78716c;
-  --border: #e7e5e4;
-  --surface: #ffffff;
-  --faint: #a8a29e;
+  /* Follow site theme (html[data-theme]); paper tokens already flip light/dark. */
+  --background: var(--paper-warm);
+  --foreground: var(--paper-ink);
+  --muted: var(--paper-muted);
+  --border: var(--paper-line);
+  --surface: var(--card);
   width: 100%;
   max-width: 100%;
   overflow-x: clip;
@@ -15730,15 +15736,15 @@ html.dark .home-research ::selection,
 }
 
 .hermes-paper-btn-secondary {
-  border: 1px solid rgba(28, 25, 23, 0.18);
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
   background: var(--background);
   color: var(--foreground);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .hermes-paper-btn-secondary:hover {
-  border-color: rgba(28, 25, 23, 0.4);
-  background: rgba(28, 25, 23, 0.04);
+  border-color: color-mix(in srgb, var(--foreground) 40%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
 }
 
 /* Hero */
@@ -16613,19 +16619,38 @@ html.dark .home-research ::selection,
 
 /* ═══════════════════════════════════════════════════════════
    Live decision ledger, matches Hermes marketing ledger art
+   Theme-aware: tokens follow html[data-theme] / site CSS vars.
    ═══════════════════════════════════════════════════════════ */
 .ledger-doc {
-  --ledger-ink: #1c1917;
-  --ledger-muted: #78716c;
-  --ledger-faint: #a8a29e;
-  --ledger-line: #e7e5e4;
-  --ledger-surface: #ffffff;
-  --ledger-bg: #fafaf9;
-  --ledger-pos: #3d6b4f;
-  --ledger-neg: #9f3a3a;
+  --ledger-ink: var(--foreground);
+  --ledger-muted: var(--muted);
+  --ledger-faint: var(--faint);
+  --ledger-line: var(--border);
+  --ledger-surface: var(--card);
+  --ledger-bg: var(--background);
+  --ledger-pos: var(--success);
+  --ledger-neg: #c45c5c;
+  /* Bridge trust-* components nested inside the observatory ledger */
+  --trust-bg: var(--ledger-bg);
+  --trust-ink: var(--ledger-ink);
+  --trust-muted: var(--ledger-muted);
+  --trust-faint: var(--ledger-faint);
+  --trust-line: var(--ledger-line);
+  --trust-line-soft: color-mix(in srgb, var(--ledger-line) 75%, transparent);
+  --trust-surface: var(--ledger-surface);
+  --trust-live: var(--ledger-pos);
+  --trust-neg: var(--ledger-neg);
+  --trust-warm: var(--warning);
   width: 100%;
   max-width: 100%;
   overflow-x: clip;
+  color: var(--ledger-ink);
+  background: var(--ledger-bg);
+}
+
+html[data-theme='light'] .ledger-doc,
+html:not([data-theme='dark']):not(.dark) .ledger-doc {
+  --ledger-neg: #9f3a3a;
 }
 
 .ledger-doc-intro {
@@ -16672,8 +16697,8 @@ html.dark .home-research ::selection,
   border-radius: 0.65rem;
   background: var(--ledger-surface);
   box-shadow:
-    0 1.25rem 2.75rem rgba(28, 25, 23, 0.07),
-    0 0.25rem 0.75rem rgba(28, 25, 23, 0.04);
+    0 1.25rem 2.75rem color-mix(in srgb, var(--ledger-ink) 8%, transparent),
+    0 0.25rem 0.75rem color-mix(in srgb, var(--ledger-ink) 5%, transparent);
 }
 
 .ledger-doc-head {
@@ -16735,21 +16760,21 @@ html.dark .home-research ::selection,
   min-height: 1.85rem;
   min-width: 1.85rem;
   padding: 0 0.45rem;
-  border: 1px solid var(--ledger-line, #e7e5e4);
+  border: 1px solid var(--ledger-line);
   border-radius: 999px;
-  background: var(--ledger-surface, #fff);
-  color: var(--ledger-ink, #1c1917);
+  background: var(--ledger-surface);
+  color: var(--ledger-ink);
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
 }
 
 .ledger-share-trigger:hover {
-  border-color: rgba(28, 25, 23, 0.28);
-  background: #fff;
+  border-color: color-mix(in srgb, var(--ledger-ink) 28%, transparent);
+  background: color-mix(in srgb, var(--ledger-ink) 4%, var(--ledger-surface));
 }
 
 .ledger-share-trigger:focus-visible {
-  outline: 2px solid rgba(28, 25, 23, 0.35);
+  outline: 2px solid color-mix(in srgb, var(--ledger-ink) 35%, transparent);
   outline-offset: 2px;
 }
 
@@ -17098,7 +17123,7 @@ html.dark .home-research ::selection,
 }
 
 .ledger-doc-panel td {
-  color: #44403c;
+  color: var(--paper-body, var(--ledger-muted));
   font-size: 0.92rem;
   line-height: 1.55;
 }
@@ -17568,7 +17593,7 @@ html.dark .home-research ::selection,
 }
 
 .trust-ledger-table tr.trust-row-interactive:hover td {
-  background: rgba(28, 25, 23, 0.025);
+  background: color-mix(in srgb, var(--ledger-ink, var(--foreground)) 4%, transparent);
 }
 
 .trust-ledger-table tr.trust-row-interactive:focus-visible {
@@ -19026,13 +19051,13 @@ html[data-theme='dark'] .hermes-paper {
   min-height: 2.6rem;
   min-width: min(100%, 16rem);
   padding: 0 2.25rem 0 0.95rem;
-  border: 1px solid var(--ledger-line, #e7e5e4);
+  border: 1px solid var(--ledger-line, var(--border));
   border-radius: 0.55rem;
-  background:
-    #ffffff
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2378716c' d='M1 1l5 5 5-5'/%3E%3C/svg%3E")
-    no-repeat right 0.9rem center;
-  color: var(--ledger-ink, #1c1917);
+  background-color: var(--ledger-surface, var(--card));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23a8a29e' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+  color: var(--ledger-ink, var(--foreground));
   font-family: var(--font-display), Georgia, serif;
   font-size: 1.05rem;
   font-weight: 500;
@@ -19041,7 +19066,7 @@ html[data-theme='dark'] .hermes-paper {
 }
 
 .obs-chain-select:focus-visible {
-  outline: 2px solid rgba(28, 25, 23, 0.35);
+  outline: 2px solid color-mix(in srgb, var(--ledger-ink, var(--foreground)) 35%, transparent);
   outline-offset: 2px;
 }
 
@@ -19490,8 +19515,8 @@ html.dark .obs-portrait-desc,
 }
 
 .obs-chain-table th {
-  background: var(--ledger-bg, #fafaf9);
-  color: var(--ledger-faint, #a8a29e);
+  background: var(--ledger-bg, var(--background));
+  color: var(--ledger-faint, var(--faint));
   font-family: var(--font-plex), monospace;
   font-size: 0.65rem;
   font-weight: 500;
@@ -19500,35 +19525,35 @@ html.dark .obs-portrait-desc,
 }
 
 .obs-chain-table td {
-  color: #44403c;
+  color: var(--paper-body, var(--ledger-muted, var(--muted)));
   line-height: 1.45;
 }
 
 .obs-chain-table tr.is-resolved td,
 .obs-chain-table tr.is-system td {
-  color: #78716c;
+  color: var(--ledger-muted, var(--muted));
 }
 
 .obs-chain-num {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  color: #1c1917 !important;
+  color: var(--ledger-ink, var(--foreground)) !important;
 }
 
 .obs-chain-mono {
   font-family: var(--font-plex), monospace;
   font-size: 0.78rem;
-  color: #a8a29e !important;
+  color: var(--ledger-faint, var(--faint)) !important;
 }
 
 .obs-chain-empty {
   padding: 1.75rem 0.85rem !important;
-  color: #78716c !important;
+  color: var(--ledger-muted, var(--muted)) !important;
   line-height: 1.55;
 }
 
 .obs-chain-belief-link {
-  color: #1c1917;
+  color: var(--ledger-ink, var(--foreground));
   text-decoration: underline;
   text-underline-offset: 0.15em;
 }
