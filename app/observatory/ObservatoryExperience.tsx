@@ -130,7 +130,7 @@ export default function ObservatoryExperience({
   const { process } = hermes.scoreboard;
 
   return (
-    <main className="hermes-paper ledger-doc obs-chain min-h-screen bg-background pt-16 text-foreground antialiased">
+    <main className="hermes-paper ledger-doc obs-chain min-h-screen bg-background pt-16 text-foreground antialiased [color-scheme:inherit]">
       <SiteHeader />
 
       <section className="hermes-paper-shell ledger-doc-intro obs-chain-intro">

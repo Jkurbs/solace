@@ -8068,8 +8068,8 @@ h2 {
   }
 
   .trust-score-grid-secondary {
-    border-top: 1px solid var(--trust-line, #e7e5e4);
-    background: rgba(0, 0, 0, 0.015);
+    border-top: 1px solid var(--trust-line, var(--border));
+    background: color-mix(in srgb, var(--trust-ink, var(--foreground)) 3%, transparent);
   }
 
   .trust-score-grid-secondary .trust-score-cell strong {
@@ -8098,10 +8098,10 @@ h2 {
   .trust-score-toggle {
     appearance: none;
     margin: 0;
-    border: 1px solid var(--trust-line, #e7e5e4);
+    border: 1px solid var(--trust-line, var(--border));
     border-radius: 0.3rem;
-    background: var(--trust-surface, #ffffff);
-    color: #57534e;
+    background: var(--trust-surface, var(--card));
+    color: var(--paper-body, var(--trust-muted, var(--muted)));
     cursor: pointer;
     font-family: var(--font-plex), monospace;
     font-size: 0.58rem;
@@ -8110,27 +8110,27 @@ h2 {
     min-height: 1.85rem;
     padding: 0 0.75rem;
     text-transform: uppercase;
-    transition: border-color 0.2s ease, color 0.2s ease;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
   }
 
   .trust-score-toggle:hover {
-    border-color: var(--trust-faint, #a8a29e);
-    color: var(--trust-ink, #1c1917);
+    border-color: var(--trust-faint, var(--faint));
+    color: var(--trust-ink, var(--foreground));
   }
 
   .trust-score-toggle:focus-visible {
-    outline: 1px solid var(--trust-faint, #a8a29e);
+    outline: 1px solid var(--trust-faint, var(--faint));
     outline-offset: 2px;
   }
 
   .trust-page .theme-toggle {
-    border-color: rgba(28, 25, 23, 0.18);
-    color: var(--trust-muted, #78716c);
+    border-color: color-mix(in srgb, var(--trust-ink, var(--foreground)) 18%, transparent);
+    color: var(--trust-muted, var(--muted));
   }
 
   .trust-page .theme-toggle:hover {
-    border-color: rgba(28, 25, 23, 0.35);
-    color: var(--trust-ink, #1c1917);
+    border-color: color-mix(in srgb, var(--trust-ink, var(--foreground)) 35%, transparent);
+    color: var(--trust-ink, var(--foreground));
   }
 
   /* Table: hairline grid, warm ink */
@@ -8338,7 +8338,7 @@ h2 {
   }
 
   .trust-pager strong {
-    color: #57534e;
+    color: var(--paper-body, var(--trust-muted, var(--muted)));
     font-family: var(--font-plex), monospace;
     font-size: 0.62rem;
     font-weight: 600;
@@ -8349,10 +8349,10 @@ h2 {
   .trust-pager-btn {
     appearance: none;
     margin: 0;
-    border: 1px solid var(--trust-line, #e7e5e4);
+    border: 1px solid var(--trust-line, var(--border));
     border-radius: 0.3rem;
-    background: var(--trust-surface, #ffffff);
-    color: #57534e;
+    background: var(--trust-surface, var(--card));
+    color: var(--paper-body, var(--trust-muted, var(--muted)));
     cursor: pointer;
     font-family: var(--font-plex), monospace;
     font-size: 0.58rem;
@@ -8362,16 +8362,16 @@ h2 {
     min-width: 5.5rem;
     padding: 0 0.75rem;
     text-transform: uppercase;
-    transition: border-color 0.2s ease, color 0.2s ease;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
   }
 
   .trust-pager-btn:hover:not(:disabled) {
-    border-color: var(--trust-faint, #a8a29e);
-    color: var(--trust-ink, #1c1917);
+    border-color: var(--trust-faint, var(--faint));
+    color: var(--trust-ink, var(--foreground));
   }
 
   .trust-pager-btn:focus-visible {
-    outline: 1px solid var(--trust-faint, #a8a29e);
+    outline: 1px solid var(--trust-faint, var(--faint));
     outline-offset: 2px;
   }
 
@@ -8576,7 +8576,7 @@ h2 {
 }
 
 .trust-verify-source summary:hover {
-  color: #3d6b4f;
+  color: var(--trust-live, var(--success));
 }
 
 .trust-verify-source pre {
@@ -8584,13 +8584,14 @@ h2 {
   padding: 1rem 1.2rem;
   max-height: 26rem;
   overflow: auto;
-  border: 1px solid var(--trust-line, #e7e5e4);
+  border: 1px solid var(--trust-line, var(--border));
   border-radius: 0.4rem;
-  background: var(--trust-bg, #fafaf9);
+  background: var(--trust-bg, var(--background));
+  color: var(--trust-ink, var(--foreground));
 }
 
 .trust-verify-source code {
-  color: #57534e;
+  color: var(--paper-body, var(--trust-muted, var(--muted)));
   font-family: var(--font-plex), monospace;
   font-size: 0.7rem;
   line-height: 1.75;
@@ -8615,16 +8616,16 @@ h2 {
 }
 
 .trust-verify-ok {
-  color: #3d6b4f;
+  color: var(--trust-live, var(--success));
 }
 
 .trust-verify-ok span {
   display: block;
-  color: #a8a29e;
+  color: var(--trust-faint, var(--faint));
 }
 
 .trust-verify-fail {
-  color: #b45a52;
+  color: var(--trust-neg, #c45c5c);
 }
 
 /* Empty row placeholder */
@@ -15581,12 +15582,7 @@ html.dark .home-research ::selection,
    Hermes product page, paper light, X Money rhythm
    ═══════════════════════════════════════════════════════════ */
 .hermes-paper {
-  /* Follow site theme (html[data-theme]); paper tokens already flip light/dark. */
-  --background: var(--paper-warm);
-  --foreground: var(--paper-ink);
-  --muted: var(--paper-muted);
-  --border: var(--paper-line);
-  --surface: var(--card);
+  /* Inherit site theme tokens from html[data-theme] — no locked light palette. */
   width: 100%;
   max-width: 100%;
   overflow-x: clip;
@@ -15636,8 +15632,9 @@ html.dark .home-research ::selection,
   top: 0;
   z-index: 50;
   border-bottom: 1px solid transparent;
-  background: rgba(250, 250, 249, 0.88);
+  background: color-mix(in srgb, var(--background) 88%, transparent);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .hermes-paper-header-inner {
@@ -16622,25 +16619,30 @@ html.dark .home-research ::selection,
    Theme-aware: tokens follow html[data-theme] / site CSS vars.
    ═══════════════════════════════════════════════════════════ */
 .ledger-doc {
+  /* Every nested ledger/trust surface reads these — keep them theme-bound. */
   --ledger-ink: var(--foreground);
   --ledger-muted: var(--muted);
   --ledger-faint: var(--faint);
   --ledger-line: var(--border);
   --ledger-surface: var(--card);
   --ledger-bg: var(--background);
+  --ledger-elevated: var(--surface);
   --ledger-pos: var(--success);
-  --ledger-neg: #c45c5c;
+  --ledger-neg: color-mix(in srgb, #c45c5c 92%, var(--foreground));
+  --ledger-warn: var(--warning);
+  --ledger-body: var(--paper-body, var(--muted));
   /* Bridge trust-* components nested inside the observatory ledger */
   --trust-bg: var(--ledger-bg);
   --trust-ink: var(--ledger-ink);
   --trust-muted: var(--ledger-muted);
   --trust-faint: var(--ledger-faint);
   --trust-line: var(--ledger-line);
-  --trust-line-soft: color-mix(in srgb, var(--ledger-line) 75%, transparent);
+  --trust-line-soft: color-mix(in srgb, var(--ledger-line) 80%, var(--ledger-bg));
   --trust-surface: var(--ledger-surface);
   --trust-live: var(--ledger-pos);
   --trust-neg: var(--ledger-neg);
-  --trust-warm: var(--warning);
+  --trust-warm: var(--ledger-warn);
+  color-scheme: inherit;
   width: 100%;
   max-width: 100%;
   overflow-x: clip;
@@ -16648,9 +16650,12 @@ html.dark .home-research ::selection,
   background: var(--ledger-bg);
 }
 
-html[data-theme='light'] .ledger-doc,
-html:not([data-theme='dark']):not(.dark) .ledger-doc {
-  --ledger-neg: #9f3a3a;
+/* Native controls (select/option) follow page scheme */
+.ledger-doc select,
+.ledger-doc option,
+.ledger-doc button,
+.ledger-doc input {
+  color-scheme: inherit;
 }
 
 .ledger-doc-intro {
@@ -17079,7 +17084,7 @@ html:not([data-theme='dark']):not(.dark) .ledger-doc {
   border: 1px solid var(--ledger-line);
   border-radius: 0.65rem;
   background: var(--ledger-surface);
-  box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ledger-ink) 6%, transparent);
 }
 
 .ledger-doc-panel h2 {
@@ -17123,7 +17128,7 @@ html:not([data-theme='dark']):not(.dark) .ledger-doc {
 }
 
 .ledger-doc-panel td {
-  color: var(--paper-body, var(--ledger-muted));
+  color: var(--ledger-body);
   font-size: 0.92rem;
   line-height: 1.55;
 }
@@ -17201,15 +17206,15 @@ html:not([data-theme='dark']):not(.dark) .ledger-doc {
   padding: 0.65rem 1.15rem;
   border-color: var(--ledger-pos);
   background: var(--ledger-pos);
-  color: #fafaf9;
+  color: var(--background);
   font-size: 0.72rem;
   letter-spacing: 0.1em;
 }
 
 .ledger-verify-strip .trust-verify-run.is-primary button:hover {
-  border-color: #2f5540;
-  background: #2f5540;
-  color: #fafaf9;
+  border-color: color-mix(in srgb, var(--ledger-pos) 82%, var(--ledger-ink));
+  background: color-mix(in srgb, var(--ledger-pos) 82%, var(--ledger-ink));
+  color: var(--background);
 }
 
 .ledger-verify-strip .trust-verify-run.is-primary button:disabled {
@@ -17263,7 +17268,7 @@ html:not([data-theme='dark']):not(.dark) .ledger-doc {
 }
 
 .ledger-verify-offline .trust-verify-pre code {
-  color: #57534e;
+  color: var(--ledger-body);
   font-family: var(--font-plex), monospace;
   font-size: 0.78rem;
   line-height: 1.7;
@@ -17361,7 +17366,7 @@ html:not([data-theme='dark']):not(.dark) .ledger-doc {
   height: 0.55rem;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.04);
+  background: color-mix(in srgb, var(--ledger-ink) 6%, transparent);
   gap: 1px;
 }
 
@@ -17372,27 +17377,27 @@ html:not([data-theme='dark']):not(.dark) .ledger-doc {
 }
 
 .ledger-posture-seg.is-deployed {
-  background: #3d6b4f;
+  background: var(--ledger-pos);
 }
 
 .ledger-posture-seg.is-selective {
-  background: #6b8f71;
+  background: color-mix(in srgb, var(--ledger-pos) 70%, var(--ledger-muted));
 }
 
 .ledger-posture-seg.is-defensive {
-  background: #c4a35a;
+  background: var(--ledger-warn);
 }
 
 .ledger-posture-seg.is-standing {
-  background: #a8a29e;
+  background: var(--ledger-faint);
 }
 
 .ledger-posture-seg.is-risk {
-  background: #78716c;
+  background: var(--ledger-muted);
 }
 
 .ledger-posture-seg.is-other {
-  background: #d6d3d1;
+  background: color-mix(in srgb, var(--ledger-faint) 55%, var(--ledger-line));
 }
 
 .ledger-posture-ribbon-legend {
@@ -17422,23 +17427,23 @@ html:not([data-theme='dark']):not(.dark) .ledger-doc {
 }
 
 .ledger-posture-dot.is-deployed {
-  background: #3d6b4f;
+  background: var(--ledger-pos);
 }
 
 .ledger-posture-dot.is-selective {
-  background: #6b8f71;
+  background: color-mix(in srgb, var(--ledger-pos) 70%, var(--ledger-muted));
 }
 
 .ledger-posture-dot.is-defensive {
-  background: #c4a35a;
+  background: var(--ledger-warn);
 }
 
 .ledger-posture-dot.is-standing {
-  background: #a8a29e;
+  background: var(--ledger-faint);
 }
 
 .ledger-posture-dot.is-risk {
-  background: #78716c;
+  background: var(--ledger-muted);
 }
 
 /* ── Sticky live panel (outside table) ──────────────────── */
@@ -17452,10 +17457,11 @@ html:not([data-theme='dark']):not(.dark) .ledger-doc {
   align-items: start;
   margin: 0;
   padding: 0.95rem 1.25rem;
-  border-bottom: 1px solid rgba(61, 107, 79, 0.22);
-  background: rgba(250, 250, 249, 0.96);
+  border-bottom: 1px solid color-mix(in srgb, var(--ledger-pos) 28%, var(--ledger-line));
+  background: color-mix(in srgb, var(--ledger-bg) 92%, var(--ledger-pos));
   backdrop-filter: blur(10px);
-  box-shadow: 0 1px 0 rgba(61, 107, 79, 0.08);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ledger-pos) 12%, transparent);
 }
 
 .ledger-live-panel.is-flat {
@@ -17654,7 +17660,7 @@ html:not([data-theme='dark']):not(.dark) .ledger-doc {
 }
 
 .ledger-row-detail-claim.is-warn {
-  color: #a67c52;
+  color: var(--ledger-warn);
 }
 
 .ledger-row-detail-claim.is-muted {
@@ -17750,7 +17756,7 @@ html:not([data-theme='dark']):not(.dark) .ledger-doc {
 
 .ledger-row-detail-hashes dd {
   margin: 0.2rem 0 0;
-  color: #57534e;
+  color: var(--ledger-body);
 }
 
 .ledger-row-detail-hashes-note {
@@ -17798,7 +17804,7 @@ html:not([data-theme='dark']):not(.dark) .ledger-doc {
   border-color: var(--ledger-line);
   border-radius: 0.65rem;
   background: var(--ledger-surface);
-  box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ledger-ink) 6%, transparent);
 }
 
 .ledger-doc .trust-pnl-pos {
@@ -17828,9 +17834,13 @@ html:not([data-theme='dark']):not(.dark) .ledger-doc {
   }
 }
 
-/* Dark preference: keep Hermes paper still paper (product page consistency).
-   Site-wide dark still works via tokens on other pages. */
-html[data-theme='dark'] .hermes-paper {
+/*
+  Product marketing pages (.hermes-paper only) may keep a paper mock window.
+  Observatory / public ledger (.hermes-paper.ledger-doc / .obs-chain) must follow
+  site light/dark — do NOT force light tokens onto those surfaces.
+*/
+html[data-theme='dark'] .hermes-paper:not(.ledger-doc):not(.obs-chain),
+html.dark .hermes-paper:not(.ledger-doc):not(.obs-chain) {
   --background: #fafaf9;
   --foreground: #1c1917;
   --muted: #78716c;
@@ -17838,6 +17848,32 @@ html[data-theme='dark'] .hermes-paper {
   --surface: #ffffff;
   --faint: #a8a29e;
   color-scheme: light;
+}
+
+/* Observatory ledger: explicit dark surfaces so nested trust UI never inherits paper-light. */
+html[data-theme='dark'] .ledger-doc,
+html.dark .ledger-doc {
+  color-scheme: dark;
+  --ledger-ink: var(--foreground);
+  --ledger-muted: var(--muted);
+  --ledger-faint: var(--faint);
+  --ledger-line: var(--border);
+  --ledger-surface: var(--card);
+  --ledger-bg: var(--background);
+  --ledger-elevated: var(--surface);
+  --ledger-body: var(--paper-body, var(--muted));
+  --trust-bg: var(--background);
+  --trust-ink: var(--foreground);
+  --trust-muted: var(--muted);
+  --trust-faint: var(--faint);
+  --trust-line: var(--border);
+  --trust-line-soft: color-mix(in srgb, var(--border) 75%, var(--background));
+  --trust-surface: var(--card);
+  --trust-live: var(--success);
+  --trust-neg: color-mix(in srgb, #c45c5c 90%, #fafafa);
+  --trust-warm: var(--warning);
+  background: var(--background);
+  color: var(--foreground);
 }
 
 /* ═══════════════════════════════════════════════════════════
