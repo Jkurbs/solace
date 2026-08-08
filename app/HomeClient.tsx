@@ -36,26 +36,66 @@ const simulationMetrics = (() => {
   return { met, total: conditions.length || 4 };
 })();
 
+/** Aggregate gate honesty: the public "not yet" count across every domain. */
+const gateTotals = (() => {
+  const all = gateDomains.flatMap((d) => d.conditions ?? []);
+  const met = all.filter((c) => c.status === 'met').length;
+  const partial = all.filter((c) => c.status === 'partial').length;
+  return { met, partial, total: all.length || 12 };
+})();
+
+/** The gate currently being worked — Glorya's revenue gate when present. */
+const workingGate = (() => {
+  const glorya = gateDomains.find((d) => d.id === 'glorya');
+  const conditions = glorya?.conditions ?? [];
+  const byName = conditions.find((c) =>
+    /revenue/i.test(String((c as { title?: string }).title ?? (c as { id?: string }).id ?? '')),
+  );
+  const firstUnmet = conditions.find((c) => c.status !== 'met');
+  const cond = byName ?? firstUnmet;
+  if (!cond) return null;
+  const c = cond as unknown as {
+    title?: string;
+    name?: string;
+    summary?: string;
+    description?: string;
+    latestMark?: string;
+    status?: string;
+  };
+  return {
+    domain: 'Glorya',
+    title: c.title ?? c.name ?? 'Working gate',
+    summary: c.summary ?? c.description ?? null,
+    latestMark: c.latestMark ?? null,
+    status: c.status ?? 'not met',
+  };
+})();
+
 const homepageQuestions = [
-  {
-    question: 'What is Solace?',
-    answer:
-      'An independent research company building instruments for disciplined decision-making under uncertainty. Hermes is the first. It begins with capital because financial markets provide rapid, ungameable feedback for learning.',
-  },
   {
     question: 'What is Hermes?',
     answer:
-      'An autonomous instrument that evaluates market liquidity, timing, and regime character to make capital allocation decisions on your behalf. Every decision is sealed on a cryptographically hashed public ledger before the outcome is known.',
+      'An autonomous instrument that evaluates market liquidity, timing, and regime character to make capital allocation decisions. Every decision is sealed on a cryptographically hashed public ledger before the outcome is known. Today it allocates founder capital — not customer funds.',
   },
   {
     question: 'Does Hermes manage customer funds?',
     answer:
-      'Not yet. Hermes currently allocates founder capital only. You can observe the public decision ledger in real time or test strategies using simulation capital. Real capital access opens in stages via a waitlist.',
+      'No — not yet. Hermes currently allocates founder capital only, and the full record is public. Outside capital opens in stages through the waitlist, and only after the gate conditions on the public board clear.',
   },
   {
-    question: 'How do I enter Hermes?',
+    question: 'How do I verify the record?',
     answer:
-      'Open the dashboard to run simulation capital with zero friction. You can inspect the public ledger anytime. When you are ready to allocate real capital, submit a request via the account dashboard waitlist.',
+      'Every decision is hashed and sealed before its outcome, chained to the previous row, so any edit breaks the chain in a way anyone can detect. Recompute the whole ledger in the Observatory — or offline with the open verification script. No account required.',
+  },
+  {
+    question: 'What happens if I join the waitlist?',
+    answer:
+      'You can open the dashboard and run simulation capital immediately, with zero financial risk. Real-capital access is offered in stages as gates clear. We store your email only to contact you about access — we never sell or share it.',
+  },
+  {
+    question: 'What is Solace?',
+    answer:
+      'An independent research company building instruments for disciplined decision-making under uncertainty. Hermes is the first. It begins with capital because financial markets provide rapid, ungameable feedback for learning.',
   },
 ];
 
@@ -107,6 +147,27 @@ export type HomeInstrumentSnapshot = {
   };
 };
 
+/** Latest sealed ledger row — the hero artifact. Wire from the ledger feed. */
+export type ChainHeadSummary = {
+  rowNumber: number;
+  recordId: string;
+  /** Full or shortened hash; displayed as-is. */
+  hash: string;
+  prevHash?: string;
+  /** Pre-formatted, e.g. "Aug 8, 2026, 12:50 AM EDT". */
+  sealedAtLabel: string;
+};
+
+/** External anchor status. Absent until the anchor job ships — by design. */
+export type AnchorStatus = {
+  /** e.g. "daily". */
+  cadence: string;
+  /** e.g. "6h ago". */
+  lastAnchoredLabel?: string;
+  /** Public proof: attestation repo, timestamp receipt, etc. */
+  href?: string;
+};
+
 /* ── Foundation: Vault seal icon ── */
 function SealIcon({ className }: { className?: string }) {
   return (
@@ -122,10 +183,14 @@ export default function HomeClient({
   hermesTelemetry,
   instruments,
   researchItems,
+  chainHead = null,
+  anchor = null,
 }: {
   hermesTelemetry: HermesTelemetry | null;
   instruments: HomeInstrumentSnapshot;
   researchItems: ResearchItem[];
+  chainHead?: ChainHeadSummary | null;
+  anchor?: AnchorStatus | null;
 }) {
   const reduceMotion = useReducedMotion();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -156,10 +221,14 @@ export default function HomeClient({
     };
   }, []);
 
+  const hermes = instruments.hermes;
+  const anchorClause = anchor ? `, anchored ${anchor.cadence}` : '';
+
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
-      {/* ── Hero: decision dust nebula ── */}
+
+      {/* ── 1 · Hero: claim + live sealed-row artifact ── */}
       <section className="hero-research hero-particle-section relative overflow-hidden">
         <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
           <HermesLiquidityFieldRender maxParticles={30000} />
@@ -182,31 +251,60 @@ export default function HomeClient({
             </motion.h1>
 
             <motion.p variants={fade} className="hero-particle-sub">
-              Solace reads market liquidity, models event probabilities, and enforces strict gate conditions before capital moves—logging every decision to an uneditable public ledger.
+              Hermes allocates founder capital under strict risk gates. Every decision is sealed
+              before the outcome is known, chained to the last{anchorClause} — so the record can
+              be verified, not trusted.
             </motion.p>
 
             <motion.p variants={fade} className="hero-particle-dek">
-              Hermes, the first instrument, evaluates market structure and allocates capital autonomously under strict risk gates, with every decision hashed and sealed prior to resolution.
+              Hermes, the first instrument, evaluates market structure and allocates capital
+              autonomously under strict risk gates, with every decision hashed and sealed prior
+              to resolution.
             </motion.p>
 
             <motion.div variants={fade} className="hero-particle-ctas">
               <Link href="/hermes" className="hero-cta hero-cta-primary hero-cta-on-void">
                 Meet Hermes
               </Link>
-              <Link href="/brief" className="hero-cta hero-cta-secondary">
-                Read the brief
+              <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-secondary">
+                Verify the record
               </Link>
             </motion.div>
 
-            {instruments.hermes.sealedDecisions != null &&
-              instruments.hermes.sealedDecisions > 0 && (
+            {chainHead ? (
+              /* The differentiator, shown not told: one real sealed row, inline. */
+              <motion.div variants={fade} className="mt-10 max-w-lg">
+                <Link
+                  href={OBSERVATORY_HERMES_LEDGER_PATH}
+                  className="group block rounded-xl border border-foreground/10 bg-background/60 backdrop-blur-sm px-4 py-3 font-mono text-[0.7rem] md:text-xs leading-relaxed text-muted transition-colors hover:border-foreground/25"
+                >
+                  <span className="block text-foreground/80 tabular-nums">
+                    #{chainHead.rowNumber} · {chainHead.recordId} · {chainHead.hash}
+                  </span>
+                  <span className="block mt-1">
+                    sealed {chainHead.sealedAtLabel}
+                    {anchor?.lastAnchoredLabel ? ` · anchored ${anchor.lastAnchoredLabel}` : ''}
+                  </span>
+                  {chainHead.prevHash && (
+                    <span className="block mt-1 opacity-80">
+                      prev {chainHead.prevHash} → chained{' '}
+                      <span className="opacity-60 transition-opacity group-hover:opacity-100">
+                        · recompute ↗
+                      </span>
+                    </span>
+                  )}
+                </Link>
+              </motion.div>
+            ) : (
+              hermes.sealedDecisions != null &&
+              hermes.sealedDecisions > 0 && (
                 <motion.div variants={fade} className="hero-decision-count hero-decision-on-void">
                   <Link
                     href={OBSERVATORY_HERMES_LEDGER_PATH}
                     className="hero-decision-count-link group"
                   >
                     <span className="hero-decision-count-value font-mono tabular-nums">
-                      {instruments.hermes.sealedDecisions.toLocaleString('en-US')}
+                      {hermes.sealedDecisions.toLocaleString('en-US')}
                     </span>
                     <span className="hero-decision-count-copy">
                       <span className="hero-decision-count-label">
@@ -222,17 +320,95 @@ export default function HomeClient({
                     </span>
                   </Link>
                 </motion.div>
-              )}
+              )
+            )}
           </div>
         </motion.div>
       </section>
 
-      {/* ── Instruments ── */}
+      {/* ── 2 · Status strip: honest numbers, founder capital explicit ── */}
+      <section aria-label="Live status" className="border-t border-border px-5 py-10 md:py-12">
+        <div className="mx-auto max-w-6xl">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4">
+            <div>
+              <dt className="text-xs uppercase tracking-[0.18em] text-muted">Hermes</dt>
+              <dd className="mt-2 text-sm leading-relaxed">
+                <span className="font-medium">Live · founder capital</span>
+                {hermes.sealedDecisions != null && (
+                  <span className="block text-muted font-mono tabular-nums mt-1">
+                    {hermes.sealedDecisions.toLocaleString('en-US')} sealed
+                    {hermes.standDownRate ? ` · ${hermes.standDownRate} standing down` : ''}
+                    <sup className="ml-0.5 text-muted/70">1</sup>
+                  </span>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-[0.18em] text-muted">Oracle</dt>
+              <dd className="mt-2 text-sm leading-relaxed">
+                <span className="font-medium">Live · BTC / ETH</span>
+                <span className="block text-muted font-mono tabular-nums mt-1">
+                  {instruments.oracleActiveCount != null
+                    ? `${instruments.oracleActiveCount} active predictions`
+                    : 'calibration in progress'}
+                  <sup className="ml-0.5 text-muted/70">2</sup>
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-[0.18em] text-muted">Glorya</dt>
+              <dd className="mt-2 text-sm leading-relaxed">
+                <span className="font-medium">Evaluating · no live capital</span>
+                <span className="block text-muted font-mono tabular-nums mt-1">
+                  {instruments.glorya.evaluated} assessed · 0 sealed
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-[0.18em] text-muted">Ledger</dt>
+              <dd className="mt-2 text-sm leading-relaxed">
+                <span className="font-medium">Sealed before outcome</span>
+                <span className="block text-muted font-mono tabular-nums mt-1 truncate">
+                  {chainHead ? `head ${chainHead.hash}` : 'hash-chained'}
+                  {anchor ? ` · anchored ${anchor.cadence}` : ''}
+                  {anchor && <sup className="ml-0.5 text-muted/70">3</sup>}
+                </span>
+              </dd>
+            </div>
+          </dl>
+
+          {/* Methodology footnotes: numbers stop being marketing and become exhibits. */}
+          <div className="mt-8 flex flex-wrap gap-x-6 gap-y-1.5 text-[0.7rem] text-muted/80 font-mono">
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hover:text-foreground transition-colors">
+              1 definitions &amp; public contract →
+            </Link>
+            <Link href="/oracle" className="hover:text-foreground transition-colors">
+              2 what a good Brier score is →
+            </Link>
+            {anchor?.href && (
+              <a
+                href={anchor.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground transition-colors"
+              >
+                3 what anchoring prevents →
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3 · Instruments: weighted by proof, not promise ── */}
       <section className="home-instruments-section px-5 py-16 md:py-28 border-t border-border">
         <div className="mx-auto max-w-6xl">
-          <h2 className="home-instruments-kicker text-xs uppercase tracking-[0.2em] text-muted mb-10 md:mb-12">
+          <h2 className="home-instruments-kicker text-xs uppercase tracking-[0.2em] text-muted mb-3">
             Instruments
           </h2>
+          <p className="text-sm text-muted max-w-xl mb-10 md:mb-12 leading-relaxed">
+            Three instruments, one discipline — weighted by proof, not promise. Hermes runs
+            founder capital only; outside capital opens through the gates.
+          </p>
 
           <InstrumentPortraits
             hermes={instruments.hermes}
@@ -264,38 +440,172 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── Charter ── */}
+      {/* ── 4 · Verify: the record is checkable, not claimable ── */}
       <section className="home-charter-section px-5 py-16 md:py-24 border-t border-border">
         <div className="hero-charter mx-auto max-w-2xl">
           <div className="hero-charter-rule" aria-hidden="true" />
           <SealIcon className="hero-charter-seal w-10 h-10 md:w-11 md:h-11 text-muted mx-auto" />
-          <p className="hero-charter-kicker">Charter</p>
+          <p className="hero-charter-kicker">Verification</p>
           <p className="hero-charter-body">
-            Every decision any live instrument makes is recorded in a sealed ledger before the
-            outcome is known. Each ledger can be inspected in the Observatory.
+            The record is checkable, not claimable.
           </p>
-          <div className="hero-charter-actions">
+
+          <ol className="mt-8 space-y-5 text-left max-w-xl mx-auto">
+            <li className="flex gap-4">
+              <span className="font-mono text-xs text-muted mt-1 shrink-0 tabular-nums">01</span>
+              <p className="text-sm md:text-[0.95rem] leading-relaxed text-muted">
+                <span className="text-foreground font-medium">Sealed before the outcome.</span>{' '}
+                Every decision is hashed and timestamped before capital moves — and chained to
+                the previous row, so any edit breaks the chain.
+              </p>
+            </li>
+            <li className="flex gap-4">
+              <span className="font-mono text-xs text-muted mt-1 shrink-0 tabular-nums">02</span>
+              <p className="text-sm md:text-[0.95rem] leading-relaxed text-muted">
+                <span className="text-foreground font-medium">
+                  {anchor ? `Anchored ${anchor.cadence}.` : 'Witnessed publicly.'}
+                </span>{' '}
+                {anchor
+                  ? 'The chain head is published outside our control, so history cannot be rewritten — even by us.'
+                  : 'The chain head is public. External anchoring ships next, so history cannot be rewritten — even by us.'}
+              </p>
+            </li>
+            <li className="flex gap-4">
+              <span className="font-mono text-xs text-muted mt-1 shrink-0 tabular-nums">03</span>
+              <p className="text-sm md:text-[0.95rem] leading-relaxed text-muted">
+                <span className="text-foreground font-medium">Recompute it yourself.</span>{' '}
+                Verify the full chain in the browser, or offline with the open script. No
+                account, no permission, no trust required.
+              </p>
+            </li>
+          </ol>
+
+          <div className="hero-charter-actions mt-10 flex flex-wrap justify-center gap-3">
             <Link
               href={OBSERVATORY_HERMES_LEDGER_PATH}
               className="hero-cta hero-cta-secondary"
             >
-              Inspect the Observatory
+              Open the Observatory
               <span aria-hidden="true" className="ml-1.5 text-[0.85em] opacity-60">
                 →
               </span>
+            </Link>
+            <Link
+              href="/brief#section-07"
+              className="text-sm text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30 self-center"
+            >
+              What this proves — and what it doesn't
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Research shelf ── */}
+      {/* ── 5 · Gates: domains are earned — the public "not yet" board ── */}
+      <section className="border-t border-border px-5 py-16 md:py-24">
+        <div className={homeShell}>
+          <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">Gates</h2>
+          <p className="font-serif text-2xl md:text-3xl font-medium max-w-xl leading-snug">
+            Domains are earned.{' '}
+            <span className="text-muted">
+              {gateTotals.met} of {gateTotals.total} expansion conditions met — and the board is
+              public.
+            </span>
+          </p>
+
+          {workingGate && (
+            <Link href="/gates" className="group mt-10 block border border-border rounded-xl p-6 md:p-7 hover:border-foreground/25 transition-colors">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+                <p className="text-xs uppercase tracking-[0.15em] text-muted">
+                  Working gate · {workingGate.domain}
+                </p>
+                <span className="text-xs text-muted font-mono uppercase tracking-[0.1em]">
+                  {workingGate.status}
+                </span>
+              </div>
+              <h3 className="mt-3 font-serif text-xl md:text-2xl font-medium leading-tight group-hover:opacity-70 transition-opacity">
+                {workingGate.title}
+              </h3>
+              {workingGate.summary && (
+                <p className="mt-2 text-sm text-muted leading-relaxed max-w-2xl">
+                  {workingGate.summary}
+                </p>
+              )}
+              {workingGate.latestMark && (
+                <p className="mt-3 text-xs text-muted font-mono">
+                  Latest mark · {workingGate.latestMark}
+                </p>
+              )}
+              <span className="mt-4 inline-block text-sm font-medium underline underline-offset-4 decoration-foreground/20 group-hover:decoration-foreground/60 transition-all">
+                See the full board
+              </span>
+            </Link>
+          )}
+
+          {!workingGate && (
+            <div className="mt-10">
+              <Link
+                href="/gates"
+                className="text-sm font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
+              >
+                See the full board
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── 6 · Operator: one person, in public, accountable by name ── */}
+      <section className="border-t border-border px-5 py-16 md:py-24">
+        <div className={homeShell}>
+          <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">Operator</h2>
+          <p className="font-serif text-2xl md:text-3xl font-medium max-w-xl leading-snug">
+            Built and operated by one person, in public.
+          </p>
+          <div className="mt-6 max-w-2xl space-y-4 text-muted leading-relaxed">
+            <p>
+              <span className="text-foreground font-medium">Kerby Jean</span> — software
+              engineer, four years building production systems at Apple. No institutional
+              trading background, and no intention of implying otherwise.
+            </p>
+            <p>
+              Founder capital, a public ledger, and gates that must clear before Solace expands.
+              The operating claim is unproven — which is exactly why everything on this site is
+              checkable.
+            </p>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <Link
+              href="/brief"
+              className="font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
+            >
+              Read the brief
+            </Link>
+            <a
+              href="https://github.com/Jkurbs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
+            >
+              GitHub
+            </a>
+            <a
+              href="mailto:hello@solace.fyi"
+              className="text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
+            >
+              hello@solace.fyi
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 7 · Research shelf: trimmed to what exists ── */}
       <section className="border-t border-border px-5 py-20 md:py-28">
         <div className={homeShell}>
           <div className="flex flex-wrap items-end justify-between gap-4 mb-12">
             <div>
               <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">Research</h2>
               <p className="font-serif text-2xl md:text-3xl font-medium max-w-xl leading-snug">
-                Notes, announcements, and the technical brief.
+                The brief and the latest notes. Dated, versioned, superseded in public.
               </p>
             </div>
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
@@ -321,7 +631,7 @@ export default function HomeClient({
           </div>
 
           <div className="divide-y divide-border border-t border-border">
-            {researchItems.map((item) => (
+            {researchItems.slice(0, 2).map((item) => (
               <Link
                 key={`${item.kind}-${item.href}-${item.title}`}
                 href={item.href}
@@ -348,7 +658,7 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── FAQ ── */}
+      {/* ── FAQ: reordered by actual visitor questions ── */}
       <section id="faq" className="border-t border-border px-5 py-20 md:py-28 scroll-mt-24">
         <div className={homeShell}>
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-12">Questions</h2>
