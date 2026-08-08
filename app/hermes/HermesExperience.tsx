@@ -36,6 +36,14 @@ export type HermesProof = {
   timeline: HermesTimelineEntry[];
 };
 
+/** External anchor status. Absent until the anchor job ships — by design. */
+export type HermesAnchorStatus = {
+  /** e.g. "daily". */
+  cadence: string;
+  /** Public proof: attestation repo, timestamp receipt, etc. */
+  href?: string;
+};
+
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
 const fade = {
@@ -70,7 +78,7 @@ const features = [
   {
     num: '04',
     title: 'Logs before it acts',
-    desc: 'Every decision is timestamped and sealed in the public ledger. The record cannot be edited after the fact.',
+    desc: 'Every decision is timestamped and sealed in the public ledger, chained to the row before it — so any edit is detectable by anyone.',
     visual: 'log' as const,
   },
 ] as const;
@@ -111,7 +119,7 @@ function PhoneMock() {
             <em>Simulation</em>
           </div>
           <div className="hmk-phone-body">
-            <span className="hmk-phone-label">Simulated allocation</span>
+            <span className="hmk-phone-label">Simulated allocation · not live capital</span>
             <strong className="hmk-phone-value">$50,897</strong>
             <span className="hmk-phone-delta is-pos">+$19,692 (+63.1%)</span>
             <div className="hmk-phone-rows">
@@ -136,10 +144,20 @@ function PhoneMock() {
   );
 }
 
+/* Small "Illustrative" tag for decorative visuals. Add to CSS:
+   .hmk-viz-tag { position:absolute; top:8px; right:10px; font:500 9px/1
+     ui-monospace,monospace; letter-spacing:.12em; text-transform:uppercase;
+     opacity:.45 }
+   and give .hmk-viz { position:relative } if it isn't already.            */
+function IllustrativeTag() {
+  return <span className="hmk-viz-tag">Illustrative</span>;
+}
+
 function FeatureVisual({ kind }: { kind: (typeof features)[number]['visual'] }) {
   if (kind === 'structure') {
     return (
       <div className="hmk-viz hmk-viz-bars" aria-hidden="true">
+        <IllustrativeTag />
         <div className="hmk-viz-bars-track">
           {[40, 55, 35, 70, 45, 85, 30, 75, 50, 90, 40, 65].map((h, i) => (
             <i
@@ -149,13 +167,14 @@ function FeatureVisual({ kind }: { kind: (typeof features)[number]['visual'] }) 
             />
           ))}
         </div>
-        <span>Live market structure read</span>
+        <span>Market structure read · example</span>
       </div>
     );
   }
   if (kind === 'edge') {
     return (
       <div className="hmk-viz hmk-viz-edge" aria-hidden="true">
+        <IllustrativeTag />
         <div>
           <strong>3.2%</strong>
           <em>Market implied</em>
@@ -165,13 +184,14 @@ function FeatureVisual({ kind }: { kind: (typeof features)[number]['visual'] }) 
           <strong className="is-pos">8.7%</strong>
           <em>Hermes reads</em>
         </div>
-        <span className="hmk-viz-caption">Edge detection: risk vs reward</span>
+        <span className="hmk-viz-caption">Edge detection: risk vs reward · example</span>
       </div>
     );
   }
   if (kind === 'size') {
     return (
       <div className="hmk-viz hmk-viz-size" aria-hidden="true">
+        <IllustrativeTag />
         {[
           { label: '2.1% sizing', w: 72 },
           { label: '1.5% sizing', w: 52 },
@@ -182,29 +202,37 @@ function FeatureVisual({ kind }: { kind: (typeof features)[number]['visual'] }) 
             <span>{row.label}</span>
           </div>
         ))}
-        <span className="hmk-viz-caption">Position sizing by conviction</span>
+        <span className="hmk-viz-caption">Position sizing by conviction · example</span>
       </div>
     );
   }
   return (
     <div className="hmk-viz hmk-viz-log" aria-hidden="true">
+      <IllustrativeTag />
       {[
-        { name: 'BTC long', pnl: '+$2,142', pos: true },
-        { name: 'ETH/BTC spread', pnl: '+$1,890', pos: true },
-        { name: '2s10s curve', pnl: '−$612', pos: false },
-        { name: 'Volatility long', pnl: '+$3,050', pos: true },
+        /* Matches instruments that appear in the live ledger. */
+        { name: 'BTC-USDT long', pnl: '+$2,142', pos: true },
+        { name: 'ETH-USDT short', pnl: '+$1,890', pos: true },
+        { name: 'ARB-USDT long', pnl: '−$612', pos: false },
+        { name: 'XRP-USDT short', pnl: '+$3,050', pos: true },
       ].map((row) => (
         <div key={row.name} className="hmk-viz-log-row">
           <span>{row.name}</span>
           <strong className={row.pos ? 'is-pos' : 'is-neg'}>{row.pnl}</strong>
         </div>
       ))}
-      <span className="hmk-viz-caption">Sealed public ledger</span>
+      <span className="hmk-viz-caption">Sealed public ledger · example rows</span>
     </div>
   );
 }
 
-export default function HermesExperience({ proof }: { proof: HermesProof }) {
+export default function HermesExperience({
+  proof,
+  anchor = null,
+}: {
+  proof: HermesProof;
+  anchor?: HermesAnchorStatus | null;
+}) {
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
 
@@ -238,7 +266,8 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
     <main className="hmk pt-16">
       <SiteHeader />
 
-      {/* Hero */}
+      {/* Hero — leads with the live record; the simulation mock is demoted
+          to the "Experience Hermes" section where it contextually belongs. */}
       <section className="hmk-hero">
         <motion.div
           className="hmk-hero-card"
@@ -258,6 +287,7 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
           <motion.p variants={fade} className="hmk-hero-lede">
             Hermes reads market structure (liquidity, volatility, regime, risk) and decides whether
             to allocate capital, how much, and when to exit. Every decision is logged before it moves.
+            Today it runs founder capital only.
           </motion.p>
           <motion.div variants={fade} className="hmk-hero-actions">
             <ExperienceHermesButton className="hmk-btn hmk-btn-dark">
@@ -273,11 +303,36 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
               API docs
             </a>
           </motion.div>
-          <motion.div variants={fade} className="hmk-hero-phone">
-            <PhoneMock />
+
+          {/* Live record strip: real numbers, first thing below the CTAs. */}
+          <motion.div variants={fade} className="hmk-hero-live" aria-label="Live record">
+            <dl className="grid grid-cols-3 gap-4 max-w-md mx-auto font-mono tabular-nums">
+              <div>
+                <dt className="text-[0.65rem] uppercase tracking-[0.14em] opacity-60">Sealed</dt>
+                <dd className="mt-1 text-lg">{proof.sealedDecisions || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-[0.65rem] uppercase tracking-[0.14em] opacity-60">Closed</dt>
+                <dd className="mt-1 text-lg">{proof.closedPaths || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-[0.65rem] uppercase tracking-[0.14em] opacity-60">Hit rate</dt>
+                <dd className="mt-1 text-lg">
+                  {proof.hitRateLabel !== '-' ? proof.hitRateLabel : '—'}
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-3 text-xs opacity-60">
+              Founder capital · young sample n={proof.sampleSize}
+              {anchor ? ` · anchored ${anchor.cadence}` : ''} ·{' '}
+              <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="underline underline-offset-4">
+                verify it yourself →
+              </Link>
+            </p>
           </motion.div>
         </motion.div>
       </section>
+
       {/* Record metrics */}
       <section className="hmk-section hmk-metrics-section">
         <div className="hmk-shell hmk-center">
@@ -311,10 +366,18 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
             {proof.posture ? ` · ${proof.posture}` : ''}
             {proof.postureAge ? ` · ${proof.postureAge}` : ''}
           </p>
+          <p className="hmk-metrics-note">
+            <Link
+              href={OBSERVATORY_HERMES_LEDGER_PATH}
+              className="underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
+            >
+              How these numbers are computed — definitions &amp; public contract →
+            </Link>
+          </p>
         </div>
       </section>
 
-      {/* How it works */}
+      {/* How it works — visuals are illustrative and now say so. */}
       <section id="how" className="hmk-section hmk-features-section scroll-mt-24">
         <div className="hmk-shell">
           <div className="hmk-features">
@@ -403,27 +466,54 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
               <span className="hmk-trust-icon" aria-hidden="true">
                 ◯
               </span>
-              <strong>Fully inspectable</strong>
-              <p>The Observatory chain is public. Process, outcomes, and sealed waits.</p>
+              <strong>
+                {anchor ? 'Anchored, not just chained' : 'Fully inspectable'}
+              </strong>
+              <p>
+                {anchor
+                  ? `The chain head is anchored ${anchor.cadence} outside our control — history cannot be rewritten, even by us.`
+                  : 'The Observatory chain is public. Process, outcomes, and sealed waits — external anchoring ships next.'}
+              </p>
+              {anchor?.href && (
+                <a
+                  href={anchor.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
+                >
+                  Check the latest anchor →
+                </a>
+              )}
             </article>
           </div>
         </div>
       </section>
 
-      {/* Simulation CTA */}
+      {/* Simulation CTA — the phone mock lives here now, inside its own
+          context, labeled as simulation in the same weight as the numbers. */}
       <section className="hmk-section">
         <div className="hmk-shell">
           <div className="hmk-sim-card">
-            <h2>Experience Hermes with simulated capital.</h2>
-            <p>
-              Track Hermes&apos;s real decision loop with simulated money. Real markets, zero financial risk.
-              See how the system behaves before allocating real capital.
-            </p>
-            <ExperienceHermesButton className="hmk-btn hmk-btn-light">
-              Start simulation
-              <span aria-hidden="true">→</span>
-            </ExperienceHermesButton>
-            <p className="hmk-sim-note">Real capital allocation coming soon. Join the waitlist to be first.</p>
+            <div className="flex flex-col md:flex-row items-center gap-10 md:gap-14">
+              <div className="flex-1 text-center md:text-left">
+                <h2>Experience Hermes with simulated capital.</h2>
+                <p>
+                  Track Hermes&apos;s real decision loop with simulated money. Real markets, zero
+                  financial risk. See how the system behaves before allocating real capital.
+                </p>
+                <ExperienceHermesButton className="hmk-btn hmk-btn-light">
+                  Start simulation
+                  <span aria-hidden="true">→</span>
+                </ExperienceHermesButton>
+                <p className="hmk-sim-note">
+                  Simulated performance is not live performance — it shows the loop, not a track
+                  record. Real capital allocation coming soon. Join the waitlist to be first.
+                </p>
+              </div>
+              <div className="shrink-0">
+                <PhoneMock />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -440,6 +530,13 @@ export default function HermesExperience({ proof }: { proof: HermesProof }) {
               </div>
             ))}
           </dl>
+          <p className="hmk-sim-note mt-8">
+            Hermes is designed, built, and operated by one engineer —{' '}
+            <Link href="/brief" className="underline underline-offset-4">
+              in public, with a name attached
+            </Link>
+            . No team, no implied credentials, no outside capital.
+          </p>
           <p className="hmk-disclaimer">
             Hermes operates on founder capital. Nothing here is an offer to manage funds, provide investment
             advice, or sell automated trading services. Young sample. A record, not a claim.
