@@ -2709,6 +2709,17 @@ h2 {
     --brief-faint: var(--paper-muted);
     background: var(--background);
     color: var(--foreground);
+    overflow-x: clip;
+    max-width: 100%;
+  }
+
+  .brief-paper article,
+  .brief-paper .brief-paper-body,
+  .brief-paper .brief-paper-section-title,
+  .brief-paper .brief-paper-meta,
+  .brief-paper li {
+    min-width: 0;
+    overflow-wrap: break-word;
   }
 
   .brief-paper ::selection {
@@ -2744,14 +2755,15 @@ h2 {
 
   .brief-paper-title {
     margin: 0;
-    max-width: 22rem;
+    max-width: min(22rem, 100%);
     color: var(--foreground);
     font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
-    font-size: clamp(2.6rem, 6vw, 4.25rem);
+    font-size: clamp(2.1rem, 8.5vw, 4.25rem);
     font-weight: 500;
     line-height: 1.05;
     letter-spacing: -0.03em;
     text-wrap: balance;
+    overflow-wrap: break-word;
   }
 
   .brief-paper-meta {
@@ -5228,7 +5240,9 @@ h2 {
   .gate-board {
     grid-column: 1 / -1;
     margin-top: 0.4rem;
-    max-width: 34rem;
+    max-width: min(34rem, 100%);
+    width: 100%;
+    min-width: 0;
     border-top: 1px solid rgba(214, 208, 196, 0.18);
     padding-top: 1.05rem;
   }
@@ -5239,6 +5253,7 @@ h2 {
     letter-spacing: 0.22em;
     text-transform: uppercase;
     color: rgba(214, 208, 196, 0.6);
+    overflow-wrap: anywhere;
   }
 
   .gate-board ul {
@@ -5247,12 +5262,14 @@ h2 {
     gap: 0.6rem;
     list-style: none;
     padding: 0;
+    min-width: 0;
   }
 
   .gate-board li {
     display: flex;
     align-items: baseline;
     gap: 0.75rem;
+    min-width: 0;
     font-family: var(--font-plex), monospace;
     font-size: 0.68rem;
     letter-spacing: 0.13em;
@@ -5260,20 +5277,66 @@ h2 {
     color: rgba(250, 250, 250, 0.52);
   }
 
+  .gate-board li > span:nth-child(2) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
   .gate-index {
+    flex-shrink: 0;
     color: rgba(214, 208, 196, 0.5);
   }
 
   .gate-leader {
-    flex: 1;
-    min-width: 2rem;
+    flex: 1 1 auto;
+    min-width: 1.25rem;
     border-bottom: 1px dotted rgba(250, 250, 250, 0.2);
     transform: translateY(-0.22em);
   }
 
   .gate-status {
+    flex-shrink: 0;
     color: rgba(250, 250, 250, 0.8);
     white-space: nowrap;
+  }
+
+  /* Portrait phones: stack label / status so long mono rows don't clip. */
+  @media (max-width: 640px) {
+    .gate-board li {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-areas:
+        'index label'
+        '. status';
+      column-gap: 0.65rem;
+      row-gap: 0.2rem;
+      letter-spacing: 0.08em;
+      align-items: start;
+    }
+
+    .gate-index {
+      grid-area: index;
+      padding-top: 0.05rem;
+    }
+
+    .gate-board li > span:nth-child(2) {
+      grid-area: label;
+    }
+
+    .gate-leader {
+      display: none;
+    }
+
+    .gate-status {
+      grid-area: status;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      letter-spacing: 0.1em;
+    }
+
+    .gate-board-title {
+      letter-spacing: 0.14em;
+    }
   }
 
   .step-list {

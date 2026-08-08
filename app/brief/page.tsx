@@ -143,10 +143,10 @@ const sections: BriefSection[] = [
 
 export default function BriefPage() {
   return (
-    <main className="brief-paper relative min-h-screen overflow-x-hidden pt-16">
+    <main className="brief-paper relative min-h-screen overflow-x-clip pt-16">
       <SiteHeader />
 
-      <article className="mx-auto max-w-4xl px-5 pb-24 pt-12 md:px-8">
+      <article className="mx-auto w-full max-w-4xl min-w-0 px-5 pb-24 pt-12 md:px-8">
         <p className="brief-paper-kicker">Solace Technical Brief</p>
         <h1 className="brief-paper-title mt-5">What we build, and how to check it.</h1>
         <p className="brief-paper-meta mt-6">
@@ -157,7 +157,7 @@ export default function BriefPage() {
         </p>
 
         <div id="author" className="brief-paper-rule mt-10 border-t pt-8">
-          <div className="flex items-center gap-5">
+          <div className="flex min-w-0 items-start gap-4 sm:items-center sm:gap-5">
             <img
               src="/assets/kerby-jean.jpg"
               alt="Kerby Jean, founder of Solace"
@@ -165,7 +165,7 @@ export default function BriefPage() {
               height={64}
               className="brief-author-photo"
             />
-            <div>
+            <div className="min-w-0">
               <p className="brief-paper-section-title text-xl md:text-2xl">Kerby Jean</p>
               <p className="mt-1 max-w-xl text-sm leading-6 text-[color:var(--muted)]">
                 Founder. Software engineer. Four years building production systems at Apple. Today,
@@ -212,15 +212,19 @@ export default function BriefPage() {
 
         <nav className="brief-paper-rule mt-12 border-t pt-8" aria-label="Brief contents">
           <p className="brief-paper-kicker">Contents</p>
-          <ol className="mt-4 grid gap-x-10 gap-y-2.5 sm:grid-cols-2">
+          <ol className="mt-4 grid min-w-0 gap-x-10 gap-y-2.5 sm:grid-cols-2">
             {sections.map((section) => (
-              <li key={section.number}>
+              <li key={section.number} className="min-w-0">
                 <a
                   href={`#section-${section.number}`}
-                  className="inline-flex items-baseline gap-3 text-[color:var(--brief-body)] transition-colors hover:text-[color:var(--foreground)]"
+                  className="flex min-w-0 items-baseline gap-3 text-[color:var(--brief-body)] transition-colors hover:text-[color:var(--foreground)]"
                 >
-                  <span className="font-mono text-xs text-[color:var(--muted)]">{section.number}</span>
-                  <span className="brief-paper-section-title text-base">{section.title}</span>
+                  <span className="shrink-0 font-mono text-xs text-[color:var(--muted)]">
+                    {section.number}
+                  </span>
+                  <span className="brief-paper-section-title min-w-0 text-base">
+                    {section.title}
+                  </span>
                 </a>
               </li>
             ))}
@@ -234,10 +238,12 @@ export default function BriefPage() {
               id={`section-${section.number}`}
               className="brief-paper-rule border-t pt-8"
             >
-              <div className="grid gap-5 md:grid-cols-[6rem_1fr]">
+              <div className="grid min-w-0 gap-5 md:grid-cols-[6rem_minmax(0,1fr)]">
                 <p className="font-mono text-xs text-[color:var(--muted)]">{section.number}</p>
-                <div>
-                  <h2 className="brief-paper-section-title text-3xl md:text-4xl">{section.title}</h2>
+                <div className="min-w-0">
+                  <h2 className="brief-paper-section-title text-2xl sm:text-3xl md:text-4xl">
+                    {section.title}
+                  </h2>
                   <div className="brief-paper-body mt-5 space-y-4">
                     {section.body.map((paragraph) => (
                       <p key={paragraph.slice(0, 40)}>{paragraph}</p>
