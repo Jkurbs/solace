@@ -193,7 +193,7 @@ export default function HomeClient({
               <Link href="/hermes" className="hero-cta hero-cta-primary hero-cta-on-void">
                 Meet Hermes
               </Link>
-              <Link href="/brief" className="hero-cta hero-cta-secondary hero-cta-on-void">
+              <Link href="/brief" className="hero-cta hero-cta-secondary">
                 Read the brief
               </Link>
             </motion.div>
