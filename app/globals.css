@@ -15273,7 +15273,7 @@ html.dark .home-research ::selection,
     margin-top: 1.85rem;
   }
 
-  .hero-particle-ctas .hero-cta {
+.hero-particle-ctas .hero-cta {
     min-height: 2.75rem;
     padding: 0.6rem 1.35rem;
     font-size: 0.8rem;
@@ -15311,15 +15311,18 @@ html.dark .home-research ::selection,
   opacity: 0.9;
 }
 
+/* Updated Secondary CTA to handle both Light and Dark mode backgrounds */
 .hero-cta-secondary {
-  border: 1px solid color-mix(in srgb, var(--foreground) 28%, transparent);
-  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  /* Uses background with subtle mix of foreground so it pops off pure white backgrounds */
+  background: color-mix(in srgb, var(--foreground) 5%, var(--background));
   color: var(--foreground);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .hero-cta-secondary:hover {
-  border-color: color-mix(in srgb, var(--foreground) 55%, transparent);
-  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border-color: color-mix(in srgb, var(--foreground) 35%, transparent);
+  background: color-mix(in srgb, var(--foreground) 10%, var(--background));
 }
 
 /* Decision count (process integrity) */
