@@ -176,7 +176,7 @@ export default async function Home() {
   const anchor =
     chain.head && chain.verified
       ? {
-          cadence: 'daily',
+          cadence: 'every few minutes',
           lastAnchoredLabel: formatRelativeTime(chain.head.sealedAt),
           href: '/anchor',
         }

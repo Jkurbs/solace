@@ -31,8 +31,7 @@ export function formatRelativeTime(iso: string): string {
 }
 
 export function formatAnchorDate(date: string): string {
-  const [y, m, d] = date.split('-').map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d));
+  const dt = new Date(date);
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',

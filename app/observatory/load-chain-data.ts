@@ -74,7 +74,7 @@ export async function loadHermesChainData(): Promise<HermesChainData> {
   const anchor =
     chain.head && chain.verified
       ? {
-          cadence: 'daily' as const,
+          cadence: 'every few minutes' as const,
           lastAnchoredLabel: formatRelativeTime(chain.head.sealedAt),
           href: '/anchor',
           label: 'cryptographically anchored' as const,

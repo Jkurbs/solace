@@ -1,6 +1,6 @@
-/** One daily anchor: a witnessed snapshot of the Solace decision chain head. */
+/** One anchor: a witnessed snapshot of the Solace decision chain head. */
 export type ChainAnchor = {
-  /** ISO calendar date, e.g. "2026-08-09". */
+  /** ISO 8601 UTC timestamp, e.g. "2026-08-09T12:34:56Z". Legacy anchors may be date-only. */
   date: string;
   /** Hex digest of the current chain head (a Hermes ledger row hash). */
   chainHead: string;
@@ -8,7 +8,7 @@ export type ChainAnchor = {
   rowNumber: number;
   /** ISO 8601 UTC timestamp when the anchor was sealed. */
   sealedAt: string;
-  /** Previous day's chain_head, or null for the genesis anchor. */
+  /** Previous anchor's chain_head, or null for the genesis anchor. */
   previousAnchor: string | null;
   /** Public canonical URL for this anchor file. */
   sourceUrl: string;
@@ -40,7 +40,7 @@ export type HashVerification = {
 
 /** Public status surfaced on Solace pages. */
 export type AnchorStatus = {
-  /** e.g. "daily". */
+  /** e.g. "every few minutes". */
   cadence: string;
   /** e.g. "6h ago". */
   lastAnchoredLabel?: string;

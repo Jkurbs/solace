@@ -92,7 +92,7 @@ export default function AnchorVerifyPanel() {
                   Hash found, but chain continuity is broken
                 </p>
                 <p className="mt-1 text-sm text-amber-900/80 dark:text-amber-300/80">
-                  The hash exists in the anchor set, but the daily chain does not link correctly.
+                  The hash exists in the anchor set, but the chain does not link correctly.
                 </p>
               </div>
             </div>

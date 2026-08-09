@@ -7,7 +7,7 @@ import AnchorClient from './AnchorClient';
 export const metadata: Metadata = {
   title: 'Solace · Anchor · Verify the chain',
   description:
-    'The Solace decision chain is cryptographically anchored every day. Paste any chain head hash to verify when it was anchored and check continuity.',
+    'The Solace decision chain is cryptographically anchored almost instantly. Paste any chain head hash to verify when it was anchored and check continuity.',
   openGraph: {
     title: 'Solace · Anchor · Verify the chain',
     description:

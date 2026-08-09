@@ -8,6 +8,10 @@ import { verifyAnchorContinuity, verifyHashInChain } from './protocol';
 
 const ANCHOR_DIR = path.join(process.cwd(), 'public', 'anchor');
 
+// Matches legacy daily files (YYYY-MM-DD.json) and new timestamped files
+// (YYYY-MM-DDTHH-MM-SS.json). Colons are replaced with dashes for filesystem safety.
+const ANCHOR_FILE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}-\d{2}-\d{2})?\.json$/;
+
 function parseAnchorFile(raw: string): ChainAnchor {
   const data = JSON.parse(raw);
   return {
@@ -20,17 +24,23 @@ function parseAnchorFile(raw: string): ChainAnchor {
   };
 }
 
+function sortAnchors(a: ChainAnchor, b: ChainAnchor): number {
+  const byDate = a.date.localeCompare(b.date);
+  if (byDate !== 0) return byDate;
+  return (a.sealedAt ?? '').localeCompare(b.sealedAt ?? '');
+}
+
 export async function listAnchors(): Promise<ChainAnchor[]> {
   try {
     const entries = await fs.readdir(ANCHOR_DIR);
-    const files = entries.filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f));
+    const files = entries.filter((f) => ANCHOR_FILE_RE.test(f));
     const anchors = await Promise.all(
       files.map(async (file) => {
         const raw = await fs.readFile(path.join(ANCHOR_DIR, file), 'utf8');
         return parseAnchorFile(raw);
       }),
     );
-    return anchors.sort((a, b) => a.date.localeCompare(b.date));
+    return anchors.sort(sortAnchors);
   } catch {
     return [];
   }
@@ -43,7 +53,9 @@ export async function getLatestAnchor(): Promise<ChainAnchor | null> {
 
 export async function getAnchorByDate(date: string): Promise<ChainAnchor | null> {
   const anchors = await listAnchors();
-  return anchors.find((a) => a.date === date) ?? null;
+  const prefix = date.slice(0, 10);
+  const matches = anchors.filter((a) => a.date.slice(0, 10) === prefix);
+  return matches[matches.length - 1] ?? null;
 }
 
 export async function getAnchorChain(): Promise<AnchorChain> {

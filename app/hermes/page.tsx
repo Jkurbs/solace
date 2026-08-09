@@ -154,7 +154,7 @@ export default async function HermesPage() {
   const anchor =
     chain.head && chain.verified
       ? {
-          cadence: 'daily',
+          cadence: 'every few minutes',
           href: '/anchor',
         }
       : null;

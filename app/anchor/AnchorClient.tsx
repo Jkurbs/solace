@@ -42,11 +42,13 @@ export default function AnchorClient({ chain }: { chain: AnchorChain }) {
 
   const head = chain.head;
   const verified = chain.verified && head !== null;
-  const stale = head ? isStale(head.sealedAt) : false;
+  const stale = head ? isStale(head.sealedAt, 0.25) : false;
   const continuousDays = useMemo(() => {
     if (!chain.anchors.length) return 0;
-    const first = new Date(chain.anchors[0].date + 'T00:00:00Z').getTime();
-    const last = new Date(chain.anchors[chain.anchors.length - 1].date + 'T00:00:00Z').getTime();
+    const anchorDate = (d: string) =>
+      d.includes('T') ? new Date(d).getTime() : new Date(`${d}T00:00:00Z`).getTime();
+    const first = anchorDate(chain.anchors[0].date);
+    const last = anchorDate(chain.anchors[chain.anchors.length - 1].date);
     if (!Number.isFinite(first) || !Number.isFinite(last)) return chain.anchors.length;
     return Math.max(1, Math.round((last - first) / (1000 * 60 * 60 * 24)) + 1);
   }, [chain.anchors]);
@@ -93,8 +95,8 @@ export default function AnchorClient({ chain }: { chain: AnchorChain }) {
 
           <motion.p variants={fade} className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">
             Every Hermes decision is a canonical record, SHA-256 hashed, and chained to the record
-            before it. This page publishes the chain head daily so anyone can check integrity
-            without trusting Solace infrastructure.
+            before it. This page publishes the chain head almost instantly so anyone can check
+            integrity without trusting Solace infrastructure.
           </motion.p>
 
           {head && (
