@@ -214,7 +214,7 @@ export default function AnchorClient({ chain }: { chain: AnchorChain }) {
 
           <p className="mt-6 text-sm text-muted">
             <a
-              href="https://github.com/Solacefyi/anchor/tree/main/anchor"
+              href="https://github.com/Solacefyi/anchor"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 underline underline-offset-4 transition-colors hover:text-foreground"
