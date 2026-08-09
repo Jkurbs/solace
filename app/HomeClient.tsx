@@ -230,15 +230,22 @@ export default function HomeClient({
                 Meet Hermes
               </Link>
             </motion.div>
-
             {hermes.sealedDecisions != null && hermes.sealedDecisions > 0 && (
               <motion.div variants={fade} className="hero-decision-count hero-decision-on-void">
-                <span className="hero-decision-count-value font-mono tabular-nums">
-                  {hermes.sealedDecisions.toLocaleString('en-US')}
-                </span>
-                <span className="hero-decision-count-label ml-2">
-                  collective decisions sealed
-                </span>
+                <Link
+                  href={OBSERVATORY_HERMES_LEDGER_PATH}
+                  className="hero-decision-count-link group inline-flex items-center"
+                >
+                  <span className="hero-decision-count-value font-mono tabular-nums">
+                    {hermes.sealedDecisions.toLocaleString('en-US')}
+                  </span>
+                  <span className="hero-decision-count-label ml-2">
+                    collective decisions sealed
+                  </span>
+                  <span className="ml-2 opacity-0 group-hover:opacity-60 transition-opacity text-sm">
+                    →
+                  </span>
+                </Link>
               </motion.div>
             )}
           </div>
