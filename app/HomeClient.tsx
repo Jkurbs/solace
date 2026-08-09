@@ -393,7 +393,7 @@ export default function HomeClient({
             <p>
               A system that requires a team to operate is too complex to audit. One person
               forces every layer to be simple enough to verify, fix, and explain. There is no
-              one else to blame — and no one else to trust.
+              one else to blame and no one else to trust.
             </p>
             <p>
               <span className="text-foreground font-medium">Kerby Jean</span> — software
