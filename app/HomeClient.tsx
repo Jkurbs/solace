@@ -254,7 +254,7 @@ export default function HomeClient({
       </section>
 
       {/* ── 2 · Status strip: honest numbers, founder capital explicit ── */}
-      <section aria-label="Live status" className="border-t border-border px-5 py-10 md:py-12">
+      {/* <section aria-label="Live status" className="border-t border-border px-5 py-10 md:py-12">
         <div className="mx-auto max-w-6xl">
           <dl className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4">
             <div>
@@ -300,7 +300,7 @@ export default function HomeClient({
             </div>
           </dl>
         </div>
-      </section>
+      </section> */}
 
       {/* ── 3 · Instruments: weighted by proof, not promise ── */}
       <section className="home-instruments-section px-5 py-16 md:py-28 border-t border-border">
