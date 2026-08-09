@@ -230,6 +230,7 @@ export default function HomeClient({
                 Meet Hermes
               </Link>
             </motion.div>
+
             {hermes.sealedDecisions != null && hermes.sealedDecisions > 0 && (
               <motion.div variants={fade} className="hero-decision-count hero-decision-on-void">
                 <Link
@@ -242,7 +243,7 @@ export default function HomeClient({
                   <span className="hero-decision-count-label ml-2">
                     collective decisions sealed
                   </span>
-                  <span className="ml-2 opacity-0 group-hover:opacity-60 transition-opacity text-sm">
+                  <span className="ml-2 opacity-60 text-sm">
                     →
                   </span>
                 </Link>
