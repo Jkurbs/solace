@@ -3,6 +3,8 @@ import 'server-only';
 import { calibration } from '@/app/calibration';
 import { resolvedQuestions } from '@/app/oracle/resolved-questions';
 import type { TrustLedgerDisplayRow } from '@/app/trust/TrustLedgerTable';
+import { formatRelativeTime } from '@/features/anchor/format';
+import { getAnchorChain } from '@/features/anchor/store';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
 import { correctSealedClosePnls } from '@/features/hermes-ledger/close-pnl';
 import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
@@ -61,12 +63,23 @@ const placeholderRow: TrustLedgerDisplayRow = {
 
 export async function loadHermesChainData(): Promise<HermesChainData> {
   const poolId = process.env.HERMES_POOL_ID ?? 'pool_balanced_v1';
-  const [storedRows, openExposure, briefSnapshot, realizedTrades] = await Promise.all([
+  const [storedRows, openExposure, briefSnapshot, realizedTrades, chain] = await Promise.all([
     listHermesLedgerRows(1000).catch(() => []),
     getHermesOpenExposure().catch(() => null),
     getStoredHermesBriefSnapshot().catch(() => null),
     getRecentHermesRealizedTradeEvents({ limit: 500, poolId }).catch(() => []),
+    getAnchorChain().catch(() => ({ anchors: [], head: null, count: 0, verified: false, breaks: [] })),
   ]);
+
+  const anchor =
+    chain.head && chain.verified
+      ? {
+          cadence: 'daily' as const,
+          lastAnchoredLabel: formatRelativeTime(chain.head.sealedAt),
+          href: '/anchor',
+          label: 'cryptographically anchored' as const,
+        }
+      : null;
 
   const displayRows = correctSealedClosePnls(
     storedRows,
@@ -137,6 +150,7 @@ export async function loadHermesChainData(): Promise<HermesChainData> {
     hermesLabel: hermesVersion.label,
     openExposure,
     hermesVersion: { id: hermesVersion.id, label: hermesVersion.label },
+    anchor,
   };
 }
 

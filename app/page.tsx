@@ -4,6 +4,8 @@ import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/s
 import { getHermesLedgerPulse } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { newsPosts } from '@/features/news/posts';
+import { formatRelativeTime } from '@/features/anchor/format';
+import { getAnchorChain } from '@/features/anchor/store';
 
 import HomeClient, {
   type HermesTelemetry,
@@ -142,14 +144,43 @@ function getHomeInstrumentSnapshot(
 export default async function Home() {
   const emptyArticles: Awaited<ReturnType<typeof listPublishedArticles>> = [];
 
-  const [articles, hermesTelemetry, ledgerPulse] = await Promise.all([
+  const [articles, hermesTelemetry, ledgerPulse, chain] = await Promise.all([
     withTimeout(listPublishedArticles().catch(() => emptyArticles), HOME_FETCH_BUDGET_MS, emptyArticles),
     withTimeout(getHermesTelemetry().catch(() => null), HOME_FETCH_BUDGET_MS, null),
     withTimeout(getHermesLedgerPulse().catch(() => null), HOME_FETCH_BUDGET_MS, null),
+    withTimeout(getAnchorChain().catch(() => ({ anchors: [], head: null, count: 0, verified: false, breaks: [] })), HOME_FETCH_BUDGET_MS, { anchors: [], head: null, count: 0, verified: false, breaks: [] }),
   ]);
 
   const sealedDecisions =
     ledgerPulse && ledgerPulse.rowCount > 0 ? ledgerPulse.rowCount : null;
+
+  const chainHead =
+    ledgerPulse?.chainHead && ledgerPulse.latestSealedAt
+      ? {
+          rowNumber: ledgerPulse.rowNumber,
+          recordId: ledgerPulse.latestRecordId ?? '—',
+          hash: ledgerPulse.chainHead,
+          sealedAtLabel: new Intl.DateTimeFormat('en-US', {
+            day: 'numeric',
+            hour: 'numeric',
+            hour12: true,
+            minute: '2-digit',
+            month: 'short',
+            timeZone: 'UTC',
+            timeZoneName: 'short',
+            year: 'numeric',
+          }).format(new Date(ledgerPulse.latestSealedAt)),
+        }
+      : null;
+
+  const anchor =
+    chain.head && chain.verified
+      ? {
+          cadence: 'daily',
+          lastAnchoredLabel: formatRelativeTime(chain.head.sealedAt),
+          href: '/anchor',
+        }
+      : null;
 
   const instruments = getHomeInstrumentSnapshot(hermesTelemetry, sealedDecisions);
 
@@ -192,6 +223,8 @@ export default async function Home() {
       hermesTelemetry={hermesTelemetry}
       instruments={instruments}
       researchItems={researchItems}
+      chainHead={chainHead}
+      anchor={anchor}
     />
   );
 }

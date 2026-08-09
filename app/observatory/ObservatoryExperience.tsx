@@ -39,6 +39,12 @@ export type HermesChainData = {
     positions: Array<{ symbol: string; side: string }>;
   } | null;
   hermesVersion: { id: string; label: string };
+  anchor: {
+    cadence: string;
+    lastAnchoredLabel: string;
+    href: string;
+    label: string;
+  } | null;
 };
 
 export type OracleChainData = {
@@ -287,6 +293,26 @@ function HermesChain({ hermes }: { hermes: HermesChainData }) {
         and keep live exposure separate from sealed history.
       */}
       <LedgerVerifyStrip />
+
+      {hermes.anchor && (
+        <div className="mx-5 mb-6 rounded-lg border border-emerald-200/60 bg-emerald-50/40 px-4 py-3 text-sm dark:border-emerald-900/60 dark:bg-emerald-950/20 md:mx-0">
+          <p className="flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+            <span className="font-medium text-emerald-900 dark:text-emerald-300">
+              {hermes.anchor.label}
+            </span>
+            <span className="text-emerald-800/70 dark:text-emerald-300/70">
+              · last anchor {hermes.anchor.lastAnchoredLabel}
+            </span>
+            <Link
+              href={hermes.anchor.href}
+              className="ml-auto underline underline-offset-4 transition-colors hover:text-foreground"
+            >
+              verify →
+            </Link>
+          </p>
+        </div>
+      )}
 
       <div className="ledger-doc-strip" aria-label="Process summary">
         <span>

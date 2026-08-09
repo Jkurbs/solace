@@ -134,7 +134,9 @@ async function ensureLedgerHashBackfill(supabase: SupabaseClient): Promise<strin
 // cheap queries instead of the full table.
 export async function getHermesLedgerPulse(): Promise<{
   rowCount: number;
+  rowNumber: number;
   latestRecordId: string | null;
+  latestSealedAt: string | null;
   chainHead: string | null;
 } | null> {
   if (!isSupabaseDataClientConfigured()) {
@@ -147,7 +149,7 @@ export async function getHermesLedgerPulse(): Promise<{
       supabase.from('hermes_decision_ledger').select('record_id', { count: 'exact', head: true }),
       supabase
         .from('hermes_decision_ledger')
-        .select('record_id,row_hash')
+        .select('record_id,row_hash,sealed_at')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
@@ -160,7 +162,9 @@ export async function getHermesLedgerPulse(): Promise<{
     return {
       chainHead: latestResult.data?.row_hash ?? null,
       latestRecordId: latestResult.data?.record_id ?? null,
+      latestSealedAt: latestResult.data?.sealed_at ?? null,
       rowCount: countResult.count ?? 0,
+      rowNumber: countResult.count ?? 0,
     };
   } catch (error) {
     console.warn('[hermes-ledger] Pulse read failed.', error);

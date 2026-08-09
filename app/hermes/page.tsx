@@ -6,6 +6,8 @@ import { computeLedgerScoreboard, formatPercent } from '@/features/hermes-ledger
 import { listHermesLedgerProcessRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { hermesVersion } from '@/features/hermes-version';
+import { formatRelativeTime } from '@/features/anchor/format';
+import { getAnchorChain } from '@/features/anchor/store';
 
 import HermesExperience, { type HermesProof, type HermesTimelineEntry } from './HermesExperience';
 
@@ -144,6 +146,18 @@ async function getHermesProof(): Promise<HermesProof> {
 }
 
 export default async function HermesPage() {
-  const proof = await getHermesProof();
-  return <HermesExperience proof={proof} />;
+  const [proof, chain] = await Promise.all([
+    getHermesProof(),
+    getAnchorChain().catch(() => ({ anchors: [], head: null, count: 0, verified: false, breaks: [] })),
+  ]);
+
+  const anchor =
+    chain.head && chain.verified
+      ? {
+          cadence: 'daily',
+          href: '/anchor',
+        }
+      : null;
+
+  return <HermesExperience proof={proof} anchor={anchor} />;
 }

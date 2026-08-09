@@ -324,8 +324,8 @@ export default function HermesExperience({
             </dl>
             <p className="mt-3 text-xs opacity-60">
               Founder capital · young sample n={proof.sampleSize}
-              {anchor ? ` · anchored ${anchor.cadence}` : ''} ·{' '}
-              <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="underline underline-offset-4">
+              {anchor ? ` · cryptographically anchored ${anchor.cadence}` : ''} ·{' '}
+              <Link href={anchor?.href ?? OBSERVATORY_HERMES_LEDGER_PATH} className="underline underline-offset-4">
                 verify it yourself →
               </Link>
             </p>
@@ -467,22 +467,20 @@ export default function HermesExperience({
                 ◯
               </span>
               <strong>
-                {anchor ? 'Anchored, not just chained' : 'Fully inspectable'}
+                {anchor ? 'Cryptographically anchored, not just chained' : 'Fully inspectable'}
               </strong>
               <p>
                 {anchor
-                  ? `The chain head is anchored ${anchor.cadence} outside our control — history cannot be rewritten, even by us.`
+                  ? `The chain head is hashed and anchored ${anchor.cadence} outside our infrastructure. Rewriting history would break the chain — and anyone can detect it.`
                   : 'The Observatory chain is public. Process, outcomes, and sealed waits — external anchoring ships next.'}
               </p>
               {anchor?.href && (
-                <a
+                <Link
                   href={anchor.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="text-sm underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
                 >
                   Check the latest anchor →
-                </a>
+                </Link>
               )}
             </article>
           </div>

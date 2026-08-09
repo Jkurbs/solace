@@ -7,6 +7,7 @@
     "build": "next build",
     "hermes:nav": "node --dns-result-order=ipv4first scripts/hermes-pool-nav-bridge.mjs",
     "hermes:nav:watch": "node --dns-result-order=ipv4first scripts/hermes-pool-nav-bridge.mjs --watch",
+    "anchor:generate": "node public/anchor/scripts/generate-anchor.mjs",
     "start": "next start",
     "lint": "next lint"
   },

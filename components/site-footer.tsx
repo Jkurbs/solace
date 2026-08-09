@@ -12,6 +12,7 @@ const researchLinks = [
   { label: 'News', href: '/news' },
   { label: 'Observatory', href: '/observatory' },
   { label: 'Decision ledger', href: '/observatory/hermes/ledger' },
+  { label: 'Chain anchors', href: '/anchor' },
   { label: 'Gate conditions', href: '/gates' },
 ] as const;
 

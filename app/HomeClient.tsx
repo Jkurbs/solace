@@ -222,7 +222,7 @@ export default function HomeClient({
   }, []);
 
   const hermes = instruments.hermes;
-  const anchorClause = anchor ? `, anchored ${anchor.cadence}` : '';
+  const anchorClause = anchor ? `, cryptographically anchored ${anchor.cadence}` : '';
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
@@ -275,7 +275,7 @@ export default function HomeClient({
               /* The differentiator, shown not told: one real sealed row, inline. */
               <motion.div variants={fade} className="mt-10 max-w-lg">
                 <Link
-                  href={OBSERVATORY_HERMES_LEDGER_PATH}
+                  href={anchor?.href ?? OBSERVATORY_HERMES_LEDGER_PATH}
                   className="group block rounded-xl border border-foreground/10 bg-background/60 backdrop-blur-sm px-4 py-3 font-mono text-[0.7rem] md:text-xs leading-relaxed text-muted transition-colors hover:border-foreground/25"
                 >
                   <span className="block text-foreground/80 tabular-nums">
@@ -370,7 +370,7 @@ export default function HomeClient({
                 <span className="font-medium">Sealed before outcome</span>
                 <span className="block text-muted font-mono tabular-nums mt-1 truncate">
                   {chainHead ? `head ${chainHead.hash}` : 'hash-chained'}
-                  {anchor ? ` · anchored ${anchor.cadence}` : ''}
+                  {anchor ? ` · cryptographically anchored ${anchor.cadence}` : ''}
                   {anchor && <sup className="ml-0.5 text-muted/70">3</sup>}
                 </span>
               </dd>
@@ -386,14 +386,12 @@ export default function HomeClient({
               2 what a good Brier score is →
             </Link>
             {anchor?.href && (
-              <a
+              <Link
                 href={anchor.href}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="hover:text-foreground transition-colors"
               >
                 3 what anchoring prevents →
-              </a>
+              </Link>
             )}
           </div>
         </div>
