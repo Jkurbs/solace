@@ -226,7 +226,10 @@ export default function HomeClient({
             </motion.p>
 
             <motion.div variants={fade} className="hero-particle-ctas">
-              <Link href="/hermes" className="hero-cta hero-cta-primary hero-cta-on-void">
+              <Link href="/brief" className="hero-cta hero-cta-primary hero-cta-on-void">
+                Read the brief
+              </Link>
+              <Link href="/hermes" className="hero-cta hero-cta-secondary hero-cta-on-void">
                 Meet Hermes
               </Link>
             </motion.div>
