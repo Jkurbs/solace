@@ -213,7 +213,7 @@ export default function HomeClient({
         >
           <div className="hero-particle-copy">
             <motion.p variants={fade} className="hero-particle-eyebrow">
-              Independent research
+              Instrument company
             </motion.p>
 
             <motion.h1 variants={fade} className="hero-particle-title">
@@ -381,23 +381,26 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── 5 · Operator: one person, in public, accountable by name ── */}
+            {/* ── 5 · Operator: one person by design, not by limitation ── */}
       <section className="border-t border-border px-5 py-16 md:py-24">
         <div className={homeShell}>
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">Operator</h2>
           <p className="font-serif text-2xl md:text-3xl font-medium max-w-xl leading-snug">
-            Built and operated by one person, in public.
+            One person is enough — because the system was built to need only one.
           </p>
           <div className="mt-6 max-w-2xl space-y-4 text-muted leading-relaxed">
             <p>
-              <span className="text-foreground font-medium">Kerby Jean</span> — software
-              engineer, four years building production systems at Apple. No institutional
-              trading background, and no intention of implying otherwise.
+              If a decision engine requires a team to operate, it is too complex to audit. Solace
+              is designed so that one person can run it, verify it, and be held accountable for
+              it. The operator&apos;s only job is to keep the machine honest. The machine does
+              the rest.
             </p>
             <p>
-              Founder capital, a public ledger, and gates that must clear before Solace expands.
-              The operating claim is unproven, which is exactly why everything on this site is
-              checkable.
+              <span className="text-foreground font-medium">Kerby Jean</span> — software
+              engineer, four years building production systems at Apple. No institutional
+              trading background, and no intention of implying otherwise. Founder capital, a
+              public ledger, and gates that must clear before Solace expands. The claim is
+              unproven — which is exactly why everything is checkable.
             </p>
           </div>
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
