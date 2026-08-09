@@ -15183,14 +15183,14 @@ html.dark .home-research ::selection,
   font-weight: 400;
   line-height: 1.4;
   letter-spacing: -0.018em;
-  color: var(--muted, #78716c);
+  color: color-mix(in srgb, var(--foreground, #1c1917) 75%, var(--muted, #78716c));
 }
 
 .hero-particle-dek {
   display: none;
   margin: 1.35rem 0 0;
   max-width: 34rem;
-  color: color-mix(in srgb, var(--foreground, #1c1917) 88%, var(--muted, #78716c));
+  color: color-mix(in srgb, var(--foreground, #1c1917) 95%, var(--muted, #78716c));
   font-size: clamp(1.12rem, 1.5vw, 1.3rem);
   font-weight: 400;
   letter-spacing: -0.012em;

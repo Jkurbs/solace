@@ -20,7 +20,7 @@ import {
 import AnchorVerifyPanel from './AnchorVerifyPanel';
 
 const CLI_COMMAND =
-  'curl -sL https://raw.githubusercontent.com/solace-fyi/anchor/main/verify/verify.sh | bash';
+  'curl -sL https://raw.githubusercontent.com/Solacefyi/anchor/main/verify/verify.sh | bash';
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -212,7 +212,7 @@ export default function AnchorClient({ chain }: { chain: AnchorChain }) {
 
           <p className="mt-6 text-sm text-muted">
             <a
-              href="https://github.com/solace-fyi/anchor/tree/main/anchor"
+              href="https://github.com/Solacefyi/anchor/tree/main/anchor"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 underline underline-offset-4 transition-colors hover:text-foreground"

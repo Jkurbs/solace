@@ -31,7 +31,7 @@ SOLACE_API_URL=http://localhost:3000 node scripts/generate-anchor.mjs
 ## For engineers: CLI verification
 
 ```bash
-curl -sL https://raw.githubusercontent.com/solace-fyi/anchor/main/verify/verify.sh | bash
+curl -sL https://raw.githubusercontent.com/Solacefyi/anchor/main/verify/verify.sh | bash
 ```
 
 Python and Node verifiers are also available in `verify/`. Point them at any Solace base URL:
