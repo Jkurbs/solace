@@ -221,8 +221,8 @@ export default function HomeClient({
             </motion.h1>
 
             <motion.p variants={fade} className="hero-particle-sub">
-              Hermes allocates founder capital under strict risk gates. Every decision is sealed
-              before the outcome is known.
+              Decisions are sealed before their outcome, chained to the last, and anchored where they cannot be edited. 
+              Hermes is the first instrument.
             </motion.p>
 
             <motion.div variants={fade} className="hero-particle-ctas">
