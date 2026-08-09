@@ -1,0 +1,36 @@
+name: Update anchor submodule
+
+on:
+  schedule:
+    # Pull the latest anchor every 5 minutes so the site stays current.
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main repo with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update anchor submodule to latest
+        run: |
+          git submodule update --init --remote --merge public/anchor
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/anchor
+          if git diff --cached --quiet; then
+            echo "Anchor submodule already up to date."
+          else
+            git commit -m "Update anchor submodule to $(git -C public/anchor rev-parse --short HEAD)"
+            git push
+          fi

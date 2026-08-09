@@ -1,3 +1,4 @@
 [submodule "public/anchor"]
 	path = public/anchor
 	url = https://github.com/Solacefyi/anchor.git
+	branch = main
