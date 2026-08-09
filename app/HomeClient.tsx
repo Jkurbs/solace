@@ -309,7 +309,7 @@ export default function HomeClient({
             Instruments
           </h2>
           <p className="text-sm text-muted max-w-xl mb-10 md:mb-12 leading-relaxed">
-            Three instruments, one discipline — weighted by proof, not promise. Hermes runs
+            Three instruments, one discipline, weighted by proof, not promise. Hermes runs
             founder capital only; outside capital opens through the gates.
           </p>
 
@@ -336,7 +336,7 @@ export default function HomeClient({
               <span className="font-mono text-xs text-muted mt-1 shrink-0 tabular-nums">01</span>
               <p className="text-sm md:text-[0.95rem] leading-relaxed text-muted">
                 <span className="text-foreground font-medium">Sealed before the outcome.</span>{' '}
-                Every decision is hashed and timestamped before capital moves — and chained to
+                Every decision is hashed and timestamped before capital moves, and chained to
                 the previous row, so any edit breaks the chain.
               </p>
             </li>
@@ -347,8 +347,8 @@ export default function HomeClient({
                   {anchor ? `Anchored ${anchor.cadence}.` : 'Witnessed publicly.'}
                 </span>{' '}
                 {anchor
-                  ? 'The chain head is published outside our control, so history cannot be rewritten — even by us.'
-                  : 'The chain head is public. External anchoring ships next, so history cannot be rewritten — even by us.'}
+                  ? 'The chain head is published outside our control, so history cannot be rewritten, even by us.'
+                  : 'The chain head is public. External anchoring ships next, so history cannot be rewritten, even by us.'}
               </p>
             </li>
             <li className="flex gap-4">
@@ -375,7 +375,7 @@ export default function HomeClient({
               href="/brief#section-07"
               className="text-sm text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30 self-center"
             >
-              What this proves — and what it doesn't
+              What this proves and what it doesn't
             </Link>
           </div>
         </div>
@@ -396,7 +396,7 @@ export default function HomeClient({
             </p>
             <p>
               Founder capital, a public ledger, and gates that must clear before Solace expands.
-              The operating claim is unproven — which is exactly why everything on this site is
+              The operating claim is unproven, which is exactly why everything on this site is
               checkable.
             </p>
           </div>
