@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
+import { useEffect } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -70,34 +70,6 @@ const workingGate = (() => {
     status: c.status ?? 'not met',
   };
 })();
-
-const homepageQuestions = [
-  {
-    question: 'What is Hermes?',
-    answer:
-      'An autonomous instrument that evaluates market liquidity, timing, and regime character to make capital allocation decisions. Every decision is sealed on a cryptographically hashed public ledger before the outcome is known. Today it allocates founder capital — not customer funds.',
-  },
-  {
-    question: 'Does Hermes manage customer funds?',
-    answer:
-      'No — not yet. Hermes currently allocates founder capital only, and the full record is public. Outside capital opens in stages through the waitlist, and only after the gate conditions on the public board clear.',
-  },
-  {
-    question: 'How do I verify the record?',
-    answer:
-      'Every decision is hashed and sealed before its outcome, chained to the previous row, so any edit breaks the chain in a way anyone can detect. Recompute the whole ledger in the Observatory — or offline with the open verification script. No account required.',
-  },
-  {
-    question: 'What happens if I join the waitlist?',
-    answer:
-      'You can open the dashboard and run simulation capital immediately, with zero financial risk. Real-capital access is offered in stages as gates clear. We store your email only to contact you about access — we never sell or share it.',
-  },
-  {
-    question: 'What is Solace?',
-    answer:
-      'An independent research company building instruments for disciplined decision-making under uncertainty. Hermes is the first. It begins with capital because financial markets provide rapid, ungameable feedback for learning.',
-  },
-];
 
 export type LatestNote = { title: string; dek: string; label: string };
 
@@ -193,7 +165,6 @@ export default function HomeClient({
   anchor?: AnchorStatus | null;
 }) {
   const reduceMotion = useReducedMotion();
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const heroInitial = reduceMotion ? false : 'hidden';
 
   useEffect(() => {
@@ -222,7 +193,6 @@ export default function HomeClient({
   }, []);
 
   const hermes = instruments.hermes;
-  const anchorClause = anchor ? `, cryptographically anchored ${anchor.cadence}` : '';
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
@@ -255,11 +225,6 @@ export default function HomeClient({
               before the outcome is known.
             </motion.p>
 
-            <motion.p variants={fade} className="hero-particle-dek">
-              Hermes evaluates market structure and allocates capital autonomously under strict
-              risk gates, with every decision sealed before resolution.
-            </motion.p>
-
             <motion.div variants={fade} className="hero-particle-ctas">
               <Link href="/hermes" className="hero-cta hero-cta-primary hero-cta-on-void">
                 Meet Hermes
@@ -268,23 +233,12 @@ export default function HomeClient({
 
             {hermes.sealedDecisions != null && hermes.sealedDecisions > 0 && (
               <motion.div variants={fade} className="hero-decision-count hero-decision-on-void">
-                <Link
-                  href={anchor?.href ?? OBSERVATORY_HERMES_LEDGER_PATH}
-                  className="hero-decision-count-link group"
-                >
-                  <span className="hero-decision-count-value font-mono tabular-nums">
-                    {hermes.sealedDecisions.toLocaleString('en-US')}
-                  </span>
-                  <span className="hero-decision-count-copy">
-                    <span className="hero-decision-count-label">
-                      collective decisions sealed
-                      {anchor && ' · cryptographically anchored'}
-                    </span>
-                    <span className="hero-decision-count-hint">
-                      {anchor ? 'Verify the chain →' : 'Observatory ledger →'}
-                    </span>
-                  </span>
-                </Link>
+                <span className="hero-decision-count-value font-mono tabular-nums">
+                  {hermes.sealedDecisions.toLocaleString('en-US')}
+                </span>
+                <span className="hero-decision-count-label ml-2">
+                  collective decisions sealed
+                </span>
               </motion.div>
             )}
           </div>
@@ -303,7 +257,6 @@ export default function HomeClient({
                   <span className="block text-muted font-mono tabular-nums mt-1">
                     {hermes.sealedDecisions.toLocaleString('en-US')} sealed
                     {hermes.standDownRate ? ` · ${hermes.standDownRate} standing down` : ''}
-                    <sup className="ml-0.5 text-muted/70">1</sup>
                   </span>
                 )}
               </dd>
@@ -316,7 +269,6 @@ export default function HomeClient({
                   {instruments.oracleActiveCount != null
                     ? `${instruments.oracleActiveCount} active predictions`
                     : 'calibration in progress'}
-                  <sup className="ml-0.5 text-muted/70">2</sup>
                 </span>
               </dd>
             </div>
@@ -333,32 +285,12 @@ export default function HomeClient({
               <dt className="text-xs uppercase tracking-[0.18em] text-muted">Ledger</dt>
               <dd className="mt-2 text-sm leading-relaxed">
                 <span className="font-medium">Sealed before outcome</span>
-                <span className="block text-muted font-mono tabular-nums mt-1 truncate">
-                  {chainHead ? `head ${chainHead.hash}` : 'hash-chained'}
-                  {anchor ? ` · cryptographically anchored ${anchor.cadence}` : ''}
-                  {anchor && <sup className="ml-0.5 text-muted/70">3</sup>}
+                <span className="block text-muted font-mono tabular-nums mt-1">
+                  {anchor ? `Anchored ${anchor.cadence}` : 'Hash-chained'}
                 </span>
               </dd>
             </div>
           </dl>
-
-          {/* Methodology footnotes: numbers stop being marketing and become exhibits. */}
-          <div className="mt-8 flex flex-wrap gap-x-6 gap-y-1.5 text-[0.7rem] text-muted/80 font-mono">
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hover:text-foreground transition-colors">
-              1 definitions &amp; public contract →
-            </Link>
-            <Link href="/oracle" className="hover:text-foreground transition-colors">
-              2 what a good Brier score is →
-            </Link>
-            {anchor?.href && (
-              <Link
-                href={anchor.href}
-                className="hover:text-foreground transition-colors"
-              >
-                3 what anchoring prevents →
-              </Link>
-            )}
-          </div>
         </div>
       </section>
 
@@ -378,28 +310,6 @@ export default function HomeClient({
             glorya={instruments.glorya}
             oracleActiveCount={instruments.oracleActiveCount}
           />
-
-          <div className="home-simulation-unit mt-10 md:mt-14 max-w-4xl mx-auto border-t border-border">
-            <Link href="/gates#simulation" className="group block py-10 md:py-8 text-center md:text-left">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted mb-3 md:hidden">
-                In progress
-              </p>
-              <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-3 md:gap-4">
-                <div className="flex flex-col items-center md:items-start">
-                  <h3 className="font-serif text-[clamp(1.75rem,6vw,2rem)] md:text-2xl font-semibold md:font-medium tracking-tight group-hover:opacity-70 transition-opacity">
-                    Simulation
-                  </h3>
-                  <p className="mt-2 text-muted leading-relaxed max-w-md md:max-w-xl text-[1rem] md:text-base">
-                    Synthetic worlds. Same decision engine. Failures stay off the wire.
-                  </p>
-                </div>
-                <span className="hidden md:inline text-sm text-muted shrink-0">In progress</span>
-              </div>
-              <p className="mt-4 text-sm text-muted font-mono tabular-nums">
-                Gate progress · {simulationMetrics.met} of {simulationMetrics.total} conditions
-              </p>
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -463,61 +373,7 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── 5 · Gates: domains are earned — the public "not yet" board ── */}
-      <section className="border-t border-border px-5 py-16 md:py-24">
-        <div className={homeShell}>
-          <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">Gates</h2>
-          <p className="font-serif text-2xl md:text-3xl font-medium max-w-xl leading-snug">
-            Domains are earned.{' '}
-            <span className="text-muted">
-              {gateTotals.met} of {gateTotals.total} expansion conditions met — and the board is
-              public.
-            </span>
-          </p>
-
-          {workingGate && (
-            <Link href="/gates" className="group mt-10 block border border-border rounded-xl p-6 md:p-7 hover:border-foreground/25 transition-colors">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-                <p className="text-xs uppercase tracking-[0.15em] text-muted">
-                  Working gate · {workingGate.domain}
-                </p>
-                <span className="text-xs text-muted font-mono uppercase tracking-[0.1em]">
-                  {workingGate.status}
-                </span>
-              </div>
-              <h3 className="mt-3 font-serif text-xl md:text-2xl font-medium leading-tight group-hover:opacity-70 transition-opacity">
-                {workingGate.title}
-              </h3>
-              {workingGate.summary && (
-                <p className="mt-2 text-sm text-muted leading-relaxed max-w-2xl">
-                  {workingGate.summary}
-                </p>
-              )}
-              {workingGate.latestMark && (
-                <p className="mt-3 text-xs text-muted font-mono">
-                  Latest mark · {workingGate.latestMark}
-                </p>
-              )}
-              <span className="mt-4 inline-block text-sm font-medium underline underline-offset-4 decoration-foreground/20 group-hover:decoration-foreground/60 transition-all">
-                See the full board
-              </span>
-            </Link>
-          )}
-
-          {!workingGate && (
-            <div className="mt-10">
-              <Link
-                href="/gates"
-                className="text-sm font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
-              >
-                See the full board
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ── 6 · Operator: one person, in public, accountable by name ── */}
+      {/* ── 5 · Operator: one person, in public, accountable by name ── */}
       <section className="border-t border-border px-5 py-16 md:py-24">
         <div className={homeShell}>
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">Operator</h2>
@@ -561,7 +417,7 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── 7 · Research shelf: trimmed to what exists ── */}
+      {/* ── 6 · Research shelf: trimmed to what exists ── */}
       <section className="border-t border-border px-5 py-20 md:py-28">
         <div className={homeShell}>
           <div className="flex flex-wrap items-end justify-between gap-4 mb-12">
@@ -594,7 +450,7 @@ export default function HomeClient({
           </div>
 
           <div className="divide-y divide-border border-t border-border">
-            {researchItems.slice(0, 2).map((item) => (
+            {researchItems.slice(0, 1).map((item) => (
               <Link
                 key={`${item.kind}-${item.href}-${item.title}`}
                 href={item.href}
@@ -616,47 +472,6 @@ export default function HomeClient({
                       : 'Read the note'}
                 </span>
               </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FAQ: reordered by actual visitor questions ── */}
-      <section id="faq" className="border-t border-border px-5 py-20 md:py-28 scroll-mt-24">
-        <div className={homeShell}>
-          <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-12">Questions</h2>
-          <div className="divide-y divide-border">
-            {homepageQuestions.map((item, i) => (
-              <div key={item.question} className="py-6">
-                <button
-                  type="button"
-                  className="w-full text-left flex items-start justify-between gap-4 group"
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  aria-expanded={openFaq === i}
-                >
-                  <span className="font-serif text-xl md:text-2xl font-medium group-hover:opacity-70 transition-opacity">
-                    {item.question}
-                  </span>
-                  <span className="text-muted text-2xl leading-none mt-1 font-light">
-                    {openFaq === i ? '−' : '+'}
-                  </span>
-                </button>
-                <AnimatePresence initial={false}>
-                  {openFaq === i && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.35, ease: easeOut }}
-                      className="overflow-hidden"
-                    >
-                      <p className="pt-4 text-muted leading-relaxed max-w-2xl">
-                        {item.answer}
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
             ))}
           </div>
         </div>
