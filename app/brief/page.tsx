@@ -41,7 +41,7 @@ const sections: BriefSection[] = [
     number: '01',
     title: 'Thesis',
     body: [
-      'Solace is an independent research company building instruments for decision-making under uncertainty. The operating belief is narrow and testable: individual events resist prediction, but the structure around them, liquidity, timing, regime, probability, can be read, modeled, and acted on with discipline.',
+      'Solace is an independent company building instruments for decision-making under uncertainty. The operating belief is narrow and testable: individual events resist prediction, but the structure around them, liquidity, timing, regime, probability, can be read, modeled, and acted on with discipline.',
       'Solace begins with markets because markets compress feedback. They expose timing, uncertainty, and system quality in days rather than years, and they fund the work. Every instrument follows one loop: observe, model, simulate, deploy, and keep only what survives contact with the world.',
     ],
   },
