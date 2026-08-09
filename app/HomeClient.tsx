@@ -271,14 +271,39 @@ export default function HomeClient({
               </Link>
             </motion.div>
 
-            {chainHead ? (
+            {hermes.sealedDecisions != null && hermes.sealedDecisions > 0 && (
+              <motion.div variants={fade} className="hero-decision-count hero-decision-on-void">
+                <Link
+                  href={OBSERVATORY_HERMES_LEDGER_PATH}
+                  className="hero-decision-count-link group"
+                >
+                  <span className="hero-decision-count-value font-mono tabular-nums">
+                    {hermes.sealedDecisions.toLocaleString('en-US')}
+                  </span>
+                  <span className="hero-decision-count-copy">
+                    <span className="hero-decision-count-label">
+                      collective decisions sealed
+                    </span>
+                    <span className="hero-decision-count-hint">
+                      Observatory ledger
+                      <span aria-hidden="true" className="opacity-60 transition-opacity group-hover:opacity-100">
+                        {' '}
+                        →
+                      </span>
+                    </span>
+                  </span>
+                </Link>
+              </motion.div>
+            )}
+
+            {chainHead && (
               /* The differentiator, shown not told: one real sealed row, inline. */
-              <motion.div variants={fade} className="mt-10 max-w-lg">
+              <motion.div variants={fade} className="mt-6 max-w-lg">
                 <Link
                   href={anchor?.href ?? OBSERVATORY_HERMES_LEDGER_PATH}
                   className="group block rounded-xl border border-foreground/10 bg-background/60 backdrop-blur-sm px-4 py-3 font-mono text-[0.7rem] md:text-xs leading-relaxed text-muted transition-colors hover:border-foreground/25"
                 >
-                  <span className="block text-foreground/80 tabular-nums">
+                  <span className="block break-all text-foreground/80 tabular-nums">
                     #{chainHead.rowNumber} · {chainHead.recordId} · {chainHead.hash}
                   </span>
                   <span className="block mt-1">
@@ -295,32 +320,6 @@ export default function HomeClient({
                   )}
                 </Link>
               </motion.div>
-            ) : (
-              hermes.sealedDecisions != null &&
-              hermes.sealedDecisions > 0 && (
-                <motion.div variants={fade} className="hero-decision-count hero-decision-on-void">
-                  <Link
-                    href={OBSERVATORY_HERMES_LEDGER_PATH}
-                    className="hero-decision-count-link group"
-                  >
-                    <span className="hero-decision-count-value font-mono tabular-nums">
-                      {hermes.sealedDecisions.toLocaleString('en-US')}
-                    </span>
-                    <span className="hero-decision-count-copy">
-                      <span className="hero-decision-count-label">
-                        collective decisions sealed
-                      </span>
-                      <span className="hero-decision-count-hint">
-                        Observatory ledger
-                        <span aria-hidden="true" className="opacity-60 transition-opacity group-hover:opacity-100">
-                          {' '}
-                          →
-                        </span>
-                      </span>
-                    </span>
-                  </Link>
-                </motion.div>
-              )
             )}
           </div>
         </motion.div>

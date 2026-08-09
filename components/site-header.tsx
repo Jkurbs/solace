@@ -125,7 +125,7 @@ export default function SiteHeader({ variant = 'paper' }: { variant?: SiteHeader
           <span>Solace</span>
         </Link>
 
-        <nav className="hidden items-center gap-7 md:flex" aria-label="Primary navigation">
+        <nav className="hidden items-center gap-4 lg:gap-7 md:flex" aria-label="Primary navigation">
           {navItems.map((item) => (
             <HeaderLink
               key={item.href}
