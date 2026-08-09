@@ -252,29 +252,24 @@ export default function HomeClient({
 
             <motion.p variants={fade} className="hero-particle-sub">
               Hermes allocates founder capital under strict risk gates. Every decision is sealed
-              before the outcome is known, chained to the last{anchorClause} — so the record can
-              be verified, not trusted.
+              before the outcome is known.
             </motion.p>
 
             <motion.p variants={fade} className="hero-particle-dek">
-              Hermes, the first instrument, evaluates market structure and allocates capital
-              autonomously under strict risk gates, with every decision hashed and sealed prior
-              to resolution.
+              Hermes evaluates market structure and allocates capital autonomously under strict
+              risk gates, with every decision sealed before resolution.
             </motion.p>
 
             <motion.div variants={fade} className="hero-particle-ctas">
               <Link href="/hermes" className="hero-cta hero-cta-primary hero-cta-on-void">
                 Meet Hermes
               </Link>
-              <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-secondary">
-                Verify the record
-              </Link>
             </motion.div>
 
             {hermes.sealedDecisions != null && hermes.sealedDecisions > 0 && (
               <motion.div variants={fade} className="hero-decision-count hero-decision-on-void">
                 <Link
-                  href={OBSERVATORY_HERMES_LEDGER_PATH}
+                  href={anchor?.href ?? OBSERVATORY_HERMES_LEDGER_PATH}
                   className="hero-decision-count-link group"
                 >
                   <span className="hero-decision-count-value font-mono tabular-nums">
@@ -283,41 +278,12 @@ export default function HomeClient({
                   <span className="hero-decision-count-copy">
                     <span className="hero-decision-count-label">
                       collective decisions sealed
+                      {anchor && ' · cryptographically anchored'}
                     </span>
                     <span className="hero-decision-count-hint">
-                      Observatory ledger
-                      <span aria-hidden="true" className="opacity-60 transition-opacity group-hover:opacity-100">
-                        {' '}
-                        →
-                      </span>
+                      {anchor ? 'Verify the chain →' : 'Observatory ledger →'}
                     </span>
                   </span>
-                </Link>
-              </motion.div>
-            )}
-
-            {chainHead && (
-              /* The differentiator, shown not told: one real sealed row, inline. */
-              <motion.div variants={fade} className="mt-6 max-w-lg">
-                <Link
-                  href={anchor?.href ?? OBSERVATORY_HERMES_LEDGER_PATH}
-                  className="group block rounded-xl border border-foreground/10 bg-background/60 backdrop-blur-sm px-4 py-3 font-mono text-[0.7rem] md:text-xs leading-relaxed text-muted transition-colors hover:border-foreground/25"
-                >
-                  <span className="block break-all text-foreground/80 tabular-nums">
-                    #{chainHead.rowNumber} · {chainHead.recordId} · {chainHead.hash}
-                  </span>
-                  <span className="block mt-1">
-                    sealed {chainHead.sealedAtLabel}
-                    {anchor?.lastAnchoredLabel ? ` · anchored ${anchor.lastAnchoredLabel}` : ''}
-                  </span>
-                  {chainHead.prevHash && (
-                    <span className="block mt-1 opacity-80">
-                      prev {chainHead.prevHash} → chained{' '}
-                      <span className="opacity-60 transition-opacity group-hover:opacity-100">
-                        · recompute ↗
-                      </span>
-                    </span>
-                  )}
                 </Link>
               </motion.div>
             )}

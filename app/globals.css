@@ -15110,6 +15110,12 @@ html.dark .home-research ::selection,
   opacity: 1;
 }
 
+/* Homepage hero: keep particles atmospheric, not competitive with copy. */
+.hero-particle-section .hero-render-canvas.is-ready,
+.hero-particle-section .hermes-render-canvas.is-ready {
+  opacity: 1;
+}
+
 .hero-particle-vignette {
   position: absolute;
   inset: 0;
@@ -15119,16 +15125,17 @@ html.dark .home-research ::selection,
   background:
     linear-gradient(
       90deg,
-      color-mix(in srgb, var(--background, #fafaf9) 90%, transparent) 0%,
-      color-mix(in srgb, var(--background, #fafaf9) 42%, transparent) 36%,
-      transparent 62%
+      color-mix(in srgb, var(--background, #fafaf9) 96%, transparent) 0%,
+      color-mix(in srgb, var(--background, #fafaf9) 72%, transparent) 40%,
+      color-mix(in srgb, var(--background, #fafaf9) 24%, transparent) 68%,
+      transparent 82%
     ),
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--background, #fafaf9) 30%, transparent) 0%,
+      color-mix(in srgb, var(--background, #fafaf9) 40%, transparent) 0%,
       transparent 22%,
       transparent 78%,
-      color-mix(in srgb, var(--background, #fafaf9) 40%, transparent) 100%
+      color-mix(in srgb, var(--background, #fafaf9) 50%, transparent) 100%
     );
   transition: background 0.25s ease;
 }
@@ -15250,16 +15257,17 @@ html.dark .home-research ::selection,
     background:
       linear-gradient(
         90deg,
-        color-mix(in srgb, var(--background, #fafaf9) 84%, transparent) 0%,
-        color-mix(in srgb, var(--background, #fafaf9) 30%, transparent) 34%,
-        transparent 62%
+        color-mix(in srgb, var(--background, #fafaf9) 94%, transparent) 0%,
+        color-mix(in srgb, var(--background, #fafaf9) 60%, transparent) 38%,
+        color-mix(in srgb, var(--background, #fafaf9) 18%, transparent) 62%,
+        transparent 78%
       ),
       linear-gradient(
         180deg,
-        color-mix(in srgb, var(--background, #fafaf9) 28%, transparent) 0%,
+        color-mix(in srgb, var(--background, #fafaf9) 36%, transparent) 0%,
         transparent 20%,
         transparent 80%,
-        color-mix(in srgb, var(--background, #fafaf9) 38%, transparent) 100%
+        color-mix(in srgb, var(--background, #fafaf9) 46%, transparent) 100%
       );
   }
 
