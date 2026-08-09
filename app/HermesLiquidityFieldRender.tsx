@@ -23,11 +23,12 @@ const particleVertexShader = `
     vAlpha = aAlpha;
 
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = clamp(aScale * (35.0 / -mvPosition.z), 1.5, 4.8);
+    gl_PointSize = clamp(aScale * (38.0 / -mvPosition.z), 1.8, 5.2);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
 
+// Fragment shader now adds a subtle core brilliance without tinting to neon
 const particleFragmentShader = `
   varying vec3 vColor;
   varying float vAlpha;
@@ -36,8 +37,13 @@ const particleFragmentShader = `
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
     
-    float strength = smoothstep(0.5, 0.2, dist);
-    gl_FragColor = vec4(vColor, vAlpha * strength);
+    // Smooth radial edge falloff
+    float strength = smoothstep(0.5, 0.15, dist);
+    
+    // Core highlight boost for crispness without hyper-saturation
+    vec3 luminousColor = mix(vColor, vColor + vec3(0.08), strength * 0.4);
+
+    gl_FragColor = vec4(luminousColor, vAlpha * strength);
   }
 `;
 
@@ -101,16 +107,16 @@ export default function HermesLiquidityFieldRender({
 
     let isDark = checkIsDark();
 
-    // Theme adaptive base palettes
+    // Theme adaptive palette: Elegant, luminous hues (avoiding neon greens/pinks)
     const getThemeColors = (dark: boolean) => ({
-      teal: new THREE.Color(dark ? '#14b8a6' : '#0d9488'),
+      teal: new THREE.Color(dark ? '#2dd4bf' : '#0f766e'),
       bronze:
         posture === 'DEFENSIVE'
-          ? new THREE.Color(dark ? '#fb923c' : '#c2410c')
-          : new THREE.Color(dark ? '#f59e0b' : '#b45309'),
-      amber: new THREE.Color(dark ? '#fcd34d' : '#f59e0b'),
-      slate: new THREE.Color(dark ? '#94a3b8' : '#64748b'),
-      emerald: new THREE.Color(dark ? '#34d399' : '#10b981'),
+          ? new THREE.Color(dark ? '#f97316' : '#c2410c')
+          : new THREE.Color(dark ? '#d97706' : '#b45309'),
+      amber: new THREE.Color(dark ? '#fbbf24' : '#d97706'),
+      slate: new THREE.Color(dark ? '#cbd5e1' : '#475569'),
+      emerald: new THREE.Color(dark ? '#34d399' : '#059669'),
     });
 
     let activePalette = getThemeColors(isDark);
@@ -140,17 +146,17 @@ export default function HermesLiquidityFieldRender({
         const i3 = i * 3;
         const rand = Math.random();
 
-        const c0 = teal.clone().lerp(slate, rand * 0.4);
+        const c0 = teal.clone().lerp(slate, rand * 0.3);
         globeColors[i3] = c0.r;
         globeColors[i3 + 1] = c0.g;
         globeColors[i3 + 2] = c0.b;
 
-        const c1 = amber.clone().lerp(teal, rand * 0.6);
+        const c1 = amber.clone().lerp(teal, rand * 0.5);
         lorenzColors[i3] = c1.r;
         lorenzColors[i3 + 1] = c1.g;
         lorenzColors[i3 + 2] = c1.b;
 
-        const c2 = bronze.clone().lerp(emerald, rand * 0.35);
+        const c2 = bronze.clone().lerp(emerald, rand * 0.3);
         sealColors[i3] = c2.r;
         sealColors[i3 + 1] = c2.g;
         sealColors[i3 + 2] = c2.b;
@@ -213,8 +219,9 @@ export default function HermesLiquidityFieldRender({
         sealTargets[i3 + 2] = shapeCenter.z + ry * Math.sin(-Math.PI / 3);
       }
 
-      scales[i] = Math.random() * 1.4 + 0.8;
-      alphas[i] = isDark ? Math.random() * 0.5 + 0.35 : Math.random() * 0.4 + 0.2;
+      scales[i] = Math.random() * 1.5 + 0.9;
+      // Boosted alpha range for higher clarity without wash-out
+      alphas[i] = isDark ? Math.random() * 0.55 + 0.4 : Math.random() * 0.45 + 0.3;
     }
 
     rebuildColors();
@@ -235,7 +242,6 @@ export default function HermesLiquidityFieldRender({
     const particleSystem = new THREE.Points(geometry, material);
     scene.add(particleSystem);
 
-    // Observe dark mode class mutations on <html> element
     const themeObserver = new MutationObserver(() => {
       const darkNow = checkIsDark();
       if (darkNow !== isDark) {
@@ -263,18 +269,15 @@ export default function HermesLiquidityFieldRender({
       animationFrameId = requestAnimationFrame(renderLoop);
       const elapsedTime = clock.getElapsedTime();
 
-      // Mouse tracking interpolation (slowed down slightly)
       mouse.x += (mouse.targetX - mouse.x) * 0.015;
       mouse.y += (mouse.targetY - mouse.y) * 0.015;
 
-      // Slower phase cycles: 16s per stage (64s full loop)
       const phaseDuration = 16;
       const totalCycle = (elapsedTime % (phaseDuration * 4)) / phaseDuration;
 
       const phaseIndex = Math.floor(totalCycle);
       const phaseProgress = totalCycle - phaseIndex;
 
-      // Ease out exponential curve for state snaps
       const snapEase = phaseProgress === 1 ? 1 : 1 - Math.pow(2, -10 * phaseProgress);
 
       const posAttr = geometry.attributes.position as THREE.BufferAttribute;
@@ -354,7 +357,6 @@ export default function HermesLiquidityFieldRender({
           noiseDampen = snapEase;
         }
 
-        // Slower 3D Noise speed (0.012 vs original 0.03)
         const n1 = noise3D(nx * 0.1, ny * 0.1, elapsedTime * 0.012);
         const n2 = noise3D(ny * 0.1 + mouse.x * 0.2, nz * 0.1 + mouse.y * 0.2, elapsedTime * 0.012);
 
@@ -370,7 +372,6 @@ export default function HermesLiquidityFieldRender({
       posAttr.needsUpdate = true;
       colorAttr.needsUpdate = true;
 
-      // Slower overall rotation
       particleSystem.rotation.y = elapsedTime * 0.005 + mouse.x * 0.008;
       particleSystem.rotation.x = Math.sin(elapsedTime * 0.003) * 0.03;
 
