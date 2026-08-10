@@ -200,20 +200,9 @@ export default function HomeClient({
 
       {/* ── 1 · Hero: claim + live sealed-row artifact ── */}
       <section className="hero-research hero-particle-section relative overflow-hidden">
-        {/* Ensure the direct parent wrapping this block has `relative min-h-[...]' or 'relative h-screen' */}
-        <div className="hero-particle-stage absolute inset-0 z-0 h-full w-full overflow-hidden pointer-events-none" aria-hidden="true">
-          {/* Field container with explicit lower z-index */}
-          <div className="absolute inset-0 z-0 h-full w-full">
-            <HermesLiquidityFieldRender maxParticles={30000} />
-          </div>
-
-          {/* Vignette layer explicitly styled as a transparent mask over the field */}
-          <div 
-            className="hero-particle-vignette absolute inset-0 z-10 pointer-events-none" 
-            style={{
-              background: 'radial-gradient(circle at center, transparent 30%, var(--tw-prose-invert-bg, rgba(0,0,0,0.85)) 100%)'
-            }}
-          />
+        <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
+          <HermesLiquidityFieldRender maxParticles={30000} />
+          <div className="hero-particle-vignette absolute inset-0 pointer-events-none" />
         </div>
 
         <motion.div
