@@ -72,7 +72,6 @@ const particleVertexShader = `
     vColor = targetColor;
 
     vec4 mvPosition = modelViewMatrix * vec4(targetPos, 1.0);
-    // Point size floor ensures particles remain visible at all camera distances
     gl_PointSize = clamp(aScale * (42.0 / -mvPosition.z), 2.0, 6.0);
     gl_Position = projectionMatrix * mvPosition;
   }
@@ -95,17 +94,21 @@ const particleFragmentShader = `
 
 export default function HermesLiquidityFieldRender({
   posture = 'SELECTIVE',
-  maxParticles = 27000,
+  maxParticles = 30000,
 }: HermesLiquidityFieldProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    const canvas = canvasRef.current;
+    if (!container || !canvas) return;
 
-    // Ensure non-zero dimensional bounds
-    const width = container.clientWidth || window.innerWidth;
-    const height = container.clientHeight || window.innerHeight;
+    const getWidth = () => container.clientWidth || window.innerWidth;
+    const getHeight = () => container.clientHeight || window.innerHeight;
+
+    const width = getWidth();
+    const height = getHeight();
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.innerWidth < 768;
@@ -132,19 +135,14 @@ export default function HermesLiquidityFieldRender({
     camera.position.set(0, 0, isMobile ? 16 : 13);
 
     const renderer = new THREE.WebGLRenderer({
+      canvas: canvas,
       alpha: true,
       antialias: !isMobile,
       powerPreference: 'high-performance',
     });
 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0));
-    renderer.setSize(width, height);
-    
-    // Clear any existing children before appending
-    while (container.firstChild) {
-      container.removeChild(container.firstChild);
-    }
-    container.appendChild(renderer.domElement);
+    renderer.setSize(width, height, false);
 
     const geometry = new THREE.BufferGeometry();
 
@@ -287,7 +285,7 @@ export default function HermesLiquidityFieldRender({
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
     let animationFrameId: number;
-    let isVisible = true; // Default to visible on mount
+    let isVisible = true;
     const clock = new THREE.Clock();
 
     const observer = new IntersectionObserver(
@@ -325,7 +323,6 @@ export default function HermesLiquidityFieldRender({
       renderer.render(scene, camera);
     };
 
-    // Trigger initial render immediately
     renderLoop();
 
     let resizeTimeout: NodeJS.Timeout;
@@ -333,11 +330,11 @@ export default function HermesLiquidityFieldRender({
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
         if (!container) return;
-        const w = container.clientWidth || window.innerWidth;
-        const h = container.clientHeight || window.innerHeight;
+        const w = getWidth();
+        const h = getHeight();
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
-        renderer.setSize(w, h);
+        renderer.setSize(w, h, false);
       }, 100);
     };
     window.addEventListener('resize', handleResize);
@@ -348,10 +345,6 @@ export default function HermesLiquidityFieldRender({
       observer.disconnect();
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
-      
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
 
       geometry.dispose();
       material.dispose();
@@ -362,8 +355,13 @@ export default function HermesLiquidityFieldRender({
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 h-full w-full pointer-events-none min-h-[300px]"
-      aria-hidden="true"
-    />
+      className="relative h-full w-full pointer-events-none min-h-[300px]"
+    >
+      <canvas
+        ref={canvasRef}
+        className="block h-full w-full pointer-events-none"
+        style={{ width: '100%', height: '100%' }}
+      />
+    </div>
   );
 }
