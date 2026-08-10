@@ -12,16 +12,23 @@ const ANCHOR_DIR = path.join(process.cwd(), 'public', 'anchor');
 // (YYYY-MM-DDTHH-MM-SS.json). Colons are replaced with dashes for filesystem safety.
 const ANCHOR_FILE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}-\d{2}-\d{2})?\.json$/;
 
-function parseAnchorFile(raw: string): ChainAnchor {
-  const data = JSON.parse(raw);
+function parseAnchorRecord(data: unknown): ChainAnchor {
+  const record = data as Record<string, unknown>;
   return {
-    date: data.date,
-    chainHead: data.chain_head,
-    rowNumber: data.row_number,
-    sealedAt: data.sealed_at,
-    previousAnchor: data.previous_anchor ?? null,
-    sourceUrl: data.source_url,
+    date: String(record.date),
+    chainHead: String(record.chain_head),
+    rowNumber: Number(record.row_number),
+    sealedAt: String(record.sealed_at),
+    previousAnchor: record.previous_anchor ? String(record.previous_anchor) : null,
+    sourceUrl: String(record.source_url),
   };
+}
+
+function parseAnchorFile(raw: string): ChainAnchor[] {
+  const data = JSON.parse(raw);
+  // New daily files are arrays; legacy files are single objects.
+  const records = Array.isArray(data) ? data : [data];
+  return records.map(parseAnchorRecord);
 }
 
 function sortAnchors(a: ChainAnchor, b: ChainAnchor): number {
@@ -34,12 +41,11 @@ export async function listAnchors(): Promise<ChainAnchor[]> {
   try {
     const entries = await fs.readdir(ANCHOR_DIR);
     const files = entries.filter((f) => ANCHOR_FILE_RE.test(f));
-    const anchors = await Promise.all(
-      files.map(async (file) => {
-        const raw = await fs.readFile(path.join(ANCHOR_DIR, file), 'utf8');
-        return parseAnchorFile(raw);
-      }),
-    );
+    const anchors: ChainAnchor[] = [];
+    for (const file of files) {
+      const raw = await fs.readFile(path.join(ANCHOR_DIR, file), 'utf8');
+      anchors.push(...parseAnchorFile(raw));
+    }
     return anchors.sort(sortAnchors);
   } catch {
     return [];
