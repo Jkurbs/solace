@@ -22,6 +22,7 @@ export async function GET() {
   const response = NextResponse.json({
     asOf: exposure?.asOf ?? null,
     chainHead: pulse?.chainHead ?? null,
+    decisionCount: pulse?.decisionCount ?? 0,
     hermesVersion: hermesVersion.id,
     hermesVersionLabel: hermesVersion.label,
     latestRecordId: pulse?.latestRecordId ?? null,

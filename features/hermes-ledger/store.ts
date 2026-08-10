@@ -134,6 +134,7 @@ async function ensureLedgerHashBackfill(supabase: SupabaseClient): Promise<strin
 // cheap queries instead of the full table.
 export async function getHermesLedgerPulse(): Promise<{
   rowCount: number;
+  decisionCount: number;
   rowNumber: number;
   latestRecordId: string | null;
   latestSealedAt: string | null;
@@ -145,8 +146,12 @@ export async function getHermesLedgerPulse(): Promise<{
 
   try {
     const supabase = await createSupabaseDataClient();
-    const [countResult, latestResult] = await Promise.all([
+    const [countResult, decisionCountResult, latestResult] = await Promise.all([
       supabase.from('hermes_decision_ledger').select('record_id', { count: 'exact', head: true }),
+      supabase
+        .from('hermes_decision_ledger')
+        .select('record_id', { count: 'exact', head: true })
+        .neq('row_class', 'system'),
       supabase
         .from('hermes_decision_ledger')
         .select('record_id,row_hash,sealed_at')
@@ -155,7 +160,7 @@ export async function getHermesLedgerPulse(): Promise<{
         .maybeSingle(),
     ]);
 
-    if (countResult.error) {
+    if (countResult.error || decisionCountResult.error) {
       return null;
     }
 
@@ -164,6 +169,7 @@ export async function getHermesLedgerPulse(): Promise<{
       latestRecordId: latestResult.data?.record_id ?? null,
       latestSealedAt: latestResult.data?.sealed_at ?? null,
       rowCount: countResult.count ?? 0,
+      decisionCount: decisionCountResult.count ?? 0,
       rowNumber: countResult.count ?? 0,
     };
   } catch (error) {

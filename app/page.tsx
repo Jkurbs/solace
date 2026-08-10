@@ -152,7 +152,7 @@ export default async function Home() {
   ]);
 
   const sealedDecisions =
-    ledgerPulse && ledgerPulse.rowCount > 0 ? ledgerPulse.rowCount : null;
+    ledgerPulse && ledgerPulse.decisionCount > 0 ? ledgerPulse.decisionCount : null;
 
   const chainHead =
     ledgerPulse?.chainHead && ledgerPulse.latestSealedAt

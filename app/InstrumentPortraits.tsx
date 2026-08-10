@@ -81,13 +81,19 @@ export default function InstrumentPortraits({
         const pulse = (await response.json()) as {
           paths?: number;
           unrealizedPnl?: number | null;
+          decisionCount?: number;
           rowCount?: number;
         };
         if (cancelled) return;
         setLive({
           openPaths: typeof pulse.paths === 'number' ? pulse.paths : null,
           openPnl: typeof pulse.unrealizedPnl === 'number' ? pulse.unrealizedPnl : null,
-          sealedDecisions: typeof pulse.rowCount === 'number' ? pulse.rowCount : null,
+          sealedDecisions:
+            typeof pulse.decisionCount === 'number'
+              ? pulse.decisionCount
+              : typeof pulse.rowCount === 'number'
+                ? pulse.rowCount
+                : null,
         });
       } catch {
         // Keep SSR snapshot; never block the card on pulse failure.
