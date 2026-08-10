@@ -72,7 +72,8 @@ const particleVertexShader = `
     vColor = targetColor;
 
     vec4 mvPosition = modelViewMatrix * vec4(targetPos, 1.0);
-    gl_PointSize = clamp(aScale * (38.0 / -mvPosition.z), 1.6, 4.8);
+    // Point size floor ensures particles remain visible at all camera distances
+    gl_PointSize = clamp(aScale * (42.0 / -mvPosition.z), 2.0, 6.0);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
@@ -86,7 +87,7 @@ const particleFragmentShader = `
     if (dist > 0.5) discard;
     
     float strength = smoothstep(0.5, 0.15, dist);
-    vec3 luminousColor = mix(vColor, vColor + vec3(0.08), strength * 0.4);
+    vec3 luminousColor = mix(vColor, vColor + vec3(0.12), strength * 0.5);
 
     gl_FragColor = vec4(luminousColor, vAlpha * strength);
   }
@@ -102,31 +103,33 @@ export default function HermesLiquidityFieldRender({
     const container = containerRef.current;
     if (!container) return;
 
-    // Check motion preferences
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Ensure non-zero dimensional bounds
+    const width = container.clientWidth || window.innerWidth;
+    const height = container.clientHeight || window.innerHeight;
 
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.innerWidth < 768;
     const isLowPower = navigator.hardwareConcurrency ? navigator.hardwareConcurrency <= 4 : false;
     
     let count = maxParticles;
     if (isMobile) {
-      count = Math.floor(maxParticles * 0.25);
+      count = Math.floor(maxParticles * 0.3);
     } else if (isLowPower) {
       count = Math.floor(maxParticles * 0.5);
     }
 
     const scaleFactor = isMobile ? 0.95 : 1.45;
-    const shapeCenterX = isMobile ? 0.5 : 5.0;
-    const shapeCenterY = isMobile ? -1.8 : 0.0;
+    const shapeCenterX = isMobile ? 0.0 : 4.0;
+    const shapeCenterY = isMobile ? -1.0 : 0.0;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       isMobile ? 58 : 48,
-      container.clientWidth / container.clientHeight,
+      width / height,
       0.1,
-      100
+      1000
     );
-    camera.position.set(0, 0, isMobile ? 15 : 12);
+    camera.position.set(0, 0, isMobile ? 16 : 13);
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -135,7 +138,12 @@ export default function HermesLiquidityFieldRender({
     });
 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0));
-    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setSize(width, height);
+    
+    // Clear any existing children before appending
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
     container.appendChild(renderer.domElement);
 
     const geometry = new THREE.BufferGeometry();
@@ -160,7 +168,7 @@ export default function HermesLiquidityFieldRender({
     const isDark = checkIsDark();
 
     const palette = {
-      teal: new THREE.Color(isDark ? '#2dd4bf' : '#0f766e'),
+      teal: new THREE.Color(isDark ? '#2dd4bf' : '#0d9488'),
       bronze: posture === 'DEFENSIVE' 
         ? new THREE.Color(isDark ? '#f97316' : '#c2410c') 
         : new THREE.Color(isDark ? '#d97706' : '#b45309'),
@@ -235,8 +243,8 @@ export default function HermesLiquidityFieldRender({
         posSeal[i3 + 2] = shapeCenter.z + ry * Math.sin(-Math.PI / 3);
       }
 
-      scales[i] = Math.random() * 1.5 + 0.9;
-      alphas[i] = isDark ? Math.random() * 0.55 + 0.4 : Math.random() * 0.45 + 0.3;
+      scales[i] = Math.random() * 1.6 + 1.0;
+      alphas[i] = isDark ? Math.random() * 0.6 + 0.45 : Math.random() * 0.5 + 0.35;
     }
 
     geometry.setAttribute('aPosGlobe', new THREE.BufferAttribute(posGlobe, 3));
@@ -279,22 +287,20 @@ export default function HermesLiquidityFieldRender({
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
     let animationFrameId: number;
-    let isVisible = true;
+    let isVisible = true; // Default to visible on mount
     const clock = new THREE.Clock();
 
-    // Intersection Observer to pause rendering off-screen
     const observer = new IntersectionObserver(
       ([entry]) => {
         isVisible = entry.isIntersecting;
       },
-      { threshold: 0.05 }
+      { threshold: 0.0 }
     );
     observer.observe(container);
 
     const renderLoop = () => {
       animationFrameId = requestAnimationFrame(renderLoop);
 
-      // Skip render calculations if off-screen
       if (!isVisible) return;
 
       const elapsedTime = prefersReducedMotion ? 0.0 : clock.getElapsedTime();
@@ -319,6 +325,7 @@ export default function HermesLiquidityFieldRender({
       renderer.render(scene, camera);
     };
 
+    // Trigger initial render immediately
     renderLoop();
 
     let resizeTimeout: NodeJS.Timeout;
@@ -326,9 +333,11 @@ export default function HermesLiquidityFieldRender({
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
         if (!container) return;
-        camera.aspect = container.clientWidth / container.clientHeight;
+        const w = container.clientWidth || window.innerWidth;
+        const h = container.clientHeight || window.innerHeight;
+        camera.aspect = w / h;
         camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setSize(w, h);
       }, 100);
     };
     window.addEventListener('resize', handleResize);
@@ -344,10 +353,8 @@ export default function HermesLiquidityFieldRender({
         container.removeChild(renderer.domElement);
       }
 
-      // Explicit WebGL Context Cleanup
       geometry.dispose();
       material.dispose();
-      renderer.forceContextLoss();
       renderer.dispose();
     };
   }, [maxParticles, posture]);
@@ -355,7 +362,7 @@ export default function HermesLiquidityFieldRender({
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 h-full w-full pointer-events-none"
+      className="absolute inset-0 h-full w-full pointer-events-none min-h-[300px]"
       aria-hidden="true"
     />
   );
