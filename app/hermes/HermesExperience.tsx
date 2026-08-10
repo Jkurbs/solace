@@ -322,9 +322,12 @@ export default function HermesExperience({
                 </dd>
               </div>
             </dl>
-            <p className="mt-3 text-xs opacity-60">
-              Founder capital · young sample n={proof.sampleSize}
-              {anchor ? ` · cryptographically anchored ${anchor.cadence}` : ''} ·{' '}
+            <p className="mt-3 flex flex-wrap items-center gap-x-1.5 text-xs opacity-60">
+              <span>Founder capital · young sample n={proof.sampleSize}</span>
+              {anchor && (
+                <span>· cryptographically anchored {anchor.cadence}</span>
+              )}
+              <span>·</span>
               <Link href={anchor?.href ?? OBSERVATORY_HERMES_LEDGER_PATH} className="underline underline-offset-4">
                 verify it yourself →
               </Link>
