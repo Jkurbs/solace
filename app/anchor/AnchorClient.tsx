@@ -42,7 +42,7 @@ export default function AnchorClient({ chain }: { chain: AnchorChain }) {
 
   const head = chain.head;
   const verified = chain.verified && head !== null;
-  const stale = head ? isStale(head.sealedAt, 0.25) : false;
+  const stale = head ? isStale(head.sealedAt, 48) : false;
   const continuousDays = useMemo(() => {
     if (!chain.anchors.length) return 0;
     const anchorDate = (d: string) =>
