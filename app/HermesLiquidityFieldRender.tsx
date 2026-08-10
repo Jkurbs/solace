@@ -28,6 +28,7 @@ const particleVertexShader = `
   }
 `;
 
+// Fragment shader now adds a subtle core brilliance without tinting to neon
 const particleFragmentShader = `
   varying vec3 vColor;
   varying float vAlpha;
@@ -36,26 +37,25 @@ const particleFragmentShader = `
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
     
+    // Smooth radial edge falloff
     float strength = smoothstep(0.5, 0.15, dist);
+    
+    // Core highlight boost for crispness without hyper-saturation
     vec3 luminousColor = mix(vColor, vColor + vec3(0.08), strength * 0.4);
 
     gl_FragColor = vec4(luminousColor, vAlpha * strength);
   }
 `;
 
-type ShapeState = 'GALAXY' | 'GLOBE' | 'LORENZ' | 'SEAL' | 'NOISE';
-
 export default function HermesLiquidityFieldRender({
   posture = 'SELECTIVE',
   maxParticles = 27000,
 }: HermesLiquidityFieldProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const container = containerRef.current;
-    const canvas = canvasRef.current;
-    if (!container || !canvas) return;
+    if (!container) return;
 
     const isMobile = window.innerWidth < 768;
     const count = isMobile ? Math.floor(maxParticles * 0.35) : maxParticles;
@@ -74,13 +74,13 @@ export default function HermesLiquidityFieldRender({
     camera.position.set(0, 0, isMobile ? 15 : 12);
 
     const renderer = new THREE.WebGLRenderer({
-      canvas,
       alpha: true,
       antialias: true,
       powerPreference: 'high-performance',
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(container.clientWidth, container.clientHeight, false);
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
 
     const noise3D = createNoise3D();
     const geometry = new THREE.BufferGeometry();
@@ -102,12 +102,14 @@ export default function HermesLiquidityFieldRender({
     const scales = new Float32Array(count);
     const alphas = new Float32Array(count);
 
+    // Dark Mode helper
     const checkIsDark = () =>
       document.documentElement.classList.contains('dark') ||
       window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     let isDark = checkIsDark();
 
+    // Theme adaptive palette: Elegant, luminous hues
     const getThemeColors = (dark: boolean) => ({
       teal: new THREE.Color(dark ? '#2dd4bf' : '#0f766e'),
       bronze:
@@ -117,13 +119,13 @@ export default function HermesLiquidityFieldRender({
       amber: new THREE.Color(dark ? '#fbbf24' : '#d97706'),
       slate: new THREE.Color(dark ? '#cbd5e1' : '#475569'),
       emerald: new THREE.Color(dark ? '#34d399' : '#059669'),
-      indigo: new THREE.Color(dark ? '#818cf8' : '#4338ca'),
     });
 
     let activePalette = getThemeColors(isDark);
+
     const shapeCenter = new THREE.Vector3(shapeCenterX, shapeCenterY, 0);
 
-    // --- Lorenz Attractor Math ---
+    // --- Lorenz Attractor ---
     let lx = 0.1,
       ly = 0.0,
       lz = 0.0;
@@ -140,41 +142,55 @@ export default function HermesLiquidityFieldRender({
     }
 
     const rebuildColors = () => {
-      const { teal, bronze, amber, slate, emerald, indigo } = activePalette;
+      const { teal, bronze, amber, slate, emerald } = activePalette;
 
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
         const rand = Math.random();
 
         const c0 = teal.clone().lerp(slate, rand * 0.3);
-        globeColors[i3] = c0.r; globeColors[i3 + 1] = c0.g; globeColors[i3 + 2] = c0.b;
+        globeColors[i3] = c0.r;
+        globeColors[i3 + 1] = c0.g;
+        globeColors[i3 + 2] = c0.b;
 
         const c1 = amber.clone().lerp(teal, rand * 0.5);
-        lorenzColors[i3] = c1.r; lorenzColors[i3 + 1] = c1.g; lorenzColors[i3 + 2] = c1.b;
+        lorenzColors[i3] = c1.r;
+        lorenzColors[i3 + 1] = c1.g;
+        lorenzColors[i3 + 2] = c1.b;
 
         const c2 = bronze.clone().lerp(emerald, rand * 0.3);
-        sealColors[i3] = c2.r; sealColors[i3 + 1] = c2.g; sealColors[i3 + 2] = c2.b;
+        sealColors[i3] = c2.r;
+        sealColors[i3 + 1] = c2.g;
+        sealColors[i3 + 2] = c2.b;
 
-        const c3 = indigo.clone().lerp(teal, rand * 0.6);
-        galaxyColors[i3] = c3.r; galaxyColors[i3 + 1] = c3.g; galaxyColors[i3 + 2] = c3.b;
+        const c3 = emerald.clone().lerp(teal, rand * 0.4);
+        galaxyColors[i3] = c3.r;
+        galaxyColors[i3 + 1] = c3.g;
+        galaxyColors[i3 + 2] = c3.b;
 
         const c4 = teal.clone().lerp(bronze, rand);
-        noiseColors[i3] = c4.r; noiseColors[i3 + 1] = c4.g; noiseColors[i3 + 2] = c4.b;
+        noiseColors[i3] = c4.r;
+        noiseColors[i3 + 1] = c4.g;
+        noiseColors[i3 + 2] = c4.b;
       }
     };
 
-    // Construct Geometries
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
 
-      // 1. Noise Field
+      // 1. Dispersed Noise
       const nx = isMobile ? (Math.random() - 0.5) * 14 : (Math.random() - 0.2) * 22;
       const ny = (Math.random() - 0.5) * (isMobile ? 20 : 16);
       const nz = (Math.random() - 0.5) * 8;
-      noisePositions[i3] = nx; noisePositions[i3 + 1] = ny; noisePositions[i3 + 2] = nz;
-      currentPositions[i3] = nx; currentPositions[i3 + 1] = ny; currentPositions[i3 + 2] = nz;
 
-      // 2. Globe
+      noisePositions[i3] = nx;
+      noisePositions[i3 + 1] = ny;
+      noisePositions[i3 + 2] = nz;
+      currentPositions[i3] = nx;
+      currentPositions[i3 + 1] = ny;
+      currentPositions[i3 + 2] = nz;
+
+      // 2. Tight Globe
       const sphereRadius = 3.6 * scaleFactor;
       const phi = Math.acos(-1 + (2 * i) / count);
       const theta = Math.sqrt(count * Math.PI) * phi;
@@ -182,13 +198,13 @@ export default function HermesLiquidityFieldRender({
       globeTargets[i3 + 1] = shapeCenter.y + sphereRadius * Math.sin(theta) * Math.sin(phi);
       globeTargets[i3 + 2] = shapeCenter.z + sphereRadius * Math.cos(phi);
 
-      // 3. Lorenz Attractor
+      // 3. Tight Lorenz
       const lorenzScale = 0.165 * scaleFactor;
       lorenzTargets[i3] = shapeCenter.x + rawLorenz[i3] * lorenzScale;
       lorenzTargets[i3 + 1] = shapeCenter.y + rawLorenz[i3 + 1] * lorenzScale;
       lorenzTargets[i3 + 2] = shapeCenter.z + rawLorenz[i3 + 2] * lorenzScale;
 
-      // 4. Gyroscopic Seal Rings
+      // 4. Tight Gyroscopic Seal Rings
       const ringIndex = i % 3;
       const radii = [2.2 * scaleFactor, 3.3 * scaleFactor, 4.4 * scaleFactor];
       const radius = radii[ringIndex];
@@ -210,19 +226,19 @@ export default function HermesLiquidityFieldRender({
         sealTargets[i3 + 2] = shapeCenter.z + ry * Math.sin(-Math.PI / 3);
       }
 
-      // 5. Spiral Galaxy Geometry (4 Logarithmic Spiral Arms)
+      // 5. Spiral Galaxy (4 Logarithmic Arms)
       const arms = 4;
       const armAngle = ((i % arms) * 2 * Math.PI) / arms;
-      const distance = Math.pow(Math.random(), 2) * 5.2 * scaleFactor;
-      const spiralOffset = distance * 1.35;
+      const dist = Math.pow(Math.random(), 2) * 5.2 * scaleFactor;
+      const spiralOffset = dist * 1.35;
       const finalAngle = armAngle + spiralOffset;
 
-      const randomX = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.45);
-      const randomY = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.45);
-      const randomZ = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.35);
+      const randomX = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.45;
+      const randomY = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.45;
+      const randomZ = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.35;
 
-      galaxyTargets[i3] = shapeCenter.x + Math.cos(finalAngle) * distance + randomX;
-      galaxyTargets[i3 + 1] = shapeCenter.y + Math.sin(finalAngle) * distance + randomY;
+      galaxyTargets[i3] = shapeCenter.x + Math.cos(finalAngle) * dist + randomX;
+      galaxyTargets[i3 + 1] = shapeCenter.y + Math.sin(finalAngle) * dist + randomY;
       galaxyTargets[i3 + 2] = shapeCenter.z + randomZ;
 
       scales[i] = Math.random() * 1.5 + 0.9;
@@ -267,36 +283,8 @@ export default function HermesLiquidityFieldRender({
     };
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-    // --- Unpredictable State Engine ---
-    const shapes: ShapeState[] = ['GALAXY', 'GLOBE', 'LORENZ', 'SEAL', 'NOISE'];
-    let currentState: ShapeState = 'GALAXY';
-    let targetState: ShapeState = 'GLOBE';
-    let transitionProgress = 0;
-    let transitionSpeed = 0.008;
-    let holdTimer = 0;
-    let holdDuration = 320; // ~5-6 seconds hold
-
-    const getTargetsForState = (state: ShapeState) => {
-      switch (state) {
-        case 'GALAXY': return { pos: galaxyTargets, col: galaxyColors, noiseDampen: 0.15 };
-        case 'GLOBE': return { pos: globeTargets, col: globeColors, noiseDampen: 0.05 };
-        case 'LORENZ': return { pos: lorenzTargets, col: lorenzColors, noiseDampen: 0.02 };
-        case 'SEAL': return { pos: sealTargets, col: sealColors, noiseDampen: 0.02 };
-        case 'NOISE': default: return { pos: noisePositions, col: noiseColors, noiseDampen: 1.0 };
-      }
-    };
-
-    const pickNextState = () => {
-      const candidates = shapes.filter((s) => s !== currentState);
-      targetState = candidates[Math.floor(Math.random() * candidates.length)];
-      transitionProgress = 0;
-      // Vary transition speed dynamically for organic unpredictability
-      transitionSpeed = 0.004 + Math.random() * 0.008;
-      holdDuration = Math.floor(240 + Math.random() * 360);
-    };
-
     let animationFrameId: number;
-    const clock = new THREE.Clock();
+    let clock = new THREE.Clock();
 
     const renderLoop = () => {
       animationFrameId = requestAnimationFrame(renderLoop);
@@ -305,27 +293,13 @@ export default function HermesLiquidityFieldRender({
       mouse.x += (mouse.targetX - mouse.x) * 0.015;
       mouse.y += (mouse.targetY - mouse.y) * 0.015;
 
-      // Unpredictable State Transition Logic
-      if (holdTimer < holdDuration) {
-        holdTimer++;
-      } else {
-        transitionProgress += transitionSpeed;
-        if (transitionProgress >= 1.0) {
-          transitionProgress = 1.0;
-          currentState = targetState;
-          holdTimer = 0;
-          pickNextState();
-        }
-      }
+      const phaseDuration = 16;
+      const totalCycle = (elapsedTime % (phaseDuration * 5)) / phaseDuration;
 
-      // Smooth Ease-In-Out Quintic Curve
-      const ease = transitionProgress < 0.5
-        ? 16 * Math.pow(transitionProgress, 5)
-        : 1 - Math.pow(-2 * transitionProgress + 2, 5) / 2;
+      const phaseIndex = Math.floor(totalCycle);
+      const phaseProgress = totalCycle - phaseIndex;
 
-      const fromData = getTargetsForState(currentState);
-      const toData = getTargetsForState(targetState);
-      const currentNoiseDampen = THREE.MathUtils.lerp(fromData.noiseDampen, toData.noiseDampen, ease);
+      const snapEase = phaseProgress === 1 ? 1 : 1 - Math.pow(2, -10 * phaseProgress);
 
       const posAttr = geometry.attributes.position as THREE.BufferAttribute;
       const posArray = posAttr.array as Float32Array;
@@ -336,28 +310,99 @@ export default function HermesLiquidityFieldRender({
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
 
-        const fx = fromData.pos[i3];
-        const fy = fromData.pos[i3 + 1];
-        const fz = fromData.pos[i3 + 2];
+        const nx = noisePositions[i3];
+        const ny = noisePositions[i3 + 1];
+        const nz = noisePositions[i3 + 2];
 
-        const tx = toData.pos[i3];
-        const ty = toData.pos[i3 + 1];
-        const tz = toData.pos[i3 + 2];
+        const gx = globeTargets[i3];
+        const gy = globeTargets[i3 + 1];
+        const gz = globeTargets[i3 + 2];
 
-        const interpX = THREE.MathUtils.lerp(fx, tx, ease);
-        const interpY = THREE.MathUtils.lerp(fy, ty, ease);
-        const interpZ = THREE.MathUtils.lerp(fz, tz, ease);
+        const lxPos = lorenzTargets[i3];
+        const lyPos = lorenzTargets[i3 + 1];
+        const lzPos = lorenzTargets[i3 + 2];
 
-        const cr = THREE.MathUtils.lerp(fromData.col[i3], toData.col[i3], ease);
-        const cg = THREE.MathUtils.lerp(fromData.col[i3 + 1], toData.col[i3 + 1], ease);
-        const cb = THREE.MathUtils.lerp(fromData.col[i3 + 2], toData.col[i3 + 2], ease);
+        const sx = sealTargets[i3];
+        const sy = sealTargets[i3 + 1];
+        const sz = sealTargets[i3 + 2];
 
-        const n1 = noise3D(fx * 0.1, fy * 0.1, elapsedTime * 0.012);
-        const n2 = noise3D(fy * 0.1 + mouse.x * 0.2, fz * 0.1 + mouse.y * 0.2, elapsedTime * 0.012);
+        const galX = galaxyTargets[i3];
+        const galY = galaxyTargets[i3 + 1];
+        const galZ = galaxyTargets[i3 + 2];
 
-        posArray[i3] = interpX + Math.cos(n1 * Math.PI) * 0.35 * currentNoiseDampen;
-        posArray[i3 + 1] = interpY + Math.sin(n2 * Math.PI) * 0.35 * currentNoiseDampen;
-        posArray[i3 + 2] = interpZ;
+        let targetX = nx;
+        let targetY = ny;
+        let targetZ = nz;
+
+        let cr = noiseColors[i3];
+        let cg = noiseColors[i3 + 1];
+        let cb = noiseColors[i3 + 2];
+
+        let noiseDampen = 1.0;
+
+        if (phaseIndex === 0) {
+          // Noise -> Globe
+          targetX = THREE.MathUtils.lerp(nx, gx, snapEase);
+          targetY = THREE.MathUtils.lerp(ny, gy, snapEase);
+          targetZ = THREE.MathUtils.lerp(nz, gz, snapEase);
+
+          cr = THREE.MathUtils.lerp(noiseColors[i3], globeColors[i3], snapEase);
+          cg = THREE.MathUtils.lerp(noiseColors[i3 + 1], globeColors[i3 + 1], snapEase);
+          cb = THREE.MathUtils.lerp(noiseColors[i3 + 2], globeColors[i3 + 2], snapEase);
+
+          noiseDampen = Math.max(0, 1.0 - snapEase * 1.2);
+        } else if (phaseIndex === 1) {
+          // Globe -> Lorenz
+          targetX = THREE.MathUtils.lerp(gx, lxPos, snapEase);
+          targetY = THREE.MathUtils.lerp(gy, lyPos, snapEase);
+          targetZ = THREE.MathUtils.lerp(gz, lzPos, snapEase);
+
+          cr = THREE.MathUtils.lerp(globeColors[i3], lorenzColors[i3], snapEase);
+          cg = THREE.MathUtils.lerp(globeColors[i3 + 1], lorenzColors[i3 + 1], snapEase);
+          cb = THREE.MathUtils.lerp(globeColors[i3 + 2], lorenzColors[i3 + 2], snapEase);
+
+          noiseDampen = 0.02;
+        } else if (phaseIndex === 2) {
+          // Lorenz -> Gyroscopic Seal
+          targetX = THREE.MathUtils.lerp(lxPos, sx, snapEase);
+          targetY = THREE.MathUtils.lerp(lyPos, sy, snapEase);
+          targetZ = THREE.MathUtils.lerp(lzPos, sz, snapEase);
+
+          cr = THREE.MathUtils.lerp(lorenzColors[i3], sealColors[i3], snapEase);
+          cg = THREE.MathUtils.lerp(lorenzColors[i3 + 1], sealColors[i3 + 1], snapEase);
+          cb = THREE.MathUtils.lerp(lorenzColors[i3 + 2], sealColors[i3 + 2], snapEase);
+
+          noiseDampen = 0.02;
+        } else if (phaseIndex === 3) {
+          // Gyroscopic Seal -> Spiral Galaxy
+          targetX = THREE.MathUtils.lerp(sx, galX, snapEase);
+          targetY = THREE.MathUtils.lerp(sy, galY, snapEase);
+          targetZ = THREE.MathUtils.lerp(sz, galZ, snapEase);
+
+          cr = THREE.MathUtils.lerp(sealColors[i3], galaxyColors[i3], snapEase);
+          cg = THREE.MathUtils.lerp(sealColors[i3 + 1], galaxyColors[i3 + 1], snapEase);
+          cb = THREE.MathUtils.lerp(sealColors[i3 + 2], galaxyColors[i3 + 2], snapEase);
+
+          noiseDampen = 0.15;
+        } else {
+          // Spiral Galaxy -> Dispersed Noise
+          targetX = THREE.MathUtils.lerp(galX, nx, snapEase);
+          targetY = THREE.MathUtils.lerp(galY, ny, snapEase);
+          targetZ = THREE.MathUtils.lerp(galZ, nz, snapEase);
+
+          cr = THREE.MathUtils.lerp(galaxyColors[i3], noiseColors[i3], snapEase);
+          cg = THREE.MathUtils.lerp(galaxyColors[i3 + 1], noiseColors[i3 + 1], snapEase);
+          cb = THREE.MathUtils.lerp(galaxyColors[i3 + 2], noiseColors[i3 + 2], snapEase);
+
+          noiseDampen = snapEase;
+        }
+
+        const n1 = noise3D(nx * 0.1, ny * 0.1, elapsedTime * 0.012);
+        const n2 = noise3D(ny * 0.1 + mouse.x * 0.2, nz * 0.1 + mouse.y * 0.2, elapsedTime * 0.012);
+
+        posArray[i3] = targetX + Math.cos(n1 * Math.PI) * 0.3 * noiseDampen;
+        posArray[i3 + 1] = targetY + Math.sin(n2 * Math.PI) * 0.3 * noiseDampen;
+        posArray[i3 + 2] = targetZ;
 
         colorArray[i3] = cr;
         colorArray[i3 + 1] = cg;
@@ -367,9 +412,7 @@ export default function HermesLiquidityFieldRender({
       posAttr.needsUpdate = true;
       colorAttr.needsUpdate = true;
 
-      // Galaxy state gets subtle extra spiral rotation momentum
-      const extraSpeed = currentState === 'GALAXY' || targetState === 'GALAXY' ? 0.008 : 0.0;
-      particleSystem.rotation.y = elapsedTime * (0.005 + extraSpeed) + mouse.x * 0.008;
+      particleSystem.rotation.y = elapsedTime * 0.005 + mouse.x * 0.008;
       particleSystem.rotation.x = Math.sin(elapsedTime * 0.003) * 0.03;
 
       renderer.render(scene, camera);
@@ -381,7 +424,7 @@ export default function HermesLiquidityFieldRender({
       if (!container) return;
       camera.aspect = container.clientWidth / container.clientHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(container.clientWidth, container.clientHeight, false);
+      renderer.setSize(container.clientWidth, container.clientHeight);
     };
     window.addEventListener('resize', handleResize);
 
@@ -390,6 +433,9 @@ export default function HermesLiquidityFieldRender({
       themeObserver.disconnect();
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
       geometry.dispose();
       material.dispose();
       renderer.dispose();
@@ -397,8 +443,10 @@ export default function HermesLiquidityFieldRender({
   }, [maxParticles, posture]);
 
   return (
-    <div ref={containerRef} className="relative h-full w-full pointer-events-none min-h-[300px]">
-      <canvas ref={canvasRef} className="block h-full w-full pointer-events-none" style={{ width: '100%', height: '100%' }} />
-    </div>
+    <div
+      ref={containerRef}
+      className="absolute inset-0 h-full w-full pointer-events-none"
+      aria-hidden="true"
+    />
   );
 }
