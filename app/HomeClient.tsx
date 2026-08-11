@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -21,10 +21,11 @@ import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
  *  1. Headline text unchanged ("Instruments for decisions when you can't predict the future."),
  *     scaled way up (text-5xl → lg:text-8xl) — SpaceX-scale mission type. The hero holds
  *     only eyebrow + headline + the single "Read the brief" CTA over the particle field.
- *  2. The sealed record lives in its own section directly under the hero (not inside it):
- *     record card (sealed count, latest seal, anchor status, verify link), then the
- *     description as its caption, then the "Meet Hermes" CTA.
- *     (SpaceX structure: the event leads, the mission labels it.)
+ *  2. The sealed record lives in its own section directly under the hero (not inside it).
+ *     Section order: rotating bridge line ("Solace builds instruments for decisions about
+ *     capital / belief / help" — cycles every 2.4s, respects reduced-motion) → record card
+ *     (sealed count, latest seal, anchor status, verify link) → description as its caption
+ *     → "Meet Hermes" CTA. (SpaceX structure: the event leads, the mission labels it.)
  *  3. The old small inline "N decisions sealed" line is removed (absorbed into the card).
  *
  * Wiring notes (unchanged from v2):
@@ -165,6 +166,11 @@ export type AnchorStatus = {
   href?: string;
 };
 
+/** Rotating domains for the bridge line above the record card. Keep honest:
+ *  capital = Hermes (live), belief = Oracle (live), help = Glorya (evaluating). */
+const ROTATING_DOMAINS = ['capital', 'belief', 'help'] as const;
+const ROTATE_MS = 2400;
+
 /* ── Foundation: Vault seal icon ── */
 function SealIcon({ className }: { className?: string }) {
   return (
@@ -191,6 +197,16 @@ export default function HomeClient({
 }) {
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
+
+  const [domainIndex, setDomainIndex] = useState(0);
+  useEffect(() => {
+    if (reduceMotion) return;
+    const id = window.setInterval(
+      () => setDomainIndex((i) => (i + 1) % ROTATING_DOMAINS.length),
+      ROTATE_MS,
+    );
+    return () => window.clearInterval(id);
+  }, [reduceMotion]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -266,6 +282,31 @@ export default function HomeClient({
           variants={stagger}
           className="mx-auto max-w-6xl"
         >
+          {/* Bridge line: the mission, made concrete — domains rotate, then the record
+              lands directly beneath as the proof. Respects prefers-reduced-motion. */}
+          <motion.p
+            variants={fade}
+            className="font-serif text-2xl md:text-3xl leading-snug"
+            aria-label="Solace builds instruments for decisions about capital, belief, and help."
+          >
+            Solace builds instruments for decisions about{' '}
+            <span className="relative inline-block overflow-hidden align-bottom text-left min-w-[5.5ch]">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={ROTATING_DOMAINS[domainIndex]}
+                  initial={reduceMotion ? false : { y: '100%', opacity: 0 }}
+                  animate={{ y: '0%', opacity: 1 }}
+                  exit={reduceMotion ? undefined : { y: '-100%', opacity: 0 }}
+                  transition={{ duration: 0.45, ease: easeOut }}
+                  className="inline-block"
+                >
+                  {ROTATING_DOMAINS[domainIndex]}
+                </motion.span>
+              </AnimatePresence>
+            </span>
+            .
+          </motion.p>
+
           {/* The record, as the event. SpaceX structure: attempt first, mission second. */}
           {showRecordCard && (
             <motion.div variants={fade}>
