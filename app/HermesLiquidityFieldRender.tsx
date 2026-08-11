@@ -28,7 +28,7 @@ const particleVertexShader = `
   }
 `;
 
-// Fragment shader now adds a subtle core brilliance without tinting to neon
+// Fragment shader featuring non-linear core brilliance for rich highlights
 const particleFragmentShader = `
   varying vec3 vColor;
   varying float vAlpha;
@@ -40,8 +40,9 @@ const particleFragmentShader = `
     // Smooth radial edge falloff
     float strength = smoothstep(0.5, 0.15, dist);
     
-    // Core highlight boost for crispness without hyper-saturation
-    vec3 luminousColor = mix(vColor, vColor + vec3(0.08), strength * 0.4);
+    // Nonlinear brightness curve: crisp bright core with saturated edges
+    float core = pow(strength, 2.2);
+    vec3 luminousColor = vColor * (1.0 + core * 0.65);
 
     gl_FragColor = vec4(luminousColor, vAlpha * strength);
   }
@@ -107,16 +108,16 @@ export default function HermesLiquidityFieldRender({
 
     let isDark = checkIsDark();
 
-    // Theme adaptive palette: Elegant, luminous hues (avoiding neon greens/pinks)
+    // Saturated, luminous color palette with reduced slate dominance
     const getThemeColors = (dark: boolean) => ({
-      teal: new THREE.Color(dark ? '#2dd4bf' : '#0f766e'),
+      teal: new THREE.Color(dark ? '#22D3EE' : '#0f766e'),
       bronze:
         posture === 'DEFENSIVE'
-          ? new THREE.Color(dark ? '#f97316' : '#c2410c')
+          ? new THREE.Color(dark ? '#F97316' : '#c2410c')
           : new THREE.Color(dark ? '#d97706' : '#b45309'),
-      amber: new THREE.Color(dark ? '#fbbf24' : '#d97706'),
-      slate: new THREE.Color(dark ? '#cbd5e1' : '#475569'),
-      emerald: new THREE.Color(dark ? '#34d399' : '#059669'),
+      amber: new THREE.Color(dark ? '#FBBF24' : '#d97706'),
+      slate: new THREE.Color(dark ? '#94A3B8' : '#475569'),
+      emerald: new THREE.Color(dark ? '#34D399' : '#059669'),
     });
 
     let activePalette = getThemeColors(isDark);
@@ -140,18 +141,19 @@ export default function HermesLiquidityFieldRender({
     }
 
     const rebuildColors = () => {
-      const { teal, bronze, amber, slate, emerald } = activePalette;
+      const { teal, bronze, amber, emerald } = activePalette;
 
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
         const rand = Math.random();
 
-        const c0 = teal.clone().lerp(slate, rand * 0.3);
+        // Blending toward lively colors rather than desaturating with slate
+        const c0 = teal.clone().lerp(emerald, rand * 0.25);
         globeColors[i3] = c0.r;
         globeColors[i3 + 1] = c0.g;
         globeColors[i3 + 2] = c0.b;
 
-        const c1 = amber.clone().lerp(teal, rand * 0.5);
+        const c1 = amber.clone().lerp(teal, rand * 0.35);
         lorenzColors[i3] = c1.r;
         lorenzColors[i3 + 1] = c1.g;
         lorenzColors[i3 + 2] = c1.b;
@@ -161,7 +163,7 @@ export default function HermesLiquidityFieldRender({
         sealColors[i3 + 1] = c2.g;
         sealColors[i3 + 2] = c2.b;
 
-        const c3 = teal.clone().lerp(bronze, rand);
+        const c3 = teal.clone().lerp(bronze, rand * 0.7);
         noiseColors[i3] = c3.r;
         noiseColors[i3 + 1] = c3.g;
         noiseColors[i3 + 2] = c3.b;
@@ -220,7 +222,7 @@ export default function HermesLiquidityFieldRender({
       }
 
       scales[i] = Math.random() * 1.5 + 0.9;
-      // Boosted alpha range for higher clarity without wash-out
+      // Retain controlled alpha to preserve visual density under additive blending
       alphas[i] = isDark ? Math.random() * 0.55 + 0.4 : Math.random() * 0.45 + 0.3;
     }
 
@@ -236,7 +238,7 @@ export default function HermesLiquidityFieldRender({
       fragmentShader: particleFragmentShader,
       transparent: true,
       depthWrite: false,
-      blending: THREE.NormalBlending,
+      blending: THREE.AdditiveBlending,
     });
 
     const particleSystem = new THREE.Points(geometry, material);
