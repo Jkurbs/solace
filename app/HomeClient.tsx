@@ -18,11 +18,12 @@ import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
  * Homepage v3 — record-first hero.
  *
  * What changed vs. the version you sent:
- *  1. Headline text unchanged ("Instruments for decisions when you can't predict the future.");
- *     the hero now contains ONLY eyebrow + headline over the particle field.
+ *  1. Headline text unchanged ("Instruments for decisions when you can't predict the future."),
+ *     scaled way up (text-5xl → lg:text-8xl) — SpaceX-scale mission type. The hero holds
+ *     only eyebrow + headline + the single "Read the brief" CTA over the particle field.
  *  2. The sealed record lives in its own section directly under the hero (not inside it):
  *     record card (sealed count, latest seal, anchor status, verify link), then the
- *     description as its caption, then the CTAs.
+ *     description as its caption, then the "Meet Hermes" CTA.
  *     (SpaceX structure: the event leads, the mission labels it.)
  *  3. The old small inline "N decisions sealed" line is removed (absorbed into the card).
  *
@@ -241,9 +242,18 @@ export default function HomeClient({
               Instrument company
             </motion.p>
 
-            <motion.h1 variants={fade} className="hero-particle-title">
+            <motion.h1
+              variants={fade}
+              className="hero-particle-title text-5xl md:text-7xl lg:text-8xl leading-[1.05] tracking-tight"
+            >
               Instruments for decisions when you can't predict the future.
             </motion.h1>
+
+            <motion.div variants={fade} className="hero-particle-ctas">
+              <Link href="/brief" className="hero-cta hero-cta-primary hero-cta-on-void">
+                Read the brief
+              </Link>
+            </motion.div>
           </div>
         </motion.div>
       </section>
@@ -320,9 +330,6 @@ export default function HomeClient({
           </motion.p>
 
           <motion.div variants={fade} className="mt-8 flex flex-wrap gap-3">
-            <Link href="/brief" className="hero-cta hero-cta-primary">
-              Read the brief
-            </Link>
             <Link href="/hermes" className="hero-cta hero-cta-secondary">
               Meet Hermes
             </Link>
