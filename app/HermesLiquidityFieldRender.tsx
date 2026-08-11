@@ -23,12 +23,12 @@ const particleVertexShader = `
     vAlpha = aAlpha;
 
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = clamp(aScale * (38.0 / -mvPosition.z), 1.8, 5.2);
+    // Sub-pixel scaling for crisp instrument precision
+    gl_PointSize = clamp(aScale * (42.0 / -mvPosition.z), 1.0, 8.0);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
 
-// Fragment shader featuring non-linear core brilliance for rich highlights
 const particleFragmentShader = `
   varying vec3 vColor;
   varying float vAlpha;
@@ -37,12 +37,12 @@ const particleFragmentShader = `
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
     
-    // Smooth radial edge falloff
-    float strength = smoothstep(0.5, 0.15, dist);
+    // Sharper edge falloff for clinical, non-soft look
+    float strength = smoothstep(0.5, 0.05, dist);
     
-    // Nonlinear brightness curve: crisp bright core with saturated edges
-    float core = pow(strength, 2.2);
-    vec3 luminousColor = vColor * (1.0 + core * 0.65);
+    // Core brilliance with crisp edge separation
+    float core = pow(strength, 3.0);
+    vec3 luminousColor = vColor * (1.0 + core * 0.85);
 
     gl_FragColor = vec4(luminousColor, vAlpha * strength);
   }
@@ -61,8 +61,8 @@ export default function HermesLiquidityFieldRender({
     const isMobile = window.innerWidth < 768;
     const count = isMobile ? Math.floor(maxParticles * 0.35) : maxParticles;
 
-    const shapeCenterX = isMobile ? 0.5 : 5.0;
-    const shapeCenterY = isMobile ? -1.8 : 0.0;
+    const shapeCenterX = isMobile ? 0.0 : 4.5;
+    const shapeCenterY = isMobile ? -1.2 : 0.0;
     const scaleFactor = isMobile ? 0.95 : 1.45;
 
     const scene = new THREE.Scene();
@@ -101,14 +101,12 @@ export default function HermesLiquidityFieldRender({
     const scales = new Float32Array(count);
     const alphas = new Float32Array(count);
 
-    // Dark Mode helper
     const checkIsDark = () =>
       document.documentElement.classList.contains('dark') ||
       window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     let isDark = checkIsDark();
 
-    // Saturated, luminous color palette with reduced slate dominance
     const getThemeColors = (dark: boolean) => ({
       teal: new THREE.Color(dark ? '#22D3EE' : '#0f766e'),
       bronze:
@@ -121,13 +119,10 @@ export default function HermesLiquidityFieldRender({
     });
 
     let activePalette = getThemeColors(isDark);
-
     const shapeCenter = new THREE.Vector3(shapeCenterX, shapeCenterY, 0);
 
-    // --- Lorenz Attractor ---
-    let lx = 0.1,
-      ly = 0.0,
-      lz = 0.0;
+    // --- Lorenz Attractor Calculation ---
+    let lx = 0.1, ly = 0.0, lz = 0.0;
     const dt = 0.008;
     const rawLorenz: number[] = [];
     for (let j = 0; j < count; j++) {
@@ -147,7 +142,6 @@ export default function HermesLiquidityFieldRender({
         const i3 = i * 3;
         const rand = Math.random();
 
-        // Blending toward lively colors rather than desaturating with slate
         const c0 = teal.clone().lerp(emerald, rand * 0.25);
         globeColors[i3] = c0.r;
         globeColors[i3 + 1] = c0.g;
@@ -170,10 +164,12 @@ export default function HermesLiquidityFieldRender({
       }
     };
 
+    const sphereRadius = 3.6 * scaleFactor;
+
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
 
-      // 1. Dispersed Noise
+      // 1. Dispersed Grid/Noise
       const nx = isMobile ? (Math.random() - 0.5) * 14 : (Math.random() - 0.2) * 22;
       const ny = (Math.random() - 0.5) * (isMobile ? 20 : 16);
       const nz = (Math.random() - 0.5) * 8;
@@ -185,13 +181,38 @@ export default function HermesLiquidityFieldRender({
       currentPositions[i3 + 1] = ny;
       currentPositions[i3 + 2] = nz;
 
-      // 2. Tight Globe
-      const sphereRadius = 3.6 * scaleFactor;
-      const phi = Math.acos(-1 + (2 * i) / count);
-      const theta = Math.sqrt(count * Math.PI) * phi;
-      globeTargets[i3] = shapeCenter.x + sphereRadius * Math.cos(theta) * Math.sin(phi);
-      globeTargets[i3 + 1] = shapeCenter.y + sphereRadius * Math.sin(theta) * Math.sin(phi);
-      globeTargets[i3 + 2] = shapeCenter.z + sphereRadius * Math.cos(phi);
+      // 2. Structured Latitudinal Rings & Polar Axes (Foundation Instrument Sphere)
+      if (i < count * 0.08) {
+        // Polar Vector Axis (vertical telemetry shaft)
+        const rayY = ((i / (count * 0.08)) - 0.5) * (sphereRadius * 2.6);
+        globeTargets[i3] = shapeCenter.x;
+        globeTargets[i3 + 1] = shapeCenter.y + rayY;
+        globeTargets[i3 + 2] = shapeCenter.z;
+      } else if (i < count * 0.22) {
+        // Equatorial Target Ring
+        const angle = (i / (count * 0.14)) * Math.PI * 2;
+        const ringR = sphereRadius * 1.15;
+        globeTargets[i3] = shapeCenter.x + ringR * Math.cos(angle);
+        globeTargets[i3 + 1] = shapeCenter.y;
+        globeTargets[i3 + 2] = shapeCenter.z + ringR * Math.sin(angle);
+      } else if (i < count * 0.75) {
+        // Quantized Latitudinal Bands
+        const latitudeBands = 12;
+        const band = Math.floor(((i - count * 0.22) / (count * 0.53)) * latitudeBands);
+        const phi = (band / (latitudeBands - 1)) * Math.PI;
+        const theta = (i % 120) * ((Math.PI * 2) / 120);
+
+        globeTargets[i3] = shapeCenter.x + sphereRadius * Math.sin(phi) * Math.cos(theta);
+        globeTargets[i3 + 1] = shapeCenter.y + sphereRadius * Math.cos(phi);
+        globeTargets[i3 + 2] = shapeCenter.z + sphereRadius * Math.sin(phi) * Math.sin(theta);
+      } else {
+        // Fibonacci Sphere fill for backing lattice density
+        const phi = Math.acos(-1 + (2 * i) / count);
+        const theta = Math.sqrt(count * Math.PI) * phi;
+        globeTargets[i3] = shapeCenter.x + sphereRadius * Math.cos(theta) * Math.sin(phi);
+        globeTargets[i3 + 1] = shapeCenter.y + sphereRadius * Math.sin(theta) * Math.sin(phi);
+        globeTargets[i3 + 2] = shapeCenter.z + sphereRadius * Math.cos(phi);
+      }
 
       // 3. Tight Lorenz
       const lorenzScale = 0.165 * scaleFactor;
@@ -221,9 +242,18 @@ export default function HermesLiquidityFieldRender({
         sealTargets[i3 + 2] = shapeCenter.z + ry * Math.sin(-Math.PI / 3);
       }
 
-      scales[i] = Math.random() * 1.5 + 0.9;
-      // Retain controlled alpha to preserve visual density under additive blending
-      alphas[i] = isDark ? Math.random() * 0.55 + 0.4 : Math.random() * 0.45 + 0.3;
+      // 5. Sub-Pixel Scale Hierarchy
+      const sizeSeed = Math.random();
+      if (sizeSeed > 0.98) {
+        scales[i] = 4.2; // Key Telemetry Nodes
+        alphas[i] = isDark ? 0.95 : 0.85;
+      } else if (sizeSeed > 0.88) {
+        scales[i] = 2.1; // Primary Trackers
+        alphas[i] = isDark ? 0.70 : 0.60;
+      } else {
+        scales[i] = 0.75; // High-Density Lattice Micro-Pixels
+        alphas[i] = isDark ? 0.35 : 0.25;
+      }
     }
 
     rebuildColors();
@@ -287,6 +317,9 @@ export default function HermesLiquidityFieldRender({
 
       const colorAttr = geometry.attributes.aColor as THREE.BufferAttribute;
       const colorArray = colorAttr.array as Float32Array;
+
+      // Stepped clock tick for quantized quantum jitter
+      const steppedTime = Math.floor(elapsedTime * 10) / 10;
 
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
@@ -359,11 +392,13 @@ export default function HermesLiquidityFieldRender({
           noiseDampen = snapEase;
         }
 
-        const n1 = noise3D(nx * 0.1, ny * 0.1, elapsedTime * 0.012);
-        const n2 = noise3D(ny * 0.1 + mouse.x * 0.2, nz * 0.1 + mouse.y * 0.2, elapsedTime * 0.012);
+        // Quantized step displacement for instrument feel
+        const n1 = noise3D(nx * 0.15, ny * 0.15, steppedTime * 0.04);
+        const jitterX = Math.round(Math.cos(n1 * Math.PI) * 3) * 0.04;
+        const jitterY = Math.round(Math.sin(n1 * Math.PI) * 3) * 0.04;
 
-        posArray[i3] = targetX + Math.cos(n1 * Math.PI) * 0.3 * noiseDampen;
-        posArray[i3 + 1] = targetY + Math.sin(n2 * Math.PI) * 0.3 * noiseDampen;
+        posArray[i3] = targetX + jitterX * noiseDampen;
+        posArray[i3 + 1] = targetY + jitterY * noiseDampen;
         posArray[i3 + 2] = targetZ;
 
         colorArray[i3] = cr;
@@ -405,10 +440,44 @@ export default function HermesLiquidityFieldRender({
   }, [maxParticles, posture]);
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 h-full w-full pointer-events-none"
-      aria-hidden="true"
-    />
+    <div className="relative w-full h-full pointer-events-none overflow-hidden select-none">
+      {/* WebGL Canvas */}
+      <div ref={containerRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
+
+      {/* Foundation Scientific Instrument Telemetry HUD */}
+      <div className="absolute inset-0 flex flex-col justify-between p-6 md:p-8 font-mono text-[10px] tracking-widest text-cyan-500/50 uppercase">
+        {/* Top Header Readout */}
+        <div className="flex justify-between items-start border-b border-cyan-500/15 pb-2">
+          <div className="flex items-center space-x-3">
+            <span className="inline-block w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+            <span>SYS.HERMES // POSTURE: {posture}</span>
+          </div>
+          <span className="hidden sm:inline">FREQ: 1420.405 MHz</span>
+        </div>
+
+        {/* Center Target Reticle Grid */}
+        <div className="absolute top-1/2 right-1/2 md:right-[18%] -translate-y-1/2 translate-x-1/2 md:translate-x-0 w-64 h-64 md:w-80 md:h-80 border border-cyan-500/10 rounded-full flex items-center justify-center pointer-events-none">
+          <div className="w-56 h-56 md:w-72 md:h-72 border border-dashed border-cyan-500/15 rounded-full animate-[spin_90s_linear_infinite]" />
+          <div className="absolute w-full h-[1px] bg-cyan-500/10" />
+          <div className="absolute h-full w-[1px] bg-cyan-500/10" />
+          <div className="absolute w-2 h-2 border-t border-l border-cyan-400/40 -top-1 -left-1" />
+          <div className="absolute w-2 h-2 border-t border-r border-cyan-400/40 -top-1 -right-1" />
+          <div className="absolute w-2 h-2 border-b border-l border-cyan-400/40 -bottom-1 -left-1" />
+          <div className="absolute w-2 h-2 border-b border-r border-cyan-400/40 -bottom-1 -right-1" />
+        </div>
+
+        {/* Bottom Coordinates & System Status */}
+        <div className="flex justify-between items-end border-t border-cyan-500/15 pt-2">
+          <div>
+            <div>GRID LAT: 47.6062 N</div>
+            <div>GRID LONG: 122.3321 W</div>
+          </div>
+          <div className="text-right">
+            <div>LATTICE DENSITY: {maxParticles.toLocaleString()} PTS</div>
+            <div className="text-emerald-400/80">STATUS: NOMINAL</div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
