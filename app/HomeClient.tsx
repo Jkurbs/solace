@@ -14,30 +14,6 @@ import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 import InstrumentPortraits from './InstrumentPortraits';
 import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
 
-/*
- * Homepage v3 — record-first hero.
- *
- * What changed vs. the version you sent:
- *  1. Headline text unchanged ("Instruments for decisions when you can't predict the future.").
- *  2. The sealed record is now the hero's VISUAL CENTERPIECE: a record card sits directly
- *     under the headline — big sealed count, latest seal time, anchor status, verify link.
- *     (SpaceX structure: the event leads, the mission labels it.)
- *  3. The description paragraph moved BELOW the record card — it now reads as the caption
- *     explaining what the visitor is looking at, instead of competing with the proof.
- *  4. The old small inline "N decisions sealed" line is removed (absorbed into the card).
- *
- * Wiring notes (unchanged from v2):
- *  - `chainHead`: wire from the ledger feed when ready. When null, the card shows the
- *    sealed count from instruments.hermes.sealedDecisions and omits the row line.
- *  - `anchor`: anchor is shipped — pass { cadence: 'daily', lastAnchoredLabel: '6h ago',
- *    href: '/anchor' } so the card and Verification section stop saying "ships next".
- *  - The record card is pure Tailwind (border-foreground/15, bg-background/60,
- *    backdrop-blur-md) so it sits on the particle void without new CSS. If you want it
- *    class-based like hero-cta-on-void, add:
- *      .hero-record-card { border: 1px solid rgba(255,255,255,.14);
- *        background: rgba(0,0,0,.35); backdrop-filter: blur(12px); border-radius: 1rem; }
- */
-
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
 /** Editorial shell: a step wider than essay measure; prose stays tighter inside. */
