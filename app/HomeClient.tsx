@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useEffect } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -19,15 +19,13 @@ import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
  *
  * What changed vs. the version you sent:
  *  1. Headline text unchanged ("Instruments for decisions when you can't predict the future."),
- *     scaled way up (text-5xl → lg:text-8xl) and typed character-by-character on load
- *     (Neuralink-style: ~38ms/char after a 500ms delay, blinking underscore cursor that
- *     persists after typing completes — reads as "the record still being written").
- *     The hero holds only eyebrow + typed headline + the single "Read the brief" CTA.
+ *     scaled way up (text-5xl → lg:text-8xl). The hero holds only eyebrow + headline +
+ *     the single "Read the brief" CTA over the particle field.
  *  2. The sealed record lives in its own section directly under the hero (not inside it).
- *     Section order: rotating bridge line ("Solace builds instruments for decisions about
- *     capital / belief / help" — cycles every 2.4s, respects reduced-motion) → record card
- *     (sealed count, latest seal, anchor status, verify link) → description as its caption
- *     → "Meet Hermes" CTA. (SpaceX structure: the event leads, the mission labels it.)
+ *     Section order: static bridge label ("Solace builds instruments for decisions about
+ *     capital, belief, and help" + blinking Neuralink-style underscore cursor) → record
+ *     card (sealed count, latest seal, anchor status, verify link) → description as its
+ *     caption → "Meet Hermes" CTA. (SpaceX structure: the event leads, the mission labels it.)
  *  3. The old small inline "N decisions sealed" line is removed (absorbed into the card).
  *
  * Wiring notes (unchanged from v2):
@@ -43,11 +41,6 @@ import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
  */
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
-
-/** Hero headline, typed character-by-character (Neuralink-style), cursor persists. */
-const HERO_TITLE = "Instruments for decisions when you can't predict the future.";
-const TYPE_MS = 38;
-const TYPE_START_DELAY_MS = 500;
 
 /** Editorial shell: a step wider than essay measure; prose stays tighter inside. */
 const homeShell = 'max-w-4xl mx-auto';
@@ -173,11 +166,6 @@ export type AnchorStatus = {
   href?: string;
 };
 
-/** Rotating domains for the bridge line above the record card. Keep honest:
- *  capital = Hermes (live), belief = Oracle (live), help = Glorya (evaluating). */
-const ROTATING_DOMAINS = ['capital', 'belief', 'help'] as const;
-const ROTATE_MS = 2400;
-
 /* ── Foundation: Vault seal icon ── */
 function SealIcon({ className }: { className?: string }) {
   return (
@@ -204,38 +192,6 @@ export default function HomeClient({
 }) {
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
-
-  const [domainIndex, setDomainIndex] = useState(0);
-  useEffect(() => {
-    if (reduceMotion) return;
-    const id = window.setInterval(
-      () => setDomainIndex((i) => (i + 1) % ROTATING_DOMAINS.length),
-      ROTATE_MS,
-    );
-    return () => window.clearInterval(id);
-  }, [reduceMotion]);
-
-  /** Typed hero title. Reduced motion: full text instantly, cursor still shown. */
-  const [typedCount, setTypedCount] = useState(0);
-  useEffect(() => {
-    if (reduceMotion) {
-      setTypedCount(HERO_TITLE.length);
-      return;
-    }
-    let i = 0;
-    let intervalId: number | undefined;
-    const timeoutId = window.setTimeout(() => {
-      intervalId = window.setInterval(() => {
-        i += 1;
-        setTypedCount(i);
-        if (i >= HERO_TITLE.length && intervalId) window.clearInterval(intervalId);
-      }, TYPE_MS);
-    }, TYPE_START_DELAY_MS);
-    return () => {
-      window.clearTimeout(timeoutId);
-      if (intervalId) window.clearInterval(intervalId);
-    };
-  }, [reduceMotion]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -290,18 +246,8 @@ export default function HomeClient({
             <motion.h1
               variants={fade}
               className="hero-particle-title text-5xl md:text-7xl lg:text-8xl leading-[1.05] tracking-tight"
-              aria-label={HERO_TITLE}
             >
-              <span aria-hidden="true">
-                {HERO_TITLE.slice(0, typedCount)}
-                <motion.span
-                  animate={{ opacity: [1, 1, 0, 0] }}
-                  transition={{ duration: 1.06, repeat: Infinity, times: [0, 0.5, 0.5, 1], ease: 'linear' }}
-                  className="font-light"
-                >
-                  _
-                </motion.span>
-              </span>
+              Instruments for decisions when you can't predict the future.
             </motion.h1>
 
             <motion.div variants={fade} className="hero-particle-ctas">
@@ -321,29 +267,21 @@ export default function HomeClient({
           variants={stagger}
           className="mx-auto max-w-6xl"
         >
-          {/* Bridge line: the mission, made concrete — domains rotate, then the record
-              lands directly beneath as the proof. Respects prefers-reduced-motion. */}
+          {/* Bridge label: static line + blinking Neuralink-style cursor, landing
+              directly on the record card — "the record still being written". */}
           <motion.p
             variants={fade}
             className="font-serif text-2xl md:text-3xl leading-snug"
-            aria-label="Solace builds instruments for decisions about capital, belief, and help."
           >
-            Solace builds instruments for decisions about{' '}
-            <span className="relative inline-block overflow-hidden align-bottom text-left min-w-[5.5ch]">
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.span
-                  key={ROTATING_DOMAINS[domainIndex]}
-                  initial={reduceMotion ? false : { y: '100%', opacity: 0 }}
-                  animate={{ y: '0%', opacity: 1 }}
-                  exit={reduceMotion ? undefined : { y: '-100%', opacity: 0 }}
-                  transition={{ duration: 0.45, ease: easeOut }}
-                  className="inline-block"
-                >
-                  {ROTATING_DOMAINS[domainIndex]}
-                </motion.span>
-              </AnimatePresence>
-            </span>
-            .
+            Solace builds instruments for decisions about capital, belief, and help
+            <motion.span
+              aria-hidden="true"
+              animate={{ opacity: [1, 1, 0, 0] }}
+              transition={{ duration: 1.06, repeat: Infinity, times: [0, 0.5, 0.5, 1], ease: 'linear' }}
+              className="font-light"
+            >
+              _
+            </motion.span>
           </motion.p>
 
           {/* The record, as the event. SpaceX structure: attempt first, mission second. */}
