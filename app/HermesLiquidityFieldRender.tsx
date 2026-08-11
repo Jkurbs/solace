@@ -10,6 +10,7 @@ interface HermesLiquidityFieldProps {
   maxParticles?: number;
 }
 
+// Moderately boosted gl_PointSize clamp (2.4 to 6.8) for slightly larger particle presence
 const particleVertexShader = `
   attribute float aScale;
   attribute float aAlpha;
@@ -23,12 +24,11 @@ const particleVertexShader = `
     vAlpha = aAlpha;
 
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = clamp(aScale * (38.0 / -mvPosition.z), 1.8, 5.2);
+    gl_PointSize = clamp(aScale * (44.0 / -mvPosition.z), 2.4, 6.8);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
 
-// Fragment shader now adds a subtle core brilliance without tinting to neon
 const particleFragmentShader = `
   varying vec3 vColor;
   varying float vAlpha;
@@ -37,10 +37,7 @@ const particleFragmentShader = `
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
     
-    // Smooth radial edge falloff
     float strength = smoothstep(0.5, 0.15, dist);
-    
-    // Core highlight boost for crispness without hyper-saturation
     vec3 luminousColor = mix(vColor, vColor + vec3(0.08), strength * 0.4);
 
     gl_FragColor = vec4(luminousColor, vAlpha * strength);
@@ -62,7 +59,9 @@ export default function HermesLiquidityFieldRender({
 
     const shapeCenterX = isMobile ? 0.5 : 5.0;
     const shapeCenterY = isMobile ? -1.8 : 0.0;
-    const scaleFactor = isMobile ? 0.95 : 1.45;
+    
+    // Increased scaleFactor moderately (Mobile: 0.95 -> 1.2, Desktop: 1.45 -> 1.85)
+    const scaleFactor = isMobile ? 1.2 : 1.85;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -102,14 +101,12 @@ export default function HermesLiquidityFieldRender({
     const scales = new Float32Array(count);
     const alphas = new Float32Array(count);
 
-    // Dark Mode helper
     const checkIsDark = () =>
       document.documentElement.classList.contains('dark') ||
       window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     let isDark = checkIsDark();
 
-    // Theme adaptive palette: Elegant, luminous hues
     const getThemeColors = (dark: boolean) => ({
       teal: new THREE.Color(dark ? '#2dd4bf' : '#0f766e'),
       bronze:
@@ -122,7 +119,6 @@ export default function HermesLiquidityFieldRender({
     });
 
     let activePalette = getThemeColors(isDark);
-
     const shapeCenter = new THREE.Vector3(shapeCenterX, shapeCenterY, 0);
 
     // --- Lorenz Attractor ---
@@ -179,8 +175,8 @@ export default function HermesLiquidityFieldRender({
       const i3 = i * 3;
 
       // 1. Dispersed Noise
-      const nx = isMobile ? (Math.random() - 0.5) * 14 : (Math.random() - 0.2) * 22;
-      const ny = (Math.random() - 0.5) * (isMobile ? 20 : 16);
+      const nx = isMobile ? (Math.random() - 0.5) * 16 : (Math.random() - 0.2) * 26;
+      const ny = (Math.random() - 0.5) * (isMobile ? 22 : 18);
       const nz = (Math.random() - 0.5) * 8;
 
       noisePositions[i3] = nx;
@@ -190,7 +186,7 @@ export default function HermesLiquidityFieldRender({
       currentPositions[i3 + 1] = ny;
       currentPositions[i3 + 2] = nz;
 
-      // 2. Tight Globe
+      // 2. Globe
       const sphereRadius = 3.6 * scaleFactor;
       const phi = Math.acos(-1 + (2 * i) / count);
       const theta = Math.sqrt(count * Math.PI) * phi;
@@ -198,13 +194,13 @@ export default function HermesLiquidityFieldRender({
       globeTargets[i3 + 1] = shapeCenter.y + sphereRadius * Math.sin(theta) * Math.sin(phi);
       globeTargets[i3 + 2] = shapeCenter.z + sphereRadius * Math.cos(phi);
 
-      // 3. Tight Lorenz
+      // 3. Lorenz
       const lorenzScale = 0.165 * scaleFactor;
       lorenzTargets[i3] = shapeCenter.x + rawLorenz[i3] * lorenzScale;
       lorenzTargets[i3 + 1] = shapeCenter.y + rawLorenz[i3 + 1] * lorenzScale;
       lorenzTargets[i3 + 2] = shapeCenter.z + rawLorenz[i3 + 2] * lorenzScale;
 
-      // 4. Tight Gyroscopic Seal Rings
+      // 4. Gyroscopic Seal
       const ringIndex = i % 3;
       const radii = [2.2 * scaleFactor, 3.3 * scaleFactor, 4.4 * scaleFactor];
       const radius = radii[ringIndex];
@@ -226,7 +222,7 @@ export default function HermesLiquidityFieldRender({
         sealTargets[i3 + 2] = shapeCenter.z + ry * Math.sin(-Math.PI / 3);
       }
 
-      // 5. Spiral Galaxy (4 Logarithmic Arms)
+      // 5. Spiral Galaxy
       const arms = 4;
       const armAngle = ((i % arms) * 2 * Math.PI) / arms;
       const dist = Math.pow(Math.random(), 2) * 5.2 * scaleFactor;
@@ -241,7 +237,7 @@ export default function HermesLiquidityFieldRender({
       galaxyTargets[i3 + 1] = shapeCenter.y + Math.sin(finalAngle) * dist + randomY;
       galaxyTargets[i3 + 2] = shapeCenter.z + randomZ;
 
-      scales[i] = Math.random() * 1.5 + 0.9;
+      scales[i] = Math.random() * 1.6 + 1.0;
       alphas[i] = isDark ? Math.random() * 0.55 + 0.4 : Math.random() * 0.45 + 0.3;
     }
 
@@ -341,7 +337,6 @@ export default function HermesLiquidityFieldRender({
         let noiseDampen = 1.0;
 
         if (phaseIndex === 0) {
-          // Noise -> Globe
           targetX = THREE.MathUtils.lerp(nx, gx, snapEase);
           targetY = THREE.MathUtils.lerp(ny, gy, snapEase);
           targetZ = THREE.MathUtils.lerp(nz, gz, snapEase);
@@ -352,7 +347,6 @@ export default function HermesLiquidityFieldRender({
 
           noiseDampen = Math.max(0, 1.0 - snapEase * 1.2);
         } else if (phaseIndex === 1) {
-          // Globe -> Lorenz
           targetX = THREE.MathUtils.lerp(gx, lxPos, snapEase);
           targetY = THREE.MathUtils.lerp(gy, lyPos, snapEase);
           targetZ = THREE.MathUtils.lerp(gz, lzPos, snapEase);
@@ -363,7 +357,6 @@ export default function HermesLiquidityFieldRender({
 
           noiseDampen = 0.02;
         } else if (phaseIndex === 2) {
-          // Lorenz -> Gyroscopic Seal
           targetX = THREE.MathUtils.lerp(lxPos, sx, snapEase);
           targetY = THREE.MathUtils.lerp(lyPos, sy, snapEase);
           targetZ = THREE.MathUtils.lerp(lzPos, sz, snapEase);
@@ -374,7 +367,6 @@ export default function HermesLiquidityFieldRender({
 
           noiseDampen = 0.02;
         } else if (phaseIndex === 3) {
-          // Gyroscopic Seal -> Spiral Galaxy
           targetX = THREE.MathUtils.lerp(sx, galX, snapEase);
           targetY = THREE.MathUtils.lerp(sy, galY, snapEase);
           targetZ = THREE.MathUtils.lerp(sz, galZ, snapEase);
@@ -385,7 +377,6 @@ export default function HermesLiquidityFieldRender({
 
           noiseDampen = 0.15;
         } else {
-          // Spiral Galaxy -> Dispersed Noise
           targetX = THREE.MathUtils.lerp(galX, nx, snapEase);
           targetY = THREE.MathUtils.lerp(galY, ny, snapEase);
           targetZ = THREE.MathUtils.lerp(galZ, nz, snapEase);
@@ -443,10 +434,17 @@ export default function HermesLiquidityFieldRender({
   }, [maxParticles, posture]);
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 h-full w-full pointer-events-none"
-      aria-hidden="true"
-    />
+    <div className="relative w-full">
+      {/* Doubled header size using text-4xl/text-5xl (or text-[2em]/200% scaling) */}
+      <h1 className="text-4xl md:text-5xl font-bold tracking-wider text-slate-900 dark:text-slate-100 mb-4">
+        HERMES_RELIEF_RUNNER_MODE
+      </h1>
+
+      <div
+        ref={containerRef}
+        className="absolute inset-0 h-full w-full pointer-events-none"
+        aria-hidden="true"
+      />
+    </div>
   );
 }

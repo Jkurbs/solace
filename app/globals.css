@@ -15168,9 +15168,9 @@ html.dark .home-research ::selection,
 .hero-particle-title {
   margin: 0.9rem 0 0;
   font-family: var(--font-display), Georgia, serif;
-  font-size: clamp(2.15rem, 8.4vw, 3.4rem);
+  font-size: clamp(3.2rem, 10vw, 5.5rem);
   font-weight: 600;
-  line-height: 1.05;
+  line-height: 1.02;
   letter-spacing: -0.035em;
   color: var(--foreground, #1c1917);
   text-wrap: balance;
