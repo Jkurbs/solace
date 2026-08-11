@@ -18,13 +18,13 @@ import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
  * Homepage v3 — record-first hero.
  *
  * What changed vs. the version you sent:
- *  1. Headline text unchanged ("Instruments for decisions when you can't predict the future.").
- *  2. The sealed record is now the hero's VISUAL CENTERPIECE: a record card sits directly
- *     under the headline — big sealed count, latest seal time, anchor status, verify link.
+ *  1. Headline text unchanged ("Instruments for decisions when you can't predict the future.");
+ *     the hero now contains ONLY eyebrow + headline over the particle field.
+ *  2. The sealed record lives in its own section directly under the hero (not inside it):
+ *     record card (sealed count, latest seal, anchor status, verify link), then the
+ *     description as its caption, then the CTAs.
  *     (SpaceX structure: the event leads, the mission labels it.)
- *  3. The description paragraph moved BELOW the record card — it now reads as the caption
- *     explaining what the visitor is looking at, instead of competing with the proof.
- *  4. The old small inline "N decisions sealed" line is removed (absorbed into the card).
+ *  3. The old small inline "N decisions sealed" line is removed (absorbed into the card).
  *
  * Wiring notes (unchanged from v2):
  *  - `chainHead`: wire from the ledger feed when ready. When null, the card shows the
@@ -244,83 +244,93 @@ export default function HomeClient({
             <motion.h1 variants={fade} className="hero-particle-title">
               Instruments for decisions when you can't predict the future.
             </motion.h1>
-
-            {/* The record, as the event. SpaceX structure: attempt first, mission second. */}
-            {showRecordCard && (
-              <motion.div variants={fade} className="mt-9 md:mt-12">
-                <div className="inline-block max-w-full rounded-2xl border border-foreground/15 bg-background/60 backdrop-blur-md px-6 py-5 md:px-8 md:py-6">
-                  <div className="flex flex-wrap items-end gap-x-10 gap-y-5">
-                    <div>
-                      <p className="font-mono text-4xl md:text-5xl tabular-nums tracking-tight leading-none">
-                        {hermes.sealedDecisions!.toLocaleString('en-US')}
-                      </p>
-                      <p className="mt-2 text-[0.65rem] uppercase tracking-[0.18em] text-muted">
-                        Decisions sealed
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-mono text-sm tabular-nums leading-none">
-                        {chainHead ? chainHead.sealedAtLabel : 'Live'}
-                      </p>
-                      <p className="mt-2 text-[0.65rem] uppercase tracking-[0.18em] text-muted">
-                        Latest seal
-                      </p>
-                    </div>
-                    <div>
-                      {anchor ? (
-                        <Link
-                          href={anchor.href ?? '/anchor'}
-                          className="font-mono text-sm leading-none underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
-                        >
-                          Anchored {anchor.cadence}
-                        </Link>
-                      ) : (
-                        <p className="font-mono text-sm leading-none">Hash-chained</p>
-                      )}
-                      <p className="mt-2 text-[0.65rem] uppercase tracking-[0.18em] text-muted">
-                        Record integrity
-                      </p>
-                    </div>
-                  </div>
-
-                  {chainHead && (
-                    <p className="mt-4 font-mono text-xs text-muted tabular-nums truncate max-w-md">
-                      #{chainHead.rowNumber} · {chainHead.recordId} · {chainHead.hash.slice(0, 20)}…
-                    </p>
-                  )}
-
-                  <Link
-                    href={OBSERVATORY_HERMES_LEDGER_PATH}
-                    className="group mt-4 inline-flex items-center text-sm font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
-                  >
-                    Verify any one of them
-                    <span aria-hidden="true" className="ml-1.5 text-[0.85em] opacity-60 transition-transform group-hover:translate-x-0.5">
-                      →
-                    </span>
-                  </Link>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Description, moved below the record: it now captions what you're looking at. */}
-            <motion.p variants={fade} className="hero-particle-sub mt-8 md:mt-10">
-              Decisions are sealed before their outcome, chained to the last, and anchored
-              where they cannot be edited. Hermes is the first instrument.
-            </motion.p>
-
-            <motion.div variants={fade} className="hero-particle-ctas">
-              <Link href="/brief" className="hero-cta hero-cta-primary hero-cta-on-void">
-                Read the brief
-              </Link>
-              <Link href="/hermes" className="hero-cta hero-cta-secondary hero-cta-on-void">
-                Meet Hermes
-              </Link>
-            </motion.div>
           </div>
         </motion.div>
       </section>
 
-      {/* ── 2 · Status strip: honest numbers, founder capital explicit ── */}
+      {/* ── 2 · The record: directly under the hero, not inside it ── */}
+      <section className="px-5 pt-14 pb-16 md:pt-20 md:pb-24">
+        <motion.div
+          initial={heroInitial}
+          animate="show"
+          variants={stagger}
+          className="mx-auto max-w-6xl"
+        >
+          {/* The record, as the event. SpaceX structure: attempt first, mission second. */}
+          {showRecordCard && (
+            <motion.div variants={fade}>
+              <div className="inline-block max-w-full rounded-2xl border border-foreground/15 px-6 py-5 md:px-8 md:py-6">
+                <div className="flex flex-wrap items-end gap-x-10 gap-y-5">
+                  <div>
+                    <p className="font-mono text-4xl md:text-5xl tabular-nums tracking-tight leading-none">
+                      {hermes.sealedDecisions!.toLocaleString('en-US')}
+                    </p>
+                    <p className="mt-2 text-[0.65rem] uppercase tracking-[0.18em] text-muted">
+                      Decisions sealed
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-mono text-sm tabular-nums leading-none">
+                      {chainHead ? chainHead.sealedAtLabel : 'Live'}
+                    </p>
+                    <p className="mt-2 text-[0.65rem] uppercase tracking-[0.18em] text-muted">
+                      Latest seal
+                    </p>
+                  </div>
+                  <div>
+                    {anchor ? (
+                      <Link
+                        href={anchor.href ?? '/anchor'}
+                        className="font-mono text-sm leading-none underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
+                      >
+                        Anchored {anchor.cadence}
+                      </Link>
+                    ) : (
+                      <p className="font-mono text-sm leading-none">Hash-chained</p>
+                    )}
+                    <p className="mt-2 text-[0.65rem] uppercase tracking-[0.18em] text-muted">
+                      Record integrity
+                    </p>
+                  </div>
+                </div>
+
+                {chainHead && (
+                  <p className="mt-4 font-mono text-xs text-muted tabular-nums truncate max-w-md">
+                    #{chainHead.rowNumber} · {chainHead.recordId} · {chainHead.hash.slice(0, 20)}…
+                  </p>
+                )}
+
+                <Link
+                  href={OBSERVATORY_HERMES_LEDGER_PATH}
+                  className="group mt-4 inline-flex items-center text-sm font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
+                >
+                  Verify any one of them
+                  <span aria-hidden="true" className="ml-1.5 text-[0.85em] opacity-60 transition-transform group-hover:translate-x-0.5">
+                    →
+                  </span>
+                </Link>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Description: captions the record above it. */}
+          <motion.p variants={fade} className="mt-8 md:mt-10 max-w-xl text-muted leading-relaxed text-base md:text-lg">
+            Decisions are sealed before their outcome, chained to the last, and anchored
+            where they cannot be edited. Hermes is the first instrument.
+          </motion.p>
+
+          <motion.div variants={fade} className="mt-8 flex flex-wrap gap-3">
+            <Link href="/brief" className="hero-cta hero-cta-primary">
+              Read the brief
+            </Link>
+            <Link href="/hermes" className="hero-cta hero-cta-secondary">
+              Meet Hermes
+            </Link>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* ── 3 · Status strip: honest numbers, founder capital explicit ── */}
       {/* <section aria-label="Live status" className="border-t border-border px-5 py-10 md:py-12">
         <div className="mx-auto max-w-6xl">
           <dl className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4">
@@ -369,7 +379,7 @@ export default function HomeClient({
         </div>
       </section> */}
 
-      {/* ── 3 · Instruments: weighted by proof, not promise ── */}
+      {/* ── 4 · Instruments: weighted by proof, not promise ── */}
       <section className="home-instruments-section px-5 py-16 md:py-28 border-t border-border">
         <div className="mx-auto max-w-6xl">
           <h2 className="home-instruments-kicker text-xs uppercase tracking-[0.2em] text-muted mb-3">
@@ -388,7 +398,7 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── 4 · Verify: the record is checkable, not claimable ── */}
+      {/* ── 5 · Verify: the record is checkable, not claimable ── */}
       <section className="home-charter-section px-5 py-16 md:py-24 border-t border-border">
         <div className="hero-charter mx-auto max-w-2xl">
           <div className="hero-charter-rule" aria-hidden="true" />
@@ -448,7 +458,7 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── 5 · Operator: one person, by design ── */}
+      {/* ── 6 · Operator: one person, by design ── */}
       <section className="border-t border-border px-5 py-16 md:py-24">
         <div className={homeShell}>
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">Operator</h2>
@@ -493,7 +503,7 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── 6 · Research shelf: trimmed to what exists ── */}
+      {/* ── 7 · Research shelf: trimmed to what exists ── */}
       <section className="border-t border-border px-5 py-20 md:py-28">
         <div className={homeShell}>
           <div className="flex flex-wrap items-end justify-between gap-4 mb-12">
