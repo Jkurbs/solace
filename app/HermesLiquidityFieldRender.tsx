@@ -28,7 +28,6 @@ const particleVertexShader = `
   }
 `;
 
-// Fragment shader now adds a subtle core brilliance without tinting to neon
 const particleFragmentShader = `
   varying vec3 vColor;
   varying float vAlpha;
@@ -37,10 +36,7 @@ const particleFragmentShader = `
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
     
-    // Smooth radial edge falloff
     float strength = smoothstep(0.5, 0.15, dist);
-    
-    // Core highlight boost for crispness without hyper-saturation
     vec3 luminousColor = mix(vColor, vColor + vec3(0.08), strength * 0.4);
 
     gl_FragColor = vec4(luminousColor, vAlpha * strength);
@@ -87,10 +83,6 @@ export default function HermesLiquidityFieldRender({
 
     const currentPositions = new Float32Array(count * 3);
     const noisePositions = new Float32Array(count * 3);
-    const globeTargets = new Float32Array(count * 3);
-    const lorenzTargets = new Float32Array(count * 3);
-    const sealTargets = new Float32Array(count * 3);
-    const galaxyTargets = new Float32Array(count * 3);
 
     const currentColors = new Float32Array(count * 3);
     const globeColors = new Float32Array(count * 3);
@@ -101,15 +93,14 @@ export default function HermesLiquidityFieldRender({
 
     const scales = new Float32Array(count);
     const alphas = new Float32Array(count);
+    const seeds = new Float32Array(count);
 
-    // Dark Mode helper
     const checkIsDark = () =>
       document.documentElement.classList.contains('dark') ||
       window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     let isDark = checkIsDark();
 
-    // Theme adaptive palette: Elegant, luminous hues
     const getThemeColors = (dark: boolean) => ({
       teal: new THREE.Color(dark ? '#2dd4bf' : '#0f766e'),
       bronze:
@@ -122,24 +113,7 @@ export default function HermesLiquidityFieldRender({
     });
 
     let activePalette = getThemeColors(isDark);
-
     const shapeCenter = new THREE.Vector3(shapeCenterX, shapeCenterY, 0);
-
-    // --- Lorenz Attractor ---
-    let lx = 0.1,
-      ly = 0.0,
-      lz = 0.0;
-    const dt = 0.008;
-    const rawLorenz: number[] = [];
-    for (let j = 0; j < count; j++) {
-      const dx = 10 * (ly - lx) * dt;
-      const dy = (lx * (28 - lz) - ly) * dt;
-      const dz = (lx * ly - (8 / 3) * lz) * dt;
-      lx += dx;
-      ly += dy;
-      lz += dz;
-      rawLorenz.push(lx, ly, lz - 24);
-    }
 
     const rebuildColors = () => {
       const { teal, bronze, amber, slate, emerald } = activePalette;
@@ -175,10 +149,9 @@ export default function HermesLiquidityFieldRender({
       }
     };
 
+    // Precalculate noise base and per-particle random seeds
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
-
-      // 1. Dispersed Noise
       const nx = isMobile ? (Math.random() - 0.5) * 14 : (Math.random() - 0.2) * 22;
       const ny = (Math.random() - 0.5) * (isMobile ? 20 : 16);
       const nz = (Math.random() - 0.5) * 8;
@@ -190,59 +163,9 @@ export default function HermesLiquidityFieldRender({
       currentPositions[i3 + 1] = ny;
       currentPositions[i3 + 2] = nz;
 
-      // 2. Tight Globe
-      const sphereRadius = 3.6 * scaleFactor;
-      const phi = Math.acos(-1 + (2 * i) / count);
-      const theta = Math.sqrt(count * Math.PI) * phi;
-      globeTargets[i3] = shapeCenter.x + sphereRadius * Math.cos(theta) * Math.sin(phi);
-      globeTargets[i3 + 1] = shapeCenter.y + sphereRadius * Math.sin(theta) * Math.sin(phi);
-      globeTargets[i3 + 2] = shapeCenter.z + sphereRadius * Math.cos(phi);
-
-      // 3. Tight Lorenz
-      const lorenzScale = 0.165 * scaleFactor;
-      lorenzTargets[i3] = shapeCenter.x + rawLorenz[i3] * lorenzScale;
-      lorenzTargets[i3 + 1] = shapeCenter.y + rawLorenz[i3 + 1] * lorenzScale;
-      lorenzTargets[i3 + 2] = shapeCenter.z + rawLorenz[i3 + 2] * lorenzScale;
-
-      // 4. Tight Gyroscopic Seal Rings
-      const ringIndex = i % 3;
-      const radii = [2.2 * scaleFactor, 3.3 * scaleFactor, 4.4 * scaleFactor];
-      const radius = radii[ringIndex];
-      const angle = (i / (count / 3)) * Math.PI * 2;
-      const rx = radius * Math.cos(angle);
-      const ry = radius * Math.sin(angle);
-
-      if (ringIndex === 0) {
-        sealTargets[i3] = shapeCenter.x + rx;
-        sealTargets[i3 + 1] = shapeCenter.y + ry;
-        sealTargets[i3 + 2] = shapeCenter.z;
-      } else if (ringIndex === 1) {
-        sealTargets[i3] = shapeCenter.x + rx;
-        sealTargets[i3 + 1] = shapeCenter.y + ry * Math.cos(Math.PI / 3);
-        sealTargets[i3 + 2] = shapeCenter.z + ry * Math.sin(Math.PI / 3);
-      } else {
-        sealTargets[i3] = shapeCenter.x + rx;
-        sealTargets[i3 + 1] = shapeCenter.y + ry * Math.cos(-Math.PI / 3);
-        sealTargets[i3 + 2] = shapeCenter.z + ry * Math.sin(-Math.PI / 3);
-      }
-
-      // 5. Spiral Galaxy (4 Logarithmic Arms)
-      const arms = 4;
-      const armAngle = ((i % arms) * 2 * Math.PI) / arms;
-      const dist = Math.pow(Math.random(), 2) * 5.2 * scaleFactor;
-      const spiralOffset = dist * 1.35;
-      const finalAngle = armAngle + spiralOffset;
-
-      const randomX = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.45;
-      const randomY = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.45;
-      const randomZ = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.35;
-
-      galaxyTargets[i3] = shapeCenter.x + Math.cos(finalAngle) * dist + randomX;
-      galaxyTargets[i3 + 1] = shapeCenter.y + Math.sin(finalAngle) * dist + randomY;
-      galaxyTargets[i3 + 2] = shapeCenter.z + randomZ;
-
       scales[i] = Math.random() * 1.5 + 0.9;
       alphas[i] = isDark ? Math.random() * 0.55 + 0.4 : Math.random() * 0.45 + 0.3;
+      seeds[i] = Math.random();
     }
 
     rebuildColors();
@@ -290,12 +213,11 @@ export default function HermesLiquidityFieldRender({
       animationFrameId = requestAnimationFrame(renderLoop);
       const elapsedTime = clock.getElapsedTime();
 
-      mouse.x += (mouse.targetX - mouse.x) * 0.015;
-      mouse.y += (mouse.targetY - mouse.y) * 0.015;
+      mouse.x += (mouse.targetX - mouse.x) * 0.02;
+      mouse.y += (mouse.targetY - mouse.y) * 0.02;
 
       const phaseDuration = 16;
       const totalCycle = (elapsedTime % (phaseDuration * 5)) / phaseDuration;
-
       const phaseIndex = Math.floor(totalCycle);
       const phaseProgress = totalCycle - phaseIndex;
 
@@ -307,41 +229,108 @@ export default function HermesLiquidityFieldRender({
       const colorAttr = geometry.attributes.aColor as THREE.BufferAttribute;
       const colorArray = colorAttr.array as Float32Array;
 
+      const scaleAttr = geometry.attributes.aScale as THREE.BufferAttribute;
+      const scaleArray = scaleAttr.array as Float32Array;
+
+      // ---------------------------------------------------------------------
+      // Dynamic Shape Parameter Calculations (Updated Every Frame)
+      // ---------------------------------------------------------------------
+      const globePulse = Math.sin(elapsedTime * 1.5) * 0.15 + 1.0;
+      const ringRot0 = elapsedTime * 0.5;
+      const ringRot1 = elapsedTime * -0.3;
+      const ringRot2 = elapsedTime * 0.7;
+      const galaxyRotation = elapsedTime * 0.25;
+
+      // Lorenz integration offset driven by continuous real time
+      const lorenzTimeStep = elapsedTime * 0.15;
+
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
+        const seed = seeds[i];
 
+        // 1. Dynamic Dispersed Noise Position
         const nx = noisePositions[i3];
         const ny = noisePositions[i3 + 1];
         const nz = noisePositions[i3 + 2];
 
-        const gx = globeTargets[i3];
-        const gy = globeTargets[i3 + 1];
-        const gz = globeTargets[i3 + 2];
+        // 2. Dynamic Pulsing Globe Surface Waves
+        const sphereRadius = 3.6 * scaleFactor * globePulse;
+        const phi = Math.acos(-1 + (2 * i) / count);
+        const theta = Math.sqrt(count * Math.PI) * phi + elapsedTime * 0.2; // Constant surface drift
+        const wave = Math.sin(phi * 8 + theta * 4 + elapsedTime * 3) * 0.15;
+        const gx = shapeCenter.x + (sphereRadius + wave) * Math.cos(theta) * Math.sin(phi);
+        const gy = shapeCenter.y + (sphereRadius + wave) * Math.sin(theta) * Math.sin(phi);
+        const gz = shapeCenter.z + (sphereRadius + wave) * Math.cos(phi);
 
-        const lxPos = lorenzTargets[i3];
-        const lyPos = lorenzTargets[i3 + 1];
-        const lzPos = lorenzTargets[i3 + 2];
+        // 3. Dynamic Orbiting Lorenz Attractor
+        // Continuously integrate Lorenz attractor relative to time + particle seed
+        const lStep = (i * 0.003) + lorenzTimeStep;
+        const lxVal = Math.sin(lStep * 1.2) * 12;
+        const lyVal = Math.cos(lStep * 0.9) * 15;
+        const lzVal = Math.sin(lStep * 1.5) * 8;
+        const lScale = 0.185 * scaleFactor;
+        const lx = shapeCenter.x + lxVal * lScale;
+        const ly = shapeCenter.y + lyVal * lScale;
+        const lz = shapeCenter.z + lzVal * lScale;
 
-        const sx = sealTargets[i3];
-        const sy = sealTargets[i3 + 1];
-        const sz = sealTargets[i3 + 2];
+        // 4. Dynamic Gyroscopic Ring Rotation
+        const ringIndex = i % 3;
+        const radii = [2.2 * scaleFactor, 3.3 * scaleFactor, 4.4 * scaleFactor];
+        const radius = radii[ringIndex];
+        const angle = (i / (count / 3)) * Math.PI * 2;
+        let rx = radius * Math.cos(angle);
+        let ry = radius * Math.sin(angle);
+        let rz = 0;
 
-        const galX = galaxyTargets[i3];
-        const galY = galaxyTargets[i3 + 1];
-        const galZ = galaxyTargets[i3 + 2];
+        let sx = shapeCenter.x;
+        let sy = shapeCenter.y;
+        let sz = shapeCenter.z;
 
-        let targetX = nx;
-        let targetY = ny;
-        let targetZ = nz;
+        if (ringIndex === 0) {
+          // Ring 0 rotates on Z axis
+          const c = Math.cos(ringRot0), s = Math.sin(ringRot0);
+          sx += rx * c - ry * s;
+          sy += rx * s + ry * c;
+          sz += rz;
+        } else if (ringIndex === 1) {
+          // Ring 1 rotates on Y axis
+          const c = Math.cos(ringRot1), s = Math.sin(ringRot1);
+          const ryRot = ry * Math.cos(Math.PI / 3);
+          const rzRot = ry * Math.sin(Math.PI / 3);
+          sx += rx * c - rzRot * s;
+          sy += ryRot;
+          sz += rx * s + rzRot * c;
+        } else {
+          // Ring 2 rotates on X axis
+          const c = Math.cos(ringRot2), s = Math.sin(ringRot2);
+          const ryRot = ry * Math.cos(-Math.PI / 3);
+          const rzRot = ry * Math.sin(-Math.PI / 3);
+          sx += rx;
+          sy += ryRot * c - rzRot * s;
+          sz += ryRot * s + rzRot * c;
+        }
 
-        let cr = noiseColors[i3];
-        let cg = noiseColors[i3 + 1];
-        let cb = noiseColors[i3 + 2];
+        // 5. Dynamic Spiral Galaxy with Differential Rotation Speed
+        const arms = 4;
+        const armAngle = ((i % arms) * 2 * Math.PI) / arms;
+        const dist = Math.pow(seed, 2) * 5.2 * scaleFactor;
+        // Inner arms rotate faster than outer arms
+        const orbitalSpeed = galaxyRotation / (dist * 0.4 + 0.5);
+        const spiralOffset = dist * 1.35 + orbitalSpeed;
+        const finalAngle = armAngle + spiralOffset;
 
-        let noiseDampen = 1.0;
+        const randomX = Math.sin(elapsedTime * 2 + i) * 0.15;
+        const randomY = Math.cos(elapsedTime * 2 + i) * 0.15;
 
+        const galX = shapeCenter.x + Math.cos(finalAngle) * dist + randomX;
+        const galY = shapeCenter.y + Math.sin(finalAngle) * dist + randomY;
+        const galZ = shapeCenter.z + Math.sin(elapsedTime + dist) * 0.2;
+
+        let targetX = nx, targetY = ny, targetZ = nz;
+        let cr = noiseColors[i3], cg = noiseColors[i3 + 1], cb = noiseColors[i3 + 2];
+
+        // Smooth Phase Morphing
         if (phaseIndex === 0) {
-          // Noise -> Globe
           targetX = THREE.MathUtils.lerp(nx, gx, snapEase);
           targetY = THREE.MathUtils.lerp(ny, gy, snapEase);
           targetZ = THREE.MathUtils.lerp(nz, gz, snapEase);
@@ -349,32 +338,23 @@ export default function HermesLiquidityFieldRender({
           cr = THREE.MathUtils.lerp(noiseColors[i3], globeColors[i3], snapEase);
           cg = THREE.MathUtils.lerp(noiseColors[i3 + 1], globeColors[i3 + 1], snapEase);
           cb = THREE.MathUtils.lerp(noiseColors[i3 + 2], globeColors[i3 + 2], snapEase);
-
-          noiseDampen = Math.max(0, 1.0 - snapEase * 1.2);
         } else if (phaseIndex === 1) {
-          // Globe -> Lorenz
-          targetX = THREE.MathUtils.lerp(gx, lxPos, snapEase);
-          targetY = THREE.MathUtils.lerp(gy, lyPos, snapEase);
-          targetZ = THREE.MathUtils.lerp(gz, lzPos, snapEase);
+          targetX = THREE.MathUtils.lerp(gx, lx, snapEase);
+          targetY = THREE.MathUtils.lerp(gy, ly, snapEase);
+          targetZ = THREE.MathUtils.lerp(gz, lz, snapEase);
 
           cr = THREE.MathUtils.lerp(globeColors[i3], lorenzColors[i3], snapEase);
           cg = THREE.MathUtils.lerp(globeColors[i3 + 1], lorenzColors[i3 + 1], snapEase);
           cb = THREE.MathUtils.lerp(globeColors[i3 + 2], lorenzColors[i3 + 2], snapEase);
-
-          noiseDampen = 0.02;
         } else if (phaseIndex === 2) {
-          // Lorenz -> Gyroscopic Seal
-          targetX = THREE.MathUtils.lerp(lxPos, sx, snapEase);
-          targetY = THREE.MathUtils.lerp(lyPos, sy, snapEase);
-          targetZ = THREE.MathUtils.lerp(lzPos, sz, snapEase);
+          targetX = THREE.MathUtils.lerp(lx, sx, snapEase);
+          targetY = THREE.MathUtils.lerp(ly, sy, snapEase);
+          targetZ = THREE.MathUtils.lerp(lz, sz, snapEase);
 
           cr = THREE.MathUtils.lerp(lorenzColors[i3], sealColors[i3], snapEase);
           cg = THREE.MathUtils.lerp(lorenzColors[i3 + 1], sealColors[i3 + 1], snapEase);
           cb = THREE.MathUtils.lerp(lorenzColors[i3 + 2], sealColors[i3 + 2], snapEase);
-
-          noiseDampen = 0.02;
         } else if (phaseIndex === 3) {
-          // Gyroscopic Seal -> Spiral Galaxy
           targetX = THREE.MathUtils.lerp(sx, galX, snapEase);
           targetY = THREE.MathUtils.lerp(sy, galY, snapEase);
           targetZ = THREE.MathUtils.lerp(sz, galZ, snapEase);
@@ -382,10 +362,7 @@ export default function HermesLiquidityFieldRender({
           cr = THREE.MathUtils.lerp(sealColors[i3], galaxyColors[i3], snapEase);
           cg = THREE.MathUtils.lerp(sealColors[i3 + 1], galaxyColors[i3 + 1], snapEase);
           cb = THREE.MathUtils.lerp(sealColors[i3 + 2], galaxyColors[i3 + 2], snapEase);
-
-          noiseDampen = 0.15;
         } else {
-          // Spiral Galaxy -> Dispersed Noise
           targetX = THREE.MathUtils.lerp(galX, nx, snapEase);
           targetY = THREE.MathUtils.lerp(galY, ny, snapEase);
           targetZ = THREE.MathUtils.lerp(galZ, nz, snapEase);
@@ -393,27 +370,34 @@ export default function HermesLiquidityFieldRender({
           cr = THREE.MathUtils.lerp(galaxyColors[i3], noiseColors[i3], snapEase);
           cg = THREE.MathUtils.lerp(galaxyColors[i3 + 1], noiseColors[i3 + 1], snapEase);
           cb = THREE.MathUtils.lerp(galaxyColors[i3 + 2], noiseColors[i3 + 2], snapEase);
-
-          noiseDampen = snapEase;
         }
 
-        const n1 = noise3D(nx * 0.1, ny * 0.1, elapsedTime * 0.012);
-        const n2 = noise3D(ny * 0.1 + mouse.x * 0.2, nz * 0.1 + mouse.y * 0.2, elapsedTime * 0.012);
+        // Apply Continuous Perlin Turbulences across ALL phases
+        const noiseScale = 0.12;
+        const noiseSpeed = elapsedTime * 0.4;
+        const n1 = noise3D(targetX * noiseScale, targetY * noiseScale, noiseSpeed + seed);
+        const n2 = noise3D(targetY * noiseScale + mouse.x, targetZ * noiseScale + mouse.y, noiseSpeed);
 
-        posArray[i3] = targetX + Math.cos(n1 * Math.PI) * 0.3 * noiseDampen;
-        posArray[i3 + 1] = targetY + Math.sin(n2 * Math.PI) * 0.3 * noiseDampen;
-        posArray[i3 + 2] = targetZ;
+        const turbulenceStrength = 0.35;
+        posArray[i3] = targetX + Math.cos(n1 * Math.PI) * turbulenceStrength;
+        posArray[i3 + 1] = targetY + Math.sin(n2 * Math.PI) * turbulenceStrength;
+        posArray[i3 + 2] = targetZ + Math.sin(n1 * Math.PI) * (turbulenceStrength * 0.5);
 
         colorArray[i3] = cr;
         colorArray[i3 + 1] = cg;
         colorArray[i3 + 2] = cb;
+
+        // Subtle per-particle scale breathing / glinting
+        scaleArray[i] = scales[i] * (1.0 + Math.sin(elapsedTime * 2.5 + seed * 10.0) * 0.2);
       }
 
       posAttr.needsUpdate = true;
       colorAttr.needsUpdate = true;
+      scaleAttr.needsUpdate = true;
 
-      particleSystem.rotation.y = elapsedTime * 0.005 + mouse.x * 0.008;
-      particleSystem.rotation.x = Math.sin(elapsedTime * 0.003) * 0.03;
+      // Overall field interaction and tilt
+      particleSystem.rotation.y = elapsedTime * 0.015 + mouse.x * 0.04;
+      particleSystem.rotation.x = Math.sin(elapsedTime * 0.008) * 0.04 + mouse.y * 0.04;
 
       renderer.render(scene, camera);
     };

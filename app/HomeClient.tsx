@@ -169,7 +169,7 @@ export type AnchorStatus = {
 
 /** Typewriter domains for the bridge label above the record card. Keep honest:
  *  capital = Hermes (live), belief = Oracle (live), help = Glorya (evaluating). */
-const TYPEWRITER_DOMAINS = ['capital', 'belief', 'help'] as const;
+const TYPEWRITER_DOMAINS = ['capital', 'belief', 'help', 'much more...'] as const;
 const TYPE_CHAR_MS = 95;      // per-character speed, typing and deleting
 const TYPE_HOLD_MS = 1500;    // pause with the full word before deleting
 const TYPE_EMPTY_MS = 350;    // pause on empty before the next word
