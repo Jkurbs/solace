@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 
 import SiteFooter from '@/components/site-footer';
@@ -22,10 +22,11 @@ import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
  *     scaled way up (text-5xl → lg:text-8xl). The hero holds only eyebrow + headline +
  *     the single "Read the brief" CTA over the particle field.
  *  2. The sealed record lives in its own section directly under the hero (not inside it).
- *     Section order: static bridge label ("Solace builds instruments for decisions about
- *     capital, belief, and help" + blinking Neuralink-style underscore cursor) → record
- *     card (sealed count, latest seal, anchor status, verify link) → description as its
- *     caption → "Meet Hermes" CTA. (SpaceX structure: the event leads, the mission labels it.)
+ *     Section order: typewriter bridge label ("Solace builds instruments for decisions
+ *     about ___" — types/deletes capital → belief → help on loop, blinking underscore
+ *     cursor throughout) → record card (sealed count, latest seal, anchor status, verify
+ *     link) → description as its caption → "Meet Hermes" CTA.
+ *     (SpaceX structure: the event leads, the mission labels it.)
  *  3. The old small inline "N decisions sealed" line is removed (absorbed into the card).
  *
  * Wiring notes (unchanged from v2):
@@ -166,6 +167,13 @@ export type AnchorStatus = {
   href?: string;
 };
 
+/** Typewriter domains for the bridge label above the record card. Keep honest:
+ *  capital = Hermes (live), belief = Oracle (live), help = Glorya (evaluating). */
+const TYPEWRITER_DOMAINS = ['capital', 'belief', 'help'] as const;
+const TYPE_CHAR_MS = 95;      // per-character speed, typing and deleting
+const TYPE_HOLD_MS = 1500;    // pause with the full word before deleting
+const TYPE_EMPTY_MS = 350;    // pause on empty before the next word
+
 /* ── Foundation: Vault seal icon ── */
 function SealIcon({ className }: { className?: string }) {
   return (
@@ -192,6 +200,38 @@ export default function HomeClient({
 }) {
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
+
+  /** Typewriter: type word → hold → delete → next word. Reduced motion: static first word. */
+  const [typedWord, setTypedWord] = useState(reduceMotion ? TYPEWRITER_DOMAINS[0] : '');
+  useEffect(() => {
+    if (reduceMotion) return;
+    let wordIndex = 0;
+    let charCount = 0;
+    let deleting = false;
+    let timeoutId: number;
+    const tick = () => {
+      const word = TYPEWRITER_DOMAINS[wordIndex];
+      let delay = TYPE_CHAR_MS;
+      if (!deleting) {
+        charCount += 1;
+        if (charCount === word.length) {
+          deleting = true;
+          delay = TYPE_HOLD_MS;
+        }
+      } else {
+        charCount -= 1;
+        if (charCount === 0) {
+          deleting = false;
+          wordIndex = (wordIndex + 1) % TYPEWRITER_DOMAINS.length;
+          delay = TYPE_EMPTY_MS;
+        }
+      }
+      setTypedWord(TYPEWRITER_DOMAINS[wordIndex].slice(0, charCount));
+      timeoutId = window.setTimeout(tick, delay);
+    };
+    timeoutId = window.setTimeout(tick, TYPE_EMPTY_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, [reduceMotion]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -267,21 +307,24 @@ export default function HomeClient({
           variants={stagger}
           className="mx-auto max-w-6xl"
         >
-          {/* Bridge label: static line + blinking Neuralink-style cursor, landing
-              directly on the record card — "the record still being written". */}
+          {/* Bridge label: typewriter cycles the domains, blinking cursor throughout,
+              landing directly on the record card — "the record still being written". */}
           <motion.p
             variants={fade}
             className="font-serif text-2xl md:text-3xl leading-snug"
+            aria-label="Solace builds instruments for decisions about capital, belief, and help."
           >
-            Solace builds instruments for decisions about capital, belief, and help
-            <motion.span
-              aria-hidden="true"
-              animate={{ opacity: [1, 1, 0, 0] }}
-              transition={{ duration: 1.06, repeat: Infinity, times: [0, 0.5, 0.5, 1], ease: 'linear' }}
-              className="font-light"
-            >
-              _
-            </motion.span>
+            <span aria-hidden="true">
+              Solace builds instruments for decisions about{' '}
+              <span className="inline-block text-left min-w-[7ch]">{typedWord}</span>
+              <motion.span
+                animate={{ opacity: [1, 1, 0, 0] }}
+                transition={{ duration: 1.06, repeat: Infinity, times: [0, 0.5, 0.5, 1], ease: 'linear' }}
+                className="font-light"
+              >
+                _
+              </motion.span>
+            </span>
           </motion.p>
 
           {/* The record, as the event. SpaceX structure: attempt first, mission second. */}
