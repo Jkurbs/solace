@@ -396,6 +396,9 @@ export default function HomeClient({
             <Link href="/hermes" className="hero-cta hero-cta-secondary">
               Meet Hermes
             </Link>
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-secondary">
+              Inspect the Observatory
+            </Link>
           </motion.div>
         </motion.div>
       </section>
