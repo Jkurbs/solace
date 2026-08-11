@@ -19,8 +19,10 @@ import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
  *
  * What changed vs. the version you sent:
  *  1. Headline text unchanged ("Instruments for decisions when you can't predict the future."),
- *     scaled way up (text-5xl → lg:text-8xl) — SpaceX-scale mission type. The hero holds
- *     only eyebrow + headline + the single "Read the brief" CTA over the particle field.
+ *     scaled way up (text-5xl → lg:text-8xl) and typed character-by-character on load
+ *     (Neuralink-style: ~38ms/char after a 500ms delay, blinking underscore cursor that
+ *     persists after typing completes — reads as "the record still being written").
+ *     The hero holds only eyebrow + typed headline + the single "Read the brief" CTA.
  *  2. The sealed record lives in its own section directly under the hero (not inside it).
  *     Section order: rotating bridge line ("Solace builds instruments for decisions about
  *     capital / belief / help" — cycles every 2.4s, respects reduced-motion) → record card
@@ -41,6 +43,11 @@ import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
  */
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
+
+/** Hero headline, typed character-by-character (Neuralink-style), cursor persists. */
+const HERO_TITLE = "Instruments for decisions when you can't predict the future.";
+const TYPE_MS = 38;
+const TYPE_START_DELAY_MS = 500;
 
 /** Editorial shell: a step wider than essay measure; prose stays tighter inside. */
 const homeShell = 'max-w-4xl mx-auto';
@@ -208,6 +215,28 @@ export default function HomeClient({
     return () => window.clearInterval(id);
   }, [reduceMotion]);
 
+  /** Typed hero title. Reduced motion: full text instantly, cursor still shown. */
+  const [typedCount, setTypedCount] = useState(0);
+  useEffect(() => {
+    if (reduceMotion) {
+      setTypedCount(HERO_TITLE.length);
+      return;
+    }
+    let i = 0;
+    let intervalId: number | undefined;
+    const timeoutId = window.setTimeout(() => {
+      intervalId = window.setInterval(() => {
+        i += 1;
+        setTypedCount(i);
+        if (i >= HERO_TITLE.length && intervalId) window.clearInterval(intervalId);
+      }, TYPE_MS);
+    }, TYPE_START_DELAY_MS);
+    return () => {
+      window.clearTimeout(timeoutId);
+      if (intervalId) window.clearInterval(intervalId);
+    };
+  }, [reduceMotion]);
+
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0) return;
@@ -261,8 +290,18 @@ export default function HomeClient({
             <motion.h1
               variants={fade}
               className="hero-particle-title text-5xl md:text-7xl lg:text-8xl leading-[1.05] tracking-tight"
+              aria-label={HERO_TITLE}
             >
-              Instruments for decisions when you can't predict the future.
+              <span aria-hidden="true">
+                {HERO_TITLE.slice(0, typedCount)}
+                <motion.span
+                  animate={{ opacity: [1, 1, 0, 0] }}
+                  transition={{ duration: 1.06, repeat: Infinity, times: [0, 0.5, 0.5, 1], ease: 'linear' }}
+                  className="font-light"
+                >
+                  _
+                </motion.span>
+              </span>
             </motion.h1>
 
             <motion.div variants={fade} className="hero-particle-ctas">
@@ -309,7 +348,7 @@ export default function HomeClient({
 
           {/* The record, as the event. SpaceX structure: attempt first, mission second. */}
           {showRecordCard && (
-            <motion.div variants={fade}>
+            <motion.div variants={fade} className="mt-10 md:mt-14">
               <div className="inline-block max-w-full rounded-2xl border border-foreground/15 px-6 py-5 md:px-8 md:py-6">
                 <div className="flex flex-wrap items-end gap-x-10 gap-y-5">
                   <div>
