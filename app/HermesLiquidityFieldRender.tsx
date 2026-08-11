@@ -385,7 +385,7 @@ export default function HermesLiquidityFieldRender({
         const shrinkFactor = Math.min(1.2, Math.max(0.4, distFromCenter * 0.25));
         const pulse = 1.0 + Math.sin(elapsedTime * 0.5 + seed * 6.28) * 0.15;
         
-        scaleArray[i] = scales[i] * shrinkFactor * pulse;
+        scaleArray[i] = scales[i];//scales[i] * shrinkFactor * pulse;
       }
 
       posAttr.needsUpdate = true;
