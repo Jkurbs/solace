@@ -307,7 +307,7 @@ export default function HomeClient({
           variants={stagger}
           className="mx-auto max-w-6xl"
         >
-          {/* Bridge label: typewriter cycles the domains, blinking cursor throughout,
+          {/* Bridge label: typewriter cycles the domains, blinking cursor attached directly to the typed string,
               landing directly on the record card — "the record still being written". */}
           <motion.p
             variants={fade}
@@ -316,14 +316,16 @@ export default function HomeClient({
           >
             <span aria-hidden="true">
               Solace builds instruments for decisions about{' '}
-              <span className="inline-block text-left min-w-[7ch]">{typedWord}</span>
-              <motion.span
-                animate={{ opacity: [1, 1, 0, 0] }}
-                transition={{ duration: 1.06, repeat: Infinity, times: [0, 0.5, 0.5, 1], ease: 'linear' }}
-                className="font-light"
-              >
-                _
-              </motion.span>
+              <span className="inline-inline-flex items-baseline text-left">
+                <span>{typedWord}</span>
+                <motion.span
+                  animate={{ opacity: [1, 1, 0, 0] }}
+                  transition={{ duration: 1.06, repeat: Infinity, times: [0, 0.5, 0.5, 1], ease: 'linear' }}
+                  className="font-light ml-0.5 inline-block"
+                >
+                  _
+                </motion.span>
+              </span>
             </span>
           </motion.p>
 
