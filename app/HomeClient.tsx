@@ -1,23 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import { gateDomains } from '@/features/gates/conditions';
-import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
-import InstrumentPortraits from './InstrumentPortraits';
 import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
-
-/** Editorial shell: a step wider than essay measure; prose stays tighter inside. */
-const homeShell = 'max-w-4xl mx-auto';
 
 const fade = {
   hidden: { opacity: 0, y: 12 },
@@ -29,52 +23,14 @@ const stagger = {
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
 };
 
-export type LatestNote = { title: string; dek: string; label: string };
-
-export type FeaturedReading = {
-  kind: 'News' | 'Research' | 'Brief';
-  title: string;
-  dek: string;
-  label: string;
-  href: string;
-  cta: string;
-};
-
-export type ResearchItem = {
-  kind: 'News' | 'Research' | 'Brief';
-  title: string;
-  dek: string;
-  label: string;
-  href: string;
-  /** ISO date YYYY-MM-DD for ordering. */
-  date: string;
-};
-
 export type HermesTelemetry = {
-  posture: HermesPublicPosture;
+  posture: string;
   reason?: string;
   condition?: string;
   deployedCount?: number;
   pathsCount: number;
   pathsLabel: string;
   updatedAt: string;
-};
-
-export type HomeInstrumentSnapshot = {
-  hermes: {
-    posture: string | null;
-    pathsCount: number | null;
-    sealedDecisions: number | null;
-    standDownRate: string | null;
-    openPaths: number | null;
-    openPnl: number | null;
-  };
-  oracleActiveCount: number | null;
-  glorya: {
-    evaluated: number;
-    standingDown: number;
-    standDownRate: number;
-  };
 };
 
 /** Latest sealed ledger row — the hero artifact. Wire from the ledger feed. */
@@ -95,70 +51,27 @@ export type AnchorStatus = {
   href?: string;
 };
 
-/** Typewriter domains: plain English outcomes for capital, belief, and aid. */
-const TYPEWRITER_DOMAINS = ['money', 'truth', 'help', 'safety'] as const;
-const TYPE_CHAR_MS = 95;      // per-character speed, typing and deleting
-const TYPE_HOLD_MS = 1500;    // pause with the full word before deleting
-const TYPE_EMPTY_MS = 350;    // pause on empty before the next word
-
-/* ── Foundation: Vault seal icon ── */
-function SealIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 12 12" fill="none" className={className} aria-hidden="true">
-      <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1" opacity="0.6" />
-      <circle cx="6" cy="6" r="2.5" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
-      <circle cx="6" cy="6" r="0.8" fill="currentColor" opacity="0.5" />
-    </svg>
-  );
+function formatConstant(value: string) {
+  return value
+    .toLowerCase()
+    .split('_')
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
 }
 
 export default function HomeClient({
   hermesTelemetry,
-  instruments,
-  researchItems,
+  sealedDecisions,
   chainHead = null,
   anchor = null,
 }: {
   hermesTelemetry: HermesTelemetry | null;
-  instruments: HomeInstrumentSnapshot;
-  researchItems: ResearchItem[];
+  sealedDecisions: number | null;
   chainHead?: ChainHeadSummary | null;
   anchor?: AnchorStatus | null;
 }) {
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
-
-  /** Typewriter: type word → hold → delete → next word. */
-  const [typedWord, setTypedWord] = useState(reduceMotion ? TYPEWRITER_DOMAINS[0] : '');
-  useEffect(() => {
-    if (reduceMotion) return;
-    let wordIndex = 0;
-    let charCount = 0;
-    let deleting = false;
-    let timeoutId: number;
-    const tick = () => {
-      const word = TYPEWRITER_DOMAINS[wordIndex];
-      let delay = TYPE_CHAR_MS;
-      if (!deleting) {
-        charCount += 1;
-        if (charCount === word.length) {
-          deleting = true;
-          delay = TYPE_HOLD_MS;
-        }
-      } else {
-        charCount -= 1;
-        if (charCount === 0) {
-          deleting = false;
-          wordIndex = (wordIndex + 1) % TYPEWRITER_DOMAINS.length;
-          delay = TYPE_EMPTY_MS;
-        }
-      }
-      setTypedWord(TYPEWRITER_DOMAINS[wordIndex].slice(0, charCount));
-      timeoutId = window.setTimeout(tick, delay);
-    };
-    timeoutId = window.setTimeout(tick, TYPE_EMPTY_MS);
-    return () => window.clearTimeout(timeoutId);
-  }, [reduceMotion]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -166,13 +79,15 @@ export default function HomeClient({
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const target = e.target;
       if (!(target instanceof Element)) return;
-      const anchor = target.closest('a[href]');
-      if (!(anchor instanceof HTMLAnchorElement)) return;
-      if (!isInAppNavigationAnchor(anchor)) return;
+      const link = target.closest('a[href]');
+      if (!(link instanceof HTMLAnchorElement)) return;
+      if (!isInAppNavigationAnchor(link)) return;
       setWebglPaused(true);
     };
     const onShow = () => setWebglPaused(false);
-    const onVis = () => { if (document.visibilityState === 'visible') setWebglPaused(false); };
+    const onVis = () => {
+      if (document.visibilityState === 'visible') setWebglPaused(false);
+    };
     document.addEventListener('click', onClick, true);
     window.addEventListener('pageshow', onShow);
     document.addEventListener('visibilitychange', onVis);
@@ -185,14 +100,14 @@ export default function HomeClient({
     };
   }, []);
 
-  const hermes = instruments.hermes;
-  const showRecordCard = hermes.sealedDecisions != null && hermes.sealedDecisions > 0;
+  const showRecord =
+    (sealedDecisions != null && sealedDecisions > 0) ||
+    Boolean(hermesTelemetry?.condition || hermesTelemetry?.posture || hermesTelemetry?.reason);
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
 
-      {/* ── 1 · Hero: mission headline ── */}
       <section className="hero-research hero-particle-section relative overflow-hidden">
         <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
           <HermesLiquidityFieldRender maxParticles={30000} />
@@ -205,333 +120,170 @@ export default function HomeClient({
           variants={stagger}
           className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-20 md:pt-24 md:pb-28"
         >
-          <div className="hero-particle-copy">
+          <div className="hero-particle-copy home-hero-copy">
             <motion.p variants={fade} className="hero-particle-eyebrow">
-              Smart Robot Tools For Crazy Times
+              Solace
             </motion.p>
 
-            <motion.h1
-              variants={fade}
-              className="hero-particle-title text-5xl md:text-7xl lg:text-8xl leading-[1.05] tracking-tight"
-            >
-              Tools that make smart choices when nobody knows what happens next.
+            <motion.h1 variants={fade} className="hero-particle-title home-hero-title">
+              <span className="home-hero-line">Individual events resist prediction.</span>
+              <span className="home-hero-line home-hero-line-2">The structure around them can be read.</span>
             </motion.h1>
 
+            <motion.p variants={fade} className="home-hero-dek">
+              Solace builds the systems that read that structure and decide — or stand down.
+              We start with capital, because markets tell you if you were wrong in days.
+              Founder capital only. You cannot invest yet.
+            </motion.p>
+
             <motion.div variants={fade} className="hero-particle-ctas">
-              <Link href="/brief" className="hero-cta hero-cta-primary hero-cta-on-void">
-                Read How It Works
+              <Link href="/hermes" className="hero-cta hero-cta-primary hero-cta-on-void">
+                Run a simulation
+              </Link>
+              <Link
+                href={OBSERVATORY_HERMES_LEDGER_PATH}
+                className="hero-cta hero-cta-secondary hero-cta-on-void"
+              >
+                Open the public record
               </Link>
             </motion.div>
-          </div>
-        </motion.div>
-      </section>
 
-      {/* ── 2 · The Live Record Card (The X-Ray) ── */}
-      <section className="px-5 pt-14 pb-16 md:pt-20 md:pb-24">
-        <motion.div
-          initial={heroInitial}
-          animate="show"
-          variants={stagger}
-          className="mx-auto max-w-6xl"
-        >
-          {/* Typewriter bridge label */}
-          <motion.p
-            variants={fade}
-            className="font-serif text-2xl md:text-3xl leading-snug"
-            aria-label="Solace builds tools for hard choices about money, truth, and help."
-          >
-            <span aria-hidden="true">
-              Solace builds computer tools to make good choices about{' '}
-              <span className="inline-inline-flex items-baseline text-left">
-                <span>{typedWord}</span>
-                <motion.span
-                  animate={{ opacity: [1, 1, 0, 0] }}
-                  transition={{ duration: 1.06, repeat: Infinity, times: [0, 0.5, 0.5, 1], ease: 'linear' }}
-                  className="font-light ml-0.5 inline-block"
-                >
-                  _
-                </motion.span>
-              </span>
-            </span>
-          </motion.p>
-
-          {/* The Live Telemetry Record Card */}
-          {showRecordCard && (
-            <motion.div variants={fade} className="mt-10 md:mt-14">
-              <div className="inline-block w-full max-w-full rounded-2xl border border-foreground/15 px-6 py-5 md:px-8 md:py-6 bg-background/60 backdrop-blur-md">
-                
-                {/* 3-Second Visual Live State Readout */}
-                <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 pb-6 border-b border-foreground/10">
-                  <div>
-                    <p className="text-[0.65rem] uppercase tracking-[0.18em] text-muted">What The Computer Sees</p>
-                    <p className="font-mono text-sm font-medium mt-1">
-                      {hermesTelemetry?.condition ?? 'Crazy Things Happening in the Market'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[0.65rem] uppercase tracking-[0.18em] text-muted">What The Computer Chose</p>
-                    <p className="font-mono text-sm font-medium mt-1 text-emerald-500 dark:text-emerald-400">
-                      Action: {hermesTelemetry?.posture ?? 'WAITING (0% Risk)'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[0.65rem] uppercase tracking-[0.18em] text-muted">Why</p>
-                    <p className="font-mono text-xs text-muted mt-1 leading-normal">
-                      {hermesTelemetry?.reason ?? '"Too dangerous right now. Holding onto cash."'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Ledger Verification Counters */}
-                <div className="flex flex-wrap items-end gap-x-10 gap-y-5">
-                  <div>
-                    <p className="font-mono text-4xl md:text-5xl tabular-nums tracking-tight leading-none">
-                      {hermes.sealedDecisions!.toLocaleString('en-US')}
-                    </p>
-                    <p className="mt-2 text-[0.65rem] uppercase tracking-[0.18em] text-muted">
-                      Choices Locked In Early
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-mono text-sm tabular-nums leading-none">
-                      {chainHead ? chainHead.sealedAtLabel : 'Right Now'}
-                    </p>
-                    <p className="mt-2 text-[0.65rem] uppercase tracking-[0.18em] text-muted">
-                      Time of Last Choice
-                    </p>
-                  </div>
-                  <div>
-                    {anchor ? (
-                      <Link
-                        href={anchor.href ?? '/anchor'}
-                        className="font-mono text-sm leading-none underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
-                      >
-                        Saved Publicly {anchor.cadence}
-                      </Link>
-                    ) : (
-                      <p className="font-mono text-sm leading-none">Public Notebook</p>
+            {showRecord && (
+              <motion.div variants={fade} className="home-record" aria-label="Live Hermes record">
+                {(hermesTelemetry?.condition || hermesTelemetry?.posture || hermesTelemetry?.reason) && (
+                  <div className="home-record-readout">
+                    {hermesTelemetry?.condition && (
+                      <div>
+                        <p className="home-record-label">Condition</p>
+                        <p className="home-record-value">{hermesTelemetry.condition}</p>
+                      </div>
                     )}
-                    <p className="mt-2 text-[0.65rem] uppercase tracking-[0.18em] text-muted">
-                      Un-Changeable History
-                    </p>
+                    {hermesTelemetry?.posture && (
+                      <div>
+                        <p className="home-record-label">Decision</p>
+                        <p className="home-record-value">{formatConstant(hermesTelemetry.posture)}</p>
+                      </div>
+                    )}
+                    {hermesTelemetry?.reason && (
+                      <div>
+                        <p className="home-record-label">Why</p>
+                        <p className="home-record-value home-record-value-quiet">{hermesTelemetry.reason}</p>
+                      </div>
+                    )}
                   </div>
-                </div>
-
-                {chainHead && (
-                  <p className="mt-4 font-mono text-xs text-muted tabular-nums truncate max-w-md">
-                    Proof Code #{chainHead.rowNumber} · {chainHead.recordId} · {chainHead.hash.slice(0, 20)}…
-                  </p>
                 )}
 
-                <div className="mt-6">
-                  <Link
-                    href={OBSERVATORY_HERMES_LEDGER_PATH}
-                    className="group inline-flex items-center text-sm font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
-                  >
-                    [ Check Any Choice Receipt ]
-                    <span aria-hidden="true" className="ml-1.5 text-[0.85em] opacity-60 transition-transform group-hover:translate-x-0.5">
-                      →
-                    </span>
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          )}
+                {sealedDecisions != null && sealedDecisions > 0 && (
+                  <div className="home-record-counts">
+                    <div>
+                      <p className="home-record-count">{sealedDecisions.toLocaleString('en-US')}</p>
+                      <p className="home-record-label">Sealed</p>
+                    </div>
+                    {chainHead && (
+                      <div>
+                        <p className="home-record-meta">{chainHead.sealedAtLabel}</p>
+                        <p className="home-record-label">Last seal</p>
+                      </div>
+                    )}
+                    {anchor && (
+                      <div>
+                        <Link href={anchor.href ?? '/anchor'} className="home-record-meta home-record-link">
+                          {anchor.cadence}
+                        </Link>
+                        <p className="home-record-label">Published outside our servers</p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-          {/* Direct Caption */}
-          <motion.p variants={fade} className="mt-8 md:mt-10 max-w-xl text-muted leading-relaxed text-base md:text-lg">
-            Every choice is written down on a public scoreboard before we see what happens. 
-            No one can hide bad mistakes, and no one can fake good guesses.
-          </motion.p>
-
-          <motion.div variants={fade} className="mt-8 flex flex-wrap gap-3">
-            <Link href="/hermes" className="hero-cta hero-cta-secondary">
-              See Hermes
-            </Link>
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-secondary">
-              Look at the Live Scoreboard
-            </Link>
-          </motion.div>
+                <p className="home-record-note">
+                  Founder capital. Young sample.
+                  {chainHead ? ` Row ${chainHead.rowNumber}.` : ''}
+                </p>
+              </motion.div>
+            )}
+          </div>
         </motion.div>
       </section>
 
-      {/* ── 3 · Instruments Section: Clear First-Principles Analogies ── */}
-      <section className="home-instruments-section px-5 py-16 md:py-28 border-t border-border">
+      <section className="home-vision border-t border-border px-5 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">
-          <h2 className="home-instruments-kicker text-xs uppercase tracking-[0.2em] text-muted mb-3">
-            The Three Tools
-          </h2>
-          <p className="text-sm text-muted max-w-xl mb-10 md:mb-12 leading-relaxed">
-            Three special programs built to keep people calm during scary moments. 
-            Driven purely by facts, not hype or guesses.
+          <p className="home-vision-kicker">The work</p>
+          <h2 className="home-vision-title">Capital first. Then belief. Then help.</h2>
+          <p className="home-vision-dek">
+            Markets compress feedback. They expose a wrong decision in days rather than years, and
+            they fund what comes next. Every system follows the same loop: observe, decide, seal,
+            stand down when the path is broken.
           </p>
 
-          <InstrumentPortraits
-            hermes={instruments.hermes}
-            glorya={instruments.glorya}
-            oracleActiveCount={instruments.oracleActiveCount}
-          />
-        </div>
-      </section>
-
-      {/* ── 4 · Verification: Truth & Self-Auditing ── */}
-      <section className="home-charter-section px-5 py-16 md:py-24 border-t border-border">
-        <div className="hero-charter mx-auto max-w-2xl">
-          <div className="hero-charter-rule" aria-hidden="true" />
-          <SealIcon className="hero-charter-seal w-10 h-10 md:w-11 md:h-11 text-muted mx-auto" />
-          <p className="hero-charter-kicker">Proof</p>
-          <p className="hero-charter-body">
-            You can double-check everything yourself.
-          </p>
-
-          <ol className="mt-8 space-y-5 text-left max-w-xl mx-auto">
-            <li className="flex gap-4">
-              <span className="font-mono text-xs text-muted mt-1 shrink-0 tabular-nums">01</span>
-              <p className="text-sm md:text-[0.95rem] leading-relaxed text-muted">
-                <span className="text-foreground font-medium">Locked before knowing the future.</span>{' '}
-                Every decision is timestamped and saved before money moves or events happen.
-                Changing even one old entry breaks the entire digital chain.
-              </p>
+          <ol className="home-vision-ladder">
+            <li>
+              <span className="home-vision-index">01</span>
+              <div>
+                <p className="home-vision-domain">Capital</p>
+                <p>
+                  Hermes is live. It reads liquidity, volatility, and regime, then decides whether
+                  to allocate, how much, and when to exit. Every decision is sealed before the
+                  trade. Founder capital. Young sample.
+                </p>
+              </div>
             </li>
-            <li className="flex gap-4">
-              <span className="font-mono text-xs text-muted mt-1 shrink-0 tabular-nums">02</span>
-              <p className="text-sm md:text-[0.95rem] leading-relaxed text-muted">
-                <span className="text-foreground font-medium">
-                  {anchor ? `Saved publicly ${anchor.cadence}.` : 'Watched by the whole world.'}
-                </span>{' '}
-                {anchor
-                  ? 'The list is copied somewhere we do not own, so history can never be rewritten—not even by us.'
-                  : 'The list is totally public. Saving it everywhere keeps history completely permanent.'}
-              </p>
+            <li>
+              <span className="home-vision-index">02</span>
+              <div>
+                <p className="home-vision-domain">Belief</p>
+                <p>
+                  Oracle writes a probability before the event resolves, then scores it against
+                  what happened. Calibration is the product. The sample is still young.
+                </p>
+              </div>
             </li>
-            <li className="flex gap-4">
-              <span className="font-mono text-xs text-muted mt-1 shrink-0 tabular-nums">03</span>
-              <p className="text-sm md:text-[0.95rem] leading-relaxed text-muted">
-                <span className="text-foreground font-medium">Do the math yourself.</span>{' '}
-                Test the code directly in your browser or run the free script on your computer.
-                No special sign-ups, passwords, or trust needed.
-              </p>
+            <li>
+              <span className="home-vision-index">03</span>
+              <div>
+                <p className="home-vision-domain">Help</p>
+                <p>
+                  Glorya asks whether need is real and whether a path can carry the money. It does
+                  not move capital until Solace has $1M cumulative revenue.
+                </p>
+              </div>
             </li>
           </ol>
-
-          <div className="hero-charter-actions mt-10 flex flex-wrap justify-center gap-3">
-            <Link
-              href={OBSERVATORY_HERMES_LEDGER_PATH}
-              className="hero-cta hero-cta-secondary"
-            >
-              Open the Public Scoreboard
-              <span aria-hidden="true" className="ml-1.5 text-[0.85em] opacity-60">
-                →
-              </span>
-            </Link>
-            <Link
-              href="/brief#section-07"
-              className="text-sm text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30 self-center"
-            >
-              What this proves and what it doesn't
-            </Link>
-          </div>
         </div>
       </section>
 
-      {/* ── 5 · Operator: Radical Transparency ── */}
-      <section className="border-t border-border px-5 py-16 md:py-24">
-        <div className={homeShell}>
-          <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">The Builder</h2>
-          <p className="font-serif text-2xl md:text-3xl font-medium max-w-xl leading-snug">
-            Solace is built and run by just one person.
+      <section className="border-t border-border px-5 py-16 md:py-20">
+        <div className="mx-auto max-w-6xl">
+          <p className="max-w-xl text-sm leading-relaxed text-muted">
+            Solace is one person — <span className="text-foreground">Kerby Jean</span>.
           </p>
-          <div className="mt-6 max-w-2xl space-y-4 text-muted leading-relaxed">
-            <p>
-              When a huge team builds software, it gets confusing fast. Having just one builder
-              forces every part to be super simple, so anyone can inspect it and fix it easily.
-            </p>
-            <p>
-              <span className="text-foreground font-medium">Kerby Jean</span> — computer engineer who
-              spent four years making software at Apple. These tools are built to take away guessing, panic, and human mistakes when big choices matter.
-            </p>
-          </div>
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <Link
               href="/brief"
-              className="font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
+              className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30"
             >
-              Read How It Works
+              Read the brief
+            </Link>
+            <Link
+              href="/research"
+              className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30"
+            >
+              Notes
             </Link>
             <a
               href="https://github.com/Jkurbs"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
+              className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30"
             >
               GitHub
             </a>
             <a
               href="mailto:hello@solace.fyi"
-              className="text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
+              className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30"
             >
               hello@solace.fyi
             </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 6 · Research & Brief Shelf ── */}
-      <section className="border-t border-border px-5 py-20 md:py-28">
-        <div className={homeShell}>
-          <div className="flex flex-wrap items-end justify-between gap-4 mb-12">
-            <div>
-              <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">Articles & Notes</h2>
-              <p className="font-serif text-2xl md:text-3xl font-medium max-w-xl leading-snug">
-                The rulebook for making good choices when you aren't sure. Updated in public.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-              <Link
-                href="/research"
-                className="text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
-              >
-                All Notes
-              </Link>
-              <Link
-                href="/news"
-                className="text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
-              >
-                News
-              </Link>
-              <Link
-                href="/brief"
-                className="text-muted hover:text-foreground transition-colors underline underline-offset-4 decoration-transparent hover:decoration-foreground/30"
-              >
-                Brief
-              </Link>
-            </div>
-          </div>
-
-          <div className="divide-y divide-border border-t border-border">
-            {researchItems.slice(0, 1).map((item) => (
-              <Link
-                key={`${item.kind}-${item.href}-${item.title}`}
-                href={item.href}
-                className="group block py-8 first:pt-8"
-              >
-                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-                  <p className="text-xs uppercase tracking-[0.15em] text-muted">{item.kind}</p>
-                  <span className="text-xs text-muted font-mono tabular-nums">{item.label}</span>
-                </div>
-                <h3 className="mt-3 font-serif text-2xl md:text-3xl font-medium leading-tight group-hover:opacity-70 transition-opacity">
-                  {item.title}
-                </h3>
-                <p className="mt-3 text-muted leading-relaxed max-w-2xl">{item.dek}</p>
-                <span className="mt-5 inline-block text-sm font-medium underline underline-offset-4 decoration-foreground/20 group-hover:decoration-foreground/60 transition-all">
-                  {item.kind === 'News'
-                    ? 'Read the update'
-                    : item.kind === 'Brief'
-                      ? 'Read the guide'
-                      : 'Read the note'}
-                </span>
-              </Link>
-            ))}
           </div>
         </div>
       </section>

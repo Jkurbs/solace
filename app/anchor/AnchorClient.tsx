@@ -152,7 +152,7 @@ export default function AnchorClient({ chain }: { chain: AnchorChain }) {
                   Verify This Hash
                 </Button>
                 <Button variant="secondary" asChild>
-                  <a href={`/api/anchor/proof?date=${head.date}`} download>
+                  <a href={`/api/anchor/proof?date=${encodeURIComponent(head.date)}`} download>
                     <Download className="h-4 w-4" />
                     Download Proof
                   </a>

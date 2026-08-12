@@ -55,9 +55,10 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const date = searchParams.get('date');
 
-  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+  // YYYY-MM-DD, ISO timestamp, or filename form (2026-08-12T21-40-14).
+  if (!date || !/^\d{4}-\d{2}-\d{2}(T[\d:.\-Z]+)?$/.test(date)) {
     return NextResponse.json(
-      { error: 'bad_request', message: 'Provide a valid date (YYYY-MM-DD).' },
+      { error: 'bad_request', message: 'Provide a valid anchor date or timestamp.' },
       { headers: corsHeaders, status: 400 },
     );
   }
@@ -95,7 +96,7 @@ export async function GET(request: Request) {
     const response = NextResponse.json(proof, {
       headers: {
         ...corsHeaders,
-        'Content-Disposition': `attachment; filename="solace-anchor-proof-${date}.json"`,
+        'Content-Disposition': `attachment; filename="solace-anchor-proof-${date.replace(/[:.]/g, '-')}.json"`,
         'Cache-Control': 'public, max-age=300, s-maxage=300',
         'X-Solace-Surface': 'anchor-proof',
       },
