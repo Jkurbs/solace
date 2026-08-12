@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 
 import SiteFooter from '@/components/site-footer';
@@ -119,7 +119,7 @@ export default function HomeClient({
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
 
-      {/* ── STEP 1 & 3A: HERO SECTION ── */}
+      {/* ── STAGE 1: HERO SECTION ── */}
       <section className="hero-research hero-particle-section relative overflow-hidden">
         <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
           <HermesLiquidityFieldRender maxParticles={30000} />
@@ -133,13 +133,13 @@ export default function HomeClient({
           className="hero-particle-layout relative z-10 mx-auto max-w-5xl px-5 pt-16 pb-20 md:pt-24 md:pb-28"
         >
           <div className="hero-particle-copy max-w-3xl">
-            <motion.p variants={fade} className="hero-particle-eyebrow text-xs uppercase tracking-[0.2em] text-muted mb-4">
-              Decision Systems for High Uncertainty
+            <motion.p variants={fade} className="hero-particle-eyebrow text-xs uppercase tracking-[0.2em] text-muted mb-4 font-mono">
+              Decision Engine for High Uncertainty
             </motion.p>
 
             <motion.h1
               variants={fade}
-              className="text-4xl sm:text-6xl md:text-7xl font-serif font-medium leading-[1.1] tracking-tight text-foreground"
+              className="text-4xl sm:text-6xl md:text-7xl font-serif font-medium leading-[1.08] tracking-tight text-foreground"
             >
               Software built to make calm choices when the future is unpredictable.
             </motion.h1>
@@ -151,7 +151,7 @@ export default function HomeClient({
               Solace builds autonomous decision tools for capital, truth, and relief—logged publicly before the outcome is known so you never have to take our word for it.
             </motion.p>
 
-            <motion.div variants={fade} className="mt-8 flex flex-wrap gap-4">
+            <motion.div variants={fade} className="mt-8 flex flex-wrap gap-4 font-mono text-xs font-semibold">
               <Link href="/hermes" className="hero-cta hero-cta-primary hero-cta-on-void">
                 Watch Hermes Live
               </Link>
@@ -163,7 +163,7 @@ export default function HomeClient({
         </motion.div>
       </section>
 
-      {/* ── STEP 4 & 5: ACCELERATE & AUTOMATE (LIVE TELEMETRY CARD) ── */}
+      {/* ── STAGE 2: TRI-DOMAIN TELEMETRY HUD ── */}
       <section className="px-5 py-12 border-t border-border/50 bg-foreground/[0.01]">
         <div className="mx-auto max-w-5xl">
           <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm">
@@ -174,7 +174,7 @@ export default function HomeClient({
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                 </span>
                 <p className="text-xs font-mono uppercase tracking-[0.15em] font-semibold text-foreground">
-                  HERMES TELEMETRY (LIVE)
+                  LIVE SYSTEM TELEMETRY
                 </p>
               </div>
               <span className="text-xs font-mono text-muted">
@@ -183,22 +183,36 @@ export default function HomeClient({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 font-mono">
-              <div className="space-y-1">
-                <p className="text-[0.7rem] uppercase tracking-wider text-muted">Current Posture</p>
-                <p className="text-lg font-bold text-emerald-500 dark:text-emerald-400">
-                  [{hermesTelemetry?.posture ?? 'DEFENSIVE'}]
+              {/* Domain 1: Capital */}
+              <div className="space-y-1 p-3 rounded-lg bg-background/50 border border-border/40">
+                <p className="text-[0.7rem] uppercase tracking-wider text-emerald-500 dark:text-emerald-400 font-bold">01 // CAPITAL (HERMES)</p>
+                <p className="text-sm font-bold text-foreground">
+                  Posture: [{hermesTelemetry?.posture ?? 'DEFENSIVE'}]
+                </p>
+                <p className="text-[0.75rem] text-muted truncate">
+                  {hermesTelemetry?.condition ?? 'Risk Allocation Engine'}
                 </p>
               </div>
-              <div className="space-y-1">
-                <p className="text-[0.7rem] uppercase tracking-wider text-muted">Active Market State</p>
-                <p className="text-sm text-foreground font-medium">
-                  {hermesTelemetry?.condition ?? 'High Volatility Expansion'}
+
+              {/* Domain 2: Truth */}
+              <div className="space-y-1 p-3 rounded-lg bg-background/50 border border-border/40">
+                <p className="text-[0.7rem] uppercase tracking-wider text-cyan-500 dark:text-cyan-400 font-bold">02 // TRUTH (ORACLE)</p>
+                <p className="text-sm font-bold text-foreground">
+                  Status: Active
+                </p>
+                <p className="text-[0.75rem] text-muted truncate">
+                  Prediction Accuracy Ledger
                 </p>
               </div>
-              <div className="space-y-1">
-                <p className="text-[0.7rem] uppercase tracking-wider text-muted">Active Execution Rule</p>
-                <p className="text-sm text-muted">
-                  {hermesTelemetry?.reason ?? 'Waiting for liquidity delta > 2.5x'}
+
+              {/* Domain 3: Relief */}
+              <div className="space-y-1 p-3 rounded-lg bg-background/50 border border-border/40">
+                <p className="text-[0.7rem] uppercase tracking-wider text-amber-500 font-bold">03 // RELIEF (GLORYA)</p>
+                <p className="text-sm font-bold text-foreground">
+                  Status: Evaluating
+                </p>
+                <p className="text-[0.75rem] text-muted truncate">
+                  Humanitarian Aid Routing
                 </p>
               </div>
             </div>
@@ -206,10 +220,10 @@ export default function HomeClient({
             {chainHead && (
               <div className="mt-6 pt-4 border-t border-border/60 flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-muted">
                 <span className="truncate max-w-md">
-                  Live Decision Hash: <span className="text-foreground">{chainHead.hash}</span>
+                  Pre-Commit Hash: <span className="text-foreground">{chainHead.hash}</span>
                 </span>
-                <span className="text-emerald-500 dark:text-emerald-400 flex items-center gap-1 font-sans">
-                  ✓ Timestamp Verified
+                <span className="text-emerald-500 dark:text-emerald-400 flex items-center gap-1 font-sans font-medium">
+                  ✓ Immutable Ledger Anchored
                 </span>
               </div>
             )}
@@ -217,17 +231,17 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── STEP 3B: THE 3 INSTRUMENTS ── */}
+      {/* ── STAGE 3: THE 3 INSTRUMENTS ── */}
       <section className="px-5 py-16 md:py-24 border-t border-border">
         <div className="mx-auto max-w-5xl">
           <div className="text-center md:text-left mb-12">
-            <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-2">Three Instruments</h2>
+            <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-2 font-mono">Three Instruments</h2>
             <p className="font-serif text-2xl md:text-3xl font-medium">Broad decision theory applied to human impact.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* HERMES */}
-            <div className="rounded-xl border border-border bg-card p-6 flex flex-col justify-between">
+            <div className="rounded-xl border border-border bg-card p-6 flex flex-col justify-between hover:border-emerald-500/40 transition-colors">
               <div>
                 <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
                   <h3 className="font-mono text-lg font-bold tracking-tight">HERMES</h3>
@@ -246,7 +260,7 @@ export default function HomeClient({
             </div>
 
             {/* ORACLE */}
-            <div className="rounded-xl border border-border bg-card p-6 flex flex-col justify-between">
+            <div className="rounded-xl border border-border bg-card p-6 flex flex-col justify-between hover:border-cyan-500/40 transition-colors">
               <div>
                 <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
                   <h3 className="font-mono text-lg font-bold tracking-tight">ORACLE</h3>
@@ -265,7 +279,7 @@ export default function HomeClient({
             </div>
 
             {/* GLORYA */}
-            <div className="rounded-xl border border-border bg-card p-6 flex flex-col justify-between">
+            <div className="rounded-xl border border-border bg-card p-6 flex flex-col justify-between hover:border-amber-500/40 transition-colors">
               <div>
                 <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
                   <h3 className="font-mono text-lg font-bold tracking-tight">GLORYA</h3>
@@ -286,12 +300,12 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── STEP 2 & 3C: UN-FACKABLE PROOF (DELETED PROCESS JARGON) ── */}
+      {/* ── STAGE 4: UN-FAKABLE PROOF ── */}
       <section className="px-5 py-16 md:py-24 border-t border-border bg-card/30">
         <div className="mx-auto max-w-3xl text-center md:text-left">
           <p className="text-xs uppercase tracking-[0.2em] text-muted mb-3 font-mono">Verification</p>
           <h2 className="font-serif text-3xl md:text-4xl font-medium tracking-tight mb-6">
-            Un-fackable Proof
+            Un-fakable Proof
           </h2>
           <p className="text-lg text-foreground font-medium mb-4">
             Most platforms change their story after they see what happens.
@@ -302,7 +316,7 @@ export default function HomeClient({
           <div>
             <Link
               href={OBSERVATORY_HERMES_LEDGER_PATH}
-              className="hero-cta hero-cta-primary inline-flex items-center gap-2"
+              className="hero-cta hero-cta-primary inline-flex items-center gap-2 font-mono text-xs font-semibold"
             >
               Verify Full History in 1-Click
               <span aria-hidden="true">→</span>
@@ -311,7 +325,7 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── STEP 3D: THE OPERATOR SECTION ── */}
+      {/* ── STAGE 5: THE OPERATOR SECTION ── */}
       <section className="px-5 py-16 md:py-24 border-t border-border">
         <div className="mx-auto max-w-3xl">
           <p className="text-xs uppercase tracking-[0.2em] text-muted mb-3 font-mono">Operator</p>
@@ -352,7 +366,7 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── RESEARCH & BRIEF SHELF ── */}
+      {/* ── STAGE 6: RESEARCH & BRIEF SHELF ── */}
       <section className="border-t border-border px-5 py-16 md:py-24">
         <div className="mx-auto max-w-3xl">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
