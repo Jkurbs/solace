@@ -96,7 +96,7 @@ export type AnchorStatus = {
 };
 
 /** Typewriter domains: plain English outcomes for capital, belief, and aid. */
-const TYPEWRITER_DOMAINS = ['capital', 'belief', 'aid', 'risk'] as const;
+const TYPEWRITER_DOMAINS = ['money', 'truth', 'help', 'safety'] as const;
 const TYPE_CHAR_MS = 95;      // per-character speed, typing and deleting
 const TYPE_HOLD_MS = 1500;    // pause with the full word before deleting
 const TYPE_EMPTY_MS = 350;    // pause on empty before the next word
@@ -207,19 +207,19 @@ export default function HomeClient({
         >
           <div className="hero-particle-copy">
             <motion.p variants={fade} className="hero-particle-eyebrow">
-              Software Instruments for High Uncertainty
+              Smart Robot Tools For Crazy Times
             </motion.p>
 
             <motion.h1
               variants={fade}
               className="hero-particle-title text-5xl md:text-7xl lg:text-8xl leading-[1.05] tracking-tight"
             >
-              Instruments for decisions when you can't predict the future.
+              Tools that make smart choices when nobody knows what happens next.
             </motion.h1>
 
             <motion.div variants={fade} className="hero-particle-ctas">
               <Link href="/brief" className="hero-cta hero-cta-primary hero-cta-on-void">
-                Read the Brief
+                Read How It Works
               </Link>
             </motion.div>
           </div>
@@ -238,10 +238,10 @@ export default function HomeClient({
           <motion.p
             variants={fade}
             className="font-serif text-2xl md:text-3xl leading-snug"
-            aria-label="Solace builds instruments for decisions about capital, belief, and aid."
+            aria-label="Solace builds tools for hard choices about money, truth, and help."
           >
             <span aria-hidden="true">
-              Solace builds software instruments for decisions about{' '}
+              Solace builds computer tools to make good choices about{' '}
               <span className="inline-inline-flex items-baseline text-left">
                 <span>{typedWord}</span>
                 <motion.span
@@ -263,21 +263,21 @@ export default function HomeClient({
                 {/* 3-Second Visual Live State Readout */}
                 <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 pb-6 border-b border-foreground/10">
                   <div>
-                    <p className="text-[0.65rem] uppercase tracking-[0.18em] text-muted">What Solace Sees</p>
+                    <p className="text-[0.65rem] uppercase tracking-[0.18em] text-muted">What The Computer Sees</p>
                     <p className="font-mono text-sm font-medium mt-1">
-                      {hermesTelemetry?.condition ?? 'High Market Volatility'}
+                      {hermesTelemetry?.condition ?? 'Crazy Things Happening in the Market'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[0.65rem] uppercase tracking-[0.18em] text-muted">What Solace Decides</p>
+                    <p className="text-[0.65rem] uppercase tracking-[0.18em] text-muted">What The Computer Chose</p>
                     <p className="font-mono text-sm font-medium mt-1 text-emerald-500 dark:text-emerald-400">
-                      Posture: {hermesTelemetry?.posture ?? 'STAND DOWN (0% Exposure)'}
+                      Action: {hermesTelemetry?.posture ?? 'WAITING (0% Risk)'}
                     </p>
                   </div>
                   <div>
                     <p className="text-[0.65rem] uppercase tracking-[0.18em] text-muted">Why</p>
                     <p className="font-mono text-xs text-muted mt-1 leading-normal">
-                      {hermesTelemetry?.reason ?? '"Risk exceeds safe parameter limits. Sitting in cash."'}
+                      {hermesTelemetry?.reason ?? '"Too dangerous right now. Holding onto cash."'}
                     </p>
                   </div>
                 </div>
@@ -289,15 +289,15 @@ export default function HomeClient({
                       {hermes.sealedDecisions!.toLocaleString('en-US')}
                     </p>
                     <p className="mt-2 text-[0.65rem] uppercase tracking-[0.18em] text-muted">
-                      Decisions Sealed Before Outcome
+                      Choices Locked In Early
                     </p>
                   </div>
                   <div>
                     <p className="font-mono text-sm tabular-nums leading-none">
-                      {chainHead ? chainHead.sealedAtLabel : 'Live'}
+                      {chainHead ? chainHead.sealedAtLabel : 'Right Now'}
                     </p>
                     <p className="mt-2 text-[0.65rem] uppercase tracking-[0.18em] text-muted">
-                      Latest Seal Timestamp
+                      Time of Last Choice
                     </p>
                   </div>
                   <div>
@@ -306,20 +306,20 @@ export default function HomeClient({
                         href={anchor.href ?? '/anchor'}
                         className="font-mono text-sm leading-none underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
                       >
-                        Anchored {anchor.cadence}
+                        Saved Publicly {anchor.cadence}
                       </Link>
                     ) : (
-                      <p className="font-mono text-sm leading-none">Public Ledger</p>
+                      <p className="font-mono text-sm leading-none">Public Notebook</p>
                     )}
                     <p className="mt-2 text-[0.65rem] uppercase tracking-[0.18em] text-muted">
-                      Un-editable Public Record
+                      Un-Changeable History
                     </p>
                   </div>
                 </div>
 
                 {chainHead && (
                   <p className="mt-4 font-mono text-xs text-muted tabular-nums truncate max-w-md">
-                    Proof #{chainHead.rowNumber} · {chainHead.recordId} · {chainHead.hash.slice(0, 20)}…
+                    Proof Code #{chainHead.rowNumber} · {chainHead.recordId} · {chainHead.hash.slice(0, 20)}…
                   </p>
                 )}
 
@@ -328,7 +328,7 @@ export default function HomeClient({
                     href={OBSERVATORY_HERMES_LEDGER_PATH}
                     className="group inline-flex items-center text-sm font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
                   >
-                    [ Verify Any Decision Receipt ]
+                    [ Check Any Choice Receipt ]
                     <span aria-hidden="true" className="ml-1.5 text-[0.85em] opacity-60 transition-transform group-hover:translate-x-0.5">
                       →
                     </span>
@@ -340,16 +340,16 @@ export default function HomeClient({
 
           {/* Direct Caption */}
           <motion.p variants={fade} className="mt-8 md:mt-10 max-w-xl text-muted leading-relaxed text-base md:text-lg">
-            Every choice is published to an un-editable public record before the result is known. 
-            No bad calls can be hidden, and no good calls can be faked.
+            Every choice is written down on a public scoreboard before we see what happens. 
+            No one can hide bad mistakes, and no one can fake good guesses.
           </motion.p>
 
           <motion.div variants={fade} className="mt-8 flex flex-wrap gap-3">
             <Link href="/hermes" className="hero-cta hero-cta-secondary">
-              Meet Hermes
+              See Hermes
             </Link>
             <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-secondary">
-              Inspect the Live Observatory
+              Look at the Live Scoreboard
             </Link>
           </motion.div>
         </motion.div>
@@ -359,11 +359,11 @@ export default function HomeClient({
       <section className="home-instruments-section px-5 py-16 md:py-28 border-t border-border">
         <div className="mx-auto max-w-6xl">
           <h2 className="home-instruments-kicker text-xs uppercase tracking-[0.2em] text-muted mb-3">
-            The Instruments
+            The Three Tools
           </h2>
           <p className="text-sm text-muted max-w-xl mb-10 md:mb-12 leading-relaxed">
-            Three specialized software instruments built for human high-stress decisions. 
-            Weighted by proof, not promises or hype.
+            Three special programs built to keep people calm during scary moments. 
+            Driven purely by facts, not hype or guesses.
           </p>
 
           <InstrumentPortraits
@@ -379,37 +379,37 @@ export default function HomeClient({
         <div className="hero-charter mx-auto max-w-2xl">
           <div className="hero-charter-rule" aria-hidden="true" />
           <SealIcon className="hero-charter-seal w-10 h-10 md:w-11 md:h-11 text-muted mx-auto" />
-          <p className="hero-charter-kicker">Verification</p>
+          <p className="hero-charter-kicker">Proof</p>
           <p className="hero-charter-body">
-            The record is checkable, not claimable.
+            You can double-check everything yourself.
           </p>
 
           <ol className="mt-8 space-y-5 text-left max-w-xl mx-auto">
             <li className="flex gap-4">
               <span className="font-mono text-xs text-muted mt-1 shrink-0 tabular-nums">01</span>
               <p className="text-sm md:text-[0.95rem] leading-relaxed text-muted">
-                <span className="text-foreground font-medium">Sealed before the outcome.</span>{' '}
-                Every decision is timestamped and locked before capital moves or events occur.
-                Editing a single past row breaks the cryptographic chain.
+                <span className="text-foreground font-medium">Locked before knowing the future.</span>{' '}
+                Every decision is timestamped and saved before money moves or events happen.
+                Changing even one old entry breaks the entire digital chain.
               </p>
             </li>
             <li className="flex gap-4">
               <span className="font-mono text-xs text-muted mt-1 shrink-0 tabular-nums">02</span>
               <p className="text-sm md:text-[0.95rem] leading-relaxed text-muted">
                 <span className="text-foreground font-medium">
-                  {anchor ? `Anchored ${anchor.cadence}.` : 'Witnessed publicly.'}
+                  {anchor ? `Saved publicly ${anchor.cadence}.` : 'Watched by the whole world.'}
                 </span>{' '}
                 {anchor
-                  ? 'The record head is published outside our control, so history cannot be rewritten—even by us.'
-                  : 'The record head is public. External anchoring keeps history permanently immutable.'}
+                  ? 'The list is copied somewhere we do not own, so history can never be rewritten—not even by us.'
+                  : 'The list is totally public. Saving it everywhere keeps history completely permanent.'}
               </p>
             </li>
             <li className="flex gap-4">
               <span className="font-mono text-xs text-muted mt-1 shrink-0 tabular-nums">03</span>
               <p className="text-sm md:text-[0.95rem] leading-relaxed text-muted">
-                <span className="text-foreground font-medium">Recompute it yourself.</span>{' '}
-                Verify the math directly in your browser or run the open script locally.
-                No permission, account, or trust required.
+                <span className="text-foreground font-medium">Do the math yourself.</span>{' '}
+                Test the code directly in your browser or run the free script on your computer.
+                No special sign-ups, passwords, or trust needed.
               </p>
             </li>
           </ol>
@@ -419,7 +419,7 @@ export default function HomeClient({
               href={OBSERVATORY_HERMES_LEDGER_PATH}
               className="hero-cta hero-cta-secondary"
             >
-              Open the Observatory
+              Open the Public Scoreboard
               <span aria-hidden="true" className="ml-1.5 text-[0.85em] opacity-60">
                 →
               </span>
@@ -437,19 +437,18 @@ export default function HomeClient({
       {/* ── 5 · Operator: Radical Transparency ── */}
       <section className="border-t border-border px-5 py-16 md:py-24">
         <div className={homeShell}>
-          <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">Operator</h2>
+          <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">The Builder</h2>
           <p className="font-serif text-2xl md:text-3xl font-medium max-w-xl leading-snug">
-            Solace is built and operated by one person.
+            Solace is built and run by just one person.
           </p>
           <div className="mt-6 max-w-2xl space-y-4 text-muted leading-relaxed">
             <p>
-              A system that requires a team to operate is often too complex to audit. One person
-              forces every layer to be simple enough to verify, fix, and explain in plain language.
+              When a huge team builds software, it gets confusing fast. Having just one builder
+              forces every part to be super simple, so anyone can inspect it and fix it easily.
             </p>
             <p>
-              <span className="text-foreground font-medium">Kerby Jean</span> — software engineer,
-              four years building internal infrastructure at Apple. The instruments are built from first
-              principles to remove human bias, panic, and guesswork from high-stakes choices.
+              <span className="text-foreground font-medium">Kerby Jean</span> — computer engineer who
+              spent four years making software at Apple. These tools are built to take away guessing, panic, and human mistakes when big choices matter.
             </p>
           </div>
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
@@ -457,7 +456,7 @@ export default function HomeClient({
               href="/brief"
               className="font-medium underline underline-offset-4 decoration-foreground/20 hover:decoration-foreground/60 transition-all"
             >
-              Read the Brief
+              Read How It Works
             </Link>
             <a
               href="https://github.com/Jkurbs"
@@ -482,9 +481,9 @@ export default function HomeClient({
         <div className={homeShell}>
           <div className="flex flex-wrap items-end justify-between gap-4 mb-12">
             <div>
-              <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">Research & The Brief</h2>
+              <h2 className="text-xs uppercase tracking-[0.2em] text-muted mb-3">Articles & Notes</h2>
               <p className="font-serif text-2xl md:text-3xl font-medium max-w-xl leading-snug">
-                The operating manual for decisions under uncertainty. Dated and updated in public.
+                The rulebook for making good choices when you aren't sure. Updated in public.
               </p>
             </div>
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
@@ -526,9 +525,9 @@ export default function HomeClient({
                 <p className="mt-3 text-muted leading-relaxed max-w-2xl">{item.dek}</p>
                 <span className="mt-5 inline-block text-sm font-medium underline underline-offset-4 decoration-foreground/20 group-hover:decoration-foreground/60 transition-all">
                   {item.kind === 'News'
-                    ? 'Read the announcement'
+                    ? 'Read the update'
                     : item.kind === 'Brief'
-                      ? 'Read the brief'
+                      ? 'Read the guide'
                       : 'Read the note'}
                 </span>
               </Link>
