@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 
 import SiteFooter from '@/components/site-footer';
@@ -11,18 +11,6 @@ import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
 import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
-
-const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
-
-const fade = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: easeOut } },
-};
-
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
-};
 
 export type ResearchItem = {
   kind: 'News' | 'Research' | 'Brief';
@@ -79,7 +67,6 @@ export default function HomeClient({
   instruments,
   researchItems,
   chainHead = null,
-  anchor = null,
 }: {
   hermesTelemetry: HermesTelemetry | null;
   instruments: HomeInstrumentSnapshot;
@@ -88,7 +75,6 @@ export default function HomeClient({
   anchor?: AnchorStatus | null;
 }) {
   const reduceMotion = useReducedMotion();
-  const heroInitial = reduceMotion ? false : 'hidden';
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -116,298 +102,258 @@ export default function HomeClient({
   }, []);
 
   return (
-    <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/20">
+    <main className="min-h-screen bg-black text-white antialiased selection:bg-white selection:text-black">
       <SiteHeader />
 
-      {/* ── HERO SECTION ── */}
-      <section className="hero-research hero-particle-section relative overflow-hidden border-b border-border/40">
-        <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
-          <HermesLiquidityFieldRender maxParticles={30000} />
-          <div className="hero-particle-vignette absolute inset-0 bg-gradient-to-b from-background/30 via-background/60 to-background pointer-events-none" />
+      {/* ── STAGE 1: THE HERO (TESLA-STYLE DIRECTNESS) ── */}
+      <section className="relative h-screen min-h-[700px] w-full flex flex-col justify-between pt-20 pb-12 px-6 overflow-hidden">
+        {/* Full-bleed Particle Background */}
+        <div className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-80" aria-hidden="true">
+          <HermesLiquidityFieldRender maxParticles={35000} />
+          <div className="absolute inset-0 bg-radial-vignette from-transparent via-black/40 to-black" />
         </div>
 
-        <motion.div
-          initial={heroInitial}
-          animate="show"
-          variants={stagger}
-          className="hero-particle-layout relative z-10 mx-auto max-w-5xl px-6 pt-20 pb-24 md:pt-32 md:pb-36"
-        >
-          <div className="hero-particle-copy max-w-3xl">
-            <motion.div variants={fade} className="inline-flex items-center gap-2 rounded-md border border-foreground/10 bg-foreground/[0.03] px-3 py-1 mb-6 backdrop-blur-md">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[0.68rem] uppercase tracking-[0.25em] font-mono text-muted-foreground font-semibold">
-                Decision Systems for High Uncertainty
-              </span>
-            </motion.div>
+        {/* Hero Top Title Block */}
+        <div className="relative z-10 mx-auto max-w-4xl text-center pt-12 sm:pt-20">
+          <motion.p
+            initial={reduceMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="font-mono text-xs uppercase tracking-[0.3em] text-neutral-400 mb-4 font-semibold"
+          >
+            SOLACE // AUTONOMOUS DECISION ENGINE
+          </motion.p>
 
-            <motion.h1
-              variants={fade}
-              className="text-4xl sm:text-6xl md:text-7xl font-serif font-medium leading-[1.05] tracking-tight text-foreground"
+          <motion.h1
+            initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="font-serif text-4xl sm:text-6xl md:text-7xl font-medium tracking-tight leading-none text-white"
+          >
+            Calm choices in high chaos.
+          </motion.h1>
+
+          <motion.p
+            initial={reduceMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mt-4 text-neutral-400 text-sm sm:text-base font-sans max-w-xl mx-auto"
+          >
+            Autonomous decision systems for capital, truth, and relief. Pre-committed on an immutable public ledger.
+          </motion.p>
+        </div>
+
+        {/* Hero Bottom Telemetry Strip & Actions */}
+        <div className="relative z-10 mx-auto max-w-3xl w-full text-center space-y-8">
+          {/* Live System Counter */}
+          <div className="inline-flex items-center gap-6 px-6 py-2.5 rounded-full border border-white/10 bg-black/60 backdrop-blur-md font-mono text-xs">
+            <span className="flex items-center gap-2 text-emerald-400 font-semibold">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              HERMES: [{hermesTelemetry?.posture ?? 'DEFENSIVE'}]
+            </span>
+            <span className="text-white/20">|</span>
+            <span className="text-neutral-300">
+              LEDGER: <span className="text-white font-bold">{instruments.hermes.sealedDecisions ?? 'VERIFIED'}</span>
+            </span>
+          </div>
+
+          {/* Core Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/hermes"
+              className="w-full sm:w-auto px-8 py-4 rounded-md bg-white text-black font-mono text-xs uppercase tracking-widest font-bold hover:bg-neutral-200 transition-all text-center"
             >
-              Software built to make calm choices when the future is unpredictable.
-            </motion.h1>
-
-            <motion.p
-              variants={fade}
-              className="mt-6 text-lg sm:text-xl text-muted-foreground leading-relaxed font-sans max-w-2xl font-normal"
-            >
-              Solace builds autonomous decision tools for capital, truth, and relief—logged publicly before the outcome is known so you never have to take our word for it.
-            </motion.p>
-
-            <motion.div variants={fade} className="mt-10 flex flex-wrap items-center gap-4">
-              <Link href="/hermes" className="hero-cta hero-cta-primary hero-cta-on-void group inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider px-6 py-3.5 rounded-lg bg-foreground text-background font-semibold hover:bg-foreground/90 transition-all">
-                Watch Hermes Live
-                <span className="transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
-              </Link>
-              <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-secondary font-mono text-xs uppercase tracking-wider px-6 py-3.5 rounded-lg border border-border hover:bg-foreground/[0.05] transition-all">
-                Open Observatory
-              </Link>
-            </motion.div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ── LIVE TELEMETRY TERMINAL HUD ── */}
-      <section className="px-6 py-10 bg-background/50 border-b border-border/40">
-        <div className="mx-auto max-w-5xl">
-          <div className="rounded-xl border border-border/80 bg-black/80 backdrop-blur-xl p-6 shadow-2xl relative overflow-hidden">
-            {/* Terminal Top Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6 font-mono text-xs">
-              <div className="flex items-center gap-3">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="font-bold tracking-widest text-foreground text-[0.72rem]">
-                  SYS_HERMES // LIVE TELEMETRY
-                </span>
-              </div>
-              <div className="flex items-center gap-4 text-[0.68rem] text-muted-foreground">
-                <span>UPDATED: {hermesTelemetry?.updatedAt ?? 'REAL-TIME'}</span>
-                <span className="hidden sm:inline border-l border-white/10 pl-4 font-mono text-emerald-400">ENGINE_ONLINE</span>
-              </div>
-            </div>
-
-            {/* Metrics HUD Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
-              <div className="p-4 rounded-lg bg-white/[0.02] border border-white/5 space-y-1">
-                <span className="text-[0.65rem] uppercase tracking-widest text-muted-foreground block">Current Posture</span>
-                <span className="text-base font-bold text-emerald-400 block tracking-wide">
-                  [{hermesTelemetry?.posture ?? 'DEFENSIVE'}]
-                </span>
-              </div>
-              <div className="p-4 rounded-lg bg-white/[0.02] border border-white/5 space-y-1">
-                <span className="text-[0.65rem] uppercase tracking-widest text-muted-foreground block">Market Condition</span>
-                <span className="text-sm font-medium text-foreground block truncate">
-                  {hermesTelemetry?.condition ?? 'High Volatility Expansion'}
-                </span>
-              </div>
-              <div className="p-4 rounded-lg bg-white/[0.02] border border-white/5 space-y-1">
-                <span className="text-[0.65rem] uppercase tracking-widest text-muted-foreground block">Execution Parameter</span>
-                <span className="text-sm text-muted-foreground block truncate">
-                  {hermesTelemetry?.reason ?? 'Waiting for liquidity delta > 2.5x'}
-                </span>
-              </div>
-            </div>
-
-            {/* Proof Hash Strip */}
-            {chainHead && (
-              <div className="mt-5 pt-4 border-t border-white/5 flex flex-wrap items-center justify-between gap-3 text-[0.7rem] font-mono text-muted-foreground">
-                <div className="flex items-center gap-2 truncate max-w-lg">
-                  <span className="text-foreground font-semibold">PRE-COMMIT HASH:</span>
-                  <span className="truncate text-muted-foreground/80 bg-white/[0.04] px-2 py-0.5 rounded font-mono text-[0.65rem] border border-white/5">
-                    {chainHead.hash}
-                  </span>
-                </div>
-                <span className="text-emerald-400 flex items-center gap-1.5 font-sans text-[0.75rem] font-medium ml-auto">
-                  ✓ Timestamp Immutable
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ── THE 3 INSTRUMENTS ── */}
-      <section className="px-6 py-20 md:py-28 border-b border-border/40">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-14">
-            <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground mb-2">Three Instruments</p>
-            <h2 className="font-serif text-3xl md:text-5xl font-medium tracking-tight">
-              Broad decision theory applied to human impact.
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* HERMES */}
-            <div className="group rounded-2xl border border-border/80 bg-card p-7 flex flex-col justify-between hover:border-emerald-500/40 transition-all duration-300 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
-              <div>
-                <div className="flex items-center justify-between border-b border-border/60 pb-3 mb-5">
-                  <h3 className="font-mono text-xl font-bold tracking-tight">HERMES</h3>
-                  <span className="text-[0.65rem] font-mono uppercase tracking-widest text-emerald-500 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Capital</span>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Software that allocates and protects money automatically when markets go chaotic.
-                </p>
-              </div>
-              <div className="mt-10 pt-4 border-t border-border/60 flex items-center justify-between">
-                <span className="text-xs font-mono text-emerald-400 font-medium flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  Status: Live
-                </span>
-                <Link href="/hermes" className="text-xs font-mono font-semibold uppercase tracking-wider text-foreground hover:text-emerald-400 transition-colors inline-flex items-center gap-1">
-                  Inspect <span className="transition-transform group-hover:translate-x-1">→</span>
-                </Link>
-              </div>
-            </div>
-
-            {/* ORACLE */}
-            <div className="group rounded-2xl border border-border/80 bg-card p-7 flex flex-col justify-between hover:border-cyan-500/40 transition-all duration-300 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none" />
-              <div>
-                <div className="flex items-center justify-between border-b border-border/60 pb-3 mb-5">
-                  <h3 className="font-mono text-xl font-bold tracking-tight">ORACLE</h3>
-                  <span className="text-[0.65rem] font-mono uppercase tracking-widest text-cyan-400 font-semibold bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">Truth</span>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  A real-time meter that tracks predictions against real events to measure who is actually right.
-                </p>
-              </div>
-              <div className="mt-10 pt-4 border-t border-border/60 flex items-center justify-between">
-                <span className="text-xs font-mono text-cyan-400 font-medium flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-                  Status: Live
-                </span>
-                <Link href="/oracle" className="text-xs font-mono font-semibold uppercase tracking-wider text-foreground hover:text-cyan-400 transition-colors inline-flex items-center gap-1">
-                  Inspect <span className="transition-transform group-hover:translate-x-1">→</span>
-                </Link>
-              </div>
-            </div>
-
-            {/* GLORYA */}
-            <div className="group rounded-2xl border border-border/80 bg-card p-7 flex flex-col justify-between hover:border-amber-500/40 transition-all duration-300 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
-              <div>
-                <div className="flex items-center justify-between border-b border-border/60 pb-3 mb-5">
-                  <h3 className="font-mono text-xl font-bold tracking-tight">GLORYA</h3>
-                  <span className="text-[0.65rem] font-mono uppercase tracking-widest text-amber-400 font-semibold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">Relief</span>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Software that routes humanitarian aid only when intervention will actually change the outcome.
-                </p>
-              </div>
-              <div className="mt-10 pt-4 border-t border-border/60 flex items-center justify-between">
-                <span className="text-xs font-mono text-amber-400 font-medium flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                  Status: Evaluating
-                </span>
-                <Link href="/glorya" className="text-xs font-mono font-semibold uppercase tracking-wider text-foreground hover:text-amber-400 transition-colors inline-flex items-center gap-1">
-                  Inspect <span className="transition-transform group-hover:translate-x-1">→</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── UN-FAKABLE PROOF ── */}
-      <section className="px-6 py-20 md:py-28 border-b border-border/40 bg-foreground/[0.015]">
-        <div className="mx-auto max-w-3xl text-center md:text-left">
-          <p className="text-xs font-mono uppercase tracking-[0.25em] text-muted-foreground mb-3 font-semibold">Verification Engine</p>
-          <h2 className="font-serif text-4xl md:text-6xl font-medium tracking-tight mb-6">
-            Un-fakable Proof
-          </h2>
-          <p className="text-xl text-foreground font-medium mb-4">
-            Most platforms change their story after they see what happens.
-          </p>
-          <p className="text-muted-foreground leading-relaxed text-base md:text-lg mb-8 max-w-2xl">
-            Solace locks every decision into an un-editable public ledger BEFORE any action is taken. We cannot delete our mistakes, alter our history, or fake our results.
-          </p>
-          <div>
+              Watch Hermes Live
+            </Link>
             <Link
               href={OBSERVATORY_HERMES_LEDGER_PATH}
-              className="inline-flex items-center gap-3 px-6 py-3.5 rounded-lg bg-foreground text-background font-mono text-xs uppercase tracking-wider font-bold hover:bg-foreground/90 transition-all group"
+              className="w-full sm:w-auto px-8 py-4 rounded-md border border-white/20 bg-black/40 backdrop-blur-md text-white font-mono text-xs uppercase tracking-widest font-semibold hover:bg-white/10 transition-all text-center"
             >
-              Verify Full History in 1-Click
-              <span className="transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
+              Audit Public Ledger
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── THE OPERATOR SECTION ── */}
-      <section className="px-6 py-20 md:py-28 border-b border-border/40">
+      {/* ── STAGE 2: LIVE RUNTIME HUD (NO FILLER) ── */}
+      <section className="border-t border-white/10 bg-neutral-950 px-6 py-12">
+        <div className="mx-auto max-w-5xl">
+          <div className="flex items-center justify-between font-mono text-xs border-b border-white/10 pb-4 mb-6 text-neutral-400">
+            <span className="text-white font-bold tracking-widest">// LIVE SYSTEM TELEMETRY</span>
+            <span>UPDATED: {hermesTelemetry?.updatedAt ?? 'REAL-TIME'}</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
+            <div className="p-4 rounded border border-white/10 bg-black">
+              <span className="text-neutral-500 uppercase tracking-wider block mb-1">State</span>
+              <span className="text-sm text-white font-medium block truncate">
+                {hermesTelemetry?.condition ?? 'High Volatility Expansion'}
+              </span>
+            </div>
+
+            <div className="p-4 rounded border border-white/10 bg-black">
+              <span className="text-neutral-500 uppercase tracking-wider block mb-1">Rule</span>
+              <span className="text-sm text-neutral-300 block truncate">
+                {hermesTelemetry?.reason ?? 'Waiting for liquidity delta > 2.5x'}
+              </span>
+            </div>
+
+            <div className="p-4 rounded border border-white/10 bg-black">
+              <span className="text-neutral-500 uppercase tracking-wider block mb-1">Pre-Commit Hash</span>
+              <span className="text-xs text-emerald-400 font-mono block truncate">
+                {chainHead?.hash ?? '0x7f8a9b2c3d4e5f6a'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── STAGE 3: THE 3 INSTRUMENTS (HARDWARE PANEL STYLE) ── */}
+      <section className="border-t border-white/10 px-6 py-24 bg-black">
+        <div className="mx-auto max-w-5xl">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-4">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.25em] text-neutral-500 mb-2 font-bold">CORE SYSTEMS</p>
+              <h2 className="font-serif text-3xl sm:text-5xl font-medium tracking-tight text-white">
+                Three Instruments.
+              </h2>
+            </div>
+            <p className="text-neutral-400 text-sm max-w-sm">
+              Broad decision theory applied to human impact.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* HERMES */}
+            <Link href="/hermes" className="group rounded-xl border border-white/10 bg-neutral-950 p-8 flex flex-col justify-between hover:border-emerald-500/50 transition-all duration-300">
+              <div>
+                <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                  <h3 className="font-mono text-2xl font-bold text-white tracking-tight">HERMES</h3>
+                  <span className="font-mono text-[0.65rem] uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-500/30">Capital</span>
+                </div>
+                <p className="text-sm text-neutral-400 leading-relaxed font-sans">
+                  Allocates and protects money automatically when market liquidity breaks.
+                </p>
+              </div>
+              <div className="mt-12 pt-4 border-t border-white/10 flex items-center justify-between font-mono text-xs">
+                <span className="text-emerald-400 font-medium">LIVE</span>
+                <span className="text-white group-hover:translate-x-1 transition-transform">INSPECT →</span>
+              </div>
+            </Link>
+
+            {/* ORACLE */}
+            <Link href="/oracle" className="group rounded-xl border border-white/10 bg-neutral-950 p-8 flex flex-col justify-between hover:border-cyan-500/50 transition-all duration-300">
+              <div>
+                <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                  <h3 className="font-mono text-2xl font-bold text-white tracking-tight">ORACLE</h3>
+                  <span className="font-mono text-[0.65rem] uppercase tracking-wider text-cyan-400 bg-cyan-950/80 px-2.5 py-1 rounded border border-cyan-500/30">Truth</span>
+                </div>
+                <p className="text-sm text-neutral-400 leading-relaxed font-sans">
+                  Real-time prediction tracking that measures who is right before history is rewritten.
+                </p>
+              </div>
+              <div className="mt-12 pt-4 border-t border-white/10 flex items-center justify-between font-mono text-xs">
+                <span className="text-cyan-400 font-medium">LIVE</span>
+                <span className="text-white group-hover:translate-x-1 transition-transform">INSPECT →</span>
+              </div>
+            </Link>
+
+            {/* GLORYA */}
+            <Link href="/glorya" className="group rounded-xl border border-white/10 bg-neutral-950 p-8 flex flex-col justify-between hover:border-amber-500/50 transition-all duration-300">
+              <div>
+                <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                  <h3 className="font-mono text-2xl font-bold text-white tracking-tight">GLORYA</h3>
+                  <span className="font-mono text-[0.65rem] uppercase tracking-wider text-amber-400 bg-amber-950/80 px-2.5 py-1 rounded border border-amber-500/30">Relief</span>
+                </div>
+                <p className="text-sm text-neutral-400 leading-relaxed font-sans">
+                  Autonomous humanitarian aid routing triggered only when intervention shifts the outcome.
+                </p>
+              </div>
+              <div className="mt-12 pt-4 border-t border-white/10 flex items-center justify-between font-mono text-xs">
+                <span className="text-amber-400 font-medium">EVALUATING</span>
+                <span className="text-white group-hover:translate-x-1 transition-transform">INSPECT →</span>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── STAGE 4: UN-FAKABLE PROOF ── */}
+      <section className="border-t border-white/10 px-6 py-24 bg-neutral-950">
+        <div className="mx-auto max-w-3xl text-center sm:text-left">
+          <p className="font-mono text-xs uppercase tracking-[0.25em] text-neutral-500 mb-3 font-bold">VERIFICATION PROTOCOL</p>
+          <h2 className="font-serif text-4xl sm:text-6xl font-medium tracking-tight text-white mb-6">
+            Un-fakable Proof.
+          </h2>
+          <p className="text-lg sm:text-xl text-neutral-300 font-normal mb-4">
+            Most platforms change their story after they see what happens.
+          </p>
+          <p className="text-neutral-400 leading-relaxed text-sm sm:text-base mb-8">
+            Solace locks every decision into an un-editable public ledger BEFORE any action is taken. We cannot delete our mistakes, alter our history, or fake our results.
+          </p>
+          <Link
+            href={OBSERVATORY_HERMES_LEDGER_PATH}
+            className="inline-flex items-center justify-center px-8 py-4 rounded bg-white text-black font-mono text-xs uppercase tracking-widest font-bold hover:bg-neutral-200 transition-all"
+          >
+            Verify Full Ledger →
+          </Link>
+        </div>
+      </section>
+
+      {/* ── STAGE 5: OPERATOR STATEMENT ── */}
+      <section className="border-t border-white/10 px-6 py-24 bg-black">
         <div className="mx-auto max-w-3xl">
-          <p className="text-xs font-mono uppercase tracking-[0.25em] text-muted-foreground mb-3 font-semibold">Operator & Standard</p>
-          <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight mb-6">
+          <p className="font-mono text-xs uppercase tracking-[0.25em] text-neutral-500 mb-3 font-bold">OPERATOR</p>
+          <h2 className="font-serif text-3xl sm:text-5xl font-medium tracking-tight text-white mb-6">
             One Operator. Zero Excuses.
           </h2>
-          <div className="space-y-5 text-muted-foreground text-base md:text-lg leading-relaxed font-sans">
+          <div className="space-y-4 text-neutral-400 text-sm sm:text-base leading-relaxed">
             <p>
-              Systems built by large teams become too complex to audit. Solace is engineered and operated by <strong className="text-foreground font-semibold">Kerby Jean</strong> (ex-Apple Systems Engineer).
+              Systems built by large teams become too complex to audit. Solace is engineered and operated by <strong className="text-white font-semibold">Kerby Jean</strong> (ex-Apple Systems Engineer).
             </p>
             <p>
               Building software at Apple requires zero-failure discipline. Solace is built on that same standard: simple enough for one engineer to run, and transparent enough for anyone to verify.
             </p>
           </div>
 
-          <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-xs font-mono uppercase tracking-wider border-t border-border/40 pt-6">
-            <Link
-              href="/brief"
-              className="text-foreground font-bold underline underline-offset-4 decoration-border hover:decoration-foreground transition-colors"
-            >
+          <div className="mt-8 flex flex-wrap gap-6 font-mono text-xs uppercase tracking-wider border-t border-white/10 pt-6">
+            <Link href="/brief" className="text-white font-bold underline underline-offset-4">
               Read the Brief
             </Link>
-            <a
-              href="https://github.com/Jkurbs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <a href="https://github.com/Jkurbs" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white">
               GitHub
             </a>
-            <a
-              href="mailto:hello@solace.fyi"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <a href="mailto:hello@solace.fyi" className="text-neutral-400 hover:text-white">
               hello@solace.fyi
             </a>
           </div>
         </div>
       </section>
 
-      {/* ── RESEARCH & BRIEF SHELF ── */}
-      <section className="px-6 py-20 md:py-28 bg-foreground/[0.01]">
+      {/* ── STAGE 6: RESEARCH ── */}
+      <section className="border-t border-white/10 px-6 py-20 bg-neutral-950">
         <div className="mx-auto max-w-3xl">
-          <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
-            <div>
-              <p className="text-xs font-mono uppercase tracking-[0.25em] text-muted-foreground mb-2 font-semibold">Documentation</p>
-              <h2 className="font-serif text-3xl font-medium">Research & The Brief</h2>
-            </div>
-            <Link
-              href="/brief"
-              className="text-xs font-mono uppercase tracking-wider font-semibold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Read Full Brief →
+          <div className="flex items-center justify-between mb-8 font-mono text-xs">
+            <span className="text-white font-bold tracking-widest">// DOCUMENTATION & RESEARCH</span>
+            <Link href="/brief" className="text-neutral-400 hover:text-white underline">
+              VIEW BRIEF →
             </Link>
           </div>
 
-          <div className="divide-y divide-border/60 border-t border-b border-border/60">
+          <div className="divide-y divide-white/10">
             {researchItems.slice(0, 2).map((item) => (
               <Link
                 key={`${item.kind}-${item.href}-${item.title}`}
                 href={item.href}
-                className="group block py-8 transition-colors hover:bg-foreground/[0.02] -mx-4 px-4 rounded-xl"
+                className="group block py-6 transition-colors hover:bg-white/[0.02]"
               >
-                <div className="flex items-baseline justify-between gap-4 font-mono">
-                  <span className="text-[0.68rem] uppercase tracking-wider text-muted-foreground">{item.kind}</span>
-                  <span className="text-xs text-muted-foreground">{item.label}</span>
+                <div className="flex items-center justify-between font-mono text-[0.7rem] text-neutral-500 mb-1">
+                  <span>{item.kind}</span>
+                  <span>{item.label}</span>
                 </div>
-                <h3 className="mt-2 font-serif text-xl md:text-2xl font-medium group-hover:text-muted-foreground transition-colors">
+                <h3 className="font-serif text-xl font-medium text-white group-hover:text-neutral-300 transition-colors">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{item.dek}</p>
+                <p className="mt-1 text-xs text-neutral-400 leading-relaxed">{item.dek}</p>
               </Link>
             ))}
           </div>
