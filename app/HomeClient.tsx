@@ -125,15 +125,13 @@ export default function HomeClient({
               Solace
             </motion.p>
 
-            <motion.h1 variants={fade} className="hero-particle-title home-hero-title">
-              <span className="home-hero-line">Individual events resist prediction.</span>
-              <span className="home-hero-line home-hero-line-2">The structure around them can be read.</span>
+            <motion.h1 variants={fade} className="hero-particle-title home-hero-title is-mission">
+              Decide under uncertainty.
             </motion.h1>
 
             <motion.p variants={fade} className="home-hero-dek">
-              Solace builds the systems that read that structure and decide — or stand down.
-              We start with capital, because markets tell you if you were wrong in days.
-              Founder capital only. You cannot invest yet.
+              We start with money. Every decision is written down before anyone knows if it was
+              right. You cannot invest yet.
             </motion.p>
 
             <motion.div variants={fade} className="hero-particle-ctas">

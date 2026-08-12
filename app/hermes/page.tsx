@@ -6,19 +6,18 @@ import { computeLedgerScoreboard, formatPercent } from '@/features/hermes-ledger
 import { listHermesLedgerProcessRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { hermesVersion } from '@/features/hermes-version';
-import { formatRelativeTime } from '@/features/anchor/format';
 import { getAnchorChain } from '@/features/anchor/store';
 
 import HermesExperience, { type HermesProof, type HermesTimelineEntry } from './HermesExperience';
 
 export const metadata: Metadata = {
-  title: 'Solace · Hermes · Capital that decides for itself',
+  title: 'Solace · Hermes · Read the structure. Then allocate — or wait.',
   description:
-    'Hermes reads market structure and decides whether to allocate capital, how much, and when to exit. Every decision is sealed publicly before it moves.',
+    'Hermes reads liquidity, volatility, and regime, then decides whether to allocate capital, how much, and when to exit. Every decision is sealed before the trade. Founder capital only.',
   openGraph: {
-    title: 'Hermes · Capital that decides for itself',
+    title: 'Solace · Hermes · Read the structure. Then allocate — or wait.',
     description:
-      'Autonomous capital allocation with a public sealed ledger. Founder capital live. Simulation open.',
+      'Hermes reads liquidity, volatility, and regime, then decides whether to allocate capital, how much, and when to exit. Every decision is sealed before the trade. Founder capital only.',
   },
 };
 
@@ -67,21 +66,32 @@ async function getHermesProof(): Promise<HermesProof> {
   const now = Date.now();
   let posture: string | null = null;
   let postureAge: string | null = null;
+  let condition: string | null = null;
+  let reason: string | null = null;
 
   const candidates = [
     brief && brief.brief_id !== 'fallback'
       ? {
           posture: formatConstant(brief.posture),
+          condition: brief.market_regime.label,
+          reason: brief.posture_reason,
           updatedAt: brief.data_as_of || brief.generated_at,
         }
       : null,
     reading
       ? {
           posture: formatConstant(reading.posture.label),
+          condition: undefined as string | undefined,
+          reason: reading.posture.subtext,
           updatedAt: reading.updated_at,
         }
       : null,
-  ].filter(Boolean) as Array<{ posture: string; updatedAt: string }>;
+  ].filter(Boolean) as Array<{
+    posture: string;
+    condition?: string;
+    reason?: string;
+    updatedAt: string;
+  }>;
 
   const fresh = candidates
     .filter((c) => {
@@ -92,6 +102,8 @@ async function getHermesProof(): Promise<HermesProof> {
 
   if (fresh[0]) {
     posture = fresh[0].posture;
+    condition = fresh[0].condition ?? null;
+    reason = fresh[0].reason ?? null;
     const ageMs = now - new Date(fresh[0].updatedAt).getTime();
     const minutes = Math.floor(ageMs / 60_000);
     postureAge =
@@ -129,6 +141,8 @@ async function getHermesProof(): Promise<HermesProof> {
   return {
     posture,
     postureAge,
+    condition,
+    reason,
     sealedDecisions: process.sealedDecisions,
     openPaths: process.openPaths,
     closedPaths: process.closedPaths,

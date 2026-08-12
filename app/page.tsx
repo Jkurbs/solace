@@ -90,13 +90,13 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: 'Solace · The structure can be read',
+  title: 'Solace · Decide under uncertainty',
   description:
-    'Individual events resist prediction. The structure around them can be read. Solace builds systems that decide under uncertainty, beginning with capital.',
+    'We start with money. Every decision is written down before anyone knows if it was right. You cannot invest yet.',
   openGraph: {
-    title: 'Solace · The structure can be read',
+    title: 'Solace · Decide under uncertainty',
     description:
-      'Individual events resist prediction. The structure around them can be read. Solace builds systems that decide under uncertainty, beginning with capital.',
+      'We start with money. Every decision is written down before anyone knows if it was right. You cannot invest yet.',
   },
 };
 

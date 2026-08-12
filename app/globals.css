@@ -15172,6 +15172,14 @@ html.dark .home-research ::selection,
   letter-spacing: -0.028em;
 }
 
+.home-hero-title.is-mission {
+  display: block;
+  max-width: 12ch;
+  font-size: clamp(2.8rem, 7.2vw, 5.2rem);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+}
+
 .home-hero-line {
   display: block;
   max-width: 16ch;
@@ -15351,6 +15359,94 @@ html.dark .home-research ::selection,
 
 .home-vision-ladder .home-vision-domain {
   color: var(--foreground, #1c1917);
+}
+
+.home-seals {
+  list-style: none;
+  margin: 2.5rem 0 0;
+  padding: 0;
+  max-width: 46rem;
+  border-top: 1px solid var(--border, #e7e5e4);
+}
+
+.home-seals li {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.35rem 1.5rem;
+  padding: 1.15rem 0;
+  border-bottom: 1px solid var(--border, #e7e5e4);
+}
+
+.home-seals time {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  color: var(--muted, #78716c);
+  font-variant-numeric: tabular-nums;
+}
+
+.home-seals-action {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+}
+
+.home-seals-detail,
+.home-seals-outcome {
+  margin: 0.2rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--muted, #78716c);
+}
+
+.home-seals-outcome {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.78rem;
+}
+
+@media (min-width: 720px) {
+  .home-seals li {
+    grid-template-columns: 11.5rem 1fr auto;
+    align-items: baseline;
+    gap: 1.5rem;
+  }
+
+  .home-seals-outcome {
+    margin-top: 0;
+    text-align: right;
+  }
+}
+
+.home-faq {
+  margin: 1.75rem 0 0;
+  max-width: 40rem;
+}
+
+.home-faq > div {
+  padding: 1.2rem 0;
+  border-bottom: 1px solid var(--border, #e7e5e4);
+}
+
+.home-faq > div:first-child {
+  border-top: 1px solid var(--border, #e7e5e4);
+}
+
+.home-faq dt {
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+}
+
+.home-faq dd {
+  margin: 0.45rem 0 0;
+  color: var(--muted, #78716c);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+button.hero-cta {
+  cursor: pointer;
+  font: inherit;
 }
 
 .hero-particle-eyebrow {
