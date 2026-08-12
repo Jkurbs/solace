@@ -15121,21 +15121,14 @@ html.dark .home-research ::selection,
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  /* Theme plate wash: clear left for copy, open right for dust */
+  /* Phones: type needs a light top wash. Do not paint the whole plate. */
   background:
     linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--background, #fafaf9) 96%, transparent) 0%,
-      color-mix(in srgb, var(--background, #fafaf9) 72%, transparent) 40%,
-      color-mix(in srgb, var(--background, #fafaf9) 24%, transparent) 68%,
-      transparent 82%
-    ),
-    linear-gradient(
       180deg,
-      color-mix(in srgb, var(--background, #fafaf9) 40%, transparent) 0%,
-      transparent 22%,
-      transparent 78%,
-      color-mix(in srgb, var(--background, #fafaf9) 50%, transparent) 100%
+      color-mix(in srgb, var(--background, #fafaf9) 62%, transparent) 0%,
+      color-mix(in srgb, var(--background, #fafaf9) 22%, transparent) 38%,
+      transparent 62%,
+      color-mix(in srgb, var(--background, #fafaf9) 36%, transparent) 100%
     );
   transition: background 0.25s ease;
 }

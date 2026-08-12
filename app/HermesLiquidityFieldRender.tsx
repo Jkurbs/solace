@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { createNoise3D } from 'simplex-noise';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
+import { getRenderPixelRatio } from '@/lib/webgl-dpr';
 
 interface HermesLiquidityFieldProps {
   posture?: HermesPublicPosture | null;
@@ -14,6 +15,7 @@ const particleVertexShader = `
   attribute float aScale;
   attribute float aAlpha;
   attribute vec3 aColor;
+  uniform float uPixelRatio;
 
   varying vec3 vColor;
   varying float vAlpha;
@@ -23,7 +25,9 @@ const particleVertexShader = `
     vAlpha = aAlpha;
 
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = clamp(aScale * (38.0 / -mvPosition.z), 1.8, 5.2);
+    float depth = max(0.001, -mvPosition.z);
+    float size = aScale * (52.0 / depth) * uPixelRatio;
+    gl_PointSize = clamp(size, 2.8 * uPixelRatio, 10.0 * uPixelRatio);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
@@ -57,29 +61,36 @@ export default function HermesLiquidityFieldRender({
     const container = containerRef.current;
     if (!container) return;
 
-    const isMobile = window.innerWidth < 768;
-    const count = isMobile ? Math.floor(maxParticles * 0.35) : maxParticles;
+    const isMobile = window.matchMedia('(max-width: 900px)').matches;
+    const count = isMobile ? Math.max(8000, Math.floor(maxParticles * 0.55)) : maxParticles;
 
-    const shapeCenterX = isMobile ? 0.5 : 5.0;
-    const shapeCenterY = isMobile ? -1.8 : 0.0;
-    const scaleFactor = isMobile ? 0.95 : 1.45;
+    const shapeCenterX = isMobile ? 0.15 : 5.0;
+    const shapeCenterY = isMobile ? 0.35 : 0.0;
+    const scaleFactor = isMobile ? 1.2 : 1.45;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
-      isMobile ? 58 : 48,
-      container.clientWidth / container.clientHeight,
+      isMobile ? 50 : 48,
+      Math.max(container.clientWidth, 1) / Math.max(container.clientHeight, 1),
       0.1,
       100
     );
-    camera.position.set(0, 0, isMobile ? 15 : 12);
+    camera.position.set(0, 0, isMobile ? 11 : 12);
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
-      antialias: true,
+      antialias: !isMobile,
       powerPreference: 'high-performance',
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setClearColor(0x000000, 0);
+    renderer.domElement.className = 'hermes-render-canvas';
+    const dpr = getRenderPixelRatio(isMobile ? 2 : 2.5);
+    renderer.setPixelRatio(dpr);
+    renderer.setSize(
+      Math.max(container.clientWidth, 1),
+      Math.max(container.clientHeight, 1),
+      false,
+    );
     container.appendChild(renderer.domElement);
 
     const noise3D = createNoise3D();
@@ -219,9 +230,12 @@ export default function HermesLiquidityFieldRender({
         sealTargets[i3 + 2] = shapeCenter.z + ry * Math.sin(-Math.PI / 3);
       }
 
-      scales[i] = Math.random() * 1.5 + 0.9;
-      // Boosted alpha range for higher clarity without wash-out
-      alphas[i] = isDark ? Math.random() * 0.55 + 0.4 : Math.random() * 0.45 + 0.3;
+      scales[i] = Math.random() * 1.5 + (isMobile ? 1.15 : 0.9);
+      alphas[i] = isDark
+        ? Math.random() * 0.55 + 0.4
+        : isMobile
+          ? Math.random() * 0.5 + 0.42
+          : Math.random() * 0.45 + 0.3;
     }
 
     rebuildColors();
@@ -232,6 +246,9 @@ export default function HermesLiquidityFieldRender({
     geometry.setAttribute('aAlpha', new THREE.BufferAttribute(alphas, 1));
 
     const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uPixelRatio: { value: dpr },
+      },
       vertexShader: particleVertexShader,
       fragmentShader: particleFragmentShader,
       transparent: true,
@@ -379,20 +396,32 @@ export default function HermesLiquidityFieldRender({
     };
 
     renderLoop();
+    requestAnimationFrame(() => {
+      renderer.domElement.classList.add('is-ready');
+    });
 
     const handleResize = () => {
       if (!container) return;
-      camera.aspect = container.clientWidth / container.clientHeight;
+      const w = Math.max(1, container.clientWidth);
+      const h = Math.max(1, container.clientHeight);
+      const nextDpr = getRenderPixelRatio(isMobile ? 2 : 2.5);
+      renderer.setPixelRatio(nextDpr);
+      renderer.setSize(w, h, false);
+      material.uniforms.uPixelRatio.value = nextDpr;
+      camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(container.clientWidth, container.clientHeight);
     };
     window.addEventListener('resize', handleResize);
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(handleResize) : null;
+    resizeObserver?.observe(container);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
       themeObserver.disconnect();
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
+      resizeObserver?.disconnect();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
