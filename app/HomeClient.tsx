@@ -102,84 +102,96 @@ export default function HomeClient({
   }, []);
 
   return (
-    <main className="min-h-screen bg-black text-white antialiased selection:bg-white selection:text-black font-sans">
+    <main className="min-h-screen bg-black text-white antialiased selection:bg-white selection:text-black">
       <SiteHeader />
 
-      {/* ── STAGE 1: CINEMATIC HERO (TERAFAB / TESLA ARCHITECTURE) ── */}
-      <section className="relative min-h-[90vh] sm:min-h-screen w-full flex flex-col justify-between pt-24 pb-12 px-6 overflow-hidden border-b border-white/10">
-        {/* Full-Bleed WebGL Canvas Background */}
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-75" aria-hidden="true">
+      {/* ── STAGE 1: THE HERO (TESLA-STYLE DIRECTNESS) ── */}
+      <section className="relative h-screen min-h-[700px] w-full flex flex-col justify-between pt-20 pb-12 px-6 overflow-hidden">
+        {/* Full-bleed Particle Background */}
+        <div className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-80" aria-hidden="true">
           <HermesLiquidityFieldRender maxParticles={35000} />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black" />
+          <div className="absolute inset-0 bg-radial-vignette from-transparent via-black/40 to-black" />
         </div>
 
-        {/* Hero Copy & Primary Triggers */}
-        <div className="relative z-10 my-auto max-w-2xl pt-12 sm:pt-20">
-          <motion.div
-            initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+        {/* Hero Top Title Block */}
+        <div className="relative z-10 mx-auto max-w-4xl text-center pt-12 sm:pt-20">
+          <motion.p
+            initial={reduceMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="font-mono text-xs uppercase tracking-[0.3em] text-neutral-400 mb-4 font-semibold"
+          >
+            SOLACE // AUTONOMOUS DECISION ENGINE
+          </motion.p>
+
+          <motion.h1
+            initial={reduceMotion ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
+            className="font-serif text-4xl sm:text-6xl md:text-7xl font-medium tracking-tight leading-none text-white"
           >
-            <h1 className="font-serif text-5xl sm:text-7xl font-medium tracking-tight text-white leading-[1.02] mb-4">
-              Solace
-            </h1>
-            <p className="text-lg sm:text-2xl font-light text-neutral-300 leading-snug max-w-xl mb-8">
-              Software built to make calm choices when the future is unpredictable.
-            </p>
+            Calm choices in high chaos.
+          </motion.h1>
 
-            {/* High-Contrast Dual CTAs */}
-            <div className="flex items-center gap-3 font-mono text-xs font-bold uppercase tracking-wider">
-              <Link
-                href="/hermes"
-                className="px-6 py-3.5 rounded bg-white text-black hover:bg-neutral-200 transition-all inline-flex items-center gap-1.5"
-              >
-                Watch Live <span className="text-sm">›</span>
-              </Link>
-              <Link
-                href={OBSERVATORY_HERMES_LEDGER_PATH}
-                className="px-6 py-3.5 rounded bg-white/10 backdrop-blur-md border border-white/15 text-white hover:bg-white/20 transition-all inline-flex items-center gap-1.5"
-              >
-                Audit Ledger <span className="text-sm">›</span>
-              </Link>
-            </div>
-          </motion.div>
+          <motion.p
+            initial={reduceMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mt-4 text-neutral-400 text-sm sm:text-base font-sans max-w-xl mx-auto"
+          >
+            Autonomous decision systems for capital, truth, and relief. Pre-committed on an immutable public ledger.
+          </motion.p>
         </div>
 
-        {/* Hero Bottom Anchor / Branding Bar */}
-        <div className="relative z-10 border-t border-white/10 pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-mono text-xs">
-          <div className="flex items-center gap-3">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        {/* Hero Bottom Telemetry Strip & Actions */}
+        <div className="relative z-10 mx-auto max-w-3xl w-full text-center space-y-8">
+          {/* Live System Counter */}
+          <div className="inline-flex items-center gap-6 px-6 py-2.5 rounded-full border border-white/10 bg-black/60 backdrop-blur-md font-mono text-xs">
+            <span className="flex items-center gap-2 text-emerald-400 font-semibold">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              HERMES: [{hermesTelemetry?.posture ?? 'DEFENSIVE'}]
             </span>
-            <span className="text-neutral-300 font-semibold tracking-wider">
-              HERMES POSTURE: [{hermesTelemetry?.posture ?? 'DEFENSIVE'}]
+            <span className="text-white/20">|</span>
+            <span className="text-neutral-300">
+              LEDGER: <span className="text-white font-bold">{instruments.hermes.sealedDecisions ?? 'VERIFIED'}</span>
             </span>
           </div>
-          <div className="text-neutral-500 text-[0.7rem] uppercase tracking-widest">
-            SEALED DECISIONS: <span className="text-white font-bold">{instruments.hermes.sealedDecisions ?? 'VERIFIED'}</span>
+
+          {/* Core Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/hermes"
+              className="w-full sm:w-auto px-8 py-4 rounded-md bg-white text-black font-mono text-xs uppercase tracking-widest font-bold hover:bg-neutral-200 transition-all text-center"
+            >
+              Watch Hermes Live
+            </Link>
+            <Link
+              href={OBSERVATORY_HERMES_LEDGER_PATH}
+              className="w-full sm:w-auto px-8 py-4 rounded-md border border-white/20 bg-black/40 backdrop-blur-md text-white font-mono text-xs uppercase tracking-widest font-semibold hover:bg-white/10 transition-all text-center"
+            >
+              Audit Public Ledger
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ── STAGE 2: LIVE RUNTIME HUD ── */}
-      <section className="border-b border-white/10 bg-neutral-950 px-6 py-10">
+      {/* ── STAGE 2: LIVE RUNTIME HUD (NO FILLER) ── */}
+      <section className="border-t border-white/10 bg-neutral-950 px-6 py-12">
         <div className="mx-auto max-w-5xl">
           <div className="flex items-center justify-between font-mono text-xs border-b border-white/10 pb-4 mb-6 text-neutral-400">
-            <span className="text-white font-bold tracking-widest">// LIVE TELEMETRY STREAM</span>
+            <span className="text-white font-bold tracking-widest">// LIVE SYSTEM TELEMETRY</span>
             <span>UPDATED: {hermesTelemetry?.updatedAt ?? 'REAL-TIME'}</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
             <div className="p-4 rounded border border-white/10 bg-black">
-              <span className="text-neutral-500 uppercase tracking-wider block mb-1">Market State</span>
+              <span className="text-neutral-500 uppercase tracking-wider block mb-1">State</span>
               <span className="text-sm text-white font-medium block truncate">
                 {hermesTelemetry?.condition ?? 'High Volatility Expansion'}
               </span>
             </div>
 
             <div className="p-4 rounded border border-white/10 bg-black">
-              <span className="text-neutral-500 uppercase tracking-wider block mb-1">Active Rule</span>
+              <span className="text-neutral-500 uppercase tracking-wider block mb-1">Rule</span>
               <span className="text-sm text-neutral-300 block truncate">
                 {hermesTelemetry?.reason ?? 'Waiting for liquidity delta > 2.5x'}
               </span>
@@ -195,13 +207,13 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* ── STAGE 3: THE 3 INSTRUMENTS ── */}
-      <section className="border-b border-white/10 px-6 py-24 bg-black">
+      {/* ── STAGE 3: THE 3 INSTRUMENTS (HARDWARE PANEL STYLE) ── */}
+      <section className="border-t border-white/10 px-6 py-24 bg-black">
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-4">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.25em] text-neutral-500 mb-2 font-bold">CORE SYSTEMS</p>
-              <h2 className="font-serif text-4xl sm:text-6xl font-medium tracking-tight text-white">
+              <h2 className="font-serif text-3xl sm:text-5xl font-medium tracking-tight text-white">
                 Three Instruments.
               </h2>
             </div>
@@ -218,13 +230,13 @@ export default function HomeClient({
                   <h3 className="font-mono text-2xl font-bold text-white tracking-tight">HERMES</h3>
                   <span className="font-mono text-[0.65rem] uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-500/30">Capital</span>
                 </div>
-                <p className="text-sm text-neutral-400 leading-relaxed">
-                  Software that allocates and protects money automatically when markets go chaotic.
+                <p className="text-sm text-neutral-400 leading-relaxed font-sans">
+                  Allocates and protects money automatically when market liquidity breaks.
                 </p>
               </div>
               <div className="mt-12 pt-4 border-t border-white/10 flex items-center justify-between font-mono text-xs">
                 <span className="text-emerald-400 font-medium">LIVE</span>
-                <span className="text-white group-hover:translate-x-1 transition-transform">INSPECT ›</span>
+                <span className="text-white group-hover:translate-x-1 transition-transform">INSPECT →</span>
               </div>
             </Link>
 
@@ -235,13 +247,13 @@ export default function HomeClient({
                   <h3 className="font-mono text-2xl font-bold text-white tracking-tight">ORACLE</h3>
                   <span className="font-mono text-[0.65rem] uppercase tracking-wider text-cyan-400 bg-cyan-950/80 px-2.5 py-1 rounded border border-cyan-500/30">Truth</span>
                 </div>
-                <p className="text-sm text-neutral-400 leading-relaxed">
-                  A real-time meter that tracks predictions against real events to measure who is actually right.
+                <p className="text-sm text-neutral-400 leading-relaxed font-sans">
+                  Real-time prediction tracking that measures who is right before history is rewritten.
                 </p>
               </div>
               <div className="mt-12 pt-4 border-t border-white/10 flex items-center justify-between font-mono text-xs">
                 <span className="text-cyan-400 font-medium">LIVE</span>
-                <span className="text-white group-hover:translate-x-1 transition-transform">INSPECT ›</span>
+                <span className="text-white group-hover:translate-x-1 transition-transform">INSPECT →</span>
               </div>
             </Link>
 
@@ -252,13 +264,13 @@ export default function HomeClient({
                   <h3 className="font-mono text-2xl font-bold text-white tracking-tight">GLORYA</h3>
                   <span className="font-mono text-[0.65rem] uppercase tracking-wider text-amber-400 bg-amber-950/80 px-2.5 py-1 rounded border border-amber-500/30">Relief</span>
                 </div>
-                <p className="text-sm text-neutral-400 leading-relaxed">
-                  Software that routes humanitarian aid only when intervention will actually change the outcome.
+                <p className="text-sm text-neutral-400 leading-relaxed font-sans">
+                  Autonomous humanitarian aid routing triggered only when intervention shifts the outcome.
                 </p>
               </div>
               <div className="mt-12 pt-4 border-t border-white/10 flex items-center justify-between font-mono text-xs">
                 <span className="text-amber-400 font-medium">EVALUATING</span>
-                <span className="text-white group-hover:translate-x-1 transition-transform">INSPECT ›</span>
+                <span className="text-white group-hover:translate-x-1 transition-transform">INSPECT →</span>
               </div>
             </Link>
           </div>
@@ -266,8 +278,8 @@ export default function HomeClient({
       </section>
 
       {/* ── STAGE 4: UN-FAKABLE PROOF ── */}
-      <section className="border-b border-white/10 px-6 py-24 bg-neutral-950">
-        <div className="mx-auto max-w-3xl text-left">
+      <section className="border-t border-white/10 px-6 py-24 bg-neutral-950">
+        <div className="mx-auto max-w-3xl text-center sm:text-left">
           <p className="font-mono text-xs uppercase tracking-[0.25em] text-neutral-500 mb-3 font-bold">VERIFICATION PROTOCOL</p>
           <h2 className="font-serif text-4xl sm:text-6xl font-medium tracking-tight text-white mb-6">
             Un-fakable Proof.
@@ -282,13 +294,13 @@ export default function HomeClient({
             href={OBSERVATORY_HERMES_LEDGER_PATH}
             className="inline-flex items-center justify-center px-8 py-4 rounded bg-white text-black font-mono text-xs uppercase tracking-widest font-bold hover:bg-neutral-200 transition-all"
           >
-            Verify Full Ledger ›
+            Verify Full Ledger →
           </Link>
         </div>
       </section>
 
       {/* ── STAGE 5: OPERATOR STATEMENT ── */}
-      <section className="border-b border-white/10 px-6 py-24 bg-black">
+      <section className="border-t border-white/10 px-6 py-24 bg-black">
         <div className="mx-auto max-w-3xl">
           <p className="font-mono text-xs uppercase tracking-[0.25em] text-neutral-500 mb-3 font-bold">OPERATOR</p>
           <h2 className="font-serif text-3xl sm:text-5xl font-medium tracking-tight text-white mb-6">
@@ -318,12 +330,12 @@ export default function HomeClient({
       </section>
 
       {/* ── STAGE 6: RESEARCH ── */}
-      <section className="px-6 py-20 bg-neutral-950">
+      <section className="border-t border-white/10 px-6 py-20 bg-neutral-950">
         <div className="mx-auto max-w-3xl">
           <div className="flex items-center justify-between mb-8 font-mono text-xs">
             <span className="text-white font-bold tracking-widest">// DOCUMENTATION & RESEARCH</span>
             <Link href="/brief" className="text-neutral-400 hover:text-white underline">
-              VIEW BRIEF ›
+              VIEW BRIEF →
             </Link>
           </div>
 
