@@ -117,7 +117,7 @@ export default function HermesExperience({
                 trade. Founder capital only. You cannot invest yet.
               </motion.p>
 
-              <motion.div variants={fade} className="hero-particle-ctas">
+              <motion.div variants={fade} className="hero-particle-ctas mb-10 md:mb-14">
                 <ExperienceHermesButton className="hero-cta hero-cta-primary">
                   Run a simulation
                 </ExperienceHermesButton>

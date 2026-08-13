@@ -155,5 +155,7 @@ export function useTrustLivePulse() {
 }
 
 export function hasLiveExposure(pulse: LedgerPulse) {
-  return Boolean(pulse.asOf) && pulse.unrealizedPnl !== null;
+  const heldPnl =
+    pulse.unrealizedPnl !== null && Math.abs(pulse.unrealizedPnl) > 1e-9;
+  return Boolean(pulse.asOf) && (pulse.paths > 0 || heldPnl);
 }

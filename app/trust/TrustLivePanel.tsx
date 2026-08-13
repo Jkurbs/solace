@@ -159,10 +159,12 @@ export default function TrustLivePanel() {
           <em>Open PnL</em>
           <strong className={pnlToneClass(unrealizedPnl)}>{pnlFormatter.format(unrealizedPnl)}</strong>
         </span>
-        <span>
-          <em>Status</em>
-          <strong>Open</strong>
-        </span>
+        {pulse.paths > 0 ? (
+          <span>
+            <em>Status</em>
+            <strong>Open</strong>
+          </span>
+        ) : null}
       </div>
     </div>
   );
