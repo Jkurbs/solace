@@ -149,63 +149,71 @@ export default function HomeClient({
                 Open the public record
               </Link>
             </motion.div>
-
-            {showRecord && (
-              <motion.div variants={fade} className="home-record" aria-label="Live Hermes record">
-                {(hermesTelemetry?.condition || hermesTelemetry?.posture || hermesTelemetry?.reason) && (
-                  <div className="home-record-readout">
-                    {hermesTelemetry?.condition && (
-                      <div>
-                        <p className="home-record-label">Condition</p>
-                        <p className="home-record-value">{hermesTelemetry.condition}</p>
-                      </div>
-                    )}
-                    {hermesTelemetry?.posture && (
-                      <div>
-                        <p className="home-record-label">Decision</p>
-                        <p className="home-record-value">{formatConstant(hermesTelemetry.posture)}</p>
-                      </div>
-                    )}
-                    {hermesTelemetry?.reason && (
-                      <div>
-                        <p className="home-record-label">Why</p>
-                        <p className="home-record-value home-record-value-quiet">{hermesTelemetry.reason}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {sealedDecisions != null && sealedDecisions > 0 && (
-                  <div className="home-record-counts">
-                    <div>
-                      <p className="home-record-count">{sealedDecisions.toLocaleString('en-US')}</p>
-                      <p className="home-record-label">Sealed</p>
-                    </div>
-                    {chainHead && (
-                      <div>
-                        <p className="home-record-meta">{chainHead.sealedAtLabel}</p>
-                        <p className="home-record-label">Last seal</p>
-                      </div>
-                    )}
-                    {anchor && (
-                      <div>
-                        <Link href={anchor.href ?? '/anchor'} className="home-record-meta home-record-link">
-                          {anchor.cadence}
-                        </Link>
-                        <p className="home-record-label">Published outside our servers</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <p className="home-record-note">
-                  Founder capital. Young sample.
-                  {chainHead ? ` Row ${chainHead.rowNumber}.` : ''}
-                </p>
-              </motion.div>
-            )}
           </div>
         </motion.div>
+
+        {showRecord && (
+          <motion.div
+            initial={heroInitial}
+            animate="show"
+            variants={fade}
+            className="home-record-band relative z-10 mx-auto max-w-6xl px-5 pb-16 md:pb-24"
+            aria-label="Live Hermes record"
+          >
+            <div className="home-record">
+              {(hermesTelemetry?.condition || hermesTelemetry?.posture || hermesTelemetry?.reason) && (
+                <div className="home-record-readout">
+                  {hermesTelemetry?.condition && (
+                    <div>
+                      <p className="home-record-label">Condition</p>
+                      <p className="home-record-value">{hermesTelemetry.condition}</p>
+                    </div>
+                  )}
+                  {hermesTelemetry?.posture && (
+                    <div>
+                      <p className="home-record-label">Decision</p>
+                      <p className="home-record-value">{formatConstant(hermesTelemetry.posture)}</p>
+                    </div>
+                  )}
+                  {hermesTelemetry?.reason && (
+                    <div>
+                      <p className="home-record-label">Why</p>
+                      <p className="home-record-value home-record-value-quiet">{hermesTelemetry.reason}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {sealedDecisions != null && sealedDecisions > 0 && (
+                <div className="home-record-counts">
+                  <div>
+                    <p className="home-record-count">{sealedDecisions.toLocaleString('en-US')}</p>
+                    <p className="home-record-label">Sealed</p>
+                  </div>
+                  {chainHead && (
+                    <div>
+                      <p className="home-record-meta">{chainHead.sealedAtLabel}</p>
+                      <p className="home-record-label">Last seal</p>
+                    </div>
+                  )}
+                  {anchor && (
+                    <div>
+                      <Link href={anchor.href ?? '/anchor'} className="home-record-meta home-record-link">
+                        {anchor.cadence}
+                      </Link>
+                      <p className="home-record-label">Published outside our servers</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <p className="home-record-note">
+                Founder capital. Young sample.
+                {chainHead ? ` Row ${chainHead.rowNumber}.` : ''}
+              </p>
+            </div>
+          </motion.div>
+        )}
       </section>
 
       <section className="home-vision border-t border-border px-5 py-20 md:py-28">

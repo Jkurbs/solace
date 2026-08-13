@@ -15211,8 +15211,11 @@ html.dark .home-research ::selection,
   line-height: 1.55;
 }
 
+.home-record-band {
+  margin-top: -1.5rem;
+}
+
 .home-record {
-  margin-top: 2rem;
   width: 100%;
   max-width: 40rem;
   padding: 1.15rem 1.25rem 1.1rem;
