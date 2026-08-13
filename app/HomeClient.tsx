@@ -129,6 +129,10 @@ export default function HomeClient({
               Decide under uncertainty.
             </motion.h1>
 
+            <motion.p variants={fade} className="home-hero-subline">
+              Most of the time, the right decision is none.
+            </motion.p>
+
             <motion.p variants={fade} className="home-hero-dek">
               We start with money. Every decision is written down before anyone knows if it was
               right. You cannot invest yet.

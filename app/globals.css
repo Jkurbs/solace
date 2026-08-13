@@ -15190,6 +15190,17 @@ html.dark .home-research ::selection,
   color: color-mix(in srgb, var(--foreground, #1c1917) 72%, var(--muted, #78716c));
 }
 
+.home-hero-subline {
+  margin: 1rem 0 0;
+  max-width: 28rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--foreground, #1c1917) 82%, var(--muted, #78716c));
+}
+
 .home-hero-dek {
   margin: 1.35rem 0 0;
   max-width: 32rem;
