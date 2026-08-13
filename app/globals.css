@@ -15532,6 +15532,8 @@ button.hero-cta {
 .record-table {
   width: 100%;
   border-collapse: collapse;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .record-table th,
@@ -15556,18 +15558,6 @@ button.hero-cta {
 .record-table td:last-child {
   padding-right: 0;
   text-align: right;
-}
-
-.record-table tr.is-interactive {
-  cursor: pointer;
-}
-
-.record-table tr.is-interactive:hover td {
-  color: var(--foreground, #1c1917);
-}
-
-.record-table tr.is-selected td {
-  background: color-mix(in srgb, var(--foreground, #1c1917) 4%, transparent);
 }
 
 .record-table tr.is-backfill td {
