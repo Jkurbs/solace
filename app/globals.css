@@ -17995,6 +17995,24 @@ button.hero-cta {
   background: var(--ledger-muted);
 }
 
+.held-panel-bleed {
+  width: 100%;
+}
+
+.held-panel-bleed .ledger-live-panel {
+  width: 100%;
+  box-sizing: border-box;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .held-panel-bleed .ledger-live-panel {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
 /* ── Sticky live panel (outside table) ──────────────────── */
 .ledger-live-panel {
   position: sticky;

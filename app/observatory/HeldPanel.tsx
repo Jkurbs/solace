@@ -22,7 +22,9 @@ export default function HeldPanel({
       initialHermesVersion={hermesVersion}
       livePosture={livePosture}
     >
-      <TrustLivePanel />
+      <div className="held-panel-bleed">
+        <TrustLivePanel />
+      </div>
     </TrustLivePulseProvider>
   );
 }
