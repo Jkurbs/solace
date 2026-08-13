@@ -15165,7 +15165,6 @@ html.dark .home-research ::selection,
   display: flex;
   flex-direction: column;
   gap: 0.35em;
-  font-family: Georgia, 'Times New Roman', serif;
   font-size: clamp(2.15rem, 5.4vw, 3.65rem);
   font-weight: 500;
   line-height: 1.08;
@@ -15193,7 +15192,6 @@ html.dark .home-research ::selection,
 .home-hero-subline {
   margin: 1rem 0 0;
   max-width: 28rem;
-  font-family: Georgia, 'Times New Roman', serif;
   font-size: clamp(1.15rem, 2.2vw, 1.45rem);
   font-weight: 400;
   letter-spacing: -0.02em;
@@ -15318,7 +15316,6 @@ html.dark .home-research ::selection,
 .home-vision-title {
   margin: 0.85rem 0 0;
   max-width: 18ch;
-  font-family: Georgia, 'Times New Roman', serif;
   font-size: clamp(2rem, 4.4vw, 3.1rem);
   font-weight: 500;
   letter-spacing: -0.03em;
