@@ -6,6 +6,7 @@ export function formatHash(hash: string | null, prefix = 8, suffix = 8): string 
 
 export function formatDateTime(iso: string): string {
   const d = new Date(iso);
+  if (!iso || Number.isNaN(d.getTime())) return '—';
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
@@ -32,6 +33,7 @@ export function formatRelativeTime(iso: string): string {
 
 export function formatAnchorDate(date: string): string {
   const dt = new Date(date);
+  if (!date || Number.isNaN(dt.getTime())) return date || '—';
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',

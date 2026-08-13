@@ -39,6 +39,9 @@ export default function AnchorClient({ chain }: { chain: AnchorChain }) {
   const heroInitial = reduceMotion ? false : 'hidden';
   const verifyRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedHead, setCopiedHead] = useState<string | null>(null);
+  const [verifyHash, setVerifyHash] = useState('');
+  const [verifyNonce, setVerifyNonce] = useState(0);
 
   const head = chain.head;
   const verified = chain.verified && head !== null;
@@ -55,6 +58,19 @@ export default function AnchorClient({ chain }: { chain: AnchorChain }) {
 
   const scrollToVerify = () => {
     verifyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const copyHeadIntoVerify = async (value: string) => {
+    setVerifyHash(value);
+    setVerifyNonce((nonce) => nonce + 1);
+    scrollToVerify();
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedHead(value);
+      window.setTimeout(() => setCopiedHead((current) => (current === value ? null : current)), 2000);
+    } catch {
+      // Clipboard can fail; the field is still filled.
+    }
   };
 
   const copyCommand = async () => {
@@ -147,9 +163,13 @@ export default function AnchorClient({ chain }: { chain: AnchorChain }) {
               </div>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <Button onClick={scrollToVerify}>
+                <Button onClick={() => void copyHeadIntoVerify(head.chainHead)}>
+                  {copiedHead === head.chainHead ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copiedHead === head.chainHead ? 'Copied · verifying' : 'Copy chain head'}
+                </Button>
+                <Button variant="secondary" onClick={() => void copyHeadIntoVerify(head.chainHead)}>
                   <ShieldCheck className="h-4 w-4" />
-                  Verify This Hash
+                  Verify this hash
                 </Button>
                 <Button variant="secondary" asChild>
                   <a href={`/api/anchor/proof?date=${encodeURIComponent(head.date)}`} download>
@@ -171,7 +191,11 @@ export default function AnchorClient({ chain }: { chain: AnchorChain }) {
             Paste any chain head hash to see when it was anchored and whether the chain stays
             continuous.
           </p>
-          <AnchorVerifyPanel />
+          <AnchorVerifyPanel
+            hash={verifyHash}
+            onHashChange={setVerifyHash}
+            verifyNonce={verifyNonce}
+          />
         </div>
       </section>
 
@@ -197,8 +221,25 @@ export default function AnchorClient({ chain }: { chain: AnchorChain }) {
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-sm text-muted">Row {anchor.rowNumber}</span>
+                    <button
+                      type="button"
+                      onClick={() => void copyHeadIntoVerify(anchor.chainHead)}
+                      className="inline-flex items-center gap-1 text-sm underline underline-offset-4 transition-colors hover:text-foreground"
+                    >
+                      {copiedHead === anchor.chainHead ? (
+                        <>
+                          <Check className="h-3 w-3" />
+                          copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3 w-3" />
+                          copy
+                        </>
+                      )}
+                    </button>
                     <Link
-                      href={`/api/anchor?date=${anchor.date}`}
+                      href={`/api/anchor?date=${encodeURIComponent(anchor.date)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-sm underline underline-offset-4 transition-colors hover:text-muted-foreground"

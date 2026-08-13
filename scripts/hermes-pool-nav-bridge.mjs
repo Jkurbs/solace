@@ -820,11 +820,13 @@ function writePublicReadingFile(publicReading) {
   return targetPath;
 }
 
-async function fetchHermesPortfolio(hermesApiUrl) {
+async function fetchHermesPortfolio(hermesApiUrl, { forceRefresh = false } = {}) {
   const url = getUrl(hermesApiUrl, '/api/portfolio/kucoin');
-  // Live public PnL needs a fresh KuCoin read every tick; cached portfolio
-  // snapshots freeze unrealized PnL on the ledger.
-  url.searchParams.set('refresh', 'true');
+  // Prefer Hermes cache most ticks. Force live KuCoin only on a slow cadence
+  // (or first run) so the single API worker is not hammered every bridge loop.
+  if (forceRefresh) {
+    url.searchParams.set('refresh', 'true');
+  }
 
   const response = await fetch(url, {
     headers: {
@@ -969,10 +971,80 @@ function getBridgeIntervalMs() {
   return Math.max(5_000, configured);
 }
 
+/** Force live KuCoin open-book refresh at most this often (ms). */
+function getPortfolioHardRefreshMs() {
+  return Math.max(15_000, getNumber(process.env.HERMES_PORTFOLIO_HARD_REFRESH_MS, 60_000));
+}
+
+/**
+ * Closed position history only changes when a position closes.
+ * Default: fetch on open-set shrink, else at most every 5 minutes (reconcile).
+ */
+function getPositionHistoryIntervalMs() {
+  return Math.max(30_000, getNumber(process.env.HERMES_POSITION_HISTORY_INTERVAL_MS, 300_000));
+}
+
+/** Capital flows (deposit/withdraw) change rarely. */
+function getSourceFlowsIntervalMs() {
+  return Math.max(30_000, getNumber(process.env.HERMES_SOURCE_FLOWS_INTERVAL_MS, 300_000));
+}
+
 function sleep(ms) {
   return new Promise((resolveSleep) => {
     setTimeout(resolveSleep, ms);
   });
+}
+
+// Watch-mode state: avoid hammering KuCoin history/flows every 15s.
+let lastPortfolioHardRefreshAt = 0;
+let lastPositionHistoryFetchAt = 0;
+let lastSourceFlowsFetchAt = 0;
+let cachedPositionHistory = [];
+let cachedSourceFlows = [];
+let lastOpenPositionKeySet = null;
+
+function getOpenPositionKeySet(snapshot) {
+  const keys = new Set();
+  const positions = Array.isArray(snapshot?.positions) ? snapshot.positions : [];
+
+  for (const position of positions) {
+    if (!position || typeof position !== 'object') {
+      continue;
+    }
+
+    const contracts = Math.abs(getNumber(position.contracts ?? position.position_size ?? position.size));
+
+    if (contracts <= 0) {
+      continue;
+    }
+
+    const symbol = normalizeSymbol(position.symbol || position.canonical_symbol);
+    const side = String(position.side || position.position_side || '')
+      .trim()
+      .toUpperCase();
+
+    if (!symbol) {
+      continue;
+    }
+
+    keys.add(`${symbol}|${side}`);
+  }
+
+  return keys;
+}
+
+function openPositionSetShrinks(previous, next) {
+  if (!(previous instanceof Set) || previous.size === 0) {
+    return false;
+  }
+
+  for (const key of previous) {
+    if (!next.has(key)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 async function runBridgeOnce({ hermesApiUrl, secret, solaceAppUrl }) {
@@ -980,47 +1052,120 @@ async function runBridgeOnce({ hermesApiUrl, secret, solaceAppUrl }) {
     throw new Error('Set HERMES_INGEST_SECRET in .env.local or the process environment.');
   }
 
-  const [recentTrades, positionHistory, snapshot] = await Promise.all([
+  const now = Date.now();
+  const forcePortfolioRefresh =
+    lastPortfolioHardRefreshAt <= 0
+    || now - lastPortfolioHardRefreshAt >= getPortfolioHardRefreshMs();
+
+  const snapshot = await fetchHermesPortfolio(hermesApiUrl, {
+    forceRefresh: forcePortfolioRefresh,
+  });
+
+  if (forcePortfolioRefresh) {
+    lastPortfolioHardRefreshAt = now;
+  }
+
+  const openKeys = getOpenPositionKeySet(snapshot);
+  const closedDetected = openPositionSetShrinks(lastOpenPositionKeySet, openKeys);
+  lastOpenPositionKeySet = openKeys;
+
+  const needHistory =
+    closedDetected
+    || lastPositionHistoryFetchAt <= 0
+    || now - lastPositionHistoryFetchAt >= getPositionHistoryIntervalMs();
+  const needFlows =
+    lastSourceFlowsFetchAt <= 0
+    || now - lastSourceFlowsFetchAt >= getSourceFlowsIntervalMs();
+
+  const [recentTrades, positionHistory] = await Promise.all([
     fetchHermesRecentTrades(hermesApiUrl).catch((error) => {
       console.warn(error instanceof Error ? error.message : error);
       return [];
     }),
-    fetchHermesPositionHistory(hermesApiUrl).catch((error) => {
-      console.warn(error instanceof Error ? error.message : error);
-      return [];
-    }),
-    fetchHermesPortfolio(hermesApiUrl),
+    needHistory
+      ? fetchHermesPositionHistory(hermesApiUrl)
+          .then((rows) => {
+            cachedPositionHistory = Array.isArray(rows) ? rows : [];
+            lastPositionHistoryFetchAt = Date.now();
+            if (closedDetected) {
+              console.log(
+                JSON.stringify({
+                  at: new Date().toISOString(),
+                  message: 'Fetched position history after open-position close detected.',
+                  openPositions: openKeys.size,
+                }),
+              );
+            }
+            return cachedPositionHistory;
+          })
+          .catch((error) => {
+            console.warn(error instanceof Error ? error.message : error);
+            return cachedPositionHistory;
+          })
+      : Promise.resolve(cachedPositionHistory),
   ]);
-  const sourceFlows = await fetchHermesSourceCapitalFlows(hermesApiUrl)
-    .then((flows) => flows.map(buildSourceCapitalFlow).filter(Boolean))
-    .catch((error) => {
-      console.warn(error instanceof Error ? error.message : error);
-      return [];
-    });
+
+  const sourceFlowsRaw = needFlows
+    ? await fetchHermesSourceCapitalFlows(hermesApiUrl)
+        .then((flows) => {
+          lastSourceFlowsFetchAt = Date.now();
+          return flows;
+        })
+        .catch((error) => {
+          console.warn(error instanceof Error ? error.message : error);
+          return cachedSourceFlows;
+        })
+    : cachedSourceFlows;
+
+  const sourceFlows = (Array.isArray(sourceFlowsRaw) ? sourceFlowsRaw : [])
+    .map(buildSourceCapitalFlow)
+    .filter(Boolean);
+
+  if (needFlows && Array.isArray(sourceFlowsRaw)) {
+    cachedSourceFlows = sourceFlowsRaw;
+  }
+
+  // Only post trade events when we have a fresh history pull or recent hermes trades.
+  // Using cached history every 15s was re-posting the same closes and thrashing Hermes.
   const tradeEvents = dedupeTradeEvents([
     ...recentTrades.map(buildTradeEventFromHermesTrade),
-    ...positionHistory.map(buildTradeEventFromPositionHistory),
+    ...(needHistory ? positionHistory.map(buildTradeEventFromPositionHistory) : []),
   ]);
-  const tradeEventResult = await postSolaceTradeEvents(solaceAppUrl, secret, tradeEvents).catch((error) => {
-    const message = error instanceof Error ? error.message : String(error);
-    console.warn(message);
+  const tradeEventResult =
+    tradeEvents.length > 0
+      ? await postSolaceTradeEvents(solaceAppUrl, secret, tradeEvents).catch((error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          console.warn(message);
 
-    return {
-      count: 0,
-      error: message,
-      message: 'Hermes realized trade ingest skipped after failure.',
-    };
-  });
-  const sourceFlowResult = await postSolaceSourceCapitalFlows(solaceAppUrl, secret, sourceFlows).catch((error) => {
-    const message = error instanceof Error ? error.message : String(error);
-    console.warn(message);
+          return {
+            count: 0,
+            error: message,
+            message: 'Hermes realized trade ingest skipped after failure.',
+          };
+        })
+      : {
+          count: 0,
+          message: needHistory
+            ? 'No Hermes trade events to post.'
+            : 'Position history skipped (no close; waiting for interval).',
+          skipped: !needHistory,
+        };
+  const sourceFlowResult = needFlows
+    ? await postSolaceSourceCapitalFlows(solaceAppUrl, secret, sourceFlows).catch((error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(message);
 
-    return {
-      count: 0,
-      error: message,
-      message: 'Hermes source capital flow ingest skipped after failure.',
-    };
-  });
+        return {
+          count: 0,
+          error: message,
+          message: 'Hermes source capital flow ingest skipped after failure.',
+        };
+      })
+    : {
+        count: 0,
+        message: 'Source capital flows skipped (interval not elapsed).',
+        skipped: true,
+      };
   const poolMark = buildPoolMark(snapshot);
   const allocationMark = buildAllocationMark(snapshot, poolMark);
   const publicReading = buildPublicReading(snapshot, poolMark);
