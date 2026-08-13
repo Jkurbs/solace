@@ -108,7 +108,7 @@ export default function HermesExperience({
 
               <motion.h1 variants={fade} className="hero-particle-title home-hero-title">
                 <span className="home-hero-line">Hermes reads the structure.</span>
-                <span className="home-hero-line home-hero-line-2">Then it allocates — or it waits.</span>
+                <span className="home-hero-line home-hero-line-2">Then it allocates or it waits.</span>
               </motion.h1>
 
               <motion.p variants={fade} className="home-hero-dek">

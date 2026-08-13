@@ -15524,6 +15524,10 @@ button.hero-cta {
   text-decoration-color: color-mix(in srgb, var(--foreground, #1c1917) 60%, transparent);
 }
 
+.record-table-block {
+  margin-top: 1.75rem;
+}
+
 .record-table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -15538,15 +15542,15 @@ button.hero-cta {
 
 .record-table th,
 .record-table td {
-  padding: 0.9rem 0.85rem 0.9rem 0;
+  padding: 1.05rem 1.25rem 1.05rem 0;
   border-bottom: 1px solid var(--border, #e7e5e4);
   text-align: left;
   vertical-align: top;
 }
 
 .record-table th {
-  padding-top: 0;
-  padding-bottom: 0.7rem;
+  padding-top: 0.15rem;
+  padding-bottom: 0.85rem;
   color: var(--muted, #78716c);
   font-size: 0.65rem;
   font-weight: 500;
@@ -15624,7 +15628,7 @@ button.hero-cta {
 
 .record-table-hint,
 .record-table-pager {
-  margin-top: 1rem;
+  margin-top: 1.35rem;
   color: var(--muted, #78716c);
   font-size: 0.82rem;
 }
@@ -15673,9 +15677,13 @@ button.hero-cta {
     width: 100%;
   }
 
+  .record-table-block {
+    margin-top: 0.25rem;
+  }
+
   .record-table tr {
     box-sizing: border-box;
-    padding: 0.95rem 1.25rem;
+    padding: 1.15rem 1.25rem;
     border-bottom: 1px solid var(--border, #e7e5e4);
   }
 
@@ -18021,7 +18029,7 @@ button.hero-cta {
   width: 100%;
   box-sizing: border-box;
   margin: 0;
-  padding: 0.95rem 1.25rem;
+  padding: 1.05rem 0;
   border-bottom: 1px solid color-mix(in srgb, var(--ledger-pos) 28%, var(--ledger-line));
   background: color-mix(in srgb, var(--ledger-bg) 92%, var(--ledger-pos));
   backdrop-filter: blur(10px);
