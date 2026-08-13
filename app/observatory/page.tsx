@@ -1,35 +1,28 @@
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 
-import {
-  parseObservatoryInstrument,
-  type ObservatoryInstrumentId,
-} from '@/features/observatory/paths';
+import { parseObservatoryInstrument } from '@/features/observatory/paths';
 
 import ObservatoryExperience from './ObservatoryExperience';
-import {
-  loadGloryaChainData,
-  loadHermesChainData,
-  loadOracleChainData,
-} from './load-chain-data';
+import { loadHermesChainData } from './load-chain-data';
 
 export const metadata: Metadata = {
-  title: 'Solace · Observatory',
+  title: 'Solace · Public record',
   description:
-    'Inspect the decision chain. Every Solace instrument records observations, reasoning, and actions in one Observatory.',
+    'Every decision is written down before anyone knows if it was right. You can check the chain. Founder capital. Young sample.',
   openGraph: {
-    title: 'Solace · Observatory',
+    title: 'Solace · Public record',
     description:
-      'One place where every instrument exposes its chain of reasoning. Hermes, Oracle, Glorya.',
+      'Every decision is written down before anyone knows if it was right. You can check the chain. Founder capital. Young sample.',
     url: 'https://solace.fyi/observatory',
     type: 'website',
     siteName: 'Solace',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Solace · Observatory',
+    title: 'Solace · Public record',
     description:
-      'Inspect the decision chain. Every instrument leaves an auditable path.',
+      'Every decision is written down before anyone knows if it was right. You can check the chain.',
   },
 };
 
@@ -41,30 +34,16 @@ type Props = {
 
 export default async function ObservatoryPage({ searchParams }: Props) {
   const params = await searchParams;
-  const initialInstrument: ObservatoryInstrumentId = parseObservatoryInstrument(
-    params.instrument,
-  );
+  const instrument = parseObservatoryInstrument(params.instrument);
 
-  const [hermes, oracle] = await Promise.all([loadHermesChainData(), loadOracleChainData()]);
-  const glorya = loadGloryaChainData();
+  if (instrument === 'oracle') {
+    redirect('/oracle');
+  }
+  if (instrument === 'glorya') {
+    redirect('/glorya');
+  }
 
-  return (
-    <Suspense
-      fallback={
-        <main className="hermes-paper min-h-screen">
-          <div className="hermes-paper-shell" style={{ paddingTop: '6rem' }}>
-            <p className="hermes-paper-kicker">Observatory</p>
-            <p className="hermes-paper-lede">Loading the decision chain…</p>
-          </div>
-        </main>
-      }
-    >
-      <ObservatoryExperience
-        initialInstrument={initialInstrument}
-        hermes={hermes}
-        oracle={oracle}
-        glorya={glorya}
-      />
-    </Suspense>
-  );
+  const hermes = await loadHermesChainData();
+
+  return <ObservatoryExperience hermes={hermes} />;
 }

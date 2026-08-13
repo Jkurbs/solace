@@ -17,13 +17,14 @@ import { fetchKalshiBtcEthPredictions } from '@/features/oracle/kalshi';
 
 import type { GloryaChainData, HermesChainData, OracleChainData } from './ObservatoryExperience';
 
-const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
+const sealedAtFormatter = new Intl.DateTimeFormat('en-GB', {
   day: 'numeric',
-  hour: 'numeric',
-  hour12: true,
+  hour: '2-digit',
+  hourCycle: 'h23',
   minute: '2-digit',
   month: 'short',
-  timeZone: 'America/New_York',
+  second: '2-digit',
+  timeZone: 'UTC',
   timeZoneName: 'short',
   year: 'numeric',
 });

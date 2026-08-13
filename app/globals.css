@@ -15449,6 +15449,254 @@ button.hero-cta {
   font: inherit;
 }
 
+.home-verify {
+  max-width: 46rem;
+  border: 1px solid var(--border, #e7e5e4);
+  border-radius: 0.75rem;
+  padding: 0.85rem 1.1rem;
+}
+
+.home-verify summary {
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: -0.011em;
+  list-style: none;
+}
+
+.home-verify summary::-webkit-details-marker {
+  display: none;
+}
+
+.home-verify-body {
+  margin-top: 1.1rem;
+}
+
+.home-leaves {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  max-width: 40rem;
+}
+
+.home-leaves li {
+  padding: 1.2rem 0;
+  border-bottom: 1px solid var(--border, #e7e5e4);
+}
+
+.home-leaves li:first-child {
+  border-top: 1px solid var(--border, #e7e5e4);
+}
+
+.home-leaves p {
+  margin: 0.35rem 0 0;
+  color: var(--muted, #78716c);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.home-leaves .home-vision-domain {
+  margin: 0;
+  color: var(--foreground, #1c1917);
+}
+
+.home-leaves a {
+  display: inline-block;
+  margin-top: 0.7rem;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: color-mix(in srgb, var(--foreground, #1c1917) 22%, transparent);
+}
+
+.home-leaves a:hover {
+  text-decoration-color: color-mix(in srgb, var(--foreground, #1c1917) 60%, transparent);
+}
+
+.record-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.record-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.record-table th,
+.record-table td {
+  padding: 0.9rem 0.85rem 0.9rem 0;
+  border-bottom: 1px solid var(--border, #e7e5e4);
+  text-align: left;
+  vertical-align: top;
+}
+
+.record-table th {
+  padding-top: 0;
+  padding-bottom: 0.7rem;
+  color: var(--muted, #78716c);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.record-table th:last-child,
+.record-table td:last-child {
+  padding-right: 0;
+  text-align: right;
+}
+
+.record-table tr.is-interactive {
+  cursor: pointer;
+}
+
+.record-table tr.is-interactive:hover td {
+  color: var(--foreground, #1c1917);
+}
+
+.record-table tr.is-selected td {
+  background: color-mix(in srgb, var(--foreground, #1c1917) 4%, transparent);
+}
+
+.record-table tr.is-backfill td {
+  color: var(--muted, #78716c);
+}
+
+.record-table-time {
+  width: 14.5rem;
+  white-space: nowrap;
+}
+
+.record-table-time time {
+  display: block;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted, #78716c);
+}
+
+.record-table-tag {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted, #78716c);
+}
+
+.record-table-decision {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+}
+
+.record-table-note {
+  margin: 0.28rem 0 0;
+  max-width: 36rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--muted, #78716c);
+}
+
+.record-table-outcome {
+  width: 9rem;
+  font-size: 0.88rem;
+  color: var(--muted, #78716c);
+}
+
+.record-table-pnl {
+  width: 7rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.record-table-pnl.is-pos {
+  color: #3d6b4f;
+}
+
+.record-table-pnl.is-neg {
+  color: #b45a52;
+}
+
+.record-table-hint,
+.record-table-pager {
+  margin-top: 1rem;
+  color: var(--muted, #78716c);
+  font-size: 0.82rem;
+}
+
+.record-table-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.record-table-pager button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border, #e7e5e4);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground, #1c1917);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.record-table-pager button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+@media (max-width: 720px) {
+  .record-table thead {
+    display: none;
+  }
+
+  .record-table,
+  .record-table tbody,
+  .record-table tr,
+  .record-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .record-table tr {
+    padding: 0.95rem 0;
+    border-bottom: 1px solid var(--border, #e7e5e4);
+  }
+
+  .record-table td {
+    padding: 0;
+    border: 0;
+    text-align: left;
+  }
+
+  .record-table-time,
+  .record-table-outcome,
+  .record-table-pnl {
+    width: auto;
+  }
+
+  .record-table-decision {
+    margin-top: 0.35rem;
+  }
+
+  .record-table-outcome,
+  .record-table-pnl {
+    display: inline;
+    margin-right: 0.85rem;
+  }
+
+  .record-table-pnl {
+    text-align: left;
+  }
+}
+
 .hero-particle-eyebrow {
   margin: 0;
   font-size: 0.7rem;
