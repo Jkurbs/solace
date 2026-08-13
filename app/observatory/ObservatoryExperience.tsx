@@ -71,7 +71,7 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
             chain. Founder capital. Young sample.
           </p>
 
-          <div className="home-record" aria-label="Hermes record">
+          <div className="home-record mt-10 md:mt-12" aria-label="Hermes record">
             <div className="home-record-counts">
               {hermes.sealedDecisions > 0 && (
                 <div>
