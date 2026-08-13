@@ -3,6 +3,7 @@ import Link from 'next/link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import type { TrustLedgerDisplayRow } from '@/app/trust/TrustLedgerTable';
+import ShareLedger from '@/app/trust/ShareLedger';
 import HeldPanel from './HeldPanel';
 import RecordTable from './RecordTable';
 import VerifyOnDemand from './VerifyOnDemand';
@@ -63,9 +64,14 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
       <SiteHeader />
 
       <section className="px-5 pt-16 pb-10 md:pt-24 md:pb-14">
-        <div className="mx-auto max-w-6xl">
-          <p className="hero-particle-eyebrow">Hermes · founder capital</p>
-          <h1 className="hero-particle-title home-hero-title is-mission">Public record.</h1>
+        <div className="record-hero mx-auto max-w-6xl">
+          <div className="record-hero-head">
+            <div>
+              <p className="hero-particle-eyebrow">Hermes · founder capital</p>
+              <h1 className="hero-particle-title home-hero-title is-mission">Public record.</h1>
+            </div>
+            <ShareLedger />
+          </div>
           <p className="home-hero-dek">
             Every decision is written down before anyone knows if it was right. You can check the
             chain. Founder capital. Young sample.

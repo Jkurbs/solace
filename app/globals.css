@@ -15157,6 +15157,34 @@ html.dark .home-research ::selection,
 }
 
 /* Manifesto hero: thesis first, mechanism in the dek. */
+.record-hero-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.record-hero-head .ledger-share {
+  display: block;
+  flex-shrink: 0;
+  padding-top: 0.2rem;
+}
+
+.record-hero-head .ledger-share-trigger {
+  display: inline-flex;
+  border-color: var(--border, #e7e5e4);
+  background: var(--background, #fafaf9);
+  color: var(--foreground, #1c1917);
+}
+
+.record-hero-head .ledger-share-trigger-label {
+  display: inline;
+}
+
+.record-hero-head .ledger-share-desktop {
+  display: none;
+}
+
 .home-hero-copy {
   max-width: 44rem;
 }
@@ -18121,6 +18149,24 @@ button.hero-cta {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
+}
+
+.ledger-live-panel-meta strong.trust-pnl-pos {
+  color: #3d6b4f;
+}
+
+.ledger-live-panel-meta strong.trust-pnl-neg {
+  color: #b45a52;
+}
+
+html[data-theme='dark'] .ledger-live-panel-meta strong.trust-pnl-pos,
+html.dark .ledger-live-panel-meta strong.trust-pnl-pos {
+  color: #5f8f6f;
+}
+
+html[data-theme='dark'] .ledger-live-panel-meta strong.trust-pnl-neg,
+html.dark .ledger-live-panel-meta strong.trust-pnl-neg {
+  color: #d07a72;
 }
 
 .ledger-history-label {

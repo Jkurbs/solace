@@ -6,9 +6,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 const LEDGER_PATH = '/observatory?instrument=hermes';
 /** Stable OG asset URL (page redirects; image route remains). */
 const LEDGER_OG_PATH = '/observatory/hermes/ledger/opengraph-image';
-const SHARE_TITLE = 'Solace Observatory · Hermes decision chain';
+const SHARE_TITLE = 'Solace · Public record';
 const SHARE_TEXT =
-  'Inspect the Hermes chain on the Solace Observatory. Sealed before the outcome is known. Founder capital · checkable.';
+  'Every decision is written down before anyone knows if it was right. Founder capital. Young sample.';
 
 function ShareIcon() {
   return (
