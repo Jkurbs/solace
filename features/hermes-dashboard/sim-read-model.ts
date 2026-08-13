@@ -70,43 +70,6 @@ function mapConviction(posture: string, deployedPaths: number): HermesDashboardS
   return 'LOW';
 }
 
-function buildAllocationFromPool(
-  allocation: Awaited<ReturnType<typeof getLatestPoolAllocationSnapshot>>,
-  deployedCapitalPct: number,
-): HermesDashboardSnapshot['allocation'] {
-  if (allocation?.allocations?.length) {
-    const cash = allocation.allocations.find((item) => item.asset.toUpperCase() === 'CASH');
-    const positions = allocation.allocations.filter((item) => item.asset.toUpperCase() !== 'CASH');
-    if (positions.length) {
-      return allocation.allocations.map((item) => ({
-        asset: item.asset,
-        percentage: item.percentage,
-        allocationBasis: item.allocationBasis,
-        exposureUsd: item.exposureUsd,
-        marginUsd: item.marginUsd,
-        side: item.side,
-      }));
-    }
-    if (cash) {
-      return [{ asset: 'Cash', percentage: 100 }];
-    }
-  }
-
-  if (deployedCapitalPct <= 0) {
-    return [{ asset: 'Cash', percentage: 100 }];
-  }
-
-  const cash = roundPercent(Math.max(0, 100 - deployedCapitalPct));
-  if (cash <= 0) {
-    return [{ asset: 'In Strategy', percentage: 100 }];
-  }
-
-  return [
-    { asset: 'In Strategy', percentage: deployedCapitalPct },
-    { asset: 'Cash', percentage: cash },
-  ];
-}
-
 /**
  * Live open-access simulation dashboard: equity and closed orders scale to the
  * guest's chosen capital, and only paths opened after they entered participate.
@@ -156,7 +119,7 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     realizedPnl = roundCurrency(realizedPnl + userPnl);
     tradeActivity.push({
       timestamp: event.closedAt,
-      summary: `Closed ${event.symbol} ${event.side === 'LONG' ? 'long' : 'short'} · ${tradePnlFormatter.format(userPnl)}`,
+      summary: `Closed ${event.side === 'LONG' ? 'long' : 'short'} · ${tradePnlFormatter.format(userPnl)}`,
     });
   }
 
@@ -232,7 +195,17 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
         ? 'Recent closes after you entered are reflected below. Hermes will open the next path when conditions clear.'
         : 'Simulation is live. You only participate in paths Hermes opens after you entered, so early waiting is expected.';
 
-  const allocation = buildAllocationFromPool(allocationSnapshot, deployedCapital);
+  // Never publish pool tickers in simulation. Pre-entry opens are not on this
+  // guest's book — they stay in cash until Hermes opens a path after they entered.
+  const allocation =
+    participatingOpens.length > 0 && deployedCapital > 0
+      ? deployedCapital >= 100
+        ? [{ asset: 'In Strategy', percentage: 100 }]
+        : [
+            { asset: 'In Strategy', percentage: deployedCapital },
+            { asset: 'Cash', percentage: roundPercent(100 - deployedCapital) },
+          ]
+      : [{ asset: 'Cash', percentage: 100 }];
 
   return {
     contractVersion: hermesDashboardContractVersion,
