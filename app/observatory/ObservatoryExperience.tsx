@@ -107,7 +107,7 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
         </div>
       </section>
 
-      <section className="border-t border-border px-5 pb-12 md:pb-16" aria-label="Sealed rows">
+      <section className="record-section border-t border-border pb-12 md:px-5 md:pb-16" aria-label="Sealed rows">
         <div className="mx-auto max-w-6xl">
           <HeldPanel
             exposure={hermes.openExposure}
@@ -115,7 +115,7 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
             livePosture={hermes.livePosture}
           />
           <RecordTable rows={tableRows} totalSealed={hermes.sealedDecisions} />
-          <p className="mt-8 max-w-xl text-sm leading-relaxed text-muted">
+          <p className="record-section-note mt-8 max-w-xl text-sm leading-relaxed text-muted">
             Founder capital only. Young sample: a record, not a claim. Not an offer, not investment
             advice.
           </p>

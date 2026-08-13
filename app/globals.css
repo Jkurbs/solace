@@ -15664,6 +15664,13 @@ button.hero-cta {
 }
 
 @media (max-width: 720px) {
+  .record-section-note,
+  .record-table-hint,
+  .record-table-pager {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
   .record-table thead {
     display: none;
   }
@@ -15677,7 +15684,8 @@ button.hero-cta {
   }
 
   .record-table tr {
-    padding: 0.95rem 0;
+    box-sizing: border-box;
+    padding: 0.95rem 1.25rem;
     border-bottom: 1px solid var(--border, #e7e5e4);
   }
 
@@ -15685,6 +15693,11 @@ button.hero-cta {
     padding: 0;
     border: 0;
     text-align: left;
+  }
+
+  .ledger-live-panel {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
   }
 
   .record-table-time,
