@@ -120,33 +120,32 @@ export default function HomeClient({
           variants={stagger}
           className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-20 md:pt-24 md:pb-28"
         >
-          <div className="hero-particle-copy home-hero-copy">
+          <div className="hero-particle-copy home-hero-copy max-w-3xl">
             <motion.p variants={fade} className="hero-particle-eyebrow">
               Solace
             </motion.p>
 
+            {/* Core Hook: Embarrassingly simple & direct */}
             <motion.h1 variants={fade} className="hero-particle-title home-hero-title is-mission">
-              Decide under uncertainty.
+              Machines that make decisions for you.
             </motion.h1>
 
-            <motion.p variants={fade} className="home-hero-subline">
-              Most of the time, the right decision is none.
+            {/* What is Hermes? */}
+            <motion.p variants={fade} className="home-hero-subline text-lg font-medium text-foreground/90">
+              Hermes is the first one. It makes market decisions on your behalf.
             </motion.p>
 
-            <motion.p variants={fade} className="home-hero-dek">
-              We start with money. Every decision is written down before anyone knows if it was
-              right. You cannot invest yet.
+            {/* Why trust it? */}
+            <motion.p variants={fade} className="home-hero-dek text-muted mt-3">
+              You don&apos;t have to take its word for it. Every decision is recorded, timestamped, and publicly verified in real time.
             </motion.p>
 
-            <motion.div variants={fade} className="hero-particle-ctas">
-              <Link href="/hermes" className="hero-cta hero-cta-primary hero-cta-on-void">
-                Run a simulation
+            <motion.div variants={fade} className="hero-particle-ctas mt-8">
+              <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-primary hero-cta-on-void">
+                Watch what it actually does
               </Link>
-              <Link
-                href={OBSERVATORY_HERMES_LEDGER_PATH}
-                className="hero-cta hero-cta-secondary hero-cta-on-void"
-              >
-                Open the public record
+              <Link href="/hermes" className="hero-cta hero-cta-secondary hero-cta-on-void">
+                Run a simulation
               </Link>
             </motion.div>
           </div>
@@ -188,12 +187,12 @@ export default function HomeClient({
                 <div className="home-record-counts">
                   <div>
                     <p className="home-record-count">{sealedDecisions.toLocaleString('en-US')}</p>
-                    <p className="home-record-label">Sealed</p>
+                    <p className="home-record-label">Sealed Decisions</p>
                   </div>
                   {chainHead && (
                     <div>
                       <p className="home-record-meta">{chainHead.sealedAtLabel}</p>
-                      <p className="home-record-label">Last seal</p>
+                      <p className="home-record-label">Last Seal</p>
                     </div>
                   )}
                   {anchor && (
@@ -201,7 +200,7 @@ export default function HomeClient({
                       <Link href={anchor.href ?? '/anchor'} className="home-record-meta home-record-link">
                         {anchor.cadence}
                       </Link>
-                      <p className="home-record-label">Published outside our servers</p>
+                      <p className="home-record-label">Public Verification</p>
                     </div>
                   )}
                 </div>
@@ -216,45 +215,41 @@ export default function HomeClient({
         )}
       </section>
 
+      {/* Machinery Section: Explaining how it works once curiosity is established */}
       <section className="home-vision border-t border-border px-5 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">
-          <p className="home-vision-kicker">The work</p>
-          <h2 className="home-vision-title">Capital first. Then belief. Then help.</h2>
+          <p className="home-vision-kicker">The Machinery Underneath</p>
+          <h2 className="home-vision-title">Observation, execution, and public proof.</h2>
           <p className="home-vision-dek">
-            Markets compress feedback. They expose a wrong decision in days rather than years, and
-            they fund what comes next. Every system follows the same loop: observe, decide, seal,
-            stand down when the path is broken.
+            Making decisions without human bias requires high-density infrastructure. 
+            Solace connects liquidity models, regime detection, execution, and risk management to a cryptographically sealed feedback loop.
           </p>
 
-          <ol className="home-vision-ladder">
+          <ol className="home-vision-ladder mt-12">
             <li>
               <span className="home-vision-index">01</span>
               <div>
-                <p className="home-vision-domain">Capital</p>
+                <p className="home-vision-domain">Hermes (Markets)</p>
                 <p>
-                  Hermes is live. It reads liquidity, volatility, and regime, then decides whether
-                  to allocate, how much, and when to exit. Every decision is sealed before the
-                  trade. Founder capital. Young sample.
+                  Reads order flow, volatility, and structure to decide whether to allocate, how much, and when to exit. Every decision is sealed on-chain before the trade executes.
                 </p>
               </div>
             </li>
             <li>
               <span className="home-vision-index">02</span>
               <div>
-                <p className="home-vision-domain">Belief</p>
+                <p className="home-vision-domain">Oracle (Belief & Probability)</p>
                 <p>
-                  Oracle writes a probability before the event resolves, then scores it against
-                  what happened. Calibration is the product. The sample is still young.
+                  Writes a probability state before an event resolves and scores it against real-world outcomes. Continuous calibration replaces guesswork.
                 </p>
               </div>
             </li>
             <li>
               <span className="home-vision-index">03</span>
               <div>
-                <p className="home-vision-domain">Help</p>
+                <p className="home-vision-domain">Glorya (Allocation & Need)</p>
                 <p>
-                  Glorya asks whether need is real and whether a path can carry the money. It does
-                  not move capital until Solace has $1M cumulative revenue.
+                  Evaluates real world demand and resource paths. It remains inactive until Solace crosses $1M cumulative revenue.
                 </p>
               </div>
             </li>
@@ -265,7 +260,7 @@ export default function HomeClient({
       <section className="border-t border-border px-5 py-16 md:py-20">
         <div className="mx-auto max-w-6xl">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
-            Solace is one person — <span className="text-foreground">Kerby Jean</span>.
+            Solace is built by <span className="text-foreground">Kerby Jean</span>.
           </p>
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <Link
