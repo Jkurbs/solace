@@ -229,7 +229,6 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
       return;
     }
 
-    // Legacy flag without full session: send them to dashboard; cookies may still work.
     try {
       if (window.localStorage.getItem(SIM_STARTED_KEY) === '1') {
         router.push('/dashboard');
