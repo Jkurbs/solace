@@ -116,20 +116,6 @@ export default function HermesExperience({
                 public before it moves. Founder capital only. You cannot invest yet.
               </motion.p>
 
-              {/* ============================================================
-                  PREPARATION & TRUST SECTION
-                  ============================================================ */}
-
-              <motion.div variants={fade} className="mt-8 max-w-2xl space-y-2 text-sm leading-relaxed text-muted">
-                <p className="font-medium text-foreground">What happens when you click “Run a simulation”</p>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li>Pick a pretend bankroll ($10K, $50K, or $100K).</li>
-                  <li>Hermes trades with its own money – you watch with pretend money.</li>
-                  <li>Every decision is sealed before the trade. You can check it anytime.</li>
-                  <li>No email, no password, no commitment. Saved on this device.</li>
-                </ul>
-              </motion.div>
-
               <motion.div variants={fade} className="hero-particle-ctas mb-10 md:mb-14 mt-6">
                 <ExperienceHermesButton className="hero-cta hero-cta-primary">
                   Try it now
