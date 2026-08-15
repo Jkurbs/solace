@@ -117,7 +117,23 @@ export default function HermesExperience({
                 trade. Founder capital only. You cannot invest yet.
               </motion.p>
 
-              <motion.div variants={fade} className="hero-particle-ctas mb-10 md:mb-14">
+              {/* ============================================================
+                  PREPARATION SECTION (New)
+                  ============================================================ */}
+
+              {/* --- What to Expect --- */}
+              <motion.div variants={fade} className="mt-8 max-w-2xl space-y-2 text-sm leading-relaxed text-muted">
+                <p className="font-medium text-foreground">What happens when you click “Run a simulation”</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>You pick a starting allocation ($10K, $50K, or $100K).</li>
+                  <li>Hermes tracks real decisions with your simulated capital.</li>
+                  <li>You see the same ledger, same decisions, same outcomes—scaled to your allocation.</li>
+                  <li>No account. No email. No commitment. Saved on this device.</li>
+                </ul>
+              </motion.div>
+
+              {/* --- CTA Buttons --- */}
+              <motion.div variants={fade} className="hero-particle-ctas mb-10 md:mb-14 mt-6">
                 <ExperienceHermesButton className="hero-cta hero-cta-primary">
                   Run a simulation
                 </ExperienceHermesButton>
@@ -125,6 +141,35 @@ export default function HermesExperience({
                   Open the public record
                 </Link>
               </motion.div>
+
+              {/* --- Trust Box --- */}
+              <motion.div variants={fade} className="mb-6 max-w-2xl border-t border-border pt-6">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted">
+                  Trust is not claimed. It is checkable.
+                </p>
+                <ul className="mt-2 text-sm text-muted space-y-1">
+                  <li>Founder capital only. Hermes runs on the founder's own money.</li>
+                  <li>
+                    The full ledger is public and hash‑chained. Every decision is written before the
+                    outcome.
+                  </li>
+                  <li>
+                    You can inspect the record yourself. The simulation uses the same decisions, not
+                    a separate backtest.
+                  </li>
+                </ul>
+              </motion.div>
+
+              {/* --- Post-Click Expectation --- */}
+              <motion.div variants={fade} className="max-w-2xl text-xs text-muted">
+                Once you start: You will see the Hermes dashboard. Your virtual capital is allocated.
+                You will see sealed decisions, open paths, and closed outcomes—all scaled to your
+                allocation. You can return anytime from this device.
+              </motion.div>
+
+              {/* ============================================================
+                  END PREPARATION SECTION
+                  ============================================================ */}
 
               {showRecord && (
                 <motion.div variants={fade} className="home-record" aria-label="Live Hermes record">
