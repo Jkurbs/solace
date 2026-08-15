@@ -132,15 +132,9 @@ export default function HermesExperience({
                 <ul className="mt-2 text-sm text-muted space-y-1">
                   <li>Founder capital only. Hermes runs on the founder's own money.</li>
                   <li>Every decision is public and hash‑chained. Changing an old row breaks the chain.</li>
-                  <li>You can inspect the full record yourself – wins, losses, and wait times.</li>
+                  <li>You can inspect the full record yourself.</li>
                 </ul>
               </motion.div>
-
-              <motion.div variants={fade} className="max-w-2xl text-xs text-muted">
-                Once you start: You see the Hermes dashboard. Your pretend balance follows Hermes from
-                this point forward. Come back anytime on this device.
-              </motion.div>
-
               {/* ============================================================
                   END PREPARATION
                   ============================================================ */}
