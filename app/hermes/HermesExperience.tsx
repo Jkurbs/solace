@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 
@@ -61,8 +61,8 @@ const faqItems = [
     a: 'No. Hermes is an autonomous quantitative investment engine operated by Solace. It manages long-term market risk and capital allocation. It does not provide trading signals, education, or financial advice.',
   },
   {
-    q: 'Can I allocate capital to Hermes right now?',
-    a: 'Not yet. Hermes currently deploys personal capital only to establish execution rigor and risk-adjusted track record. Outside capital allocation, if opened, will start exclusively with those on the waitlist.',
+    q: 'How do I join the allocation waitlist?',
+    a: 'Launch the interactive simulation below to test the decision engine with paper capital. You can apply for future capital allocation directly from the simulation dashboard.',
   },
   {
     q: 'How is Hermes different from a traditional hedge fund?',
@@ -84,22 +84,11 @@ export default function HermesExperience({
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
 
-  const [waitlistEmail, setWaitlistEmail] = useState('');
-  const [submittedWaitlist, setSubmittedWaitlist] = useState(false);
-
   const showRecord =
     proof.sealedDecisions > 0 || Boolean(proof.condition || proof.posture || proof.reason);
 
   const timeline = proof.timeline.slice(0, 5);
   const lastSeal = timeline[0]?.time ?? null;
-
-  const handleWaitlistSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (waitlistEmail.trim()) {
-      setSubmittedWaitlist(true);
-      setWaitlistEmail('');
-    }
-  };
 
   return (
     <HermesOnboardingProvider>
@@ -125,10 +114,10 @@ export default function HermesExperience({
 
               <motion.p variants={fade} className="home-hero-dek">
                 Hermes continuously evaluates market structure and allocates capital automatically.
-                Inspect its live decision engine, verify the public audit trail, or simulate allocation strategies in real time.
+                Inspect its live decision engine, verify the public audit trail, or run a paper simulation.
               </motion.p>
 
-              <motion.div variants={fade} className="hero-particle-ctas mb-6 mt-6 flex flex-col sm:flex-row gap-3">
+              <motion.div variants={fade} className="hero-particle-ctas mb-3 mt-6 flex flex-col sm:flex-row gap-3">
                 <ExperienceHermesButton className="hero-cta hero-cta-primary">
                   Simulate Allocation Strategy
                 </ExperienceHermesButton>
@@ -137,35 +126,9 @@ export default function HermesExperience({
                 </Link>
               </motion.div>
 
-              <motion.p variants={fade} className="text-xs text-muted mb-8">
-                The simulation runs paper capital following Hermes's live decision engine.
+              <motion.p variants={fade} className="text-xs text-muted mb-10">
+                Run paper capital following Hermes's live decisions. You can request allocation access directly from the simulation dashboard.
               </motion.p>
-
-              {/* Waitlist Form Section */}
-              <motion.div variants={fade} className="mb-10 max-w-md">
-                {submittedWaitlist ? (
-                  <p className="text-sm font-medium text-emerald-500">
-                    You have been added to the allocation waitlist.
-                  </p>
-                ) : (
-                  <form onSubmit={handleWaitlistSubmit} className="flex gap-x-2">
-                    <input
-                      type="email"
-                      required
-                      value={waitlistEmail}
-                      onChange={(e) => setWaitlistEmail(e.target.value)}
-                      placeholder="Enter email to join allocation waitlist..."
-                      className="min-w-0 flex-auto rounded-md border border-border bg-background px-3.5 py-2 text-sm text-foreground shadow-sm focus:border-foreground focus:outline-none"
-                    />
-                    <button
-                      type="submit"
-                      className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:bg-foreground/90 transition-colors whitespace-nowrap"
-                    >
-                      Join Waitlist
-                    </button>
-                  </form>
-                )}
-              </motion.div>
 
               <motion.div variants={fade} className="mb-8 max-w-2xl border-t border-border pt-6">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted">
