@@ -12309,6 +12309,11 @@ h2 {
     color: #1c1917;
   }
 
+  html[data-theme='dark'] .solace-wordmark,
+  html.dark .solace-wordmark {
+    color: #fafafa;
+  }
+
   html[data-theme='light'] .site-action-separator {
     background: rgba(19, 17, 12, 0.2);
   }

@@ -7,9 +7,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDownToLine, ArrowLeft, ArrowUpFromLine, LogOut, Wallet } from 'lucide-react';
 
 import Mark from '@/app/Mark';
+import DashboardThemeToggle from '@/app/dashboard/DashboardThemeToggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getAppOrigin } from '@/lib/app-origin';
 import { cn } from '@/lib/utils';
 
 import {
@@ -207,10 +209,10 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
     >
       <header className="sticky top-0 z-30 border-b border-neutral-200 bg-[#f7f5ef]/90 backdrop-blur dark:border-neutral-800 dark:bg-[#0a0a0a]/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link href="/" className="solace-wordmark text-neutral-950 dark:text-neutral-50">
+          <a href={getAppOrigin()} className="solace-wordmark text-neutral-950 dark:text-neutral-50">
             <Mark size={22} />
             Solace
-          </Link>
+          </a>
           <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400 sm:gap-4">
             <Link
               href="/dashboard"
@@ -227,6 +229,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
               {isFetching ? 'Syncing' : 'Live 5s'}
             </Badge>
             <Badge variant={isSimulationMode ? 'secondary' : 'success'}>{isSimulationMode ? 'Simulation' : 'Live'}</Badge>
+            <DashboardThemeToggle />
             <Button
               type="button"
               variant="ghost"

@@ -4,6 +4,8 @@ import Link from 'next/link';
 
 import Mark from '@/app/Mark';
 import DashboardThemeShell from '@/app/dashboard/DashboardThemeShell';
+import DashboardThemeToggle from '@/app/dashboard/DashboardThemeToggle';
+import { getAppOrigin } from '@/lib/app-origin';
 
 
 type AuthStatus = 'denied' | 'expired' | 'failed' | 'invalid' | 'sent' | undefined;
@@ -64,10 +66,10 @@ export default function DashboardAccessGate({
     <DashboardThemeShell>
       <header className="border-b border-neutral-200 bg-[#f7f5ef]/90 backdrop-blur dark:border-neutral-800 dark:bg-[#0a0a0a]/90">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
-          <Link href="/" className="solace-wordmark text-neutral-950 dark:text-neutral-50">
+          <a href={getAppOrigin()} className="solace-wordmark text-neutral-950 dark:text-neutral-50">
             <Mark size={22} />
             Solace
-          </Link>
+          </a>
           <div className="flex items-center gap-3">
             <Link
               href="/hermes"
@@ -75,6 +77,7 @@ export default function DashboardAccessGate({
             >
               Hermes
             </Link>
+            <DashboardThemeToggle />
           </div>
         </div>
       </header>

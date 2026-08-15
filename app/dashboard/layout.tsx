@@ -9,7 +9,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{
           __html:
-            "try{var t=localStorage.getItem('hermes_dashboard_theme');document.documentElement.dataset.dashboardTheme=t==='light'?'light':'dark'}catch(e){}",
+            "try{var dk='hermes_dashboard_theme';var sk='solace-theme';var t=localStorage.getItem(dk)||localStorage.getItem(sk);var d=t==='light'?'light':'dark';var r=document.documentElement;r.dataset.theme=d;r.classList.toggle('dark',d==='dark');r.dataset.dashboardTheme=d;}catch(e){}",
         }}
       />
       <DashboardProviders>{children}</DashboardProviders>

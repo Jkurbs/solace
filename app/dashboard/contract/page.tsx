@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import Mark from '@/app/Mark';
 import DashboardAccessGate from '@/app/dashboard/DashboardAccessGate';
 import DashboardThemeShell from '@/app/dashboard/DashboardThemeShell';
+import DashboardThemeToggle from '@/app/dashboard/DashboardThemeToggle';
+import { getAppOrigin } from '@/lib/app-origin';
 
 import { getDashboardAccountId, hasDashboardAccess } from '@/features/hermes-dashboard/access';
 import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
@@ -202,10 +204,10 @@ export default async function DashboardContractPage() {
     <DashboardThemeShell>
       <header className="sticky top-0 z-30 border-b border-neutral-200 bg-[#f7f5ef]/90 backdrop-blur dark:border-neutral-800 dark:bg-[#0a0a0a]/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link href="/" className="solace-wordmark text-neutral-950 dark:text-neutral-50">
+          <a href={getAppOrigin()} className="solace-wordmark text-neutral-950 dark:text-neutral-50">
             <Mark size={22} />
             Solace
-          </Link>
+          </a>
           <nav className="flex items-center gap-4 text-sm font-bold text-neutral-600 dark:text-neutral-400">
             <Link href="/dashboard" className="transition-colors hover:text-neutral-950 dark:hover:text-neutral-50">
               Dashboard
@@ -213,6 +215,7 @@ export default async function DashboardContractPage() {
             <Link href="/hermes" className="hidden transition-colors hover:text-neutral-950 dark:hover:text-neutral-50 sm:inline">
               Hermes
             </Link>
+            <DashboardThemeToggle />
           </nav>
         </div>
       </header>

@@ -5,7 +5,9 @@ import { ArrowRight } from 'lucide-react';
 
 import Mark from '@/app/Mark';
 import DashboardThemeShell from '@/app/dashboard/DashboardThemeShell';
+import DashboardThemeToggle from '@/app/dashboard/DashboardThemeToggle';
 import SimSessionRestore from '@/app/dashboard/SimSessionRestore';
+import { getAppOrigin } from '@/lib/app-origin';
 import RiskProfileSelector from '@/app/dashboard/onboarding/risk-profile-selector';
 import {
   getDashboardAccountId,
@@ -54,16 +56,17 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
       <DashboardThemeShell>
         <header className="border-b border-neutral-200 bg-[#f7f5ef]/90 backdrop-blur dark:border-neutral-800 dark:bg-[#0a0a0a]/90">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
-            <Link href="/" className="solace-wordmark text-neutral-950 dark:text-neutral-50">
+            <a href={getAppOrigin()} className="solace-wordmark text-neutral-950 dark:text-neutral-50">
               <Mark size={22} />
               Solace
-            </Link>
+            </a>
             <Link
               href="/hermes"
               className="text-sm font-bold text-neutral-600 transition-colors hover:text-neutral-950 dark:text-neutral-400 dark:hover:text-neutral-50"
             >
               Hermes
             </Link>
+            <DashboardThemeToggle />
           </div>
         </header>
 

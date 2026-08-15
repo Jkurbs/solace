@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 import Mark from '@/app/Mark';
+import DashboardThemeToggle from '@/app/dashboard/DashboardThemeToggle';
+import { getAppOrigin } from '@/lib/app-origin';
 
 import IssueReportPanel from '@/features/hermes-dashboard/issue-report-panel';
 import { useDashboardTheme } from '@/features/hermes-dashboard/use-dashboard-theme';
@@ -23,10 +25,10 @@ export default function ReportIssueView() {
     >
       <header className="sticky top-0 z-30 border-b border-neutral-200 bg-[#f7f5ef]/90 backdrop-blur dark:border-neutral-800 dark:bg-[#0a0a0a]/90">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
-          <Link href="/" className="solace-wordmark text-neutral-950 dark:text-neutral-50">
+          <a href={getAppOrigin()} className="solace-wordmark text-neutral-950 dark:text-neutral-50">
             <Mark size={22} />
             Solace
-          </Link>
+          </a>
           <Link
             href="/dashboard"
             className="inline-flex h-9 items-center gap-1.5 rounded-md border border-neutral-300 px-3 text-sm font-bold text-neutral-700 transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:border-neutral-500 dark:hover:bg-neutral-900"
@@ -34,6 +36,7 @@ export default function ReportIssueView() {
             <ArrowLeft size={15} aria-hidden="true" />
             Back to dashboard
           </Link>
+          <DashboardThemeToggle />
         </div>
       </header>
 

@@ -171,7 +171,28 @@ function buildReadModelForAccount(dataset: LedgerDataset, account: LedgerAccount
   const postedFees = postedEntries.filter((entry) => entry.type === 'fee');
   const totalDeposited = roundCurrency(sumAmounts(postedDeposits));
   const totalWithdrawn = roundCurrency(sumAmounts(paidWithdrawals));
-  const value = roundCurrency(latestSnapshot?.portfolioValue ?? totalDeposited - totalWithdrawn);
+
+  // Portfolio snapshots are periodic marks. Posted PnL / fee / adjustment entries
+  // that arrive after the latest snapshot must still flow through to the user's
+  // capital, or closed trades appear to have no effect on the dashboard.
+  const snapshotValue = latestSnapshot?.portfolioValue ?? totalDeposited - totalWithdrawn;
+  const snapshotTime = latestSnapshot ? new Date(latestSnapshot.createdAt).getTime() : 0;
+  const entriesAfterSnapshot = postedEntries.filter(
+    (entry) =>
+      new Date(entry.createdAt).getTime() > snapshotTime &&
+      entry.type !== 'deposit' &&
+      entry.type !== 'withdrawal',
+  );
+  const entryAdjustment = entriesAfterSnapshot.reduce((total, entry) => {
+    if (entry.type === 'fee') {
+      return total - entry.amount;
+    }
+
+    // pnl and manual_adjustment are signed journal entries: positive increases
+    // the account value, negative decreases it.
+    return total + entry.amount;
+  }, 0);
+  const value = roundCurrency(snapshotValue + entryAdjustment);
   const netProfit = roundCurrency(value + totalWithdrawn - totalDeposited);
   const pendingWithdrawalsAmount = sumAmounts(pendingWithdrawals);
   const priorValue = priorSnapshot?.portfolioValue ?? value;
