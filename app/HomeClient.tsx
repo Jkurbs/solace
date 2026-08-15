@@ -132,7 +132,7 @@ export default function HomeClient({
 
             {/* What is Hermes? */}
             <motion.p variants={fade} className="home-hero-subline text-lg font-medium text-foreground/90">
-              Hermes is the first one. It makes market decisions on your behalf.
+              Hermes is the first one. It manages money and makes market decisions on your behalf.
             </motion.p>
 
             {/* Why trust it? */}
