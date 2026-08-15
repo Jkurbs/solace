@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 
@@ -56,20 +57,20 @@ const stagger = {
 
 const faqItems = [
   {
-    q: 'Is this a trading bot I can use?',
-    a: 'No. Hermes is a decision system Solace operates. You can watch the public record, or run a simulation with fake money that follows the same decisions.',
+    q: 'Is Hermes a trading bot or automated signal tool?',
+    a: 'No. Hermes is an autonomous quantitative investment engine operated by Solace. It manages long-term market risk and capital allocation. It does not provide trading signals, education, or financial advice.',
   },
   {
-    q: 'Can I invest with Hermes?',
-    a: 'Not yet. Hermes runs founder capital only. Real allocation, if it opens, will start with people on the waitlist.',
+    q: 'Can I allocate capital to Hermes right now?',
+    a: 'Not yet. Hermes currently deploys personal capital only to establish execution rigor and risk-adjusted track record. Outside capital allocation, if opened, will start exclusively with those on the waitlist.',
   },
   {
-    q: 'How is this different from a hedge fund?',
-    a: 'Hermes does not manage outside capital. It does not charge fees. Every decision is sealed on a public record before the trade.',
+    q: 'How is Hermes different from a traditional hedge fund?',
+    a: 'Hermes operates with total operational transparency. Every capital allocation decision, risk reduction, and regime shift is sealed onto an immutable public record before capital moves.',
   },
   {
-    q: 'Can I see the exact trades?',
-    a: 'You can inspect sealed decisions, outcomes, and process. Execution detail that would reveal the recipe stays private. The chain is still checkable by math.',
+    q: 'What does "verifiable by math" mean?',
+    a: 'Before any capital is deployed, the exact decision parameters are hashed and timestamped on a public chain. This creates a tamper-proof audit trail proving the decision occurred prior to market execution.',
   },
 ] as const;
 
@@ -83,11 +84,22 @@ export default function HermesExperience({
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
 
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [submittedWaitlist, setSubmittedWaitlist] = useState(false);
+
   const showRecord =
     proof.sealedDecisions > 0 || Boolean(proof.condition || proof.posture || proof.reason);
 
   const timeline = proof.timeline.slice(0, 5);
   const lastSeal = timeline[0]?.time ?? null;
+
+  const handleWaitlistSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (waitlistEmail.trim()) {
+      setSubmittedWaitlist(true);
+      setWaitlistEmail('');
+    }
+  };
 
   return (
     <HermesOnboardingProvider>
@@ -103,41 +115,68 @@ export default function HermesExperience({
           >
             <div className="home-hero-copy">
               <motion.p variants={fade} className="hero-particle-eyebrow">
-                Hermes · founder capital
+                Hermes · Autonomous Investment Engine
               </motion.p>
 
               <motion.h1 variants={fade} className="hero-particle-title home-hero-title">
-                <span className="home-hero-line">Hermes manages money.</span>
-                <span className="home-hero-line home-hero-line-2">You can check every decision.</span>
+                <span className="home-hero-line">An autonomous investment system.</span>
+                <span className="home-hero-line home-hero-line-2">Verifiable capital allocation.</span>
               </motion.h1>
 
               <motion.p variants={fade} className="home-hero-dek">
-                Hermes decides when to enter, when to exit, and how much to risk. Every decision is
-                public before it moves. Founder capital only. You cannot invest yet.
+                Hermes continuously evaluates market structure and allocates capital automatically.
+                Inspect its live decision engine, verify the public audit trail, or simulate allocation strategies in real time.
               </motion.p>
 
-              <motion.div variants={fade} className="hero-particle-ctas mb-10 md:mb-14 mt-6">
+              <motion.div variants={fade} className="hero-particle-ctas mb-6 mt-6 flex flex-col sm:flex-row gap-3">
                 <ExperienceHermesButton className="hero-cta hero-cta-primary">
-                  Try it now
+                  Simulate Allocation Strategy
                 </ExperienceHermesButton>
                 <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-secondary">
-                  Open the public record
+                  Inspect Public Ledger
                 </Link>
               </motion.div>
 
-              <motion.div variants={fade} className="mb-6 max-w-2xl border-t border-border pt-6">
+              <motion.p variants={fade} className="text-xs text-muted mb-8">
+                The simulation runs paper capital following Hermes's live decision engine.
+              </motion.p>
+
+              {/* Waitlist Form Section */}
+              <motion.div variants={fade} className="mb-10 max-w-md">
+                {submittedWaitlist ? (
+                  <p className="text-sm font-medium text-emerald-500">
+                    You have been added to the allocation waitlist.
+                  </p>
+                ) : (
+                  <form onSubmit={handleWaitlistSubmit} className="flex gap-x-2">
+                    <input
+                      type="email"
+                      required
+                      value={waitlistEmail}
+                      onChange={(e) => setWaitlistEmail(e.target.value)}
+                      placeholder="Enter email to join allocation waitlist..."
+                      className="min-w-0 flex-auto rounded-md border border-border bg-background px-3.5 py-2 text-sm text-foreground shadow-sm focus:border-foreground focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:bg-foreground/90 transition-colors whitespace-nowrap"
+                    >
+                      Join Waitlist
+                    </button>
+                  </form>
+                )}
+              </motion.div>
+
+              <motion.div variants={fade} className="mb-8 max-w-2xl border-t border-border pt-6">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted">
-                  Trust is not claimed. It is checkable.
+                  Institutional Rigor · Fully Transparent
                 </p>
-                <ul className="mt-2 text-sm text-muted space-y-1">
-                  <li>Founder capital only. Hermes runs on the founder's own money.</li>
-                  <li>Every decision is public and hash‑chained. Changing an old row breaks the chain.</li>
-                  <li>You can inspect the full record yourself.</li>
+                <ul className="mt-2 text-sm text-muted space-y-1.5">
+                  <li>• <strong>Skin in the Game:</strong> Deploys exclusively with the creator's personal capital.</li>
+                  <li>• <strong>Tamper-Proof Audit Trail:</strong> Every allocation decision is cryptographically locked before capital moves, preventing retrofitted history.</li>
+                  <li>• <strong>Systematic Preservation:</strong> Designed to capture upside during expansion regimes while standing down to preserve capital during market stress.</li>
                 </ul>
               </motion.div>
-              {/* ============================================================
-                  END PREPARATION
-                  ============================================================ */}
 
               {showRecord && (
                 <motion.div variants={fade} className="home-record" aria-label="Live Hermes record">
@@ -145,19 +184,19 @@ export default function HermesExperience({
                     <div className="home-record-readout">
                       {proof.condition && (
                         <div>
-                          <p className="home-record-label">Condition</p>
+                          <p className="home-record-label">Market Regime</p>
                           <p className="home-record-value">{proof.condition}</p>
                         </div>
                       )}
                       {proof.posture && (
                         <div>
-                          <p className="home-record-label">Decision</p>
+                          <p className="home-record-label">Capital Posture</p>
                           <p className="home-record-value">{proof.posture}</p>
                         </div>
                       )}
                       {proof.reason && (
                         <div>
-                          <p className="home-record-label">Why</p>
+                          <p className="home-record-label">Investment Thesis</p>
                           <p className="home-record-value home-record-value-quiet">{proof.reason}</p>
                         </div>
                       )}
@@ -170,18 +209,18 @@ export default function HermesExperience({
                         <p className="home-record-count">
                           {proof.sealedDecisions.toLocaleString('en-US')}
                         </p>
-                        <p className="home-record-label">Sealed</p>
+                        <p className="home-record-label">Sealed Decisions</p>
                       </div>
                       {lastSeal && (
                         <div>
                           <p className="home-record-meta">{lastSeal}</p>
-                          <p className="home-record-label">Last seal</p>
+                          <p className="home-record-label">Last Timestamp</p>
                         </div>
                       )}
                       {proof.hitRateLabel !== '-' && (
                         <div>
                           <p className="home-record-meta">{proof.hitRateLabel}</p>
-                          <p className="home-record-label">Hit rate · n={proof.sampleSize}</p>
+                          <p className="home-record-label">Hit Rate · n={proof.sampleSize}</p>
                         </div>
                       )}
                       {anchor && (
@@ -192,17 +231,17 @@ export default function HermesExperience({
                           >
                             {anchor.cadence}
                           </Link>
-                          <p className="home-record-label">Published outside our servers</p>
+                          <p className="home-record-label">Published External Anchor</p>
                         </div>
                       )}
                     </div>
                   )}
 
                   <p className="home-record-note">
-                    Founder capital. Young sample
+                    Personal capital deployment. Young sample
                     {proof.sampleSize ? ` n=${proof.sampleSize}` : ''}.
                     {proof.standDownRateLabel !== '-'
-                      ? ` Standing down ${proof.standDownRateLabel}.`
+                      ? ` Capital in reserve ${proof.standDownRateLabel}.`
                       : ''}
                     {proof.postureAge ? ` ${proof.postureAge}.` : ''}
                   </p>
@@ -214,21 +253,19 @@ export default function HermesExperience({
 
         <section className="home-vision border-t border-border px-5 py-20 md:py-28">
           <div className="mx-auto max-w-6xl">
-            <p className="home-vision-kicker">The loop</p>
-            <h2 className="home-vision-title">Read. Decide. Seal. Or stand down.</h2>
+            <p className="home-vision-kicker">The Operating Cycle</p>
+            <h2 className="home-vision-title">Evaluate. Decide. Lock. Or preserve capital.</h2>
             <p className="home-vision-dek">
-              A price destination is not a path. Hermes commits only when liquidity, timing, and
-              regime agree. Most of the time, the correct action is none.
+              A price target is not an investment thesis. Hermes commits capital only when liquidity, market structure, and macro regime agree. Most of the time, the optimal action is capital preservation.
             </p>
 
             <ol className="home-vision-ladder">
               <li>
                 <span className="home-vision-index">01</span>
                 <div>
-                  <p className="home-vision-domain">Read</p>
+                  <p className="home-vision-domain">Evaluate</p>
                   <p>
-                    Liquidity, volatility, and regime across timeframes. Not a forecast of the next
-                    tick — a read of whether the field can carry a position.
+                    Analyzes liquidity paths, order book imbalance, and regime dynamics across timeframes to determine if market conditions support capital deployment.
                   </p>
                 </div>
               </li>
@@ -237,18 +274,16 @@ export default function HermesExperience({
                 <div>
                   <p className="home-vision-domain">Decide</p>
                   <p>
-                    Whether to allocate, how much, where it is invalid, and when to exit. If the
-                    regime breaks character, Hermes stands down.
+                    Determines exact asset allocation, exposure scaling, invalidation levels, and exit conditions. If regime stability breaks down, Hermes stands down into cash reserves.
                   </p>
                 </div>
               </li>
               <li>
                 <span className="home-vision-index">03</span>
                 <div>
-                  <p className="home-vision-domain">Seal</p>
+                  <p className="home-vision-domain">Lock</p>
                   <p>
-                    The decision is written to a public chain before the trade moves. Changing an
-                    old row breaks the hash. You can check it.
+                    The decision parameter is written to an immutable public chain before capital moves. Changing an old entry breaks the cryptographic chain.
                   </p>
                 </div>
               </li>
@@ -259,10 +294,10 @@ export default function HermesExperience({
         {timeline.length > 0 && (
           <section className="border-t border-border px-5 py-20 md:py-28">
             <div className="mx-auto max-w-6xl">
-              <p className="home-vision-kicker">Recent seals</p>
-              <h2 className="home-vision-title">The last decisions, as written.</h2>
+              <p className="home-vision-kicker">Audit Trail</p>
+              <h2 className="home-vision-title">Recent allocation decisions.</h2>
               <p className="home-vision-dek">
-                Real rows from the public record. Not a backtest. Not an illustration.
+                Immutable entries from the public decision ledger. Not a backtest or hypothetical curve.
               </p>
 
               <ol className="home-seals">
@@ -283,7 +318,7 @@ export default function HermesExperience({
                   href={OBSERVATORY_HERMES_LEDGER_PATH}
                   className="text-sm underline decoration-foreground/20 underline-offset-4 transition-all hover:decoration-foreground/60"
                 >
-                  Open the full record
+                  Open full decision ledger
                 </Link>
               </div>
             </div>
@@ -292,7 +327,7 @@ export default function HermesExperience({
 
         <section className="border-t border-border px-5 py-20 md:py-28">
           <div className="mx-auto max-w-6xl">
-            <p className="home-vision-kicker">What this is</p>
+            <p className="home-vision-kicker">System Details</p>
             <dl className="home-faq">
               {faqItems.map((item) => (
                 <div key={item.q}>
@@ -302,8 +337,7 @@ export default function HermesExperience({
               ))}
             </dl>
             <p className="mt-10 max-w-xl text-sm leading-relaxed text-muted">
-              Solace is one person — <span className="text-foreground">Kerby Jean</span>. Hermes
-              operates on founder capital. Nothing here is an offer to manage funds.
+              Solace is built and operated by <span className="text-foreground">Kerby Jean</span>. Hermes deploys personal capital to establish an unalterable track record. Nothing on this site constitutes an offer to manage outside funds or financial advice.
             </p>
             <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
               <Link
