@@ -76,6 +76,19 @@ export type AnchorStatus = {
   href?: string;
 };
 
+function formatRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = Date.now();
+  const diff = now - date.getTime();
+  if (diff < 0) return '—';
+  const minutes = Math.round(diff / 60000);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.round(hours / 24);
+  return `${days}d`;
+}
+
 export default function HomeClient({
   hermesTelemetry,
   sealedDecisions,
@@ -131,18 +144,17 @@ export default function HomeClient({
     };
   }, []);
 
-  const showRecord =
-    (sealedDecisions != null && sealedDecisions > 0) || Boolean(chainHead) || Boolean(anchor);
+  const displayCount = sealedDecisions ?? 0;
+  const isVerified = Boolean(anchor?.href);
+  const lastAnchoredLabel = anchor?.lastAnchoredLabel || (chainHead ? formatRelativeTime(chainHead.sealedAtLabel) : '—');
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
 
       <section className="hero-research hero-particle-section relative overflow-hidden">
-        {/* <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
-          <HermesLiquidityFieldRender maxParticles={30000} />
-          <div className="hero-particle-vignette absolute inset-0 pointer-events-none" />
-        </div> */}
+        {/* Particle background commented out */}
+        {/* <div ... /> */}
 
         <motion.div
           initial={heroInitial}
@@ -151,11 +163,7 @@ export default function HomeClient({
           className="hero-particle-layout relative z-10 mx-auto flex min-h-[70vh] max-w-6xl flex-col items-center justify-center px-5 py-20 md:min-h-[75vh] md:py-28"
         >
           <div className="hero-particle-copy home-hero-copy flex w-full max-w-3xl flex-col items-center text-center">
-            {/* <motion.p variants={fade} className="hero-particle-eyebrow">
-              Solace
-            </motion.p> */}
-
-            {/* Title – explicitly centered */}
+            {/* Title */}
             <motion.h1
               variants={fade}
               className="hero-particle-title home-hero-title is-mission text-center"
@@ -188,51 +196,39 @@ export default function HomeClient({
                 Run a simulation
               </Link>
             </motion.div>
+
+            {/* ✨ Compact stats bar */}
+            <motion.div
+              variants={fade}
+              className="mt-10 flex flex-wrap items-center justify-center gap-8 text-sm text-white/60"
+            >
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-white tabular-nums">
+                  {displayCount.toLocaleString('en-US')}
+                  {sealedDecisions !== null && <span className="text-lg text-white/40">+</span>}
+                </span>
+                <span className="text-xs uppercase tracking-wider text-white/40">overall decisions</span>
+              </div>
+
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-white">
+                  {isVerified ? '✓' : '—'}
+                </span>
+                <span className="text-xs uppercase tracking-wider text-white/40">chain verified</span>
+              </div>
+
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-white tabular-nums">
+                  {lastAnchoredLabel}
+                </span>
+                <span className="text-xs uppercase tracking-wider text-white/40">last anchored</span>
+              </div>
+            </motion.div>
           </div>
         </motion.div>
-
-        {showRecord && (
-          <motion.div
-            initial={heroInitial}
-            animate="show"
-            variants={fade}
-            className="home-hero-stats relative z-10 mx-auto max-w-6xl px-5 pb-16 md:pb-24"
-            aria-label="Live Hermes record"
-          >
-            <div className="home-hero-stats-grid">
-              {sealedDecisions != null && sealedDecisions > 0 && (
-                <div className="home-hero-stat">
-                  <p className="home-hero-stat-value">{sealedDecisions.toLocaleString('en-US')}</p>
-                  <p className="home-hero-stat-label">Sealed decisions</p>
-                </div>
-              )}
-              {chainHead && (
-                <div className="home-hero-stat">
-                  <p className="home-hero-stat-value home-hero-stat-value-meta">{chainHead.sealedAtLabel}</p>
-                  <p className="home-hero-stat-label">Last seal</p>
-                </div>
-              )}
-              {anchor && (
-                <div className="home-hero-stat">
-                  <Link
-                    href={anchor.href ?? '/anchor'}
-                    className="home-hero-stat-value home-hero-stat-value-meta home-hero-stat-link"
-                  >
-                    {anchor.cadence}
-                  </Link>
-                  <p className="home-hero-stat-label">Public verification</p>
-                </div>
-              )}
-            </div>
-            <p className="home-hero-stats-note">
-              Founder capital. Young sample.
-              {chainHead ? ` Row ${chainHead.rowNumber}.` : ''}
-            </p>
-          </motion.div>
-        )}
       </section>
 
-      {/* Hermes & Oracle Grid */}
+      {/* Hermes & Oracle Grid – unchanged */}
       <section className="px-5 py-12 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -273,6 +269,7 @@ export default function HomeClient({
         </div>
       </section>
 
+      {/* Machinery Section – unchanged */}
       <section className="home-vision border-t border-border px-5 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">
           <p className="home-vision-kicker">The Machinery Underneath</p>
@@ -314,6 +311,7 @@ export default function HomeClient({
         </div>
       </section>
 
+      {/* Footer – unchanged */}
       <section className="border-t border-border px-5 py-16 md:py-20">
         <div className="mx-auto max-w-6xl">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
