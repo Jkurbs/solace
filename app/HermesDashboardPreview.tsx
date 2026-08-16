@@ -122,10 +122,10 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
   const listHeight = VISIBLE_COUNT * ITEM_HEIGHT;
 
   return (
-    <section className="border-t border-border bg-background px-5 py-16 md:py-24">
+    <section className="border-t border-border px-5 py-16 md:py-24">
       <div className="mx-auto max-w-5xl">
         <motion.div
-          className="overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-black/10"
+          className="overflow-hidden rounded-2xl border border-border bg-neutral-100 shadow-2xl shadow-black/10 dark:bg-neutral-900"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -159,12 +159,6 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
                 <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted">
                   Latest decisions
                 </p>
-                {started && decisions.length > 0 ? (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[0.6rem] font-medium text-emerald-700 dark:text-emerald-300">
-                    <span className="h-1 w-1 animate-pulse rounded-full bg-emerald-500" />
-                    Live
-                  </span>
-                ) : null}
               </div>
 
               {decisions.length === 0 ? (
@@ -250,6 +244,11 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
                 </svg>
               </Link>
             </div>
+
+            <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
+              Hermes continuously evaluates market structure and allocates capital automatically. Inspect its live
+              decision engine, verify the public audit trail, or run a paper simulation.
+            </p>
           </div>
         </motion.div>
       </div>

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { createNoise3D } from 'simplex-noise';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
 
 interface HermesLiquidityFieldProps {
@@ -28,7 +27,6 @@ const particleVertexShader = `
   }
 `;
 
-// Fragment shader now adds a subtle core brilliance without tinting to neon
 const particleFragmentShader = `
   varying vec3 vColor;
   varying float vAlpha;
@@ -37,10 +35,7 @@ const particleFragmentShader = `
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
     
-    // Smooth radial edge falloff
     float strength = smoothstep(0.5, 0.15, dist);
-    
-    // Core highlight boost for crispness without hyper-saturation
     vec3 luminousColor = mix(vColor, vColor + vec3(0.08), strength * 0.4);
 
     gl_FragColor = vec4(luminousColor, vAlpha * strength);
@@ -82,11 +77,9 @@ export default function HermesLiquidityFieldRender({
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
 
-    const noise3D = createNoise3D();
     const geometry = new THREE.BufferGeometry();
 
     const currentPositions = new Float32Array(count * 3);
-    const noisePositions = new Float32Array(count * 3);
     const globeTargets = new Float32Array(count * 3);
     const lorenzTargets = new Float32Array(count * 3);
     const sealTargets = new Float32Array(count * 3);
@@ -95,19 +88,16 @@ export default function HermesLiquidityFieldRender({
     const globeColors = new Float32Array(count * 3);
     const lorenzColors = new Float32Array(count * 3);
     const sealColors = new Float32Array(count * 3);
-    const noiseColors = new Float32Array(count * 3);
 
     const scales = new Float32Array(count);
     const alphas = new Float32Array(count);
 
-    // Dark Mode helper
     const checkIsDark = () =>
       document.documentElement.classList.contains('dark') ||
       window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     let isDark = checkIsDark();
 
-    // Theme adaptive palette: Elegant, luminous hues (avoiding neon greens/pinks)
     const getThemeColors = (dark: boolean) => ({
       teal: new THREE.Color(dark ? '#2dd4bf' : '#0f766e'),
       bronze:
@@ -160,44 +150,36 @@ export default function HermesLiquidityFieldRender({
         sealColors[i3] = c2.r;
         sealColors[i3 + 1] = c2.g;
         sealColors[i3 + 2] = c2.b;
-
-        const c3 = teal.clone().lerp(bronze, rand);
-        noiseColors[i3] = c3.r;
-        noiseColors[i3 + 1] = c3.g;
-        noiseColors[i3 + 2] = c3.b;
       }
     };
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
 
-      // 1. Dispersed Noise
-      const nx = isMobile ? (Math.random() - 0.5) * 14 : (Math.random() - 0.2) * 22;
-      const ny = (Math.random() - 0.5) * (isMobile ? 20 : 16);
-      const nz = (Math.random() - 0.5) * 8;
-
-      noisePositions[i3] = nx;
-      noisePositions[i3 + 1] = ny;
-      noisePositions[i3 + 2] = nz;
-      currentPositions[i3] = nx;
-      currentPositions[i3 + 1] = ny;
-      currentPositions[i3 + 2] = nz;
-
-      // 2. Tight Globe
+      // 1. Globe Target (Equilibrium Sphere)
       const sphereRadius = 3.6 * scaleFactor;
       const phi = Math.acos(-1 + (2 * i) / count);
       const theta = Math.sqrt(count * Math.PI) * phi;
-      globeTargets[i3] = shapeCenter.x + sphereRadius * Math.cos(theta) * Math.sin(phi);
-      globeTargets[i3 + 1] = shapeCenter.y + sphereRadius * Math.sin(theta) * Math.sin(phi);
-      globeTargets[i3 + 2] = shapeCenter.z + sphereRadius * Math.cos(phi);
+      const gx = shapeCenter.x + sphereRadius * Math.cos(theta) * Math.sin(phi);
+      const gy = shapeCenter.y + sphereRadius * Math.sin(theta) * Math.sin(phi);
+      const gz = shapeCenter.z + sphereRadius * Math.cos(phi);
 
-      // 3. Tight Lorenz
+      globeTargets[i3] = gx;
+      globeTargets[i3 + 1] = gy;
+      globeTargets[i3 + 2] = gz;
+
+      // Start positions directly on Globe Target
+      currentPositions[i3] = gx;
+      currentPositions[i3 + 1] = gy;
+      currentPositions[i3 + 2] = gz;
+
+      // 2. Lorenz Attractor Target
       const lorenzScale = 0.165 * scaleFactor;
       lorenzTargets[i3] = shapeCenter.x + rawLorenz[i3] * lorenzScale;
       lorenzTargets[i3 + 1] = shapeCenter.y + rawLorenz[i3 + 1] * lorenzScale;
       lorenzTargets[i3 + 2] = shapeCenter.z + rawLorenz[i3 + 2] * lorenzScale;
 
-      // 4. Tight Gyroscopic Seal Rings
+      // 3. Gyroscopic Ring Seal Target
       const ringIndex = i % 3;
       const radii = [2.2 * scaleFactor, 3.3 * scaleFactor, 4.4 * scaleFactor];
       const radius = radii[ringIndex];
@@ -220,7 +202,6 @@ export default function HermesLiquidityFieldRender({
       }
 
       scales[i] = Math.random() * 1.5 + 0.9;
-      // Boosted alpha range for higher clarity without wash-out
       alphas[i] = isDark ? Math.random() * 0.55 + 0.4 : Math.random() * 0.45 + 0.3;
     }
 
@@ -272,12 +253,14 @@ export default function HermesLiquidityFieldRender({
       mouse.x += (mouse.targetX - mouse.x) * 0.015;
       mouse.y += (mouse.targetY - mouse.y) * 0.015;
 
-      const phaseDuration = 16;
-      const totalCycle = (elapsedTime % (phaseDuration * 4)) / phaseDuration;
+      // 3-state continuous morph cycle (12s per phase)
+      const phaseDuration = 12;
+      const totalCycle = (elapsedTime % (phaseDuration * 3)) / phaseDuration;
 
-      const phaseIndex = Math.floor(totalCycle);
+      const phaseIndex = Math.floor(totalCycle); // 0: Globe -> Lorenz, 1: Lorenz -> Seal, 2: Seal -> Globe
       const phaseProgress = totalCycle - phaseIndex;
 
+      // Smooth exponential easing between shapes
       const snapEase = phaseProgress === 1 ? 1 : 1 - Math.pow(2, -10 * phaseProgress);
 
       const posAttr = geometry.attributes.position as THREE.BufferAttribute;
@@ -288,10 +271,6 @@ export default function HermesLiquidityFieldRender({
 
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
-
-        const nx = noisePositions[i3];
-        const ny = noisePositions[i3 + 1];
-        const nz = noisePositions[i3 + 2];
 
         const gx = globeTargets[i3];
         const gy = globeTargets[i3 + 1];
@@ -305,27 +284,16 @@ export default function HermesLiquidityFieldRender({
         const sy = sealTargets[i3 + 1];
         const sz = sealTargets[i3 + 2];
 
-        let targetX = nx;
-        let targetY = ny;
-        let targetZ = nz;
+        let targetX = gx;
+        let targetY = gy;
+        let targetZ = gz;
 
-        let cr = noiseColors[i3];
-        let cg = noiseColors[i3 + 1];
-        let cb = noiseColors[i3 + 2];
-
-        let noiseDampen = 1.0;
+        let cr = globeColors[i3];
+        let cg = globeColors[i3 + 1];
+        let cb = globeColors[i3 + 2];
 
         if (phaseIndex === 0) {
-          targetX = THREE.MathUtils.lerp(nx, gx, snapEase);
-          targetY = THREE.MathUtils.lerp(ny, gy, snapEase);
-          targetZ = THREE.MathUtils.lerp(nz, gz, snapEase);
-
-          cr = THREE.MathUtils.lerp(noiseColors[i3], globeColors[i3], snapEase);
-          cg = THREE.MathUtils.lerp(noiseColors[i3 + 1], globeColors[i3 + 1], snapEase);
-          cb = THREE.MathUtils.lerp(noiseColors[i3 + 2], globeColors[i3 + 2], snapEase);
-
-          noiseDampen = Math.max(0, 1.0 - snapEase * 1.2);
-        } else if (phaseIndex === 1) {
+          // Globe -> Lorenz
           targetX = THREE.MathUtils.lerp(gx, lxPos, snapEase);
           targetY = THREE.MathUtils.lerp(gy, lyPos, snapEase);
           targetZ = THREE.MathUtils.lerp(gz, lzPos, snapEase);
@@ -333,9 +301,8 @@ export default function HermesLiquidityFieldRender({
           cr = THREE.MathUtils.lerp(globeColors[i3], lorenzColors[i3], snapEase);
           cg = THREE.MathUtils.lerp(globeColors[i3 + 1], lorenzColors[i3 + 1], snapEase);
           cb = THREE.MathUtils.lerp(globeColors[i3 + 2], lorenzColors[i3 + 2], snapEase);
-
-          noiseDampen = 0.02;
-        } else if (phaseIndex === 2) {
+        } else if (phaseIndex === 1) {
+          // Lorenz -> Seal
           targetX = THREE.MathUtils.lerp(lxPos, sx, snapEase);
           targetY = THREE.MathUtils.lerp(lyPos, sy, snapEase);
           targetZ = THREE.MathUtils.lerp(lzPos, sz, snapEase);
@@ -343,25 +310,19 @@ export default function HermesLiquidityFieldRender({
           cr = THREE.MathUtils.lerp(lorenzColors[i3], sealColors[i3], snapEase);
           cg = THREE.MathUtils.lerp(lorenzColors[i3 + 1], sealColors[i3 + 1], snapEase);
           cb = THREE.MathUtils.lerp(lorenzColors[i3 + 2], sealColors[i3 + 2], snapEase);
-
-          noiseDampen = 0.02;
         } else {
-          targetX = THREE.MathUtils.lerp(sx, nx, snapEase);
-          targetY = THREE.MathUtils.lerp(sy, ny, snapEase);
-          targetZ = THREE.MathUtils.lerp(sz, nz, snapEase);
+          // Seal -> Globe
+          targetX = THREE.MathUtils.lerp(sx, gx, snapEase);
+          targetY = THREE.MathUtils.lerp(sy, gy, snapEase);
+          targetZ = THREE.MathUtils.lerp(sz, gz, snapEase);
 
-          cr = THREE.MathUtils.lerp(sealColors[i3], noiseColors[i3], snapEase);
-          cg = THREE.MathUtils.lerp(sealColors[i3 + 1], noiseColors[i3 + 1], snapEase);
-          cb = THREE.MathUtils.lerp(sealColors[i3 + 2], noiseColors[i3 + 2], snapEase);
-
-          noiseDampen = snapEase;
+          cr = THREE.MathUtils.lerp(sealColors[i3], globeColors[i3], snapEase);
+          cg = THREE.MathUtils.lerp(sealColors[i3 + 1], globeColors[i3 + 1], snapEase);
+          cb = THREE.MathUtils.lerp(sealColors[i3 + 2], globeColors[i3 + 2], snapEase);
         }
 
-        const n1 = noise3D(nx * 0.1, ny * 0.1, elapsedTime * 0.012);
-        const n2 = noise3D(ny * 0.1 + mouse.x * 0.2, nz * 0.1 + mouse.y * 0.2, elapsedTime * 0.012);
-
-        posArray[i3] = targetX + Math.cos(n1 * Math.PI) * 0.3 * noiseDampen;
-        posArray[i3 + 1] = targetY + Math.sin(n2 * Math.PI) * 0.3 * noiseDampen;
+        posArray[i3] = targetX;
+        posArray[i3 + 1] = targetY;
         posArray[i3 + 2] = targetZ;
 
         colorArray[i3] = cr;
@@ -372,6 +333,7 @@ export default function HermesLiquidityFieldRender({
       posAttr.needsUpdate = true;
       colorAttr.needsUpdate = true;
 
+      // Slow, deliberate rotation of the geometry
       particleSystem.rotation.y = elapsedTime * 0.005 + mouse.x * 0.008;
       particleSystem.rotation.x = Math.sin(elapsedTime * 0.003) * 0.03;
 
