@@ -195,7 +195,7 @@ export default function HomeClient({
 
             <motion.div variants={fade} className="hero-particle-ctas mt-8 flex justify-center gap-4">
               <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-primary hero-cta-on-void">
-                Watch what it actually does
+                Check the record
               </Link>
               <Link href="/hermes" className="hero-cta hero-cta-secondary hero-cta-on-void">
                 Run a simulation
@@ -266,6 +266,7 @@ export default function HomeClient({
       <section className="px-5 py-12 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            {/* Hermes Card */}
             <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
               <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
                 Hermes
@@ -283,6 +284,7 @@ export default function HomeClient({
               </div>
             </div>
 
+            {/* Oracle Card */}
             <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
               <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
                 Oracle
@@ -303,6 +305,7 @@ export default function HomeClient({
         </div>
       </section>
 
+      {/* Machinery Section */}
       <section className="home-vision border-t border-border px-5 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">
           <p className="home-vision-kicker">The Machinery Underneath</p>
@@ -344,6 +347,7 @@ export default function HomeClient({
         </div>
       </section>
 
+      {/* Footer */}
       <section className="border-t border-border px-5 py-16 md:py-20">
         <div className="mx-auto max-w-6xl">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
