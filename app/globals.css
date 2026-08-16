@@ -21205,6 +21205,24 @@ html.dark .obs-portrait-desc,
   }
 }
 
+@media (min-width: 768px) {
+  .hermes-onboard-sheet-root {
+    inset: 0;
+    align-items: center;
+    padding: 2rem;
+  }
+
+  .hermes-onboard-sheet {
+    width: min(100%, 42rem);
+    max-height: min(90vh, 48rem);
+    padding: 2rem;
+  }
+
+  .hermes-onboard-handle {
+    display: none;
+  }
+}
+
 .hermes-onboard-handle {
   width: 2.25rem;
   height: 0.25rem;
