@@ -94,7 +94,7 @@ export default function HomeClient({
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
 
-  const words = ['financial', 'prediction', 'aids'];
+  const words = ['financial', 'prediction'];
   const [wordIndex, setWordIndex] = useState(0);
 
   useEffect(() => {

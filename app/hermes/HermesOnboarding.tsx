@@ -465,7 +465,12 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
 
                   <div className="hermes-onboard-capital">
                     <span className="hermes-onboard-capital-label">Choose your starting allocation</span>
-                    <div className="hermes-onboard-capital-options" role="group" aria-label="Starting allocation">
+                    {/* ✅ Left‑aligned allocation buttons */}
+                    <div
+                      className="hermes-onboard-capital-options flex justify-start gap-2"
+                      role="group"
+                      aria-label="Starting allocation"
+                    >
                       {SIM_ALLOCATIONS.map((a) => (
                         <button
                           key={a.value}
