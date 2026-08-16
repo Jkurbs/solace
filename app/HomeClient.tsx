@@ -37,18 +37,14 @@ export type HermesTelemetry = {
   updatedAt: string;
 };
 
-/** Latest sealed ledger row — the hero artifact. Wire from the ledger feed. */
 export type ChainHeadSummary = {
   rowNumber: number;
   recordId: string;
-  /** Full or shortened hash; displayed as-is. */
   hash: string;
   prevHash?: string;
-  /** Pre-formatted, e.g. "Aug 8, 2026, 12:50 AM EDT". */
   sealedAtLabel: string;
 };
 
-/** External anchor status. */
 export type AnchorStatus = {
   cadence: string;
   lastAnchoredLabel?: string;
@@ -132,22 +128,15 @@ export default function HomeClient({
             <motion.p variants={fade} className="hero-particle-eyebrow">
               Solace
             </motion.p>
-
-            {/* Core Hook: Embarrassingly simple & direct */}
             <motion.h1 variants={fade} className="hero-particle-title home-hero-title is-mission">
               Machines that make decisions for you.
             </motion.h1>
-
-            {/* What is Hermes? */}
             <motion.p variants={fade} className="home-hero-subline text-lg font-medium text-foreground/90">
               Hermes is the first one. It manages money and makes market decisions on your behalf.
             </motion.p>
-
-            {/* Why trust it? */}
             <motion.p variants={fade} className="home-hero-dek text-muted mt-3">
               Every decision is recorded, timestamped, and publicly verified in real time.
             </motion.p>
-
             <motion.div variants={fade} className="hero-particle-ctas mt-8">
               <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-primary hero-cta-on-void">
                 Watch what it actually does
@@ -223,46 +212,24 @@ export default function HomeClient({
         )}
       </section>
 
-      {/* Hermes & Oracle Grid – streams only + Explore buttons */}
+      {/* Hermes & Oracle Grid – components handle their own header + explore button */}
       <section className="px-5 py-12 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            
-            {/* Hermes Card – only stream + button */}
-            <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-5 shadow-2xl transition-all duration-300 hover:border-white/20">
-              <div className="flex-1 overflow-hidden pb-8">
-                <HermesDashboardPreview decisions={recentDecisions} />
-              </div>
-              <div className="mt-4 flex items-center justify-end text-xs text-white/50">
-                <Link
-                  href={OBSERVATORY_HERMES_LEDGER_PATH}
-                  className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
-                >
-                  Explore <span className="text-sm">→</span>
-                </Link>
-              </div>
+            {/* Hermes Card */}
+            <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
+              <HermesDashboardPreview decisions={recentDecisions} />
             </div>
 
-            {/* Oracle Card – only stream + button */}
-            <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-5 shadow-2xl transition-all duration-300 hover:border-white/20">
-              <div className="flex-1 overflow-hidden pb-8">
-                <OracleOrbSection predictions={oraclePredictions} />
-              </div>
-              <div className="mt-4 flex items-center justify-end text-xs text-white/50">
-                <Link
-                  href="/oracle"
-                  className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
-                >
-                  Explore <span className="text-sm">→</span>
-                </Link>
-              </div>
+            {/* Oracle Card */}
+            <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
+              <OracleOrbSection predictions={oraclePredictions} />
             </div>
-
           </div>
         </div>
       </section>
 
-      {/* Machinery Section: Explaining how it works once curiosity is established */}
+      {/* Machinery Section */}
       <section className="home-vision border-t border-border px-5 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">
           <p className="home-vision-kicker">The Machinery Underneath</p>

@@ -35,7 +35,6 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
   const [displayed, setDisplayed] = useState<ActivePrediction[]>([]);
   const [started, setStarted] = useState(false);
 
-  // Initial staging
   useEffect(() => {
     if (predictions.length === 0) return undefined;
     const initialCount = Math.min(VISIBLE_COUNT, predictions.length);
@@ -51,7 +50,6 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
     return () => clearInterval(timer);
   }, [predictions]);
 
-  // Cycling
   useEffect(() => {
     if (!started || predictions.length <= VISIBLE_COUNT) return undefined;
     const cycle = setInterval(() => {
@@ -70,70 +68,68 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
   }, [started, predictions]);
 
   return (
-    <motion.div
-      className="h-full overflow-hidden rounded-2xl border border-border bg-neutral-100 dark:bg-neutral-900"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div className="p-6 md:p-8">
-        {/* Header */}
-        <div className="mb-4 flex items-center justify-between">
-          <p className="font-mono text-[0.6rem] font-medium uppercase tracking-[0.16em] text-muted">
-            Latest predictions
-          </p>
-        </div>
-
-        {/* Feed container */}
-        <div
-          className="relative overflow-hidden"
-          style={{ height: VISIBLE_COUNT * ITEM_HEIGHT }}
+    <div className="flex h-full flex-col">
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between">
+        <p className="font-mono text-[0.6rem] font-medium uppercase tracking-[0.16em] text-white/50">
+          Latest predictions
+        </p>
+        <Link
+          href="/oracle"
+          className="flex items-center gap-1 text-sm font-medium text-white/60 transition-colors hover:text-white"
         >
-          <AnimatePresence initial={false} mode="popLayout">
-            {displayed.map((prediction) => (
-              <motion.div
-                key={prediction.id}
-                layout="position"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="flex items-center justify-between gap-4 border-b border-border px-1 py-3"
-                style={{ height: ITEM_HEIGHT }}
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {prediction.question}
-                  </p>
-                  <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                    {prediction.asset && (
-                      <span
-                        className={`inline-flex rounded px-1 py-0.5 text-[0.6rem] font-medium uppercase tracking-wider ${
-                          prediction.asset === 'btc'
-                            ? 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300'
-                            : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
-                        }`}
-                      >
-                        {prediction.asset.toUpperCase()}
-                      </span>
-                    )}
-                    <span>{remainingLabel(prediction.resolvesAt)}</span>
-                  </p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-lg font-medium leading-none text-foreground [font-family:var(--font-display),Georgia,serif]">
-                    {formatProbability(prediction.probability)}
-                  </p>
-                  <p className="mt-1 font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">
-                    probability
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+          Explore <span className="text-base">→</span>
+        </Link>
       </div>
-    </motion.div>
+
+      {/* Feed container */}
+      <div
+        className="relative flex-1 overflow-hidden"
+        style={{ height: VISIBLE_COUNT * ITEM_HEIGHT }}
+      >
+        <AnimatePresence initial={false} mode="popLayout">
+          {displayed.map((prediction) => (
+            <motion.div
+              key={prediction.id}
+              layout="position"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="flex items-center justify-between gap-4 border-b border-white/10 px-1 py-3"
+              style={{ height: ITEM_HEIGHT }}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-white/90">
+                  {prediction.question}
+                </p>
+                <p className="mt-0.5 flex items-center gap-2 text-xs text-white/40">
+                  {prediction.asset && (
+                    <span
+                      className={`inline-flex rounded px-1 py-0.5 text-[0.6rem] font-medium uppercase tracking-wider ${
+                        prediction.asset === 'btc'
+                          ? 'bg-orange-500/20 text-orange-300'
+                          : 'bg-indigo-500/20 text-indigo-300'
+                      }`}
+                    >
+                      {prediction.asset.toUpperCase()}
+                    </span>
+                  )}
+                  <span>{remainingLabel(prediction.resolvesAt)}</span>
+                </p>
+              </div>
+              <div className="shrink-0 text-right">
+                <p className="text-lg font-medium leading-none text-white [font-family:var(--font-display),Georgia,serif]">
+                  {formatProbability(prediction.probability)}
+                </p>
+                <p className="mt-1 font-mono text-[0.6rem] uppercase tracking-wider text-white/40">
+                  probability
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }

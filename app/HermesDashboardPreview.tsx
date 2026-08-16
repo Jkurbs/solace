@@ -48,7 +48,6 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
   const [displayed, setDisplayed] = useState<HermesLedgerRow[]>([]);
   const [started, setStarted] = useState(false);
 
-  // Initial staging: show items one by one
   useEffect(() => {
     if (decisions.length === 0) return undefined;
     const initialCount = Math.min(VISIBLE_COUNT, decisions.length);
@@ -64,15 +63,13 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
     return () => clearInterval(timer);
   }, [decisions]);
 
-  // Cycling: remove first, append next
   useEffect(() => {
     if (!started || decisions.length <= VISIBLE_COUNT) return undefined;
     const cycle = setInterval(() => {
       setDisplayed((current) => {
         if (current.length === 0) return current;
         const next = [...current];
-        next.shift(); // remove oldest
-        // find the next item to append (cyclic)
+        next.shift();
         const lastId = current[current.length - 1]?.recordId;
         const lastIndex = decisions.findIndex((d) => d.recordId === lastId);
         const nextIndex = (lastIndex + 1) % decisions.length;
@@ -84,65 +81,63 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
   }, [started, decisions]);
 
   return (
-    <motion.div
-      className="h-full overflow-hidden rounded-2xl border border-border bg-neutral-100 dark:bg-neutral-900"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div className="p-6 md:p-8">
-        {/* Header: title + explore button */}
-        <div className="mb-4 flex items-center justify-between">
-          <p className="font-mono text-[0.6rem] font-medium uppercase tracking-[0.16em] text-muted">
-            Latest decisions
-          </p>
-        </div>
-
-        {/* Feed container */}
-        <div
-          className="relative overflow-hidden"
-          style={{ height: VISIBLE_COUNT * ITEM_HEIGHT }}
+    <div className="flex h-full flex-col">
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between">
+        <p className="font-mono text-[0.6rem] font-medium uppercase tracking-[0.16em] text-white/50">
+          Latest decisions
+        </p>
+        <Link
+          href={OBSERVATORY_HERMES_LEDGER_PATH}
+          className="flex items-center gap-1 text-sm font-medium text-white/60 transition-colors hover:text-white"
         >
-          <AnimatePresence initial={false} mode="popLayout">
-            {displayed.map((row, index) => {
-              const originalIndex = decisions.findIndex((d) => d.recordId === row.recordId);
-              const ret = illustrativeReturn(originalIndex);
-              return (
-                <motion.div
-                  key={row.recordId}
-                  layout="position"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex items-center justify-between gap-4 border-b border-border px-1 py-3"
-                  style={{ height: ITEM_HEIGHT }}
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted/30 text-[0.65rem] text-muted-foreground">
-                      {index + 1}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {formatActivitySummary(row)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{formatActivityDate(row.sealedAt)}</p>
-                    </div>
-                  </div>
-                  <span
-                    className={`shrink-0 text-sm font-medium tabular-nums ${
-                      ret.positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-                    }`}
-                  >
-                    {ret.formatted}
-                  </span>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
+          Explore <span className="text-base">→</span>
+        </Link>
       </div>
-    </motion.div>
+
+      {/* Feed container */}
+      <div
+        className="relative flex-1 overflow-hidden"
+        style={{ height: VISIBLE_COUNT * ITEM_HEIGHT }}
+      >
+        <AnimatePresence initial={false} mode="popLayout">
+          {displayed.map((row, index) => {
+            const originalIndex = decisions.findIndex((d) => d.recordId === row.recordId);
+            const ret = illustrativeReturn(originalIndex);
+            return (
+              <motion.div
+                key={row.recordId}
+                layout="position"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="flex items-center justify-between gap-4 border-b border-white/10 px-1 py-3"
+                style={{ height: ITEM_HEIGHT }}
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/5 text-[0.65rem] text-white/40">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-white/90">
+                      {formatActivitySummary(row)}
+                    </p>
+                    <p className="text-xs text-white/40">{formatActivityDate(row.sealedAt)}</p>
+                  </div>
+                </div>
+                <span
+                  className={`shrink-0 text-sm font-medium tabular-nums ${
+                    ret.positive ? 'text-emerald-400' : 'text-red-400'
+                  }`}
+                >
+                  {ret.formatted}
+                </span>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }
