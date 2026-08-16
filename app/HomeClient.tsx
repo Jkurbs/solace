@@ -106,7 +106,7 @@ export default function HomeClient({
   const heroInitial = reduceMotion ? false : 'hidden';
 
   // Animated word state
-  const words = ['financial', 'prediction', 'humanitarian'];
+  const words = ['financial', 'prediction', 'aids'];
   const [wordIndex, setWordIndex] = useState(0);
 
   useEffect(() => {
