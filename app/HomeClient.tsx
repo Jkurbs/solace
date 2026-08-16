@@ -52,7 +52,7 @@ function AnimatedWord({ word }: { word: string }) {
   );
 }
 
-// ---------- Types ----------
+// ---------- Types (unchanged) ----------
 export type HermesTelemetry = {
   posture: string;
   reason?: string;
@@ -104,6 +104,7 @@ export default function HomeClient({
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
 
+  // Animated word
   const words = ['financial', 'prediction', 'humanitarian'];
   const [wordIndex, setWordIndex] = useState(0);
 
@@ -114,6 +115,7 @@ export default function HomeClient({
     return () => clearInterval(interval);
   }, [words.length]);
 
+  // WebGL lifecycle (unchanged)
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0) return;
@@ -141,19 +143,21 @@ export default function HomeClient({
     };
   }, []);
 
+  // Data for stats
   const displayCount = sealedDecisions ?? 0;
-  const isVerified = !!anchor?.href;
+  const isVerified = anchor?.href ? true : false;
   const lastSealLabel = chainHead?.sealedAtLabel ?? '—';
+  const hashShort = chainHead?.hash ? `${chainHead.hash.slice(0, 6)}…${chainHead.hash.slice(-4)}` : '—';
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
 
       <section className="hero-research hero-particle-section relative overflow-hidden">
-        {/* <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
           <HermesLiquidityFieldRender maxParticles={30000} />
           <div className="hero-particle-vignette absolute inset-0 pointer-events-none" />
-        </div> */}
+        </div>
 
         <motion.div
           initial={heroInitial}
@@ -161,10 +165,16 @@ export default function HomeClient({
           variants={stagger}
           className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-20 md:pt-24 md:pb-28"
         >
-          <div className="hero-particle-copy home-hero-copy max-w-3xl mx-auto text-center">
+          <div className="hero-particle-copy home-hero-copy max-w-3xl">
+            {/* Eyebrow */}
+            <motion.p variants={fade} className="hero-particle-eyebrow">
+              Solace
+            </motion.p>
+
+            {/* Main Title (unchanged) */}
             <motion.h1
               variants={fade}
-              className="hero-particle-title home-hero-title is-mission flex flex-wrap items-center justify-center gap-1"
+              className="hero-particle-title home-hero-title is-mission flex flex-wrap items-center gap-1"
             >
               Machines that make{' '}
               <span className="inline-block min-w-[120px] text-center relative">
@@ -179,6 +189,7 @@ export default function HomeClient({
               decisions for you.
             </motion.h1>
 
+            {/* Subtitle (unchanged) */}
             <motion.p variants={fade} className="home-hero-subline text-lg font-medium text-foreground/90">
               Hermes is the first one. It manages money and makes market decisions on your behalf.
             </motion.p>
@@ -186,7 +197,8 @@ export default function HomeClient({
               Every decision is recorded, timestamped, and publicly verified in real time.
             </motion.p>
 
-            <motion.div variants={fade} className="hero-particle-ctas mt-8 flex justify-center gap-4">
+            {/* CTAs (unchanged) */}
+            <motion.div variants={fade} className="hero-particle-ctas mt-8">
               <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-primary hero-cta-on-void">
                 Watch what it actually does
               </Link>
@@ -195,62 +207,46 @@ export default function HomeClient({
               </Link>
             </motion.div>
 
-            {/* ✨ NEW: Slick Stats Bar – inspired by "400M+ queries" */}
+            {/* ✨ NEW: Stats Bar – decision count, seal, verification */}
             <motion.div
               variants={fade}
-              className="mt-12 flex flex-wrap items-center justify-center gap-8 md:gap-12 text-center"
+              className="mt-10 flex flex-wrap items-center justify-center gap-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm px-6 py-4 text-sm text-white/60"
             >
-              <div>
-                <div className="text-4xl md:text-5xl font-bold text-white tracking-tight tabular-nums">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl font-bold text-white tabular-nums">
                   {displayCount.toLocaleString('en-US')}
-                  {sealedDecisions !== null && <span className="text-2xl md:text-3xl text-white/40">+</span>}
-                </div>
-                <p className="mt-1 text-xs font-mono uppercase tracking-widest text-white/40">
+                </span>
+                <span className="text-xs uppercase tracking-wider text-white/40">
                   decisions sealed
-                </p>
+                </span>
               </div>
 
-              <div className="hidden md:block w-px h-12 bg-white/10" />
+              <span className="hidden sm:block text-white/20">|</span>
 
-              <div>
-                <div className="text-4xl md:text-5xl font-bold text-white tracking-tight flex items-center justify-center gap-2">
-                  {isVerified ? (
-                    <>
-                      <span className="text-emerald-400">✓</span>
-                      <span className="text-2xl md:text-3xl text-white/60">Verified</span>
-                    </>
-                  ) : (
-                    <span className="text-2xl md:text-3xl text-yellow-400/60">Verifying…</span>
-                  )}
-                </div>
-                <p className="mt-1 text-xs font-mono uppercase tracking-widest text-white/40">
-                  on-chain anchor
-                </p>
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-white/80">{isVerified ? 'Verified' : 'Verifying…'}</span>
               </div>
 
-              <div className="hidden md:block w-px h-12 bg-white/10" />
+              <span className="hidden sm:block text-white/20">|</span>
 
-              <div>
-                <div className="text-3xl md:text-4xl font-bold text-white tracking-tight">
-                  {lastSealLabel}
-                </div>
-                <p className="mt-1 text-xs font-mono uppercase tracking-widest text-white/40">
-                  last seal
-                </p>
+              <div className="flex items-center gap-2">
+                <span className="text-white/40">Last seal</span>
+                <span className="font-mono text-white/80">{lastSealLabel}</span>
               </div>
+
+              {chainHead?.hash && (
+                <>
+                  <span className="hidden sm:block text-white/20">|</span>
+                  <Link
+                    href={anchor?.href ?? '/anchor'}
+                    className="font-mono text-xs bg-white/5 px-2 py-1 rounded hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+                  >
+                    {hashShort}
+                  </Link>
+                </>
+              )}
             </motion.div>
-
-            {/* Optional: show short hash as a subtle link */}
-            {chainHead?.hash && (
-              <motion.div variants={fade} className="mt-4">
-                <Link
-                  href={anchor?.href ?? '/anchor'}
-                  className="inline-block text-xs font-mono text-white/20 hover:text-white/60 transition-colors underline decoration-dotted underline-offset-2"
-                >
-                  {chainHead.hash.slice(0, 8)}…{chainHead.hash.slice(-6)}
-                </Link>
-              </motion.div>
-            )}
           </div>
         </motion.div>
       </section>
@@ -259,6 +255,7 @@ export default function HomeClient({
       <section className="px-5 py-12 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            {/* Hermes Card */}
             <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
               <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
                 Hermes
@@ -276,6 +273,7 @@ export default function HomeClient({
               </div>
             </div>
 
+            {/* Oracle Card */}
             <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
               <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
                 Oracle
