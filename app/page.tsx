@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { formatRelativeTime } from '@/features/anchor/format';
 import { getAnchorChain } from '@/features/anchor/store';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
+import { computeLedgerScoreboard, formatPercent } from '@/features/hermes-ledger/scoreboard';
 import { getHermesLedgerPulse, getRecentHermesLedgerRows, listHermesLedgerRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { fetchKalshiBtcEthPredictions } from '@/features/oracle/kalshi';
@@ -11,8 +12,13 @@ import HomeClient, { type HermesTelemetry } from './HomeClient';
 import type { ActivePrediction } from './oracle/active-predictions';
 
 const TELEMETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+/** Keep home SSR/ISR under platform build budgets (no full ledger / Kalshi). */
 const HOME_FETCH_BUDGET_MS = 8_000;
 
+// The freshness contract: telemetry renders only while a feed is fresh.
+// A stale or missing feed hides the cells entirely, never a fake pulse.
+// Hermes publishes two feeds; the brief snapshot is the primary artery, the
+// public reading a fallback. Freshest fresh feed wins.
 async function getHermesTelemetry(): Promise<HermesTelemetry | null> {
   const [brief, reading] = await Promise.all([
     getStoredHermesBriefSnapshot().catch(() => null),
@@ -82,6 +88,8 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
   });
 }
 
+// Telemetry and the ledger pulse only. No articles, Glorya, or Kalshi on the
+// homepage build path. Revalidate often enough that a sealed count stays honest.
 export const revalidate = 300;
 
 export const metadata: Metadata = {
@@ -148,17 +156,6 @@ export default async function Home() {
         }
       : null;
 
-  // Compute Hermes precision: ratio of deployed paths to total evaluated
-  let precisionRate: number | null = null;
-  if (hermesTelemetry) {
-    const deployed = hermesTelemetry.deployedCount ?? 0;
-    const underReview = hermesTelemetry.pathsCount ?? 0;
-    const total = deployed + underReview;
-    if (total > 0) {
-      precisionRate = Math.round((deployed / total) * 100);
-    }
-  }
-
   return (
     <HomeClient
       hermesTelemetry={hermesTelemetry}
@@ -167,7 +164,6 @@ export default async function Home() {
       anchor={anchor}
       recentDecisions={recentDecisions}
       oraclePredictions={oraclePredictions}
-      precisionRate={precisionRate}
     />
   );
 }
