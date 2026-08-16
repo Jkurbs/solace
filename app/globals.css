@@ -15233,13 +15233,19 @@ html.dark .home-research ::selection,
 }
 
 .home-hero-dek {
-  margin: 1.35rem auto 0;
+  margin: 1.35rem 0 0;
   max-width: 32rem;
   color: color-mix(in srgb, var(--foreground, #1c1917) 78%, var(--muted, #78716c));
   font-size: clamp(1.02rem, 1.4vw, 1.18rem);
   font-weight: 400;
   letter-spacing: -0.011em;
   line-height: 1.55;
+}
+
+/* Homepage hero only: center dek inside the particle copy container. */
+.hero-particle-copy .home-hero-dek {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .home-record-band {
@@ -15249,6 +15255,7 @@ html.dark .home-research ::selection,
 .home-record {
   width: 100%;
   max-width: 40rem;
+  margin: 0 auto;
   padding: 1.15rem 1.25rem 1.1rem;
   border: 1px solid color-mix(in srgb, var(--foreground, #1c1917) 14%, transparent);
   border-radius: 1rem;
