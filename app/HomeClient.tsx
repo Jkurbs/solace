@@ -27,28 +27,16 @@ const stagger = {
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
 };
 
-// Enhanced animated word with gradient, scale, rotation, and glow
-const wordColors = {
-  financial: 'from-emerald-400 to-teal-400',
-  prediction: 'from-blue-400 to-indigo-400',
-  humanitarian: 'from-rose-400 to-pink-400',
-};
-
+// ---------- Animated Word Component ----------
 function AnimatedWord({ word }: { word: string }) {
-  const colorClass = wordColors[word as keyof typeof wordColors] || 'from-gray-400 to-gray-400';
-
   return (
     <motion.span
       key={word}
-      initial={{ opacity: 0, y: 20, scale: 0.8, rotate: -4 }}
-      animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
-      exit={{ opacity: 0, y: -20, scale: 0.8, rotate: 4 }}
-      transition={{
-        duration: 0.55,
-        ease: [0.34, 1.56, 0.64, 1], // springy bounce
-      }}
-      className={`inline-block bg-gradient-to-r ${colorClass} bg-clip-text text-transparent`}
-      style={{ textShadow: '0 0 40px rgba(255,255,255,0.15)' }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.4, ease: easeOut }}
+      className="inline-block text-white"
     >
       {word}
     </motion.span>
@@ -106,7 +94,7 @@ export default function HomeClient({
   const heroInitial = reduceMotion ? false : 'hidden';
 
   // Animated word state
-  const words = ['financial', 'prediction', 'aids'];
+  const words = ['financial', 'belief'];
   const [wordIndex, setWordIndex] = useState(0);
 
   useEffect(() => {
@@ -168,17 +156,10 @@ export default function HomeClient({
               Solace
             </motion.p>
 
-            {/* Animated Title with glow */}
-            <motion.h1
-              variants={fade}
-              className="hero-particle-title home-hero-title is-mission flex flex-wrap items-center gap-1"
-            >
+            {/* Animated Title */}
+            <motion.h1 variants={fade} className="hero-particle-title home-hero-title is-mission flex flex-wrap items-center gap-1">
               Machines that make{' '}
-              <span className="inline-block min-w-[120px] text-center relative">
-                <span
-                  className="absolute inset-0 blur-2xl opacity-30 rounded-full"
-                  style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)' }}
-                />
+              <span className="inline-block min-w-[120px] text-center">
                 <AnimatePresence mode="wait">
                   <AnimatedWord word={words[wordIndex]} />
                 </AnimatePresence>
