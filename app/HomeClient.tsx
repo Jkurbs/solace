@@ -157,10 +157,10 @@ export default function HomeClient({
           initial={heroInitial}
           animate="show"
           variants={stagger}
-          className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-20 md:pt-24 md:pb-28"
+          className="hero-particle-layout relative z-10 mx-auto flex min-h-[70vh] max-w-6xl flex-col items-center justify-center px-5 py-20 md:min-h-[75vh] md:py-28"
         >
           {/* ✅ CENTERED CONTAINER */}
-          <div className="hero-particle-copy home-hero-copy max-w-3xl mx-auto text-center">
+          <div className="hero-particle-copy home-hero-copy w-full max-w-3xl text-center">
             {/* <motion.p variants={fade} className="hero-particle-eyebrow">
               Solace
             </motion.p> */}
@@ -183,10 +183,10 @@ export default function HomeClient({
               decisions for you.
             </motion.h1>
 
-            <motion.p variants={fade} className="home-hero-subline text-lg font-medium text-foreground/90">
+            <motion.p variants={fade} className="home-hero-subline mx-auto max-w-xl text-center text-lg font-medium text-foreground/90">
               Hermes is the first one. It manages money and makes market decisions on your behalf.
             </motion.p>
-            <motion.p variants={fade} className="home-hero-dek text-muted mt-3">
+            <motion.p variants={fade} className="home-hero-dek mx-auto max-w-xl text-center text-muted mt-3">
               Every decision is recorded, timestamped, and publicly verified in real time.
             </motion.p>
 
