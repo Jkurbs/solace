@@ -106,7 +106,7 @@ export default function HomeClient({
   const heroInitial = reduceMotion ? false : 'hidden';
 
   // Animated word state
-  const words = ['financial', 'prediction', 'humanitarian'];
+  const words = ['financial', 'prediction', 'aids'];
   const [wordIndex, setWordIndex] = useState(0);
 
   useEffect(() => {
@@ -163,12 +163,7 @@ export default function HomeClient({
           variants={stagger}
           className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-20 md:pt-24 md:pb-28"
         >
-          {/* ✨ CENTERED ✨ */}
           <div className="hero-particle-copy home-hero-copy max-w-3xl mx-auto text-center">
-            <motion.p variants={fade} className="hero-particle-eyebrow">
-              Solace
-            </motion.p>
-
             {/* Animated Title with glow */}
             <motion.h1
               variants={fade}
