@@ -145,11 +145,9 @@ export default function HomeClient({
     };
   }, []);
 
-  // Determine if we show the stats
   const showRecord =
     (sealedDecisions != null && sealedDecisions > 0) || Boolean(chainHead) || Boolean(anchor);
 
-  // Compute last anchored label
   const lastAnchoredLabel = anchor?.lastAnchoredLabel
     ? anchor.lastAnchoredLabel
     : chainHead
@@ -204,54 +202,57 @@ export default function HomeClient({
               </Link>
             </motion.div>
 
-            {/* New compact stats bar */}
+            {/* Sleeker stats bar */}
             {showRecord && (
               <motion.div
                 variants={fade}
-                className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-center"
+                className="mt-10 flex w-full flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-white/60 md:gap-x-8"
               >
-                {/* Sealed decisions */}
-                {sealedDecisions != null && sealedDecisions > 0 && (
-                  <div className="flex flex-col items-center">
-                    <span className="text-3xl md:text-4xl font-bold text-white tabular-nums">
-                      {sealedDecisions.toLocaleString('en-US')}
-                    </span>
-                    <span className="mt-1 text-[0.6rem] font-mono uppercase tracking-widest text-white/40">
-                      decisions sealed
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xl font-semibold text-white md:text-2xl tabular-nums">
+                    {sealedDecisions?.toLocaleString('en-US') ?? '—'}
+                  </span>
+                  <span className="text-xs uppercase tracking-wider text-white/40">
+                    decisions
+                  </span>
+                </div>
 
-                {/* Chain verified */}
-                <div className="flex flex-col items-center">
-                  <span className="text-3xl md:text-4xl font-bold text-white">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xl font-semibold text-white md:text-2xl">
                     {isVerified ? '✓' : '—'}
                   </span>
-                  <span className="mt-1 text-[0.6rem] font-mono uppercase tracking-widest text-white/40">
-                    chain verified
+                  <span className="text-xs uppercase tracking-wider text-white/40">
+                    verified
                   </span>
                 </div>
 
-                {/* Last anchored */}
-                <div className="flex flex-col items-center">
-                  <span className="text-3xl md:text-4xl font-bold text-white tabular-nums">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xl font-semibold text-white md:text-2xl tabular-nums">
                     {lastAnchoredLabel}
                   </span>
-                  <span className="mt-1 text-[0.6rem] font-mono uppercase tracking-widest text-white/40">
-                    last anchored
+                  <span className="text-xs uppercase tracking-wider text-white/40">
+                    anchored
                   </span>
                 </div>
+
+                {/* Light button */}
+                <Link
+                  href={OBSERVATORY_HERMES_LEDGER_PATH}
+                  className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1.5 text-xs font-medium text-white/60 transition-colors hover:border-white/40 hover:text-white"
+                >
+                  Check the observatory
+                  <span className="text-sm">→</span>
+                </Link>
               </motion.div>
             )}
 
-            {/* Note – remains below stats */}
+            {/* Note – removed or kept minimal */}
             {showRecord && (
               <motion.p
                 variants={fade}
-                className="mt-6 text-center text-xs text-white/30"
+                className="mt-4 text-xs text-white/20"
               >
-                Founder capital. Young sample.
-                {chainHead ? ` Row ${chainHead.rowNumber}.` : ''}
+                {chainHead ? `Row ${chainHead.rowNumber}` : 'Founder capital · Young sample'}
               </motion.p>
             )}
           </div>
