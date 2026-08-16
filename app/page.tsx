@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { formatRelativeTime } from '@/features/anchor/format';
 import { getAnchorChain } from '@/features/anchor/store';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
-import { getHermesLedgerPulse } from '@/features/hermes-ledger/store';
+import { getHermesLedgerPulse, getRecentHermesLedgerRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 
 import HomeClient, { type HermesTelemetry } from './HomeClient';
@@ -101,7 +101,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [hermesTelemetry, ledgerPulse, chain] = await Promise.all([
+  const [hermesTelemetry, ledgerPulse, chain, recentDecisions] = await Promise.all([
     withTimeout(getHermesTelemetry().catch(() => null), HOME_FETCH_BUDGET_MS, null),
     withTimeout(getHermesLedgerPulse().catch(() => null), HOME_FETCH_BUDGET_MS, null),
     withTimeout(
@@ -109,6 +109,7 @@ export default async function Home() {
       HOME_FETCH_BUDGET_MS,
       { anchors: [], head: null, count: 0, verified: false, breaks: [] },
     ),
+    withTimeout(getRecentHermesLedgerRows(5).catch(() => []), HOME_FETCH_BUDGET_MS, []),
   ]);
 
   const sealedDecisions =
@@ -148,6 +149,7 @@ export default async function Home() {
       sealedDecisions={sealedDecisions}
       chainHead={chainHead}
       anchor={anchor}
+      recentDecisions={recentDecisions}
     />
   );
 }

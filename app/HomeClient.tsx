@@ -6,9 +6,11 @@ import { motion, useReducedMotion } from 'framer-motion';
 
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import type { HermesLedgerRow } from '@/features/hermes-ledger/store';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
+import HermesDashboardPreview from './HermesDashboardPreview';
 import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
@@ -64,11 +66,13 @@ export default function HomeClient({
   sealedDecisions,
   chainHead = null,
   anchor = null,
+  recentDecisions = [],
 }: {
   hermesTelemetry: HermesTelemetry | null;
   sealedDecisions: number | null;
   chainHead?: ChainHeadSummary | null;
   anchor?: AnchorStatus | null;
+  recentDecisions?: HermesLedgerRow[];
 }) {
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
@@ -214,6 +218,8 @@ export default function HomeClient({
           </motion.div>
         )}
       </section>
+
+      <HermesDashboardPreview decisions={recentDecisions} />
 
       {/* Machinery Section: Explaining how it works once curiosity is established */}
       <section className="home-vision border-t border-border px-5 py-20 md:py-28">
