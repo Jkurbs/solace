@@ -274,10 +274,13 @@ export default function HomeClient({
               <div className="flex-1">
                 <HermesDashboardPreview decisions={recentDecisions} />
               </div>
-              <div className="mt-4 flex items-center justify-end text-xs text-white/50">
+              <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-white/50">
+                <p className="mr-4 max-w-xs text-xs leading-relaxed text-white/60">
+                  An automated system that reads global market trends and manages investments directly on your behalf.
+                </p>
                 <Link
                   href="/hermes"
-                  className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
+                  className="flex shrink-0 items-center gap-1 font-medium text-white/70 transition-colors hover:text-white"
                 >
                   Explore Hermes <span className="text-sm">→</span>
                 </Link>
@@ -292,10 +295,13 @@ export default function HomeClient({
               <div className="flex-1">
                 <OracleOrbSection predictions={oraclePredictions} />
               </div>
-              <div className="mt-4 flex items-center justify-end text-xs text-white/50">
+              <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-white/50">
+                <p className="mr-4 max-w-xs text-xs leading-relaxed text-white/60">
+                  A prediction system that calculates the odds of future events and tracks how accurate its forecasts turn out to be.
+                </p>
                 <Link
                   href="/oracle"
-                  className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
+                  className="flex shrink-0 items-center gap-1 font-medium text-white/70 transition-colors hover:text-white"
                 >
                   Explore Oracle <span className="text-sm">→</span>
                 </Link>
