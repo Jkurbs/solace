@@ -238,7 +238,6 @@ export default function HomeClient({
                 </Link>
               </div>
             </div>
-
             {/* Oracle Card: Streamlined to Latest Predictions + Action Button */}
             <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
               <div className="flex flex-col gap-5">
@@ -255,12 +254,14 @@ export default function HomeClient({
                         className="flex flex-col gap-1.5 rounded-2xl border border-white/5 bg-black/30 p-3.5 transition-colors hover:border-white/10"
                       >
                         <p className="line-clamp-2 text-xs font-medium text-white/90 leading-snug">
-                          {pred.title || pred.question}
+                          {pred.question}
                         </p>
                         <div className="flex items-center justify-between text-[11px] text-white/50 font-mono">
                           <span>Probability</span>
                           <span className="font-semibold text-emerald-400">
-                            {typeof pred.probability === 'number' ? `${(pred.probability * 100).toFixed(0)}%` : pred.probability}
+                            {typeof pred.probability === 'number'
+                              ? `${(pred.probability * 100).toFixed(0)}%`
+                              : pred.probability}
                           </span>
                         </div>
                       </div>
@@ -273,7 +274,7 @@ export default function HomeClient({
                 </div>
               </div>
 
-              <div className="mt-6 flex items-center justify-between text-xs text-white/50 border-t border-white/5 pt-4">
+              <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-white/50">
                 <span className="font-medium text-white/80">Oracle</span>
                 <Link
                   href="/oracle"
@@ -283,7 +284,6 @@ export default function HomeClient({
                 </Link>
               </div>
             </div>
-
             {/* Cryptographic Proof Card */}
             <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20 md:col-span-2 lg:col-span-1">
               <div className="flex flex-col gap-4">
