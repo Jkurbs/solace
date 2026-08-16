@@ -31,7 +31,7 @@ const stagger = {
 const wordColors = {
   financial: 'from-emerald-400 to-teal-400',
   prediction: 'from-blue-400 to-indigo-400',
-  humanitarian: 'from-rose-400 to-pink-400',
+  aids: 'from-rose-400 to-pink-400',
 };
 
 function AnimatedWord({ word }: { word: string }) {
@@ -83,6 +83,7 @@ export default function HomeClient({
   anchor = null,
   recentDecisions = [],
   oraclePredictions = [],
+  precisionRate = null,
 }: {
   hermesTelemetry: HermesTelemetry | null;
   sealedDecisions: number | null;
@@ -90,6 +91,7 @@ export default function HomeClient({
   anchor?: AnchorStatus | null;
   recentDecisions?: HermesLedgerRow[];
   oraclePredictions?: ActivePrediction[];
+  precisionRate?: number | null;
 }) {
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
@@ -132,17 +134,18 @@ export default function HomeClient({
   }, []);
 
   const showRecord =
-    (sealedDecisions != null && sealedDecisions > 0) || Boolean(chainHead) || Boolean(anchor);
+    (sealedDecisions != null && sealedDecisions > 0) ||
+    Boolean(chainHead) ||
+    Boolean(anchor) ||
+    precisionRate !== null;
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
 
       <section className="hero-research hero-particle-section relative overflow-hidden">
-        {/* <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
-          <HermesLiquidityFieldRender maxParticles={30000} />
-          <div className="hero-particle-vignette absolute inset-0 pointer-events-none" />
-        </div> */}
+        {/* Particle background commented out */}
+        {/* <div ... /> */}
 
         <motion.div
           initial={heroInitial}
@@ -151,11 +154,6 @@ export default function HomeClient({
           className="hero-particle-layout relative z-10 mx-auto flex min-h-[70vh] max-w-6xl flex-col items-center justify-center px-5 py-20 md:min-h-[75vh] md:py-28"
         >
           <div className="hero-particle-copy home-hero-copy flex w-full max-w-3xl flex-col items-center text-center">
-            {/* <motion.p variants={fade} className="hero-particle-eyebrow">
-              Solace
-            </motion.p> */}
-
-            {/* Title – explicitly centered */}
             <motion.h1
               variants={fade}
               className="hero-particle-title home-hero-title is-mission text-center"
@@ -206,10 +204,11 @@ export default function HomeClient({
                   <p className="home-hero-stat-label">Sealed decisions</p>
                 </div>
               )}
-              {chainHead && (
+              {/* Precision from Hermes */}
+              {precisionRate !== null && (
                 <div className="home-hero-stat">
-                  <p className="home-hero-stat-value home-hero-stat-value-meta">{chainHead.sealedAtLabel}</p>
-                  <p className="home-hero-stat-label">Last seal</p>
+                  <p className="home-hero-stat-value">{precisionRate}%</p>
+                  <p className="home-hero-stat-label">Precision</p>
                 </div>
               )}
               {anchor && (
