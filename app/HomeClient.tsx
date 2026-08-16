@@ -162,10 +162,6 @@ export default function HomeClient({
           className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-20 md:pt-24 md:pb-28"
         >
           <div className="hero-particle-copy home-hero-copy max-w-3xl mx-auto text-center">
-            <motion.p variants={fade} className="hero-particle-eyebrow">
-              Solace
-            </motion.p>
-
             <motion.h1
               variants={fade}
               className="hero-particle-title home-hero-title is-mission flex flex-wrap items-center justify-center gap-1"
