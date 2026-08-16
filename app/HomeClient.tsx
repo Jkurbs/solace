@@ -212,19 +212,47 @@ export default function HomeClient({
         )}
       </section>
 
-      {/* Hermes & Oracle Grid – components handle their own header + explore button */}
+      {/* Hermes & Oracle Grid */}
       <section className="px-5 py-12 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            
             {/* Hermes Card */}
-            <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
-              <HermesDashboardPreview decisions={recentDecisions} />
+            <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
+              <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
+                Hermes
+              </h3>
+              <div className="flex-1">
+                <HermesDashboardPreview decisions={recentDecisions} />
+              </div>
+              <div className="mt-4 flex items-center justify-end text-xs text-white/50">
+                <Link
+                  href={OBSERVATORY_HERMES_LEDGER_PATH}
+                  className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
+                >
+                  Explore Hermes <span className="text-sm">→</span>
+                </Link>
+              </div>
             </div>
 
             {/* Oracle Card */}
-            <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
-              <OracleOrbSection predictions={oraclePredictions} />
+            <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
+              <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
+                Oracle
+              </h3>
+              <div className="flex-1">
+                <OracleOrbSection predictions={oraclePredictions} />
+              </div>
+              <div className="mt-4 flex items-center justify-end text-xs text-white/50">
+                <Link
+                  href="/oracle"
+                  className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
+                >
+                  Explore Oracle <span className="text-sm">→</span>
+                </Link>
+              </div>
             </div>
+
           </div>
         </div>
       </section>
