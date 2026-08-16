@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { motion, useReducedMotion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -27,20 +27,7 @@ const stagger = {
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
 };
 
-// ---------- Animated Counter ----------
-function AnimatedCounter({ target }: { target: number }) {
-  const count = useMotionValue(0);
-  const rounded = useTransform(count, (v) => Math.round(v).toLocaleString('en-US'));
-
-  useEffect(() => {
-    const controls = animate(count, target, { duration: 1.8, ease: 'easeOut' });
-    return controls.stop;
-  }, [count, target]);
-
-  return <motion.span>{rounded}</motion.span>;
-}
-
-// ---------- Animated Word (gradient, spring) ----------
+// Enhanced animated word with gradient, scale, rotation, and glow
 const wordColors = {
   financial: 'from-emerald-400 to-teal-400',
   prediction: 'from-blue-400 to-indigo-400',
@@ -56,7 +43,10 @@ function AnimatedWord({ word }: { word: string }) {
       initial={{ opacity: 0, y: 20, scale: 0.8, rotate: -4 }}
       animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
       exit={{ opacity: 0, y: -20, scale: 0.8, rotate: 4 }}
-      transition={{ duration: 0.55, ease: [0.34, 1.56, 0.64, 1] }}
+      transition={{
+        duration: 0.55,
+        ease: [0.34, 1.56, 0.64, 1], // springy bounce
+      }}
       className={`inline-block bg-gradient-to-r ${colorClass} bg-clip-text text-transparent`}
       style={{ textShadow: '0 0 40px rgba(255,255,255,0.15)' }}
     >
@@ -65,7 +55,6 @@ function AnimatedWord({ word }: { word: string }) {
   );
 }
 
-// ---------- Rest of types (unchanged) ----------
 export type HermesTelemetry = {
   posture: string;
   reason?: string;
@@ -98,7 +87,6 @@ function formatConstant(value: string) {
     .join(' ');
 }
 
-// ---------- Main Component ----------
 export default function HomeClient({
   hermesTelemetry,
   sealedDecisions,
@@ -118,7 +106,7 @@ export default function HomeClient({
   const heroInitial = reduceMotion ? false : 'hidden';
 
   // Animated word state
-  const words = ['financial', 'prediction', 'humanitarian'];
+  const words = ['financial', 'prediction', 'aids'];
   const [wordIndex, setWordIndex] = useState(0);
 
   useEffect(() => {
@@ -128,7 +116,6 @@ export default function HomeClient({
     return () => clearInterval(interval);
   }, [words.length]);
 
-  // WebGL lifecycle (unchanged)
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0) return;
@@ -160,21 +147,15 @@ export default function HomeClient({
     (sealedDecisions != null && sealedDecisions > 0) ||
     Boolean(hermesTelemetry?.condition || hermesTelemetry?.posture || hermesTelemetry?.reason);
 
-  // Prepare data for hero
-  const displayCount = sealedDecisions ?? 0;
-  const isVerified = anchor?.href ? true : false;
-  const lastSealLabel = chainHead?.sealedAtLabel ?? '—';
-  const hashShort = chainHead?.hash ? `${chainHead.hash.slice(0, 6)}…${chainHead.hash.slice(-4)}` : '—';
-
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
 
       <section className="hero-research hero-particle-section relative overflow-hidden">
-        <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
+        {/* <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
           <HermesLiquidityFieldRender maxParticles={30000} />
           <div className="hero-particle-vignette absolute inset-0 pointer-events-none" />
-        </div>
+        </div> */}
 
         <motion.div
           initial={heroInitial}
@@ -182,65 +163,36 @@ export default function HomeClient({
           variants={stagger}
           className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-20 md:pt-24 md:pb-28"
         >
-          <div className="hero-particle-copy home-hero-copy max-w-4xl mx-auto text-center">
-            {/* Eyebrow */}
-            <motion.p variants={fade} className="hero-particle-eyebrow text-center">
+          <div className="hero-particle-copy home-hero-copy max-w-3xl">
+            <motion.p variants={fade} className="hero-particle-eyebrow">
               Solace
             </motion.p>
 
-            {/* Small animated title (now secondary) */}
-            <motion.h2
+            {/* Animated Title with glow */}
+            <motion.h1
               variants={fade}
-              className="text-sm font-mono uppercase tracking-widest text-white/50 mb-6"
+              className="hero-particle-title home-hero-title is-mission flex flex-wrap items-center gap-1"
             >
               Machines that make{' '}
-              <span className="inline-block min-w-[100px] text-center relative">
+              <span className="inline-block min-w-[120px] text-center relative">
                 <span
-                  className="absolute inset-0 blur-2xl opacity-20 rounded-full"
-                  style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)' }}
+                  className="absolute inset-0 blur-2xl opacity-30 rounded-full"
+                  style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)' }}
                 />
                 <AnimatePresence mode="wait">
                   <AnimatedWord word={words[wordIndex]} />
                 </AnimatePresence>
               </span>{' '}
-              decisions
-            </motion.h2>
+              decisions for you.
+            </motion.h1>
 
-            {/* Massive Decision Counter */}
-            <motion.div variants={fade} className="mb-2">
-              <span className="text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight text-white font-mono">
-                <AnimatedCounter target={displayCount} />
-              </span>
-            </motion.div>
-
-            <motion.p variants={fade} className="text-lg md:text-xl text-white/60 font-medium mb-2">
-              decisions sealed and anchored on-chain
+            <motion.p variants={fade} className="home-hero-subline text-lg font-medium text-foreground/90">
+              Hermes is the first one. It manages money and makes market decisions on your behalf.
             </motion.p>
-
-            {/* Verification & Chain Preview */}
-            <motion.div
-              variants={fade}
-              className="flex flex-wrap items-center justify-center gap-4 text-sm text-white/40 mt-4"
-            >
-              <span className="flex items-center gap-2">
-                <span className={`inline-block h-2 w-2 rounded-full ${anchor?.href ? 'bg-emerald-400 animate-pulse' : 'bg-yellow-400'}`} />
-                {anchor?.href ? 'Verified' : 'Verifying…'}
-              </span>
-              <span className="text-white/20">|</span>
-              <span>Last seal: {lastSealLabel}</span>
-              <span className="text-white/20">|</span>
-              <span className="font-mono text-xs bg-white/5 px-2 py-0.5 rounded">
-                {hashShort}
-              </span>
-              {anchor?.href && (
-                <Link href={anchor.href} className="text-white/30 hover:text-white transition-colors underline decoration-dotted underline-offset-2">
-                  View proof →
-                </Link>
-              )}
-            </motion.div>
-
-            {/* CTAs */}
-            <motion.div variants={fade} className="hero-particle-ctas mt-8 flex justify-center gap-4">
+            <motion.p variants={fade} className="home-hero-dek text-muted mt-3">
+              Every decision is recorded, timestamped, and publicly verified in real time.
+            </motion.p>
+            <motion.div variants={fade} className="hero-particle-ctas mt-8">
               <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-primary hero-cta-on-void">
                 Watch what it actually does
               </Link>
@@ -251,7 +203,6 @@ export default function HomeClient({
           </div>
         </motion.div>
 
-        {/* Record band – now we keep it but can remove it if you prefer */}
         {showRecord && (
           <motion.div
             initial={heroInitial}
@@ -316,10 +267,11 @@ export default function HomeClient({
         )}
       </section>
 
-      {/* Hermes & Oracle Grid (unchanged) */}
+      {/* Hermes & Oracle Grid */}
       <section className="px-5 py-12 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            
             {/* Hermes Card */}
             <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
               <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
@@ -355,11 +307,12 @@ export default function HomeClient({
                 </Link>
               </div>
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* Machinery Section (unchanged) */}
+      {/* Machinery Section */}
       <section className="home-vision border-t border-border px-5 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">
           <p className="home-vision-kicker">The Machinery Underneath</p>
