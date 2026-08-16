@@ -227,7 +227,7 @@ export default function HomeClient({
               </div>
               <div className="mt-4 flex items-center justify-end text-xs text-white/50">
                 <Link
-                  href={OBSERVATORY_HERMES_LEDGER_PATH}
+                  href="/hermes"
                   className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
                 >
                   Explore Hermes <span className="text-sm">→</span>
