@@ -223,30 +223,17 @@ export default function HomeClient({
         )}
       </section>
 
-      {/* Hermes & Oracle Grid */}
+      {/* Hermes & Oracle Grid – streams only + Explore buttons */}
       <section className="px-5 py-12 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             
-            {/* Hermes Card */}
+            {/* Hermes Card – only stream + button */}
             <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-5 shadow-2xl transition-all duration-300 hover:border-white/20">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs text-blue-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
-                  Live Execution
-                </div>
-                <h3 className="mt-3 text-xl font-medium tracking-tight text-white">Hermes</h3>
-                <p className="mt-1 text-sm leading-relaxed text-white/60">
-                  Manages capital and makes market decisions on your behalf. Every decision is sealed before execution.
-                </p>
-              </div>
-              <div className="flex-1 overflow-hidden pb-8 mt-4">
+              <div className="flex-1 overflow-hidden pb-8">
                 <HermesDashboardPreview decisions={recentDecisions} />
               </div>
-              <div className="mt-4 flex items-center justify-between text-xs text-white/50">
-                <span className="font-medium text-white/80">
-                  {sealedDecisions?.toLocaleString() ?? 0} sealed decisions
-                </span>
+              <div className="mt-4 flex items-center justify-end text-xs text-white/50">
                 <Link
                   href={OBSERVATORY_HERMES_LEDGER_PATH}
                   className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
