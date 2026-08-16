@@ -15252,10 +15252,63 @@ html.dark .home-research ::selection,
   margin-top: -1.5rem;
 }
 
-/* Homepage hero only: center the live record band card. */
-.home-record-band .home-record {
-  margin-left: auto;
-  margin-right: auto;
+.home-hero-stats {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.home-hero-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 2rem;
+  justify-items: center;
+}
+
+.home-hero-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.home-hero-stat-value {
+  margin: 0;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--foreground, #1c1917);
+}
+
+.home-hero-stat-value-meta {
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  line-height: 1.2;
+  padding-top: 0.2em;
+}
+
+.home-hero-stat-link {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: color-mix(in srgb, var(--foreground, #1c1917) 22%, transparent);
+}
+
+.home-hero-stat-link:hover {
+  text-decoration-color: color-mix(in srgb, var(--foreground, #1c1917) 60%, transparent);
+}
+
+.home-hero-stat-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted, #78716c);
+}
+
+.home-hero-stats-note {
+  margin: 2rem 0 0;
+  font-size: 0.78rem;
+  color: var(--muted, #78716c);
 }
 
 .home-record {

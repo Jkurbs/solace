@@ -76,14 +76,6 @@ export type AnchorStatus = {
   href?: string;
 };
 
-function formatConstant(value: string) {
-  return value
-    .toLowerCase()
-    .split('_')
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ');
-}
-
 export default function HomeClient({
   hermesTelemetry,
   sealedDecisions,
@@ -140,8 +132,7 @@ export default function HomeClient({
   }, []);
 
   const showRecord =
-    (sealedDecisions != null && sealedDecisions > 0) ||
-    Boolean(hermesTelemetry?.condition || hermesTelemetry?.posture || hermesTelemetry?.reason);
+    (sealedDecisions != null && sealedDecisions > 0) || Boolean(chainHead) || Boolean(anchor);
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
@@ -205,61 +196,38 @@ export default function HomeClient({
             initial={heroInitial}
             animate="show"
             variants={fade}
-            className="home-record-band relative z-10 mx-auto max-w-6xl px-5 pb-16 md:pb-24"
+            className="home-hero-stats relative z-10 mx-auto max-w-6xl px-5 pb-16 md:pb-24"
             aria-label="Live Hermes record"
           >
-            <div className="home-record">
-              {(hermesTelemetry?.condition || hermesTelemetry?.posture || hermesTelemetry?.reason) && (
-                <div className="home-record-readout">
-                  {hermesTelemetry?.condition && (
-                    <div>
-                      <p className="home-record-label">Condition</p>
-                      <p className="home-record-value">{hermesTelemetry.condition}</p>
-                    </div>
-                  )}
-                  {hermesTelemetry?.posture && (
-                    <div>
-                      <p className="home-record-label">Decision</p>
-                      <p className="home-record-value">{formatConstant(hermesTelemetry.posture)}</p>
-                    </div>
-                  )}
-                  {hermesTelemetry?.reason && (
-                    <div>
-                      <p className="home-record-label">Why</p>
-                      <p className="home-record-value home-record-value-quiet">{hermesTelemetry.reason}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
+            <div className="home-hero-stats-grid">
               {sealedDecisions != null && sealedDecisions > 0 && (
-                <div className="home-record-counts">
-                  <div>
-                    <p className="home-record-count">{sealedDecisions.toLocaleString('en-US')}</p>
-                    <p className="home-record-label">Sealed Decisions</p>
-                  </div>
-                  {chainHead && (
-                    <div>
-                      <p className="home-record-meta">{chainHead.sealedAtLabel}</p>
-                      <p className="home-record-label">Last Seal</p>
-                    </div>
-                  )}
-                  {anchor && (
-                    <div>
-                      <Link href={anchor.href ?? '/anchor'} className="home-record-meta home-record-link">
-                        {anchor.cadence}
-                      </Link>
-                      <p className="home-record-label">Public Verification</p>
-                    </div>
-                  )}
+                <div className="home-hero-stat">
+                  <p className="home-hero-stat-value">{sealedDecisions.toLocaleString('en-US')}</p>
+                  <p className="home-hero-stat-label">Sealed decisions</p>
                 </div>
               )}
-
-              <p className="home-record-note">
-                Founder capital. Young sample.
-                {chainHead ? ` Row ${chainHead.rowNumber}.` : ''}
-              </p>
+              {chainHead && (
+                <div className="home-hero-stat">
+                  <p className="home-hero-stat-value home-hero-stat-value-meta">{chainHead.sealedAtLabel}</p>
+                  <p className="home-hero-stat-label">Last seal</p>
+                </div>
+              )}
+              {anchor && (
+                <div className="home-hero-stat">
+                  <Link
+                    href={anchor.href ?? '/anchor'}
+                    className="home-hero-stat-value home-hero-stat-value-meta home-hero-stat-link"
+                  >
+                    {anchor.cadence}
+                  </Link>
+                  <p className="home-hero-stat-label">Public verification</p>
+                </div>
+              )}
             </div>
+            <p className="home-hero-stats-note">
+              Founder capital. Young sample.
+              {chainHead ? ` Row ${chainHead.rowNumber}.` : ''}
+            </p>
           </motion.div>
         )}
       </section>
