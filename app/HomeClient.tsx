@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -10,162 +10,10 @@ import type { HermesLedgerRow } from '@/features/hermes-ledger/store';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
+import HermesDashboardPreview from './HermesDashboardPreview';
 import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
+import OracleOrbSection from './OracleOrbSection';
 import type { ActivePrediction } from './oracle/active-predictions';
-
-// ---------- Oracle Q&A Feed ----------
-function OracleQnaFeed({ predictions }: { predictions: ActivePrediction[] }) {
-  const [displayed, setDisplayed] = useState<ActivePrediction[]>([]);
-  const [started, setStarted] = useState(false);
-
-  useEffect(() => {
-    if (predictions.length === 0) return;
-    const initialCount = Math.min(3, predictions.length);
-    let step = 0;
-    const timer = setInterval(() => {
-      step += 1;
-      setDisplayed(predictions.slice(0, Math.min(step, initialCount)));
-      if (step >= initialCount) {
-        clearInterval(timer);
-        setStarted(true);
-      }
-    }, 400);
-    return () => clearInterval(timer);
-  }, [predictions]);
-
-  useEffect(() => {
-    if (!started || predictions.length <= 3) return;
-    const cycle = setInterval(() => {
-      setDisplayed((current) => {
-        const next = [...current];
-        next.shift();
-        const lastId = current[current.length - 1]?.id;
-        const lastIndex = predictions.findIndex((p) => p.id === lastId);
-        const nextIndex = (lastIndex + 1) % predictions.length;
-        next.push(predictions[nextIndex]);
-        return next;
-      });
-    }, 3000);
-    return () => clearInterval(cycle);
-  }, [started, predictions]);
-
-  if (predictions.length === 0) {
-    return <p className="text-sm text-white/40">No active predictions.</p>;
-  }
-
-  return (
-    <div className="space-y-4">
-      <AnimatePresence initial={false} mode="popLayout">
-        {displayed.map((p) => (
-          <motion.div
-            key={p.id}
-            layout="position"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="border-b border-white/10 pb-3 last:border-0"
-          >
-            <p className="text-sm font-medium text-white/90">{p.question}</p>
-            <p className="mt-1 text-xs text-white/50">
-              {p.asset ? p.asset.toUpperCase() : ''} · {Math.round(p.probability * 100)}% ·{' '}
-              {new Date(p.resolvesAt).toLocaleDateString()}
-            </p>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// ---------- Hermes Decision Feed (plain, no code) ----------
-function HermesDecisionFeed({ decisions }: { decisions: HermesLedgerRow[] }) {
-  const [displayed, setDisplayed] = useState<HermesLedgerRow[]>([]);
-  const [started, setStarted] = useState(false);
-
-  useEffect(() => {
-    if (decisions.length === 0) return;
-    const initialCount = Math.min(3, decisions.length);
-    let step = 0;
-    const timer = setInterval(() => {
-      step += 1;
-      setDisplayed(decisions.slice(0, Math.min(step, initialCount)));
-      if (step >= initialCount) {
-        clearInterval(timer);
-        setStarted(true);
-      }
-    }, 400);
-    return () => clearInterval(timer);
-  }, [decisions]);
-
-  useEffect(() => {
-    if (!started || decisions.length <= 3) return;
-    const cycle = setInterval(() => {
-      setDisplayed((current) => {
-        const next = [...current];
-        next.shift();
-        const lastId = current[current.length - 1]?.recordId;
-        const lastIndex = decisions.findIndex((d) => d.recordId === lastId);
-        const nextIndex = (lastIndex + 1) % decisions.length;
-        next.push(decisions[nextIndex]);
-        return next;
-      });
-    }, 3000);
-    return () => clearInterval(cycle);
-  }, [started, decisions]);
-
-  if (decisions.length === 0) {
-    return <p className="text-sm text-white/40">No decisions recorded yet.</p>;
-  }
-
-  return (
-    <div className="space-y-4">
-      <AnimatePresence initial={false} mode="popLayout">
-        {displayed.map((d) => (
-          <motion.div
-            key={d.recordId}
-            layout="position"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="border-b border-white/10 pb-3 last:border-0"
-          >
-            <p className="text-sm font-medium text-white/90">{d.note || d.decision || 'Decision recorded'}</p>
-            <p className="mt-1 text-xs text-white/50">
-              {new Date(d.sealedAt).toLocaleDateString()} · {new Date(d.sealedAt).toLocaleTimeString()}
-            </p>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// ---------- Receipts / Log (unchanged) ----------
-function ReceiptsLog() {
-  const items = [
-    { label: 'Receipts → 9 matched to card charges', detail: 'Report → drafted · $2,340 across 3 trips' },
-    { label: 'Flagged → 1 charge · harbor hotel, $412 twice', detail: 'the harbor hotel charged $412 on the 12th and again on the 14th. double-billed, or two separate nights?' },
-  ];
-  const chatSnippet = 'two nights, mia stayed the second one';
-
-  return (
-    <div className="space-y-4">
-      {items.map((item, idx) => (
-        <div key={idx} className="border-b border-white/10 pb-3 last:border-0">
-          <p className="text-sm font-medium text-white/80">{item.label}</p>
-          <p className="mt-1 text-xs text-white/50">{item.detail}</p>
-        </div>
-      ))}
-      <div className="mt-4 rounded-md bg-white/5 p-3 text-sm text-white/60">
-        <span className="text-white/40">→</span> {chatSnippet}
-      </div>
-    </div>
-  );
-}
-
-// ---------- Main HomeClient ----------
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -261,10 +109,9 @@ export default function HomeClient({
     Boolean(hermesTelemetry?.condition || hermesTelemetry?.posture || hermesTelemetry?.reason);
 
   return (
-    <main className="home-research min-h-screen bg-[#080809] pt-16 text-foreground antialiased selection:bg-foreground/10">
+    <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
 
-      {/* Hero – big title, subtitle, two CTAs (our wording, screenshot design) */}
       <section className="hero-research hero-particle-section relative overflow-hidden">
         <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
           <HermesLiquidityFieldRender maxParticles={30000} />
@@ -275,22 +122,22 @@ export default function HomeClient({
           initial={heroInitial}
           animate="show"
           variants={stagger}
-          className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-16 md:pt-20 md:pb-20"
+          className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-20 md:pt-24 md:pb-28"
         >
-          <div className="hero-particle-copy home-hero-copy max-w-3xl mx-auto text-center">
-            <motion.p variants={fade} className="hero-particle-eyebrow text-center">
+          <div className="hero-particle-copy home-hero-copy max-w-3xl">
+            <motion.p variants={fade} className="hero-particle-eyebrow">
               Solace
             </motion.p>
-            <motion.h1 variants={fade} className="hero-particle-title home-hero-title is-mission text-center">
+            <motion.h1 variants={fade} className="hero-particle-title home-hero-title is-mission">
               Machines that make decisions for you.
             </motion.h1>
-            <motion.p variants={fade} className="home-hero-subline text-lg font-medium text-foreground/90 text-center">
+            <motion.p variants={fade} className="home-hero-subline text-lg font-medium text-foreground/90">
               Hermes is the first one. It manages money and makes market decisions on your behalf.
             </motion.p>
-            <motion.p variants={fade} className="home-hero-dek text-muted mt-3 text-center">
+            <motion.p variants={fade} className="home-hero-dek text-muted mt-3">
               Every decision is recorded, timestamped, and publicly verified in real time.
             </motion.p>
-            <motion.div variants={fade} className="hero-particle-ctas mt-8 flex justify-center gap-4">
+            <motion.div variants={fade} className="hero-particle-ctas mt-8">
               <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-primary hero-cta-on-void">
                 Watch what it actually does
               </Link>
@@ -301,7 +148,6 @@ export default function HomeClient({
           </div>
         </motion.div>
 
-        {/* Record band – kept from original */}
         {showRecord && (
           <motion.div
             initial={heroInitial}
@@ -366,92 +212,123 @@ export default function HomeClient({
         )}
       </section>
 
-      {/* Oracle Q&A + Hermes Decision Feed (no code viewer) */}
+      {/* Hermes & Oracle Grid */}
       <section className="px-5 py-12 md:py-16">
         <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            {/* Oracle Q&A */}
-            <div className="rounded-2xl border border-white/10 bg-[#121214] p-6 shadow-2xl">
-              <h3 className="mb-4 font-mono text-xs font-medium uppercase tracking-widest text-white/40">
-                Oracle – Latest Predictions
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            
+            {/* Hermes Card */}
+            <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
+              <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
+                Hermes
               </h3>
-              <OracleQnaFeed predictions={oraclePredictions} />
-              <div className="mt-4 flex justify-end">
+              <div className="flex-1">
+                <HermesDashboardPreview decisions={recentDecisions} />
+              </div>
+              <div className="mt-4 flex items-center justify-end text-xs text-white/50">
+                <Link
+                  href="/hermes"
+                  className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
+                >
+                  Explore Hermes <span className="text-sm">→</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Oracle Card */}
+            <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
+              <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
+                Oracle
+              </h3>
+              <div className="flex-1">
+                <OracleOrbSection predictions={oraclePredictions} />
+              </div>
+              <div className="mt-4 flex items-center justify-end text-xs text-white/50">
                 <Link
                   href="/oracle"
-                  className="flex items-center gap-1 text-xs text-white/40 transition-colors hover:text-white"
+                  className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
                 >
-                  Explore → <span className="text-sm">→</span>
+                  Explore Oracle <span className="text-sm">→</span>
                 </Link>
               </div>
             </div>
 
-            {/* Hermes Decision Feed (plain) */}
-            <div className="rounded-2xl border border-white/10 bg-[#121214] p-6 shadow-2xl">
-              <h3 className="mb-4 font-mono text-xs font-medium uppercase tracking-widest text-white/40">
-                Hermes – Recent Decisions
-              </h3>
-              <HermesDecisionFeed decisions={recentDecisions} />
-              <div className="mt-4 flex justify-end">
-                <Link
-                  href={OBSERVATORY_HERMES_LEDGER_PATH}
-                  className="flex items-center gap-1 text-xs text-white/40 transition-colors hover:text-white"
-                >
-                  Explore → <span className="text-sm">→</span>
-                </Link>
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Receipts & Chat row */}
-      <section className="border-t border-white/10 px-5 py-12 md:py-16">
+      {/* Machinery Section */}
+      <section className="home-vision border-t border-border px-5 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-[#121214] p-6 shadow-2xl">
-              <h3 className="mb-4 font-mono text-xs font-medium uppercase tracking-widest text-white/40">
-                Receipts & Log
-              </h3>
-              <ReceiptsLog />
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-[#121214] p-6 shadow-2xl">
-              <h3 className="mb-4 font-mono text-xs font-medium uppercase tracking-widest text-white/40">
-                Chat
-              </h3>
-              <div className="flex h-32 items-center justify-center rounded border border-dashed border-white/10 text-sm text-white/30">
-                <span>💬 Ask me anything</span>
+          <p className="home-vision-kicker">The Machinery Underneath</p>
+          <h2 className="home-vision-title">Observation, execution, and public proof.</h2>
+          <p className="home-vision-dek">
+            Making decisions without human bias requires high-density infrastructure. 
+            Solace connects liquidity models, regime detection, execution, and risk management to a cryptographically sealed feedback loop.
+          </p>
+
+          <ol className="home-vision-ladder mt-12">
+            <li>
+              <span className="home-vision-index">01</span>
+              <div>
+                <p className="home-vision-domain">Hermes (Markets)</p>
+                <p>
+                  Reads order flow, volatility, and structure to decide whether to allocate, how much, and when to exit. Every decision is sealed on-chain before the trade executes.
+                </p>
               </div>
-              <div className="mt-4 flex justify-end">
-                <Link
-                  href="/chat"
-                  className="flex items-center gap-1 text-xs text-white/40 transition-colors hover:text-white"
-                >
-                  Start a conversation →
-                </Link>
+            </li>
+            <li>
+              <span className="home-vision-index">02</span>
+              <div>
+                <p className="home-vision-domain">Oracle (Belief & Probability)</p>
+                <p>
+                  Writes a probability state before an event resolves and scores it against real-world outcomes. Continuous calibration replaces guesswork.
+                </p>
               </div>
-            </div>
-          </div>
+            </li>
+            <li>
+              <span className="home-vision-index">03</span>
+              <div>
+                <p className="home-vision-domain">Glorya (Allocation & Need)</p>
+                <p>
+                  Evaluates real world demand and resource paths. It remains inactive until Solace crosses $1M cumulative revenue.
+                </p>
+              </div>
+            </li>
+          </ol>
         </div>
       </section>
 
-      {/* Footer */}
-      <section className="border-t border-white/10 px-5 py-16 md:py-20">
+      <section className="border-t border-border px-5 py-16 md:py-20">
         <div className="mx-auto max-w-6xl">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
             Solace is built by <span className="text-foreground">Kerby Jean</span>.
           </p>
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-            <Link href="/brief" className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30">
+            <Link
+              href="/brief"
+              className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30"
+            >
               Read the brief
             </Link>
-            <Link href="/research" className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30">
+            <Link
+              href="/research"
+              className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30"
+            >
               Notes
             </Link>
-            <a href="https://github.com/Jkurbs" target="_blank" rel="noopener noreferrer" className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30">
+            <a
+              href="https://github.com/Jkurbs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30"
+            >
               GitHub
             </a>
-            <a href="mailto:hello@solace.fyi" className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30">
+            <a
+              href="mailto:hello@solace.fyi"
+              className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30"
+            >
               hello@solace.fyi
             </a>
           </div>
