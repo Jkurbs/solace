@@ -15252,10 +15252,15 @@ html.dark .home-research ::selection,
   margin-top: -1.5rem;
 }
 
+/* Homepage hero only: center the live record band card. */
+.home-record-band .home-record {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .home-record {
   width: 100%;
   max-width: 40rem;
-  margin: 0 auto;
   padding: 1.15rem 1.25rem 1.1rem;
   border: 1px solid color-mix(in srgb, var(--foreground, #1c1917) 14%, transparent);
   border-radius: 1rem;
