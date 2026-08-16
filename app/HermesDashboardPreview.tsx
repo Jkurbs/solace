@@ -73,6 +73,9 @@ function illustrativeReturn(index: number) {
   };
 }
 
+const ITEM_HEIGHT = 56;
+const VISIBLE_COUNT = 4;
+
 export default function HermesDashboardPreview({ decisions }: HermesDashboardPreviewProps) {
   const { ref: valueRef, rounded: valueRounded } = useCountUp(12842.17);
   const [displayed, setDisplayed] = useState<HermesLedgerRow[]>([]);
@@ -81,8 +84,7 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
   useEffect(() => {
     if (decisions.length === 0) return undefined;
 
-    // Stage the initial items one by one so they feel like a live incoming feed.
-    const initialCount = Math.min(4, decisions.length);
+    const initialCount = Math.min(VISIBLE_COUNT, decisions.length);
     let step = 0;
 
     const stageTimer = window.setInterval(() => {
@@ -93,13 +95,13 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
         window.clearInterval(stageTimer);
         setStarted(true);
       }
-    }, 650);
+    }, 550);
 
     return () => window.clearInterval(stageTimer);
   }, [decisions]);
 
   useEffect(() => {
-    if (!started || decisions.length <= 4) return undefined;
+    if (!started || decisions.length <= VISIBLE_COUNT) return undefined;
 
     const cycleTimer = window.setInterval(() => {
       setDisplayed((current) => {
@@ -112,146 +114,141 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
 
         return next;
       });
-    }, 2200);
+    }, 2400);
 
     return () => window.clearInterval(cycleTimer);
   }, [started, decisions]);
+
+  const listHeight = VISIBLE_COUNT * ITEM_HEIGHT;
 
   return (
     <section className="border-t border-border bg-background px-5 py-16 md:py-24">
       <div className="mx-auto max-w-5xl">
         <motion.div
-          className="hx-window hermes-preview-window"
+          className="overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-black/10"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7, ease: easeOut }}
         >
-          <div className="hx-window-bar">
-            <span className="hx-window-dots">
-              <i />
-              <i />
-              <i />
-            </span>
-            <span className="hx-window-url">app.solace.fyi/dashboard</span>
-            <span className="hx-window-spacer" />
-          </div>
+          <div className="p-6 md:p-8">
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
+              <div>
+                <p className="mb-1 font-mono text-[0.6rem] font-medium uppercase tracking-[0.16em] text-muted">
+                  Portfolio value
+                </p>
+                <motion.span
+                  ref={valueRef}
+                  className="block text-4xl font-medium tracking-[-0.01em] text-foreground [font-family:var(--font-display),Georgia,serif]"
+                >
+                  {valueRounded}
+                </motion.span>
+              </div>
+              <div className="text-right">
+                <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted">
+                  Today&apos;s change
+                </p>
+                <p className="mt-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                  +$84.22 (+0.66%)
+                </p>
+              </div>
+            </div>
 
-          <div className="hx-window-view is-static p-5 md:p-8">
-            <div className="rounded-xl border border-white/10 bg-[#0d0d0b] p-5 md:p-6">
-              <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-6">
-                <div>
-                  <p className="mb-1 font-mono text-[0.6rem] font-medium uppercase tracking-[0.16em] text-neutral-500">
-                    Portfolio value
-                  </p>
-                  <motion.span
-                    ref={valueRef}
-                    className="block text-4xl font-medium tracking-[-0.01em] text-neutral-50 [font-family:var(--font-display),Georgia,serif]"
-                  >
-                    {valueRounded}
-                  </motion.span>
-                </div>
-                <div className="text-right">
-                  <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-neutral-500">
-                    Today&apos;s change
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-emerald-400">+$84.22 (+0.66%)</p>
-                </div>
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted">
+                  Latest decisions
+                </p>
+                {started && decisions.length > 0 ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[0.6rem] font-medium text-emerald-700 dark:text-emerald-300">
+                    <span className="h-1 w-1 animate-pulse rounded-full bg-emerald-500" />
+                    Live
+                  </span>
+                ) : null}
               </div>
 
-              <div className="mb-6">
-                <div className="mb-3 flex items-center gap-2">
-                  <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-neutral-500">
-                    Latest decisions
-                  </p>
-                  {started && decisions.length > 0 ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[0.6rem] font-medium text-emerald-300">
-                      <span className="h-1 w-1 animate-pulse rounded-full bg-emerald-400" />
-                      Live
-                    </span>
-                  ) : null}
-                </div>
+              {decisions.length === 0 ? (
+                <p className="text-sm text-muted">
+                  No decisions recorded yet. The ledger updates as Hermes acts.
+                </p>
+              ) : (
+                <ol className="relative" style={{ height: listHeight }}>
+                  <AnimatePresence initial={false}>
+                    {displayed.map((row, index) => {
+                      const originalIndex = decisions.findIndex((d) => d.recordId === row.recordId);
+                      const ret = illustrativeReturn(originalIndex);
 
-                {decisions.length === 0 ? (
-                  <p className="text-sm text-neutral-400">
-                    No decisions recorded yet. The ledger updates as Hermes acts.
-                  </p>
-                ) : (
-                  <ol className="grid gap-0">
-                    <AnimatePresence mode="popLayout" initial={false}>
-                      {displayed.map((row, index) => {
-                        const ret = illustrativeReturn(decisions.findIndex((d) => d.recordId === row.recordId));
-
-                        return (
-                          <motion.li
-                            key={row.recordId}
-                            className="flex items-center justify-between gap-4 border-t border-white/10 py-3 first:border-t-0 first:pt-0 last:pb-0"
-                            initial={{ opacity: 0, x: -24, scale: 0.98 }}
-                            animate={{ opacity: 1, x: 0, scale: 1 }}
-                            exit={{ opacity: 0, x: 24, scale: 0.98 }}
-                            layout
-                            transition={{ duration: 0.4, ease: easeOut }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/5 text-[0.65rem] text-neutral-400">
-                                {index + 1}
-                              </span>
-                              <div>
-                                <p className="text-sm font-medium text-neutral-100">
-                                  {formatActivitySummary(row)}
-                                </p>
-                                <p className="text-xs text-neutral-500">{formatActivityDate(row.sealedAt)}</p>
-                              </div>
-                            </div>
-                            <span
-                              className={`text-sm font-medium tabular-nums ${
-                                ret.positive ? 'text-emerald-400' : 'text-red-400'
-                              }`}
-                            >
-                              {ret.formatted}
+                      return (
+                        <motion.li
+                          key={row.recordId}
+                          className="absolute left-0 right-0 flex items-center justify-between gap-4 border-b border-border px-1 py-3"
+                          style={{ height: ITEM_HEIGHT, top: index * ITEM_HEIGHT }}
+                          initial={{ opacity: 0, y: -16 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 16 }}
+                          transition={{ duration: 0.45, ease: easeOut }}
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted/30 text-[0.65rem] text-muted-foreground">
+                              {index + 1}
                             </span>
-                          </motion.li>
-                        );
-                      })}
-                    </AnimatePresence>
-                  </ol>
-                )}
-              </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-foreground">
+                                {formatActivitySummary(row)}
+                              </p>
+                              <p className="text-xs text-muted-foreground">{formatActivityDate(row.sealedAt)}</p>
+                            </div>
+                          </div>
+                          <span
+                            className={`shrink-0 text-sm font-medium tabular-nums ${
+                              ret.positive
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-red-600 dark:text-red-400'
+                            }`}
+                          >
+                            {ret.formatted}
+                          </span>
+                        </motion.li>
+                      );
+                    })}
+                  </AnimatePresence>
+                </ol>
+              )}
+            </div>
 
-              <div className="flex flex-wrap items-center gap-3 border-t border-white/10 pt-5">
-                <Link
-                  href={OBSERVATORY_HERMES_LEDGER_PATH}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-400 transition-colors hover:text-neutral-100"
+            <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-border pt-5">
+              <Link
+                href={OBSERVATORY_HERMES_LEDGER_PATH}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Inspect ledger
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
                 >
-                  Inspect ledger
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    aria-hidden="true"
-                  >
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </Link>
-                <Link
-                  href="/hermes"
-                  className="inline-flex items-center gap-1.5 rounded-md bg-neutral-100 px-3 py-1.5 text-sm font-medium text-neutral-950 transition-colors hover:bg-white"
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </Link>
+              <Link
+                href="/hermes"
+                className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-colors hover:opacity-90"
+              >
+                Run simulation
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
                 >
-                  Run simulation
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    aria-hidden="true"
-                  >
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
           </div>
         </motion.div>

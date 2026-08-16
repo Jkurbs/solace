@@ -141,7 +141,7 @@ export default function HomeClient({
 
             {/* Why trust it? */}
             <motion.p variants={fade} className="home-hero-dek text-muted mt-3">
-              You don&apos;t have to take its word for it. Every decision is recorded, timestamped, and publicly verified in real time.
+              Every decision is recorded, timestamped, and publicly verified in real time.
             </motion.p>
 
             <motion.div variants={fade} className="hero-particle-ctas mt-8">
