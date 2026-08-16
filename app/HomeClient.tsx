@@ -12,6 +12,7 @@ import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
 import HermesDashboardPreview from './HermesDashboardPreview';
 import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
+import OracleOrbSection from './OracleOrbSection';
 import type { ActivePrediction } from './oracle/active-predictions';
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
@@ -106,8 +107,6 @@ export default function HomeClient({
   const showRecord =
     (sealedDecisions != null && sealedDecisions > 0) ||
     Boolean(hermesTelemetry?.condition || hermesTelemetry?.posture || hermesTelemetry?.reason);
-
-  const latestPredictions = oraclePredictions.slice(0, 3);
 
   return (
     <main className="home-research min-h-screen bg-[#080809] pt-16 text-foreground antialiased selection:bg-foreground/10">
@@ -217,17 +216,17 @@ export default function HomeClient({
         )}
       </section>
 
-      {/* Grid Container */}
+      {/* Modern Card Grid matching xAI Layout */}
       <section className="px-5 py-12 md:py-16">
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
             
             {/* Hermes Execution Card */}
             <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-5 shadow-2xl transition-all duration-300 hover:border-white/20">
-              <div className="flex-1 overflow-hidden pb-6">
+              <div className="flex-1 overflow-hidden pb-8">
                 <HermesDashboardPreview decisions={recentDecisions} />
               </div>
-              <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-white/50">
+              <div className="mt-4 flex items-center justify-between text-xs text-white/50">
                 <span className="font-medium text-white/80">Hermes</span>
                 <Link
                   href={OBSERVATORY_HERMES_LEDGER_PATH}
@@ -238,57 +237,26 @@ export default function HomeClient({
               </div>
             </div>
 
-            {/* Oracle Card */}
-            <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
-              <div className="flex flex-col gap-5">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs uppercase tracking-wider text-white/40">Latest Predictions</span>
-                  <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  {latestPredictions.length > 0 ? (
-                    latestPredictions.map((pred, idx) => (
-                      <div
-                        key={pred.id || idx}
-                        className="flex flex-col gap-1.5 rounded-2xl border border-white/5 bg-black/30 p-3.5 transition-colors hover:border-white/10"
-                      >
-                        <p className="line-clamp-2 text-xs font-medium text-white/90 leading-snug">
-                          {pred.question}
-                        </p>
-                        <div className="flex items-center justify-between font-mono text-[11px] text-white/50">
-                          <span>Probability</span>
-                          <span className="font-semibold text-emerald-400">
-                            {typeof pred.probability === 'number'
-                              ? `${(pred.probability * 100).toFixed(0)}%`
-                              : pred.probability}
-                          </span>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border border-white/5 bg-black/20 p-4 text-center text-xs text-white/40">
-                      No active predictions loaded.
-                    </div>
-                  )}
-                </div>
+            {/* Oracle Prediction Card */}
+            <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-5 shadow-2xl transition-all duration-300 hover:border-white/20">
+              <div className="flex-1 overflow-hidden pb-8">
+                <OracleOrbSection predictions={oraclePredictions} />
               </div>
-
-              <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-white/50">
+              <div className="mt-4 flex items-center justify-between text-xs text-white/50">
                 <span className="font-medium text-white/80">Oracle</span>
                 <Link
                   href="/oracle"
-                  className="flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 font-medium text-white transition-all hover:bg-white/20"
+                  className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
                 >
                   Explore <span className="text-sm">→</span>
                 </Link>
               </div>
             </div>
 
-            {/* Cryptographic Proof Card */}
+            {/* Verification & Proof Card */}
             <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20 md:col-span-2 lg:col-span-1">
               <div className="flex flex-col gap-4">
-                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400">
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Live Ledger
                 </div>
@@ -301,7 +269,7 @@ export default function HomeClient({
                   <p className="truncate text-white/80">{chainHead?.hash ?? 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'}</p>
                 </div>
               </div>
-              <div className="mt-8 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-white/50">
+              <div className="mt-8 flex items-center justify-between text-xs text-white/50">
                 <span className="font-medium text-white/80">Proof</span>
                 <Link
                   href="/anchor"
