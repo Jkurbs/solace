@@ -37,18 +37,14 @@ export type HermesTelemetry = {
   updatedAt: string;
 };
 
-/** Latest sealed ledger row — the hero artifact. Wire from the ledger feed. */
 export type ChainHeadSummary = {
   rowNumber: number;
   recordId: string;
-  /** Full or shortened hash; displayed as-is. */
   hash: string;
   prevHash?: string;
-  /** Pre-formatted, e.g. "Aug 8, 2026, 12:50 AM EDT". */
   sealedAtLabel: string;
 };
 
-/** External anchor status. */
 export type AnchorStatus = {
   cadence: string;
   lastAnchoredLabel?: string;
@@ -113,7 +109,7 @@ export default function HomeClient({
     Boolean(hermesTelemetry?.condition || hermesTelemetry?.posture || hermesTelemetry?.reason);
 
   return (
-    <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
+    <main className="home-research min-h-screen bg-[#080809] pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
 
       <section className="hero-research hero-particle-section relative overflow-hidden">
@@ -126,24 +122,21 @@ export default function HomeClient({
           initial={heroInitial}
           animate="show"
           variants={stagger}
-          className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-20 md:pt-24 md:pb-28"
+          className="hero-particle-layout relative z-10 mx-auto max-w-7xl px-5 pt-14 pb-16 md:pt-20 md:pb-20"
         >
           <div className="hero-particle-copy home-hero-copy max-w-3xl">
-            <motion.p variants={fade} className="hero-particle-eyebrow">
+            <motion.p variants={fade} className="hero-particle-eyebrow font-mono text-xs text-white/50 uppercase tracking-widest">
               Solace
             </motion.p>
 
-            {/* Core Hook */}
             <motion.h1 variants={fade} className="hero-particle-title home-hero-title is-mission">
               Machines that make decisions for you.
             </motion.h1>
 
-            {/* What is Hermes? */}
             <motion.p variants={fade} className="home-hero-subline text-lg font-medium text-foreground/90">
-              Hermes is the first one. It manages money and makes market decisions on your behalf.
+              Hermes is the first one. It manages capital and makes market decisions on your behalf.
             </motion.p>
 
-            {/* Why trust it? */}
             <motion.p variants={fade} className="home-hero-dek text-muted mt-3">
               Every decision is recorded, timestamped, and publicly verified in real time.
             </motion.p>
@@ -164,7 +157,7 @@ export default function HomeClient({
             initial={heroInitial}
             animate="show"
             variants={fade}
-            className="home-record-band relative z-10 mx-auto max-w-6xl px-5 pb-16 md:pb-24"
+            className="home-record-band relative z-10 mx-auto max-w-7xl px-5 pb-12 md:pb-16"
             aria-label="Live Hermes record"
           >
             <div className="home-record">
@@ -223,36 +216,77 @@ export default function HomeClient({
         )}
       </section>
 
-      {/* xAI-Inspired Grid Section: Hermes & Oracle Side-by-Side */}
-      <section className="border-t border-border/60 px-5 py-16 md:py-24">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-10 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
-            <div>
-              <p className="text-xs font-mono uppercase tracking-widest text-muted">Active Systems</p>
-              <h2 className="mt-1 text-2xl font-medium tracking-tight text-foreground md:text-3xl">
-                Execution & Probability
-              </h2>
+      {/* Modern Card Grid matching xAI Layout */}
+      <section className="px-5 py-12 md:py-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+            
+            {/* Hermes Execution Card */}
+            <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-5 shadow-2xl transition-all duration-300 hover:border-white/20">
+              <div className="flex-1 overflow-hidden pb-8">
+                <HermesDashboardPreview decisions={recentDecisions} />
+              </div>
+              <div className="mt-4 flex items-center justify-between text-xs text-white/50">
+                <span className="font-medium text-white/80">Hermes</span>
+                <Link
+                  href={OBSERVATORY_HERMES_LEDGER_PATH}
+                  className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
+                >
+                  Explore <span className="text-sm">→</span>
+                </Link>
+              </div>
             </div>
-            <p className="max-w-md text-sm text-muted">
-              Parallel machinery monitoring continuous liquidity markets alongside probabilistic real-world states.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 gap-8 items-stretch lg:grid-cols-2 lg:gap-10">
-            <div className="flex flex-col h-full rounded-2xl border border-border/80 bg-card/40 p-1 transition-colors hover:border-border">
-              <HermesDashboardPreview decisions={recentDecisions} />
+            {/* Oracle Prediction Card */}
+            <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-5 shadow-2xl transition-all duration-300 hover:border-white/20">
+              <div className="flex-1 overflow-hidden pb-8">
+                <OracleOrbSection predictions={oraclePredictions} />
+              </div>
+              <div className="mt-4 flex items-center justify-between text-xs text-white/50">
+                <span className="font-medium text-white/80">Oracle</span>
+                <Link
+                  href="/oracle"
+                  className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
+                >
+                  Explore <span className="text-sm">→</span>
+                </Link>
+              </div>
             </div>
 
-            <div className="flex flex-col h-full rounded-2xl border border-border/80 bg-card/40 p-1 transition-colors hover:border-border">
-              <OracleOrbSection predictions={oraclePredictions} />
+            {/* Verification & Proof Card */}
+            <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20 md:col-span-2 lg:col-span-1">
+              <div className="flex flex-col gap-4">
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Live Ledger
+                </div>
+                <h3 className="text-xl font-medium tracking-tight text-white">Cryptographic Decision Ledger</h3>
+                <p className="text-sm leading-relaxed text-white/60">
+                  Hermes hashes every market evaluation and order stream into an immutable SHA-256 chain prior to execution.
+                </p>
+                <div className="mt-2 rounded-xl border border-white/5 bg-black/40 p-4 font-mono text-xs text-white/40">
+                  <p className="text-white/60"># Head Seal</p>
+                  <p className="truncate text-white/80">{chainHead?.hash ?? 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'}</p>
+                </div>
+              </div>
+              <div className="mt-8 flex items-center justify-between text-xs text-white/50">
+                <span className="font-medium text-white/80">Proof</span>
+                <Link
+                  href="/anchor"
+                  className="flex items-center gap-1 text-white/60 transition-colors hover:text-white"
+                >
+                  Explore <span className="text-sm">→</span>
+                </Link>
+              </div>
             </div>
+
           </div>
         </div>
       </section>
 
       {/* Machinery Section */}
-      <section className="home-vision border-t border-border px-5 py-20 md:py-28">
-        <div className="mx-auto max-w-6xl">
+      <section className="home-vision border-t border-white/10 px-5 py-20 md:py-28">
+        <div className="mx-auto max-w-7xl">
           <p className="home-vision-kicker">The Machinery Underneath</p>
           <h2 className="home-vision-title">Observation, execution, and public proof.</h2>
           <p className="home-vision-dek">
@@ -292,8 +326,8 @@ export default function HomeClient({
         </div>
       </section>
 
-      <section className="border-t border-border px-5 py-16 md:py-20">
-        <div className="mx-auto max-w-6xl">
+      <section className="border-t border-white/10 px-5 py-16 md:py-20">
+        <div className="mx-auto max-w-7xl">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
             Solace is built by <span className="text-foreground">Kerby Jean</span>.
           </p>
