@@ -165,13 +165,13 @@ export default function HomeClient({
               Solace
             </motion.p> */}
 
-            {/* Title – plain block, text-center inherited */}
+            {/* Title – explicitly centered */}
             <motion.h1
               variants={fade}
-              className="hero-particle-title home-hero-title is-mission"
+              className="hero-particle-title home-hero-title is-mission text-center"
             >
               Machines that make{' '}
-              <span className="inline-block min-w-[120px] text-center relative">
+              <span className="inline-flex justify-center min-w-[120px] text-center relative">
                 <span
                   className="absolute inset-0 blur-2xl opacity-30 rounded-full"
                   style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)' }}
