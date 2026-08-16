@@ -3,8 +3,7 @@ import type { Metadata } from 'next';
 import { formatRelativeTime } from '@/features/anchor/format';
 import { getAnchorChain } from '@/features/anchor/store';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
-import { computeLedgerScoreboard, formatPercent } from '@/features/hermes-ledger/scoreboard';
-import { getHermesLedgerPulse, getRecentHermesLedgerRows, listHermesLedgerRows } from '@/features/hermes-ledger/store';
+import { getHermesLedgerPulse, getRecentHermesLedgerRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { fetchKalshiBtcEthPredictions } from '@/features/oracle/kalshi';
 
@@ -104,7 +103,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [hermesTelemetry, ledgerPulse, chain, recentDecisions, oracleFeed, scoreboardRows] = await Promise.all([
+  const [hermesTelemetry, ledgerPulse, chain, recentDecisions, oracleFeed] = await Promise.all([
     withTimeout(getHermesTelemetry().catch(() => null), HOME_FETCH_BUDGET_MS, null),
     withTimeout(getHermesLedgerPulse().catch(() => null), HOME_FETCH_BUDGET_MS, null),
     withTimeout(
@@ -118,7 +117,6 @@ export default async function Home() {
       HOME_FETCH_BUDGET_MS,
       { active: [], activeCount: 0, asOf: new Date().toISOString() },
     ),
-    withTimeout(listHermesLedgerRows(200).catch(() => []), HOME_FETCH_BUDGET_MS, []),
   ]);
 
   const oraclePredictions = oracleFeed.active.filter((p): p is ActivePrediction & { question: string; probability: number } =>
