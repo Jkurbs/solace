@@ -113,10 +113,10 @@ export default function HomeClient({
       <SiteHeader />
 
       <section className="hero-research hero-particle-section relative overflow-hidden">
-        <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
+        {/* <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
           <HermesLiquidityFieldRender maxParticles={30000} />
           <div className="hero-particle-vignette absolute inset-0 pointer-events-none" />
-        </div>
+        </div> */}
 
         <motion.div
           initial={heroInitial}
