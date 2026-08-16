@@ -15223,7 +15223,7 @@ html.dark .home-research ::selection,
 }
 
 .home-hero-subline {
-  margin: 1rem 0 0;
+  margin: 1rem auto 0;
   max-width: 28rem;
   font-size: clamp(1.15rem, 2.2vw, 1.45rem);
   font-weight: 400;
@@ -15233,7 +15233,7 @@ html.dark .home-research ::selection,
 }
 
 .home-hero-dek {
-  margin: 1.35rem 0 0;
+  margin: 1.35rem auto 0;
   max-width: 32rem;
   color: color-mix(in srgb, var(--foreground, #1c1917) 78%, var(--muted, #78716c));
   font-size: clamp(1.02rem, 1.4vw, 1.18rem);
