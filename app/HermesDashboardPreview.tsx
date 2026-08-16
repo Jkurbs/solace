@@ -87,12 +87,6 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
         <p className="font-mono text-[0.6rem] font-medium uppercase tracking-[0.16em] text-white/50">
           Latest decisions
         </p>
-        <Link
-          href={OBSERVATORY_HERMES_LEDGER_PATH}
-          className="flex items-center gap-1 text-sm font-medium text-white/60 transition-colors hover:text-white"
-        >
-          Explore <span className="text-base">→</span>
-        </Link>
       </div>
 
       {/* Feed container */}

@@ -74,12 +74,6 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
         <p className="font-mono text-[0.6rem] font-medium uppercase tracking-[0.16em] text-white/50">
           Latest predictions
         </p>
-        <Link
-          href="/oracle"
-          className="flex items-center gap-1 text-sm font-medium text-white/60 transition-colors hover:text-white"
-        >
-          Explore <span className="text-base">→</span>
-        </Link>
       </div>
 
       {/* Feed container */}
