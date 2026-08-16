@@ -100,12 +100,6 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
           <p className="font-mono text-[0.6rem] font-medium uppercase tracking-[0.16em] text-muted">
             Latest decisions
           </p>
-          <Link
-            href={OBSERVATORY_HERMES_LEDGER_PATH}
-            className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Explore <span className="text-base">→</span>
-          </Link>
         </div>
 
         {/* Stream */}
