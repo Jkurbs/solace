@@ -27,7 +27,7 @@ const stagger = {
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
 };
 
-// Enhanced animated word with gradient, scale, rotation, and glow
+// Animated word
 const wordColors = {
   financial: 'from-emerald-400 to-teal-400',
   prediction: 'from-blue-400 to-indigo-400',
@@ -43,10 +43,7 @@ function AnimatedWord({ word }: { word: string }) {
       initial={{ opacity: 0, y: 20, scale: 0.8, rotate: -4 }}
       animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
       exit={{ opacity: 0, y: -20, scale: 0.8, rotate: 4 }}
-      transition={{
-        duration: 0.55,
-        ease: [0.34, 1.56, 0.64, 1], // springy bounce
-      }}
+      transition={{ duration: 0.55, ease: [0.34, 1.56, 0.64, 1] }}
       className={`inline-block bg-gradient-to-r ${colorClass} bg-clip-text text-transparent`}
       style={{ textShadow: '0 0 40px rgba(255,255,255,0.15)' }}
     >
@@ -105,14 +102,13 @@ export default function HomeClient({
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
 
-  // Animated word state
   const words = ['financial', 'prediction', 'aids'];
   const [wordIndex, setWordIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setWordIndex((i) => (i + 1) % words.length);
-    }, 2000);
+    }, 3000);
     return () => clearInterval(interval);
   }, [words.length]);
 
@@ -152,10 +148,10 @@ export default function HomeClient({
       <SiteHeader />
 
       <section className="hero-research hero-particle-section relative overflow-hidden">
-        {/* <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
           <HermesLiquidityFieldRender maxParticles={30000} />
           <div className="hero-particle-vignette absolute inset-0 pointer-events-none" />
-        </div> */}
+        </div>
 
         <motion.div
           initial={heroInitial}
@@ -163,13 +159,13 @@ export default function HomeClient({
           variants={stagger}
           className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-20 md:pt-24 md:pb-28"
         >
-          {/* ✅ Centered properly on desktop */}
+          {/* ✅ CENTERED CONTAINER */}
           <div className="hero-particle-copy home-hero-copy max-w-3xl mx-auto text-center">
-            <motion.p variants={fade} className="hero-particle-eyebrow">
+            {/* <motion.p variants={fade} className="hero-particle-eyebrow">
               Solace
-            </motion.p>
+            </motion.p> */}
 
-            {/* Title – simple block, no flex */}
+            {/* Title – plain block, text-center inherited */}
             <motion.h1
               variants={fade}
               className="hero-particle-title home-hero-title is-mission"
@@ -194,7 +190,6 @@ export default function HomeClient({
               Every decision is recorded, timestamped, and publicly verified in real time.
             </motion.p>
 
-            {/* CTAs – centered with flex */}
             <motion.div variants={fade} className="hero-particle-ctas mt-8 flex justify-center gap-4">
               <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-primary hero-cta-on-void">
                 Watch what it actually does
@@ -274,7 +269,6 @@ export default function HomeClient({
       <section className="px-5 py-12 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            {/* Hermes Card */}
             <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
               <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
                 Hermes
@@ -292,7 +286,6 @@ export default function HomeClient({
               </div>
             </div>
 
-            {/* Oracle Card */}
             <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
               <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
                 Oracle
@@ -313,7 +306,6 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* Machinery Section */}
       <section className="home-vision border-t border-border px-5 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">
           <p className="home-vision-kicker">The Machinery Underneath</p>
