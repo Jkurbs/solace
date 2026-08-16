@@ -31,7 +31,7 @@ const stagger = {
 const wordColors = {
   financial: 'from-emerald-400 to-teal-400',
   prediction: 'from-blue-400 to-indigo-400',
-  aids: 'from-rose-400 to-pink-400', // "aids" as per user
+  humanitarian: 'from-rose-400 to-pink-400',
 };
 
 function AnimatedWord({ word }: { word: string }) {
@@ -106,7 +106,7 @@ export default function HomeClient({
   const heroInitial = reduceMotion ? false : 'hidden';
 
   // Animated word state
-  const words = ['financial', 'prediction', 'aids'];
+  const words = ['financial', 'prediction', 'humanitarian'];
   const [wordIndex, setWordIndex] = useState(0);
 
   useEffect(() => {
@@ -143,17 +143,15 @@ export default function HomeClient({
     };
   }, []);
 
-  const displayCount = sealedDecisions ?? 0;
-  const isVerified = !!anchor?.href;
-  const lastSealLabel = chainHead?.sealedAtLabel ?? '—';
-  const hashShort = chainHead?.hash ? `${chainHead.hash.slice(0, 6)}…${chainHead.hash.slice(-4)}` : '—';
+  const showRecord =
+    (sealedDecisions != null && sealedDecisions > 0) ||
+    Boolean(hermesTelemetry?.condition || hermesTelemetry?.posture || hermesTelemetry?.reason);
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
 
       <section className="hero-research hero-particle-section relative overflow-hidden">
-        {/* Particle background - kept commented out as per user */}
         {/* <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
           <HermesLiquidityFieldRender maxParticles={30000} />
           <div className="hero-particle-vignette absolute inset-0 pointer-events-none" />
@@ -165,12 +163,13 @@ export default function HomeClient({
           variants={stagger}
           className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-20 md:pt-24 md:pb-28"
         >
-          {/* Centered hero content */}
+          {/* ✨ CENTERED ✨ */}
           <div className="hero-particle-copy home-hero-copy max-w-3xl mx-auto text-center">
             <motion.p variants={fade} className="hero-particle-eyebrow">
               Solace
             </motion.p>
 
+            {/* Animated Title with glow */}
             <motion.h1
               variants={fade}
               className="hero-particle-title home-hero-title is-mission flex flex-wrap items-center justify-center gap-1"
@@ -203,71 +202,78 @@ export default function HomeClient({
                 Run a simulation
               </Link>
             </motion.div>
-
-            {/* ✨ Slick Stats Bar – inspired by "400M+ queries" */}
-            <motion.div
-              variants={fade}
-              className="mt-10 flex flex-wrap items-center justify-center gap-8 md:gap-12 text-center"
-            >
-              <div>
-                <div className="text-4xl md:text-5xl font-bold text-white tracking-tight tabular-nums">
-                  {displayCount.toLocaleString('en-US')}
-                  {sealedDecisions !== null && <span className="text-2xl md:text-3xl text-white/40">+</span>}
-                </div>
-                <p className="mt-1 text-xs font-mono uppercase tracking-widest text-white/40">
-                  decisions sealed
-                </p>
-              </div>
-
-              <div className="hidden md:block w-px h-12 bg-white/10" />
-
-              <div>
-                <div className="text-4xl md:text-5xl font-bold text-white tracking-tight flex items-center justify-center gap-2">
-                  {isVerified ? (
-                    <>
-                      <span className="text-emerald-400">✓</span>
-                      <span className="text-2xl md:text-3xl text-white/60">Verified</span>
-                    </>
-                  ) : (
-                    <span className="text-2xl md:text-3xl text-yellow-400/60">Verifying…</span>
-                  )}
-                </div>
-                <p className="mt-1 text-xs font-mono uppercase tracking-widest text-white/40">
-                  on-chain anchor
-                </p>
-              </div>
-
-              <div className="hidden md:block w-px h-12 bg-white/10" />
-
-              <div>
-                <div className="text-3xl md:text-4xl font-bold text-white tracking-tight">
-                  {lastSealLabel}
-                </div>
-                <p className="mt-1 text-xs font-mono uppercase tracking-widest text-white/40">
-                  last seal
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Optional hash link */}
-            {chainHead?.hash && (
-              <motion.div variants={fade} className="mt-4">
-                <Link
-                  href={anchor?.href ?? '/anchor'}
-                  className="inline-block text-xs font-mono text-white/20 hover:text-white/60 transition-colors underline decoration-dotted underline-offset-2"
-                >
-                  {hashShort}
-                </Link>
-              </motion.div>
-            )}
           </div>
         </motion.div>
+
+        {showRecord && (
+          <motion.div
+            initial={heroInitial}
+            animate="show"
+            variants={fade}
+            className="home-record-band relative z-10 mx-auto max-w-6xl px-5 pb-16 md:pb-24"
+            aria-label="Live Hermes record"
+          >
+            <div className="home-record">
+              {(hermesTelemetry?.condition || hermesTelemetry?.posture || hermesTelemetry?.reason) && (
+                <div className="home-record-readout">
+                  {hermesTelemetry?.condition && (
+                    <div>
+                      <p className="home-record-label">Condition</p>
+                      <p className="home-record-value">{hermesTelemetry.condition}</p>
+                    </div>
+                  )}
+                  {hermesTelemetry?.posture && (
+                    <div>
+                      <p className="home-record-label">Decision</p>
+                      <p className="home-record-value">{formatConstant(hermesTelemetry.posture)}</p>
+                    </div>
+                  )}
+                  {hermesTelemetry?.reason && (
+                    <div>
+                      <p className="home-record-label">Why</p>
+                      <p className="home-record-value home-record-value-quiet">{hermesTelemetry.reason}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {sealedDecisions != null && sealedDecisions > 0 && (
+                <div className="home-record-counts">
+                  <div>
+                    <p className="home-record-count">{sealedDecisions.toLocaleString('en-US')}</p>
+                    <p className="home-record-label">Sealed Decisions</p>
+                  </div>
+                  {chainHead && (
+                    <div>
+                      <p className="home-record-meta">{chainHead.sealedAtLabel}</p>
+                      <p className="home-record-label">Last Seal</p>
+                    </div>
+                  )}
+                  {anchor && (
+                    <div>
+                      <Link href={anchor.href ?? '/anchor'} className="home-record-meta home-record-link">
+                        {anchor.cadence}
+                      </Link>
+                      <p className="home-record-label">Public Verification</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <p className="home-record-note">
+                Founder capital. Young sample.
+                {chainHead ? ` Row ${chainHead.rowNumber}.` : ''}
+              </p>
+            </div>
+          </motion.div>
+        )}
       </section>
 
       {/* Hermes & Oracle Grid */}
       <section className="px-5 py-12 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            
             {/* Hermes Card */}
             <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
               <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
@@ -303,6 +309,7 @@ export default function HomeClient({
                 </Link>
               </div>
             </div>
+
           </div>
         </div>
       </section>
