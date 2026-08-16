@@ -5,8 +5,10 @@ import { getAnchorChain } from '@/features/anchor/store';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
 import { getHermesLedgerPulse, getRecentHermesLedgerRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
+import { fetchKalshiBtcEthPredictions } from '@/features/oracle/kalshi';
 
 import HomeClient, { type HermesTelemetry } from './HomeClient';
+import type { ActivePrediction } from './oracle/active-predictions';
 
 const TELEMETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 /** Keep home SSR/ISR under platform build budgets (no full ledger / Kalshi). */
@@ -101,7 +103,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [hermesTelemetry, ledgerPulse, chain, recentDecisions] = await Promise.all([
+  const [hermesTelemetry, ledgerPulse, chain, recentDecisions, oracleFeed] = await Promise.all([
     withTimeout(getHermesTelemetry().catch(() => null), HOME_FETCH_BUDGET_MS, null),
     withTimeout(getHermesLedgerPulse().catch(() => null), HOME_FETCH_BUDGET_MS, null),
     withTimeout(
@@ -110,7 +112,16 @@ export default async function Home() {
       { anchors: [], head: null, count: 0, verified: false, breaks: [] },
     ),
     withTimeout(getRecentHermesLedgerRows(5).catch(() => []), HOME_FETCH_BUDGET_MS, []),
+    withTimeout(
+      fetchKalshiBtcEthPredictions(5).catch(() => ({ active: [], activeCount: 0, asOf: new Date().toISOString() })),
+      HOME_FETCH_BUDGET_MS,
+      { active: [], activeCount: 0, asOf: new Date().toISOString() },
+    ),
   ]);
+
+  const oraclePredictions = oracleFeed.active.filter((p): p is ActivePrediction & { question: string; probability: number } =>
+    Boolean(p.question) && typeof p.probability === 'number',
+  );
 
   const sealedDecisions =
     ledgerPulse && ledgerPulse.decisionCount > 0 ? ledgerPulse.decisionCount : null;
@@ -150,6 +161,7 @@ export default async function Home() {
       chainHead={chainHead}
       anchor={anchor}
       recentDecisions={recentDecisions}
+      oraclePredictions={oraclePredictions}
     />
   );
 }

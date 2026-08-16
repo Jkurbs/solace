@@ -13,6 +13,7 @@ import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 import HermesDashboardPreview from './HermesDashboardPreview';
 import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
 import OracleOrbSection from './OracleOrbSection';
+import type { ActivePrediction } from './oracle/active-predictions';
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -68,12 +69,14 @@ export default function HomeClient({
   chainHead = null,
   anchor = null,
   recentDecisions = [],
+  oraclePredictions = [],
 }: {
   hermesTelemetry: HermesTelemetry | null;
   sealedDecisions: number | null;
   chainHead?: ChainHeadSummary | null;
   anchor?: AnchorStatus | null;
   recentDecisions?: HermesLedgerRow[];
+  oraclePredictions?: ActivePrediction[];
 }) {
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
@@ -130,7 +133,7 @@ export default function HomeClient({
               Solace
             </motion.p>
 
-            {/* Core Hook: Embarrassingly simple & direct */}
+            {/* Core Hook */}
             <motion.h1 variants={fade} className="hero-particle-title home-hero-title is-mission">
               Machines that make decisions for you.
             </motion.h1>
@@ -220,11 +223,34 @@ export default function HomeClient({
         )}
       </section>
 
-      <HermesDashboardPreview decisions={recentDecisions} />
+      {/* xAI-Inspired Grid Section: Hermes & Oracle Side-by-Side */}
+      <section className="border-t border-border/60 px-5 py-16 md:py-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-10 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <p className="text-xs font-mono uppercase tracking-widest text-muted">Active Systems</p>
+              <h2 className="mt-1 text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+                Execution & Probability
+              </h2>
+            </div>
+            <p className="max-w-md text-sm text-muted">
+              Parallel machinery monitoring continuous liquidity markets alongside probabilistic real-world states.
+            </p>
+          </div>
 
-      <OracleOrbSection />
+          <div className="grid grid-cols-1 gap-8 items-stretch lg:grid-cols-2 lg:gap-10">
+            <div className="flex flex-col h-full rounded-2xl border border-border/80 bg-card/40 p-1 transition-colors hover:border-border">
+              <HermesDashboardPreview decisions={recentDecisions} />
+            </div>
 
-      {/* Machinery Section: Explaining how it works once curiosity is established */}
+            <div className="flex flex-col h-full rounded-2xl border border-border/80 bg-card/40 p-1 transition-colors hover:border-border">
+              <OracleOrbSection predictions={oraclePredictions} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Machinery Section */}
       <section className="home-vision border-t border-border px-5 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">
           <p className="home-vision-kicker">The Machinery Underneath</p>
@@ -240,7 +266,7 @@ export default function HomeClient({
               <div>
                 <p className="home-vision-domain">Hermes (Markets)</p>
                 <p>
-                  Reads order flow, volatility, and structure to decide whether to allocate, how much, and when to exit. Every decision is sealed on-chain before the trade executes.
+                  Reads order flow, volatility, and structure to decide whether to allocate, how much, and when to exit. Every decision is sealed on-chain before execution.
                 </p>
               </div>
             </li>

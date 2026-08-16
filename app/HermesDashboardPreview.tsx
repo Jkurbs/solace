@@ -122,15 +122,13 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
   const listHeight = VISIBLE_COUNT * ITEM_HEIGHT;
 
   return (
-    <section className="border-t border-border px-5 py-16 md:py-24">
-      <div className="mx-auto max-w-5xl">
-        <motion.div
-          className="overflow-hidden rounded-2xl border border-border bg-neutral-100 shadow-2xl shadow-black/10 dark:bg-neutral-900"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: easeOut }}
-        >
+    <motion.div
+      className="h-full overflow-hidden rounded-2xl border border-border bg-neutral-100 shadow-2xl shadow-black/10 dark:bg-neutral-900"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.7, ease: easeOut }}
+    >
           <div className="p-6 md:p-8">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
               <div>
@@ -251,7 +249,5 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
             </p>
           </div>
         </motion.div>
-      </div>
-    </section>
   );
 }
