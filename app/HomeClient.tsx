@@ -148,10 +148,10 @@ export default function HomeClient({
       <SiteHeader />
 
       <section className="hero-research hero-particle-section relative overflow-hidden">
-        <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
+        {/* <div className="hero-particle-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none" aria-hidden="true">
           <HermesLiquidityFieldRender maxParticles={30000} />
           <div className="hero-particle-vignette absolute inset-0 pointer-events-none" />
-        </div>
+        </div> */}
 
         <motion.div
           initial={heroInitial}
@@ -159,8 +159,7 @@ export default function HomeClient({
           variants={stagger}
           className="hero-particle-layout relative z-10 mx-auto flex min-h-[70vh] max-w-6xl flex-col items-center justify-center px-5 py-20 md:min-h-[75vh] md:py-28"
         >
-          {/* ✅ CENTERED CONTAINER */}
-          <div className="hero-particle-copy home-hero-copy w-full max-w-3xl text-center">
+          <div className="hero-particle-copy home-hero-copy flex w-full max-w-3xl flex-col items-center text-center">
             {/* <motion.p variants={fade} className="hero-particle-eyebrow">
               Solace
             </motion.p> */}
