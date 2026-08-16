@@ -107,7 +107,6 @@ export default function HomeClient({
     (sealedDecisions != null && sealedDecisions > 0) ||
     Boolean(hermesTelemetry?.condition || hermesTelemetry?.posture || hermesTelemetry?.reason);
 
-  // Grab the latest 3 active predictions for the compact view
   const latestPredictions = oraclePredictions.slice(0, 3);
 
   return (
@@ -228,7 +227,7 @@ export default function HomeClient({
               <div className="flex-1 overflow-hidden pb-6">
                 <HermesDashboardPreview decisions={recentDecisions} />
               </div>
-              <div className="mt-4 flex items-center justify-between text-xs text-white/50 border-t border-white/5 pt-4">
+              <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-white/50">
                 <span className="font-medium text-white/80">Hermes</span>
                 <Link
                   href={OBSERVATORY_HERMES_LEDGER_PATH}
@@ -238,7 +237,8 @@ export default function HomeClient({
                 </Link>
               </div>
             </div>
-            {/* Oracle Card: Streamlined to Latest Predictions + Action Button */}
+
+            {/* Oracle Card */}
             <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
               <div className="flex flex-col gap-5">
                 <div className="flex items-center justify-between">
@@ -256,7 +256,7 @@ export default function HomeClient({
                         <p className="line-clamp-2 text-xs font-medium text-white/90 leading-snug">
                           {pred.question}
                         </p>
-                        <div className="flex items-center justify-between text-[11px] text-white/50 font-mono">
+                        <div className="flex items-center justify-between font-mono text-[11px] text-white/50">
                           <span>Probability</span>
                           <span className="font-semibold text-emerald-400">
                             {typeof pred.probability === 'number'
@@ -284,10 +284,11 @@ export default function HomeClient({
                 </Link>
               </div>
             </div>
+
             {/* Cryptographic Proof Card */}
             <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20 md:col-span-2 lg:col-span-1">
               <div className="flex flex-col gap-4">
-                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400 w-fit">
+                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Live Ledger
                 </div>
@@ -300,7 +301,7 @@ export default function HomeClient({
                   <p className="truncate text-white/80">{chainHead?.hash ?? 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'}</p>
                 </div>
               </div>
-              <div className="mt-8 flex items-center justify-between text-xs text-white/50 border-t border-white/5 pt-4">
+              <div className="mt-8 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-white/50">
                 <span className="font-medium text-white/80">Proof</span>
                 <Link
                   href="/anchor"
