@@ -15158,7 +15158,7 @@ html.dark .home-research ::selection,
   max-width: 36rem;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
 }
 
 /* Manifesto hero: thesis first, mechanism in the dek. */
