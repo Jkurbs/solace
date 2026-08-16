@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -26,6 +26,22 @@ const stagger = {
   hidden: {},
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
 };
+
+// ---------- Animated Word Component ----------
+function AnimatedWord({ word }: { word: string }) {
+  return (
+    <motion.span
+      key={word}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.4, ease: easeOut }}
+      className="inline-block text-white"
+    >
+      {word}
+    </motion.span>
+  );
+}
 
 export type HermesTelemetry = {
   posture: string;
@@ -76,6 +92,17 @@ export default function HomeClient({
 }) {
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
+
+  // Animated word state
+  const words = ['financial', 'prediction', 'humanitarian'];
+  const [wordIndex, setWordIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWordIndex((i) => (i + 1) % words.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [words.length]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -128,9 +155,18 @@ export default function HomeClient({
             <motion.p variants={fade} className="hero-particle-eyebrow">
               Solace
             </motion.p>
-            <motion.h1 variants={fade} className="hero-particle-title home-hero-title is-mission">
-              Machines that make decisions for you.
+
+            {/* Animated Title */}
+            <motion.h1 variants={fade} className="hero-particle-title home-hero-title is-mission flex flex-wrap items-center gap-1">
+              Machines that make{' '}
+              <span className="inline-block min-w-[120px] text-center">
+                <AnimatePresence mode="wait">
+                  <AnimatedWord word={words[wordIndex]} />
+                </AnimatePresence>
+              </span>{' '}
+              decisions for you.
             </motion.h1>
+
             <motion.p variants={fade} className="home-hero-subline text-lg font-medium text-foreground/90">
               Hermes is the first one. It manages money and makes market decisions on your behalf.
             </motion.p>
