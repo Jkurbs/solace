@@ -18797,11 +18797,36 @@ html.dark .ledger-doc {
   --oracle-faint: #a8a29e;
   --oracle-line: #e7e5e4;
   --oracle-card: #ffffff;
+  --oracle-header-bg: rgba(250, 250, 249, 0.88);
   --oracle-up: #3d6b4f;
   --oracle-down: #9f3a3a;
+  --oracle-live-bg: #ecfdf5;
+  --oracle-live-border: rgba(61, 107, 79, 0.35);
+  --oracle-live-text: #3d6b4f;
+  --oracle-live-dot: #3d6b4f;
+  --oracle-btn-text: #fafaf9;
   background: var(--oracle-bg);
   color: var(--oracle-ink);
   color-scheme: light;
+}
+
+html[data-theme='dark'] .oracle-shell,
+html.dark .oracle-shell {
+  --oracle-bg: #0a0a0a;
+  --oracle-ink: #fafafa;
+  --oracle-muted: #a3a3a3;
+  --oracle-faint: #737373;
+  --oracle-line: #262626;
+  --oracle-card: #171717;
+  --oracle-header-bg: rgba(10, 10, 10, 0.88);
+  --oracle-up: #4ade80;
+  --oracle-down: #f87171;
+  --oracle-live-bg: rgba(74, 222, 128, 0.12);
+  --oracle-live-border: rgba(74, 222, 128, 0.35);
+  --oracle-live-text: #4ade80;
+  --oracle-live-dot: #4ade80;
+  --oracle-btn-text: #0a0a0a;
+  color-scheme: dark;
 }
 
 .oracle-shell-header {
@@ -18809,7 +18834,7 @@ html.dark .ledger-doc {
   top: 0;
   z-index: 40;
   border-bottom: 1px solid transparent;
-  background: rgba(250, 250, 249, 0.88);
+  background: var(--oracle-header-bg);
   backdrop-filter: blur(12px);
 }
 
@@ -18876,10 +18901,10 @@ html.dark .ledger-doc {
   align-items: center;
   gap: 0.45rem;
   padding: 0.28rem 0.7rem;
-  border: 1px solid rgba(61, 107, 79, 0.35);
+  border: 1px solid var(--oracle-live-border);
   border-radius: 999px;
-  background: #ecfdf5;
-  color: #3d6b4f;
+  background: var(--oracle-live-bg);
+  color: var(--oracle-live-text);
   font-family: var(--font-plex), monospace;
   font-size: 0.65rem;
   font-weight: 500;
@@ -18891,14 +18916,14 @@ html.dark .ledger-doc {
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 999px;
-  background: #3d6b4f;
-  box-shadow: 0 0 0 0 rgba(61, 107, 79, 0.45);
+  background: var(--oracle-live-dot);
+  box-shadow: 0 0 0 0 var(--oracle-live-border);
   animation: live-pulse 2.4s ease-out infinite;
 }
 
 .oracle-live-pill.is-quiet {
   border-color: var(--oracle-line);
-  background: #fff;
+  background: var(--oracle-card);
   color: var(--oracle-muted);
 }
 
@@ -18931,7 +18956,7 @@ html.dark .ledger-doc {
   border: 1px solid var(--oracle-ink);
   border-radius: 999px;
   background: var(--oracle-ink);
-  color: #fafaf9;
+  color: var(--oracle-btn-text);
   font-family: var(--font-plex), monospace;
   font-size: 0.68rem;
   font-weight: 500;

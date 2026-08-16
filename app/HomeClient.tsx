@@ -12,6 +12,7 @@ import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
 import HermesDashboardPreview from './HermesDashboardPreview';
 import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
+import OracleOrbSection from './OracleOrbSection';
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -220,6 +221,8 @@ export default function HomeClient({
       </section>
 
       <HermesDashboardPreview decisions={recentDecisions} />
+
+      <OracleOrbSection />
 
       {/* Machinery Section: Explaining how it works once curiosity is established */}
       <section className="home-vision border-t border-border px-5 py-20 md:py-28">
