@@ -112,7 +112,7 @@ export default function HomeClient({
   useEffect(() => {
     const interval = setInterval(() => {
       setWordIndex((i) => (i + 1) % words.length);
-    }, 3000);
+    }, 2000);
     return () => clearInterval(interval);
   }, [words.length]);
 
@@ -163,11 +163,16 @@ export default function HomeClient({
           variants={stagger}
           className="hero-particle-layout relative z-10 mx-auto max-w-6xl px-5 pt-14 pb-20 md:pt-24 md:pb-28"
         >
+          {/* ✅ Centered properly on desktop */}
           <div className="hero-particle-copy home-hero-copy max-w-3xl mx-auto text-center">
-            {/* Animated Title with glow */}
+            <motion.p variants={fade} className="hero-particle-eyebrow">
+              Solace
+            </motion.p>
+
+            {/* Title – simple block, no flex */}
             <motion.h1
               variants={fade}
-              className="hero-particle-title home-hero-title is-mission flex flex-wrap items-center justify-center gap-1"
+              className="hero-particle-title home-hero-title is-mission"
             >
               Machines that make{' '}
               <span className="inline-block min-w-[120px] text-center relative">
@@ -189,6 +194,7 @@ export default function HomeClient({
               Every decision is recorded, timestamped, and publicly verified in real time.
             </motion.p>
 
+            {/* CTAs – centered with flex */}
             <motion.div variants={fade} className="hero-particle-ctas mt-8 flex justify-center gap-4">
               <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-primary hero-cta-on-void">
                 Watch what it actually does
@@ -268,7 +274,6 @@ export default function HomeClient({
       <section className="px-5 py-12 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            
             {/* Hermes Card */}
             <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
               <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
@@ -304,7 +309,6 @@ export default function HomeClient({
                 </Link>
               </div>
             </div>
-
           </div>
         </div>
       </section>
