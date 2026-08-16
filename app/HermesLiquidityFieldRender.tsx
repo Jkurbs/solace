@@ -4,9 +4,12 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import type { HermesPublicPosture } from '@/features/hermes-public-reading/types';
 
+export type MetricFocus = 'decisions' | 'verified' | 'anchored';
+
 interface HermesLiquidityFieldProps {
   posture?: HermesPublicPosture | null;
   maxParticles?: number;
+  activeMetric?: MetricFocus | null;
 }
 
 const particleVertexShader = `
@@ -45,8 +48,14 @@ const particleFragmentShader = `
 export default function HermesLiquidityFieldRender({
   posture = 'SELECTIVE',
   maxParticles = 27000,
+  activeMetric = null,
 }: HermesLiquidityFieldProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const activeMetricRef = useRef<MetricFocus | null>(activeMetric);
+
+  useEffect(() => {
+    activeMetricRef.current = activeMetric;
+  }, [activeMetric]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -253,15 +262,13 @@ export default function HermesLiquidityFieldRender({
       mouse.x += (mouse.targetX - mouse.x) * 0.015;
       mouse.y += (mouse.targetY - mouse.y) * 0.015;
 
-      // 3-state continuous morph cycle (12s per phase)
-      const phaseDuration = 12;
-      const totalCycle = (elapsedTime % (phaseDuration * 3)) / phaseDuration;
-
-      const phaseIndex = Math.floor(totalCycle); // 0: Globe -> Lorenz, 1: Lorenz -> Seal, 2: Seal -> Globe
-      const phaseProgress = totalCycle - phaseIndex;
-
-      // Smooth exponential easing between shapes
-      const snapEase = phaseProgress === 1 ? 1 : 1 - Math.pow(2, -10 * phaseProgress);
+      let targetPhase = 0;
+      if (activeMetricRef.current === 'decisions') targetPhase = 0;
+      else if (activeMetricRef.current === 'verified') targetPhase = 1;
+      else if (activeMetricRef.current === 'anchored') targetPhase = 2;
+      else {
+        targetPhase = Math.floor((elapsedTime / 10) % 3);
+      }
 
       const posAttr = geometry.attributes.position as THREE.BufferAttribute;
       const posArray = posAttr.array as Float32Array;
@@ -284,56 +291,37 @@ export default function HermesLiquidityFieldRender({
         const sy = sealTargets[i3 + 1];
         const sz = sealTargets[i3 + 2];
 
-        let targetX = gx;
-        let targetY = gy;
-        let targetZ = gz;
+        let toX = gx;
+        let toY = gy;
+        let toZ = gz;
 
-        let cr = globeColors[i3];
-        let cg = globeColors[i3 + 1];
-        let cb = globeColors[i3 + 2];
+        let toR = globeColors[i3];
+        let toG = globeColors[i3 + 1];
+        let toB = globeColors[i3 + 2];
 
-        if (phaseIndex === 0) {
-          // Globe -> Lorenz
-          targetX = THREE.MathUtils.lerp(gx, lxPos, snapEase);
-          targetY = THREE.MathUtils.lerp(gy, lyPos, snapEase);
-          targetZ = THREE.MathUtils.lerp(gz, lzPos, snapEase);
-
-          cr = THREE.MathUtils.lerp(globeColors[i3], lorenzColors[i3], snapEase);
-          cg = THREE.MathUtils.lerp(globeColors[i3 + 1], lorenzColors[i3 + 1], snapEase);
-          cb = THREE.MathUtils.lerp(globeColors[i3 + 2], lorenzColors[i3 + 2], snapEase);
-        } else if (phaseIndex === 1) {
-          // Lorenz -> Seal
-          targetX = THREE.MathUtils.lerp(lxPos, sx, snapEase);
-          targetY = THREE.MathUtils.lerp(lyPos, sy, snapEase);
-          targetZ = THREE.MathUtils.lerp(lzPos, sz, snapEase);
-
-          cr = THREE.MathUtils.lerp(lorenzColors[i3], sealColors[i3], snapEase);
-          cg = THREE.MathUtils.lerp(lorenzColors[i3 + 1], sealColors[i3 + 1], snapEase);
-          cb = THREE.MathUtils.lerp(lorenzColors[i3 + 2], sealColors[i3 + 2], snapEase);
+        if (targetPhase === 0) {
+          toX = gx; toY = gy; toZ = gz;
+          toR = globeColors[i3]; toG = globeColors[i3 + 1]; toB = globeColors[i3 + 2];
+        } else if (targetPhase === 1) {
+          toX = lxPos; toY = lyPos; toZ = lzPos;
+          toR = lorenzColors[i3]; toG = lorenzColors[i3 + 1]; toB = lorenzColors[i3 + 2];
         } else {
-          // Seal -> Globe
-          targetX = THREE.MathUtils.lerp(sx, gx, snapEase);
-          targetY = THREE.MathUtils.lerp(sy, gy, snapEase);
-          targetZ = THREE.MathUtils.lerp(sz, gz, snapEase);
-
-          cr = THREE.MathUtils.lerp(sealColors[i3], globeColors[i3], snapEase);
-          cg = THREE.MathUtils.lerp(sealColors[i3 + 1], globeColors[i3 + 1], snapEase);
-          cb = THREE.MathUtils.lerp(sealColors[i3 + 2], globeColors[i3 + 2], snapEase);
+          toX = sx; toY = sy; toZ = sz;
+          toR = sealColors[i3]; toG = sealColors[i3 + 1]; toB = sealColors[i3 + 2];
         }
 
-        posArray[i3] = targetX;
-        posArray[i3 + 1] = targetY;
-        posArray[i3 + 2] = targetZ;
+        posArray[i3] += (toX - posArray[i3]) * 0.05;
+        posArray[i3 + 1] += (toY - posArray[i3 + 1]) * 0.05;
+        posArray[i3 + 2] += (toZ - posArray[i3 + 2]) * 0.05;
 
-        colorArray[i3] = cr;
-        colorArray[i3 + 1] = cg;
-        colorArray[i3 + 2] = cb;
+        colorArray[i3] += (toR - colorArray[i3]) * 0.05;
+        colorArray[i3 + 1] += (toG - colorArray[i3 + 1]) * 0.05;
+        colorArray[i3 + 2] += (toB - colorArray[i3 + 2]) * 0.05;
       }
 
       posAttr.needsUpdate = true;
       colorAttr.needsUpdate = true;
 
-      // Slow, deliberate rotation of the geometry
       particleSystem.rotation.y = elapsedTime * 0.005 + mouse.x * 0.008;
       particleSystem.rotation.x = Math.sin(elapsedTime * 0.003) * 0.03;
 

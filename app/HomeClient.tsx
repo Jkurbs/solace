@@ -11,7 +11,7 @@ import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
 import HermesDashboardPreview from './HermesDashboardPreview';
-import HermesLiquidityFieldRender from './HermesLiquidityFieldRender';
+import { HomeMetricsBanner } from './HomeMetricsBanner';
 import OracleOrbSection from './OracleOrbSection';
 import type { ActivePrediction } from './oracle/active-predictions';
 
@@ -154,8 +154,6 @@ export default function HomeClient({
       ? formatRelativeTime(chainHead.sealedAtLabel)
       : '—';
 
-  const isVerified = Boolean(anchor?.href);
-
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
@@ -202,61 +200,14 @@ export default function HomeClient({
               </Link>
             </motion.div>
 
-            {/* Sleek stats bar – value on top, label below */}
+            {/* Interactive Telemetry Banner */}
             {showRecord && (
-              <motion.div
-                variants={fade}
-                className="mt-12 flex w-full flex-wrap items-start justify-center gap-x-8 gap-y-4 text-sm text-white/60 md:gap-x-12"
-              >
-                {/* Sealed decisions */}
-                <div className="flex flex-col items-center">
-                  <span className="text-xl font-semibold text-white md:text-2xl tabular-nums">
-                    {sealedDecisions?.toLocaleString('en-US') ?? '—'}
-                  </span>
-                  <span className="mt-1 text-[0.6rem] font-mono uppercase tracking-widest text-white/40">
-                    decisions sealed
-                  </span>
-                </div>
-
-                {/* Chain verified */}
-                <div className="flex flex-col items-center">
-                  <span className="text-xl font-semibold text-white md:text-2xl">
-                    {isVerified ? '✓' : '—'}
-                  </span>
-                  <span className="mt-1 text-[0.6rem] font-mono uppercase tracking-widest text-white/40">
-                    chain verified
-                  </span>
-                </div>
-
-                {/* Last anchored */}
-                <div className="flex flex-col items-center">
-                  <span className="text-xl font-semibold text-white md:text-2xl tabular-nums">
-                    {lastAnchoredLabel}
-                  </span>
-                  <span className="mt-1 text-[0.6rem] font-mono uppercase tracking-widest text-white/40">
-                    last anchored
-                  </span>
-                </div>
-
-                {/* Light button – no border */}
-                <Link
-                  href={OBSERVATORY_HERMES_LEDGER_PATH}
-                  className="flex items-center gap-1 text-xs font-medium text-white/40 transition-colors hover:text-white"
-                >
-                  Check the observatory
-                  <span className="text-sm">→</span>
-                </Link>
+              <motion.div variants={fade} className="mt-12 w-full">
+                <HomeMetricsBanner
+                  decisionsCount={sealedDecisions ?? 0}
+                  lastAnchoredLabel={lastAnchoredLabel}
+                />
               </motion.div>
-            )}
-
-            {/* Minimal note */}
-            {showRecord && (
-              <motion.p
-                variants={fade}
-                className="mt-6 text-xs text-white/20"
-              >
-                {chainHead ? `Row ${chainHead.rowNumber}` : 'Founder capital · Young sample'}
-              </motion.p>
             )}
           </div>
         </motion.div>
