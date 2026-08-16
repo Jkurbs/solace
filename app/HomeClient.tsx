@@ -76,6 +76,7 @@ export type AnchorStatus = {
   href?: string;
 };
 
+// Helper to format relative time
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
   const now = Date.now();
@@ -144,18 +145,24 @@ export default function HomeClient({
     };
   }, []);
 
-  const displayCount = sealedDecisions ?? 0;
+  // Determine if we show the stats
+  const showRecord =
+    (sealedDecisions != null && sealedDecisions > 0) || Boolean(chainHead) || Boolean(anchor);
+
+  // Compute last anchored label
+  const lastAnchoredLabel = anchor?.lastAnchoredLabel
+    ? anchor.lastAnchoredLabel
+    : chainHead
+      ? formatRelativeTime(chainHead.sealedAtLabel)
+      : '—';
+
   const isVerified = Boolean(anchor?.href);
-  const lastAnchoredLabel = anchor?.lastAnchoredLabel || (chainHead ? formatRelativeTime(chainHead.sealedAtLabel) : '—');
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
 
       <section className="hero-research hero-particle-section relative overflow-hidden">
-        {/* Particle background commented out */}
-        {/* <div ... /> */}
-
         <motion.div
           initial={heroInitial}
           animate="show"
@@ -197,38 +204,61 @@ export default function HomeClient({
               </Link>
             </motion.div>
 
-            {/* ✨ Compact stats bar */}
-            <motion.div
-              variants={fade}
-              className="mt-10 flex flex-wrap items-center justify-center gap-8 text-sm text-white/60"
-            >
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-white tabular-nums">
-                  {displayCount.toLocaleString('en-US')}
-                  {sealedDecisions !== null && <span className="text-lg text-white/40">+</span>}
-                </span>
-                <span className="text-xs uppercase tracking-wider text-white/40">overall decisions</span>
-              </div>
+            {/* New compact stats bar */}
+            {showRecord && (
+              <motion.div
+                variants={fade}
+                className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-center"
+              >
+                {/* Sealed decisions */}
+                {sealedDecisions != null && sealedDecisions > 0 && (
+                  <div className="flex flex-col items-center">
+                    <span className="text-3xl md:text-4xl font-bold text-white tabular-nums">
+                      {sealedDecisions.toLocaleString('en-US')}
+                    </span>
+                    <span className="mt-1 text-[0.6rem] font-mono uppercase tracking-widest text-white/40">
+                      decisions sealed
+                    </span>
+                  </div>
+                )}
 
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-white">
-                  {isVerified ? '✓' : '—'}
-                </span>
-                <span className="text-xs uppercase tracking-wider text-white/40">chain verified</span>
-              </div>
+                {/* Chain verified */}
+                <div className="flex flex-col items-center">
+                  <span className="text-3xl md:text-4xl font-bold text-white">
+                    {isVerified ? '✓' : '—'}
+                  </span>
+                  <span className="mt-1 text-[0.6rem] font-mono uppercase tracking-widest text-white/40">
+                    chain verified
+                  </span>
+                </div>
 
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-white tabular-nums">
-                  {lastAnchoredLabel}
-                </span>
-                <span className="text-xs uppercase tracking-wider text-white/40">last anchored</span>
-              </div>
-            </motion.div>
+                {/* Last anchored */}
+                <div className="flex flex-col items-center">
+                  <span className="text-3xl md:text-4xl font-bold text-white tabular-nums">
+                    {lastAnchoredLabel}
+                  </span>
+                  <span className="mt-1 text-[0.6rem] font-mono uppercase tracking-widest text-white/40">
+                    last anchored
+                  </span>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Note – remains below stats */}
+            {showRecord && (
+              <motion.p
+                variants={fade}
+                className="mt-6 text-center text-xs text-white/30"
+              >
+                Founder capital. Young sample.
+                {chainHead ? ` Row ${chainHead.rowNumber}.` : ''}
+              </motion.p>
+            )}
           </div>
         </motion.div>
       </section>
 
-      {/* Hermes & Oracle Grid – unchanged */}
+      {/* Hermes & Oracle Grid */}
       <section className="px-5 py-12 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -269,7 +299,6 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* Machinery Section – unchanged */}
       <section className="home-vision border-t border-border px-5 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">
           <p className="home-vision-kicker">The Machinery Underneath</p>
@@ -311,7 +340,6 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* Footer – unchanged */}
       <section className="border-t border-border px-5 py-16 md:py-20">
         <div className="mx-auto max-w-6xl">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
