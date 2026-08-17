@@ -15,21 +15,21 @@ interface HomeScrollytellingSectionProps {
 const STEPS: { id: MetricFocus; title: string; subtitle: string; description: string }[] = [
   {
     id: 'decisions',
-    title: '01. Market Observation',
-    subtitle: '142 Decisions Formed',
-    description: 'Hermes ingests market structure, liquidity paths, and order flow dynamics to synthesize positioning decisions in real time.',
+    title: '01. Decision Capture',
+    subtitle: '142 Decisions Sealed',
+    description: 'The moment a machine commits to a decision, the raw intent and full context are permanently recorded. No retroactive edits, no silent overrides.',
   },
   {
     id: 'verified',
-    title: '02. Execution & Reversal Watch',
+    title: '02. Cryptographic Hashing',
     subtitle: 'Chain Verified Path',
-    description: 'Orders route through dynamic liquidity cascades with zero human intervention, evaluating risk parameters continuously.',
+    description: 'The decision is immediately stamped with a unique cryptographic signature. Any attempt to alter past records breaks the hash instantly.',
   },
   {
     id: 'anchored',
-    title: '03. Cryptographic Anchor',
+    title: '03. Immutable Anchor',
     subtitle: '3m Last Anchored',
-    description: 'Every decision state is serialized, hashed via SHA-256, and permanently written into an immutable public ledger sequence.',
+    description: 'The signature is published directly to a public, distributed ledger—anchoring the decision forever so anyone can independently verify its history.',
   },
 ];
 
