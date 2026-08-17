@@ -12,6 +12,7 @@ import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
 import HermesDashboardPreview from './HermesDashboardPreview';
 import { HomeMetricsBanner } from './HomeMetricsBanner';
+import { HomeScrollytellingSection } from './HomeScrollytellingSection';
 import OracleOrbSection from './OracleOrbSection';
 import type { ActivePrediction } from './oracle/active-predictions';
 
@@ -154,6 +155,8 @@ export default function HomeClient({
       ? formatRelativeTime(chainHead.sealedAtLabel)
       : '—';
 
+  const isVerified = Boolean(anchor?.href);
+
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
       <SiteHeader />
@@ -193,7 +196,7 @@ export default function HomeClient({
 
             <motion.div variants={fade} className="hero-particle-ctas mt-8 flex justify-center gap-4">
               <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-primary hero-cta-on-void">
-                Check the record
+                Check the live record
               </Link>
               <Link href="/hermes" className="hero-cta hero-cta-secondary hero-cta-on-void">
                 Run a simulation
@@ -212,6 +215,15 @@ export default function HomeClient({
           </div>
         </motion.div>
       </section>
+
+      {/* Scrollytelling Section */}
+      {showRecord && (
+        <HomeScrollytellingSection
+          sealedDecisions={sealedDecisions}
+          lastAnchoredLabel={lastAnchoredLabel}
+          isVerified={isVerified}
+        />
+      )}
 
       {/* Hermes & Oracle Grid */}
       <section className="px-5 py-12 md:py-16">
