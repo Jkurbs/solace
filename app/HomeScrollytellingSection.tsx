@@ -3,8 +3,9 @@
 import React, { useRef, useState } from 'react';
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import HermesLiquidityFieldRender, { MetricFocus } from './HermesLiquidityFieldRender';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
+
+export type MetricFocus = 'decisions' | 'verified' | 'anchored';
 
 interface HomeScrollytellingSectionProps {
   sealedDecisions?: number | null;
@@ -20,7 +21,7 @@ const STEPS = [
     title: 'Decision Capture',
     subtitle: 'Recorded at the millisecond.',
     description:
-      'The moment a machine commits to a decision, raw intent and market context are captured instantly. No retroactive edits, no silent overrides.',
+      'The moment Hermes commits to a decision, raw intent and market context are captured instantly. No retroactive edits, no silent overrides.',
     hash: '0x00000000000000000000000000000000',
   },
   {
@@ -77,19 +78,19 @@ export function HomeScrollytellingSection({
   const isTampered = tamperText !== ORIGINAL_PAYLOAD;
 
   return (
-    <section ref={containerRef} className="relative h-[300vh] w-full bg-[#08080a]">
-      {/* Sticky Viewport Container */}
-      <div className="sticky top-0 flex h-screen w-full items-center justify-center overflow-hidden">
-        {/* Dynamic 3D Particle Canvas Background */}
-        <HermesLiquidityFieldRender activeMetric={activeMetric} maxParticles={30000} />
+    <section ref={containerRef} className="relative h-[300vh] w-full bg-[#09090b] text-zinc-100">
+      {/* Background Grid & Vignette (Subtle, Serious Studio Tone) */}
+      <div className="sticky top-0 flex h-screen w-full items-center justify-center overflow-hidden border-y border-zinc-800/60 bg-[#09090b]">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#27272a15_1px,transparent_1px),linear-gradient(to_bottom,#27272a15_1px,transparent_1px)] bg-[size:3rem_3rem]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(24,24,27,0.8)_0%,#09090b_100%)]" />
 
         <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 gap-12 px-6 lg:grid-cols-12 lg:items-center">
-          {/* Left Column: Fixed Narrative Header */}
-          <div className="flex flex-col space-y-4 lg:col-span-5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-mono font-medium text-emerald-400 w-fit">
+          {/* Left Column: Serious Narrative Header */}
+          <div className="flex flex-col space-y-5 lg:col-span-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-zinc-900/80 px-3 py-1 text-xs font-mono font-medium text-zinc-300 w-fit backdrop-blur-md">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-zinc-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-zinc-300" />
               </span>
               Proof of Intention
             </div>
@@ -97,12 +98,12 @@ export function HomeScrollytellingSection({
             <h2 className="text-3xl font-bold tracking-tight text-white md:text-5xl">
               Decisions that cannot be changed.
             </h2>
-            <p className="text-sm leading-relaxed text-white/60">
+            <p className="text-sm leading-relaxed text-zinc-400">
               Trace how Hermes moves from active market analysis to permanent, tamper-evident cryptographic public proof.
             </p>
 
             {/* Stepper Node Chain */}
-            <div className="pt-6">
+            <div className="pt-4">
               <div className="flex items-center gap-3">
                 {STEPS.map((step, idx) => {
                   const isActive = idx === activeIndex;
@@ -112,12 +113,12 @@ export function HomeScrollytellingSection({
                     <React.Fragment key={step.id}>
                       <div className="flex items-center gap-2">
                         <div
-                          className={`flex h-8 w-8 items-center justify-center rounded-full font-mono text-xs transition-all duration-500 ${
+                          className={`flex h-8 w-8 items-center justify-center rounded-lg font-mono text-xs transition-all duration-300 ${
                             isActive
-                              ? 'border-2 border-emerald-400 bg-emerald-500/20 font-bold text-white shadow-[0_0_15px_rgba(16,185,129,0.5)]'
+                              ? 'border border-zinc-400 bg-zinc-100 text-zinc-950 font-bold shadow-md'
                               : isPast
-                                ? 'border border-emerald-500/50 bg-emerald-950/40 text-emerald-400'
-                                : 'border border-white/10 bg-white/5 text-white/40'
+                                ? 'border border-zinc-700 bg-zinc-900/80 text-zinc-300'
+                                : 'border border-zinc-800/80 bg-zinc-950/40 text-zinc-600'
                           }`}
                         >
                           {isPast ? '✓' : step.stepNum}
@@ -125,8 +126,8 @@ export function HomeScrollytellingSection({
                       </div>
                       {idx < STEPS.length - 1 && (
                         <div
-                          className={`h-0.5 flex-1 transition-colors duration-500 ${
-                            idx < activeIndex ? 'bg-emerald-500/60' : 'bg-white/10'
+                          className={`h-px flex-1 transition-colors duration-500 ${
+                            idx < activeIndex ? 'bg-zinc-600' : 'bg-zinc-800/60'
                           }`}
                         />
                       )}
@@ -136,17 +137,17 @@ export function HomeScrollytellingSection({
               </div>
             </div>
 
-            <div className="pt-4">
+            <div className="pt-2">
               <Link
                 href={OBSERVATORY_HERMES_LEDGER_PATH}
-                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 py-2.5 text-xs font-medium text-white transition-all hover:bg-white/10 hover:border-white/40"
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/80 px-4 py-2.5 text-xs font-mono font-medium text-zinc-200 transition-all hover:border-zinc-500 hover:bg-zinc-800"
               >
                 Inspect Public Ledger <span className="text-sm">→</span>
               </Link>
             </div>
           </div>
 
-          {/* Right Column: Terminal Proof Card */}
+          {/* Right Column: Serious Audit Card */}
           <div className="relative h-[380px] w-full lg:col-span-7">
             <AnimatePresence mode="wait">
               {STEPS.map((step) => {
@@ -155,29 +156,25 @@ export function HomeScrollytellingSection({
                 return (
                   <motion.div
                     key={step.id}
-                    initial={{ opacity: 0, y: 20, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -20, scale: 0.98 }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-2xl border border-white/15 bg-[#0f0f13]/90 p-6 backdrop-blur-2xl shadow-2xl"
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -16 }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-xl border border-zinc-800 bg-[#121215] p-6 shadow-2xl backdrop-blur-xl"
                   >
-                    {/* Terminal Header Bar */}
-                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
-                        <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
-                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
-                        <span className="ml-2 font-mono text-xs text-white/40">
-                          ledger_proof_node_{step.stepNum}.sh
-                        </span>
+                    {/* Header Bar */}
+                    <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4">
+                      <div className="flex items-center gap-2 font-mono text-xs text-zinc-500">
+                        <span className="h-2 w-2 rounded-full bg-zinc-600" />
+                        node_proof_ledger_{step.stepNum}
                       </div>
                       <span
-                        className={`rounded-md px-2 py-0.5 font-mono text-[10px] uppercase font-semibold tracking-wide ${
+                        className={`rounded px-2 py-0.5 font-mono text-[10px] uppercase font-semibold tracking-wider ${
                           step.id === 'decisions'
-                            ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                            ? 'border border-zinc-700 bg-zinc-800/60 text-zinc-300'
                             : step.id === 'verified'
-                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                              : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                              ? 'border border-amber-900/40 bg-amber-950/20 text-amber-400'
+                              : 'border border-emerald-900/40 bg-emerald-950/20 text-emerald-400'
                         }`}
                       >
                         ● {step.status}
@@ -186,22 +183,22 @@ export function HomeScrollytellingSection({
 
                     {/* Step Body */}
                     <div className="my-auto space-y-3 py-2">
-                      <span className="font-mono text-xs uppercase tracking-wider text-emerald-400/80">
+                      <span className="font-mono text-xs uppercase tracking-widest text-zinc-400">
                         {step.title}
                       </span>
                       <h3 className="font-mono text-2xl font-bold tracking-tight text-white">
                         {step.subtitle}
                       </h3>
-                      <p className="text-xs leading-relaxed text-white/70">
+                      <p className="text-xs leading-relaxed text-zinc-400">
                         {step.description}
                       </p>
 
-                      {/* Step 3 Tamper Interactive Demo */}
+                      {/* Step 3 Tamper Test */}
                       {step.id === 'anchored' && (
-                        <div className="mt-3 rounded-lg border border-white/10 bg-black/40 p-3 space-y-2">
-                          <div className="flex items-center justify-between text-[11px] font-mono text-white/60">
+                        <div className="mt-3 rounded-lg border border-zinc-800 bg-zinc-950 p-3 space-y-2">
+                          <div className="flex items-center justify-between font-mono text-[11px] text-zinc-400">
                             <span>Interactive Tamper Test:</span>
-                            <span className={isTampered ? 'text-rose-400' : 'text-emerald-400'}>
+                            <span className={isTampered ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
                               {isTampered ? '❌ HASH MISMATCH' : '✓ SIGNATURE MATCH'}
                             </span>
                           </div>
@@ -209,15 +206,15 @@ export function HomeScrollytellingSection({
                             type="text"
                             value={tamperText}
                             onChange={(e) => setTamperText(e.target.value)}
-                            className={`w-full rounded border bg-black/60 px-2.5 py-1.5 font-mono text-xs text-white outline-none transition-colors ${
+                            className={`w-full rounded border bg-zinc-900 px-3 py-1.5 font-mono text-xs text-zinc-100 outline-none transition-colors ${
                               isTampered
-                                ? 'border-rose-500/60 focus:border-rose-500'
-                                : 'border-emerald-500/40 focus:border-emerald-500'
+                                ? 'border-rose-500/80 focus:border-rose-500'
+                                : 'border-zinc-700 focus:border-zinc-500'
                             }`}
                           />
-                          <div className="font-mono text-[10px] break-all text-white/40">
+                          <div className="font-mono text-[10px] break-all text-zinc-500">
                             SHA-256:{' '}
-                            <span className={isTampered ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
+                            <span className={isTampered ? 'text-rose-400 font-bold' : 'text-zinc-300'}>
                               {isTampered ? TAMPERED_HASH : VALID_HASH}
                             </span>
                           </div>
@@ -227,8 +224,8 @@ export function HomeScrollytellingSection({
 
                     {/* Terminal Footer Hash Output */}
                     {step.id !== 'anchored' && (
-                      <div className="rounded-lg border border-white/5 bg-black/50 p-3 font-mono text-[11px] text-white/50">
-                        <span className="text-white/30">PAYLOAD_HASH:</span> {step.hash}
+                      <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/80 p-3 font-mono text-[11px] text-zinc-400">
+                        <span className="text-zinc-600">PAYLOAD_HASH:</span> {step.hash}
                       </div>
                     )}
                   </motion.div>
