@@ -203,7 +203,7 @@ export default function HomeClient({
               </Link>
             </motion.div>
 
-            {/* Interactive Telemetry Banner */}
+            {/* Interactive Telemetry Banner
             {showRecord && (
               <motion.div variants={fade} className="mt-12 w-full">
                 <HomeMetricsBanner
@@ -211,7 +211,7 @@ export default function HomeClient({
                   lastAnchoredLabel={lastAnchoredLabel}
                 />
               </motion.div>
-            )}
+            )} */}
           </div>
         </motion.div>
       </section>
