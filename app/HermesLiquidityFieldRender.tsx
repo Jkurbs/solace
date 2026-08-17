@@ -37,7 +37,7 @@ const particleFragmentShader = `
   void main() {
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
-    
+
     float strength = smoothstep(0.5, 0.15, dist);
     vec3 luminousColor = mix(vColor, vColor + vec3(0.08), strength * 0.4);
 
