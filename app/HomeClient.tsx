@@ -174,7 +174,7 @@ export default function HomeClient({
               variants={fade}
               className="hero-particle-title home-hero-title is-mission text-center"
             >
-              Machines that make{' '}
+              Instruments that make{' '}
               <span className="inline-flex justify-center min-w-[120px] text-center relative">
                 <span
                   className="absolute inset-0 blur-2xl opacity-30 rounded-full"
