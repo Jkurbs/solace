@@ -26,3 +26,99 @@ export type ActivePrediction = {
   openInterest?: number;
   illustrative?: boolean;
 };
+
+function inDays(nowMs: number, days: number) {
+  return new Date(nowMs + days * 86_400_000).toISOString();
+}
+
+function hoursAgo(nowMs: number, hours: number) {
+  return new Date(nowMs - hours * 3_600_000).toISOString();
+}
+
+/** Sample BTC/ETH markets for when the Kalshi board is empty or timed out. Never labeled live. */
+export function getIllustrativeActivePredictions(nowMs = Date.now()): ActivePrediction[] {
+  return [
+    {
+      id: 'sample-btc-year-150k',
+      question: 'Bitcoin above $150,000 by year end?',
+      probability: 0.41,
+      confidence: 0.62,
+      updatedAt: hoursAgo(nowMs, 3),
+      resolvesAt: inDays(nowMs, 134),
+      delta: 0.02,
+      deltaWindow: 'this week',
+      asset: 'btc',
+      source: 'illustrative',
+      illustrative: true,
+    },
+    {
+      id: 'sample-eth-year-8k',
+      question: 'Ethereum above $8,000 this year?',
+      probability: 0.28,
+      confidence: 0.58,
+      updatedAt: hoursAgo(nowMs, 5),
+      resolvesAt: inDays(nowMs, 134),
+      delta: -0.03,
+      deltaWindow: 'this week',
+      asset: 'eth',
+      source: 'illustrative',
+      illustrative: true,
+    },
+    {
+      id: 'sample-btc-month-100k',
+      question: 'Bitcoin above $100,000 this month?',
+      probability: 0.67,
+      confidence: 0.71,
+      updatedAt: hoursAgo(nowMs, 1),
+      resolvesAt: inDays(nowMs, 12),
+      delta: 0.04,
+      deltaWindow: 'this week',
+      asset: 'btc',
+      source: 'illustrative',
+      illustrative: true,
+    },
+    {
+      id: 'sample-eth-min-2k',
+      question: 'Ethereum below $2,000 this year?',
+      probability: 0.22,
+      confidence: 0.55,
+      updatedAt: hoursAgo(nowMs, 8),
+      resolvesAt: inDays(nowMs, 134),
+      delta: 0.01,
+      deltaWindow: 'this week',
+      asset: 'eth',
+      source: 'illustrative',
+      illustrative: true,
+    },
+    {
+      id: 'sample-btc-ath-month',
+      question: 'Bitcoin all-time high this month?',
+      probability: 0.19,
+      confidence: 0.6,
+      updatedAt: hoursAgo(nowMs, 2),
+      resolvesAt: inDays(nowMs, 12),
+      delta: -0.05,
+      deltaWindow: 'this week',
+      asset: 'btc',
+      source: 'illustrative',
+      illustrative: true,
+    },
+    {
+      id: 'sample-eth-ath-year',
+      question: 'Ethereum all-time high this year?',
+      probability: 0.36,
+      confidence: 0.57,
+      updatedAt: hoursAgo(nowMs, 6),
+      resolvesAt: inDays(nowMs, 134),
+      delta: null,
+      deltaWindow: null,
+      asset: 'eth',
+      source: 'illustrative',
+      illustrative: true,
+    },
+  ];
+}
+
+export function withIllustrativeOracleFallback(active: ActivePrediction[]): ActivePrediction[] {
+  return active.length > 0 ? active : getIllustrativeActivePredictions();
+}

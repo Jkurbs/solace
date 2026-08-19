@@ -6,6 +6,7 @@ import { fetchKalshiBtcEthPredictions } from '@/features/oracle/kalshi';
 
 import { calibration } from '../calibration';
 import OracleExperience from './OracleExperience';
+import { withIllustrativeOracleFallback } from './active-predictions';
 import { resolvedQuestions } from './resolved-questions';
 
 export const metadata: Metadata = {
@@ -26,6 +27,7 @@ export default async function OraclePage() {
   }));
 
   const isLive = feed.active.length > 0 && !feed.error;
+  const active = withIllustrativeOracleFallback(feed.active);
 
   return (
     <main className="oracle-shell hermes-paper min-h-screen pt-16 text-foreground">
@@ -37,7 +39,7 @@ export default async function OraclePage() {
         activeCount={feed.activeCount || feed.active.length}
         asOf={feed.asOf}
         buckets={calibration.buckets}
-        active={feed.active}
+        active={active}
         resolvedQuestions={resolvedQuestions}
         feedError={feed.error}
         isLive={isLive}

@@ -8,7 +8,7 @@ import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/s
 import { fetchKalshiBtcEthPredictions } from '@/features/oracle/kalshi';
 
 import HomeClient, { type HermesTelemetry } from './HomeClient';
-import type { ActivePrediction } from './oracle/active-predictions';
+import { withIllustrativeOracleFallback, type ActivePrediction } from './oracle/active-predictions';
 
 const TELEMETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 /** Keep home SSR/ISR under platform build budgets (no full ledger / Kalshi). */
@@ -119,8 +119,11 @@ export default async function Home() {
     ),
   ]);
 
-  const oraclePredictions = oracleFeed.active.filter((p): p is ActivePrediction & { question: string; probability: number } =>
-    Boolean(p.question) && typeof p.probability === 'number',
+  const oraclePredictions = withIllustrativeOracleFallback(
+    oracleFeed.active.filter(
+      (p): p is ActivePrediction & { question: string; probability: number } =>
+        Boolean(p.question) && typeof p.probability === 'number',
+    ),
   );
 
   const sealedDecisions =

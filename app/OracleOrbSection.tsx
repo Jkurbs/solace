@@ -34,6 +34,7 @@ function remainingLabel(iso: string) {
 export default function OracleOrbSection({ predictions }: OracleOrbSectionProps) {
   const [displayed, setDisplayed] = useState<ActivePrediction[]>([]);
   const [started, setStarted] = useState(false);
+  const sampleBoard = predictions.length > 0 && predictions.every((prediction) => prediction.illustrative);
 
   useEffect(() => {
     if (predictions.length === 0) return undefined;
@@ -72,7 +73,7 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <p className="font-mono text-[0.6rem] font-medium uppercase tracking-[0.16em] text-white/50">
-          Latest predictions
+          {sampleBoard ? 'Sample predictions' : 'Latest predictions'}
         </p>
       </div>
 
@@ -109,7 +110,7 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
                       {prediction.asset.toUpperCase()}
                     </span>
                   )}
-                  <span>{remainingLabel(prediction.resolvesAt)}</span>
+                  <span>{prediction.illustrative ? 'Sample' : remainingLabel(prediction.resolvesAt)}</span>
                 </p>
               </div>
               <div className="shrink-0 text-right">

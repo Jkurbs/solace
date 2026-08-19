@@ -77,6 +77,7 @@ export default function OracleExperience({
 }: Props) {
   const [tab, setTab] = useState<OracleTab>('active');
   const nowMs = useMemo(() => Date.now(), []);
+  const sampleBoard = active.length > 0 && active.every((entry) => entry.illustrative);
   const asOfLabel = useMemo(() => {
     const t = new Date(asOf).getTime();
     if (!Number.isFinite(t)) return asOf;
@@ -207,9 +208,13 @@ export default function OracleExperience({
             </ul>
           )}
           <p className="oracle-board-footnote">
-            {active.length === 0
-              ? 'BTC and ETH only · 15-minute markets excluded'
-              : `Showing ${active.length} of ${activeCount} open BTC/ETH markets · 15-minute markets excluded`}
+            {sampleBoard
+              ? feedError
+                ? 'Sample markets. Kalshi board is unavailable right now.'
+                : 'Sample markets. Live Kalshi board is empty right now.'
+              : active.length === 0
+                ? 'BTC and ETH only · 15-minute markets excluded'
+                : `Showing ${active.length} of ${activeCount} open BTC/ETH markets · 15-minute markets excluded`}
           </p>
         </section>
       ) : null}
