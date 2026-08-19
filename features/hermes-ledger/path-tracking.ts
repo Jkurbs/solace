@@ -4,7 +4,7 @@ import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/s
 import { getRuntimeSnapshot, saveRuntimeSnapshot } from '@/features/runtime-snapshots/store';
 import type { Json } from '@/lib/supabase/types';
 
-import { listHermesLedgerRows, sealHermesLedgerRow } from './store';
+import { listHermesLedgerRows, listUnpairedHermesOpenRows, sealHermesLedgerRow } from './store';
 
 // Two-row path schema: when a new position appears in the pool-mark feed, an
 // OPEN row is sealed immediately, instrument, direction, and size withheld
@@ -19,6 +19,10 @@ import { listHermesLedgerRows, sealHermesLedgerRow } from './store';
 // 3) Premature drop: deleting opens when a mark omits a symbol (flicker or
 //    switch) left chain opens unpaired and allowed re-seals → opens are only
 //    removed on close (popOpenPathRef), never because a mark is missing them.
+// 4) Restart re-open: killing the ingest/API drops memory. If the snapshot
+//    is empty too, the next mark looks like a brand-new path and reseals.
+//    The sealed chain is the source of truth: adopt unpaired open rows
+//    before minting, and never let unpaired opens exceed live positions.
 const OPEN_PATHS_KEY = 'hermes_open_paths';
 /** Ignore mark-driven re-opens for the same symbol:side after a close. */
 const RECENTLY_CLOSED_TTL_MS = 20 * 60 * 1000;
@@ -32,8 +36,69 @@ type OpenPathBook = {
   recentlyClosed: Record<string, string>;
 };
 
+function identitySymbol(symbol: string) {
+  return symbol.trim().toUpperCase().replace(/[-/:_]/g, '');
+}
+
 function pathKey(symbol: string, side: string) {
-  return `${symbol.trim().toUpperCase()}:${side.trim().toUpperCase()}`;
+  return `${identitySymbol(symbol)}:${side.trim().toUpperCase()}`;
+}
+
+function canonicalKeyFromStored(key: string) {
+  const separator = key.lastIndexOf(':');
+
+  if (separator <= 0) {
+    return key.trim().toUpperCase();
+  }
+
+  return pathKey(key.slice(0, separator), key.slice(separator + 1));
+}
+
+/** Collapse BTC-USDT:LONG / BTCUSDT:LONG (and leftover snapshot keys) to one identity. */
+function canonicalizeBook(book: OpenPathBook): boolean {
+  let changed = false;
+  const opens: OpenPathState = {};
+
+  for (const [key, entry] of Object.entries(book.opens)) {
+    const canonical = canonicalKeyFromStored(key);
+
+    if (canonical !== key) {
+      changed = true;
+    }
+
+    const existing = opens[canonical];
+
+    if (!existing || new Date(entry.openedAt).getTime() < new Date(existing.openedAt).getTime()) {
+      if (existing) {
+        changed = true;
+      }
+
+      opens[canonical] = entry;
+    } else {
+      changed = true;
+    }
+  }
+
+  const recentlyClosed: Record<string, string> = {};
+
+  for (const [key, closedAt] of Object.entries(book.recentlyClosed)) {
+    const canonical = canonicalKeyFromStored(key);
+
+    if (canonical !== key) {
+      changed = true;
+    }
+
+    const existing = recentlyClosed[canonical];
+
+    if (!existing || new Date(closedAt).getTime() > new Date(existing).getTime()) {
+      recentlyClosed[canonical] = closedAt;
+    }
+  }
+
+  book.opens = opens;
+  book.recentlyClosed = recentlyClosed;
+
+  return changed;
 }
 
 function parsePositionIdentity(
@@ -44,11 +109,17 @@ function parsePositionIdentity(
   const symbol = typeof record.symbol === 'string' ? record.symbol.trim().toUpperCase() : '';
   const side = typeof record.side === 'string' ? record.side.trim().toUpperCase() : '';
 
-  if (!symbol || !['LONG', 'SHORT'].includes(side) || seen.has(`${symbol}:${side}`)) {
+  if (!symbol || !['LONG', 'SHORT'].includes(side)) {
     return;
   }
 
-  seen.add(`${symbol}:${side}`);
+  const key = pathKey(symbol, side);
+
+  if (seen.has(key)) {
+    return;
+  }
+
+  seen.add(key);
   parsed.push({ side, symbol });
 }
 
@@ -145,23 +216,24 @@ function bookFromStored(stored: unknown): OpenPathBook {
   }
 
   const record = stored as Record<string, unknown>;
+  const book: OpenPathBook = isLegacyOpenStateRecord(record)
+    ? { opens: { ...(record as OpenPathState) }, recentlyClosed: {} }
+    : {
+        opens:
+          record.opens && typeof record.opens === 'object' && !Array.isArray(record.opens)
+            ? ({ ...record.opens } as OpenPathState)
+            : {},
+        recentlyClosed:
+          record.recentlyClosed &&
+          typeof record.recentlyClosed === 'object' &&
+          !Array.isArray(record.recentlyClosed)
+            ? ({ ...record.recentlyClosed } as Record<string, string>)
+            : {},
+      };
 
-  if (isLegacyOpenStateRecord(record)) {
-    return { opens: { ...(record as OpenPathState) }, recentlyClosed: {} };
-  }
+  canonicalizeBook(book);
 
-  const opens =
-    record.opens && typeof record.opens === 'object' && !Array.isArray(record.opens)
-      ? ({ ...record.opens } as OpenPathState)
-      : {};
-  const recentlyClosed =
-    record.recentlyClosed &&
-    typeof record.recentlyClosed === 'object' &&
-    !Array.isArray(record.recentlyClosed)
-      ? ({ ...record.recentlyClosed } as Record<string, string>)
-      : {};
-
-  return { opens, recentlyClosed };
+  return book;
 }
 
 /** Prefer the book that knows more active opens / newer close cooldowns. */
@@ -188,15 +260,18 @@ async function readBook(): Promise<OpenPathBook> {
   const disk = await readBookFromDisk();
   if (!memoryBook) {
     memoryBook = cloneBook(disk);
+    canonicalizeBook(memoryBook);
     return cloneBook(memoryBook);
   }
 
   const merged = mergeBooks(memoryBook, disk);
+  canonicalizeBook(merged);
   memoryBook = cloneBook(merged);
   return cloneBook(merged);
 }
 
 async function writeBook(book: OpenPathBook): Promise<boolean> {
+  canonicalizeBook(book);
   memoryBook = cloneBook(book);
   const ok = await saveRuntimeSnapshot(OPEN_PATHS_KEY, book as unknown as Json);
   if (!ok) {
@@ -246,6 +321,56 @@ function withBookLock<T>(fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
+function nextHermesRecordId(rows: Array<{ recordId: string }>) {
+  const nextRecordNumber =
+    rows.reduce((max, row) => {
+      const match = row.recordId.match(/^HMS-(\d+)$/);
+
+      return match ? Math.max(max, Number(match[1])) : max;
+    }, 0) + 1;
+
+  return `HMS-${String(nextRecordNumber).padStart(3, '0')}`;
+}
+
+function livePathKeys(positions: Array<{ symbol: string; side: string }>) {
+  const keys: string[] = [];
+  const seen = new Set<string>();
+
+  for (const position of positions) {
+    const key = pathKey(position.symbol, position.side);
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    keys.push(key);
+  }
+
+  return keys;
+}
+
+function adoptUnpairedOpen(
+  book: OpenPathBook,
+  key: string,
+  unpaired: Array<{ recordId: string; sealedAt: string }>,
+) {
+  const claimed = new Set(
+    Object.values(book.opens)
+      .map((entry) => entry.recordId)
+      .filter(Boolean),
+  );
+  const existing = unpaired.find((row) => !claimed.has(row.recordId));
+
+  if (!existing) {
+    return false;
+  }
+
+  book.opens[key] = { openedAt: existing.sealedAt, recordId: existing.recordId };
+
+  return true;
+}
+
 /**
  * Called from the pool-mark ingest after a healthy mark stores. Seals an
  * open row for every position not already tracked. Positions that vanish
@@ -272,21 +397,52 @@ export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: 
       // Do NOT drop opens when a mark omits a symbol. Only popOpenPathRef
       // (trade close) removes tracking, prevents unpaired opens + re-spam.
 
-      for (const position of positions) {
-        const key = pathKey(position.symbol, position.side);
+      const liveKeys = livePathKeys(positions);
+      const untracked = liveKeys.filter(
+        (key) => !book.opens[key] && !isInCloseCooldown(book.recentlyClosed, key, nowMs),
+      );
 
-        if (book.opens[key]) {
+      if (!untracked.length) {
+        if (changed) {
+          await writeBook(book);
+        }
+
+        return;
+      }
+
+      const unpaired = await listUnpairedHermesOpenRows();
+
+      // Chain already has enough open rows for the live book (typical after
+      // an API restart that dropped the tracking snapshot). Adopt first.
+      const neededSeals = Math.max(0, liveKeys.length - unpaired.length);
+      const adoptCount = Math.max(0, untracked.length - neededSeals);
+      const sealKeys: string[] = [];
+
+      for (const [index, key] of untracked.entries()) {
+        if (index < adoptCount && adoptUnpairedOpen(book, key, unpaired)) {
+          changed = true;
           continue;
         }
 
-        // Stale mark after a real close: do not mint a ghost open.
-        if (isInCloseCooldown(book.recentlyClosed, key, nowMs)) {
+        sealKeys.push(key);
+      }
+
+      if (changed) {
+        await writeBook(book);
+        changed = false;
+      }
+
+      const snapshot = sealKeys.length ? await getStoredHermesBriefSnapshot().catch(() => null) : null;
+
+      for (const key of sealKeys) {
+        if (book.opens[key] || isInCloseCooldown(book.recentlyClosed, key, nowMs)) {
           continue;
         }
 
         // Re-check disk immediately before seal (cross-instance race).
         const latest = await readBookFromDisk();
         const merged = mergeBooks(book, latest);
+        canonicalizeBook(merged);
         book.opens = merged.opens;
         book.recentlyClosed = merged.recentlyClosed;
         memoryBook = cloneBook(book);
@@ -295,15 +451,19 @@ export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: 
           continue;
         }
 
-        const snapshot = await getStoredHermesBriefSnapshot().catch(() => null);
-        const existing = await listHermesLedgerRows(1000);
-        const nextRecordNumber =
-          existing.reduce((max, row) => {
-            const match = row.recordId.match(/^HMS-(\d+)$/);
+        // Another instance may have sealed while this one had an empty book.
+        // If the chain already covers the live book, never mint a surplus open.
+        const latestUnpaired = await listUnpairedHermesOpenRows();
+        if (latestUnpaired.length >= liveKeys.length) {
+          if (adoptUnpairedOpen(book, key, latestUnpaired)) {
+            changed = true;
+            await writeBook(book);
+          }
+          continue;
+        }
 
-            return match ? Math.max(max, Number(match[1])) : max;
-          }, 0) + 1;
-        const recordId = `HMS-${String(nextRecordNumber).padStart(3, '0')}`;
+        const existing = await listHermesLedgerRows(1000);
+        const recordId = nextHermesRecordId(existing);
         const sealedAt = effectiveAt ?? new Date().toISOString();
         const row = await sealHermesLedgerRow({
           decision: 'Opened a path: instrument private until close',

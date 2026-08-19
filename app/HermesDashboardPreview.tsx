@@ -13,6 +13,10 @@ type HermesDashboardPreviewProps = {
 
 const ITEM_HEIGHT = 56;
 const VISIBLE_COUNT = 4;
+/** Faster than the Oracle home feed so Hermes leads the pair. */
+const REVEAL_MS = 280;
+const CYCLE_MS = 1300;
+const MOTION_S = 0.22;
 
 function formatActivityDate(value: string) {
   const date = new Date(value);
@@ -59,7 +63,7 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
         clearInterval(timer);
         setStarted(true);
       }
-    }, 550);
+    }, REVEAL_MS);
     return () => clearInterval(timer);
   }, [decisions]);
 
@@ -76,7 +80,7 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
         next.push(decisions[nextIndex]);
         return next;
       });
-    }, 2400);
+    }, CYCLE_MS);
     return () => clearInterval(cycle);
   }, [started, decisions]);
 
@@ -105,7 +109,7 @@ export default function HermesDashboardPreview({ decisions }: HermesDashboardPre
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: MOTION_S, ease: [0.16, 1, 0.3, 1] }}
                 className="flex items-center justify-between gap-4 border-b border-white/10 px-1 py-3"
                 style={{ height: ITEM_HEIGHT }}
               >

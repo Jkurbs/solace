@@ -304,6 +304,54 @@ export async function listHermesLedgerProcessRows(limit = 1500): Promise<HermesL
   }
 }
 
+function isOpenLifecycleRow(row: { event_type: string | null; decision: string }) {
+  return (
+    row.event_type === 'open' ||
+    (row.event_type === null && row.decision.startsWith('Opened a path'))
+  );
+}
+
+/**
+ * Open rows on the chain that no close/void has referenced yet.
+ * Source of truth for "is this live path already sealed?" when the tracking
+ * book is empty after a process restart.
+ */
+export async function listUnpairedHermesOpenRows(): Promise<Array<{ recordId: string; sealedAt: string }>> {
+  if (!isSupabaseDataClientConfigured()) {
+    return [];
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    const { data, error } = await supabase
+      .from('hermes_decision_ledger')
+      .select('record_id, sealed_at, event_type, ref, decision')
+      .order('created_at', { ascending: true })
+      .limit(1500);
+
+    if (error) {
+      if (!isMissingLedgerTable(error.message)) {
+        console.warn('[hermes-ledger] Unpaired open lookup failed.', error.message);
+      }
+
+      return [];
+    }
+
+    const settled = new Set(
+      (data ?? [])
+        .filter((row) => (row.event_type === 'close' || row.event_type === 'void') && row.ref)
+        .map((row) => row.ref as string),
+    );
+
+    return (data ?? [])
+      .filter((row) => isOpenLifecycleRow(row) && !settled.has(row.record_id))
+      .map((row) => ({ recordId: row.record_id, sealedAt: row.sealed_at }));
+  } catch (error) {
+    console.warn('[hermes-ledger] Unpaired open lookup failed.', error);
+    return [];
+  }
+}
+
 export async function sealHermesLedgerRow(input: {
   recordId: string;
   sealedAt?: string;
