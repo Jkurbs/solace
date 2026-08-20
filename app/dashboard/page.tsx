@@ -23,7 +23,7 @@ import SimSessionPersist from './SimSessionPersist';
 
 export const metadata: Metadata = {
   title: 'Solace · Hermes Dashboard',
-  description: 'A simple Hermes account dashboard focused on value, status, allocation, activity, and commentary.',
+  description: 'Your Hermes account: value, allocation, and recent decisions.',
 };
 
 export const dynamic = 'force-dynamic';

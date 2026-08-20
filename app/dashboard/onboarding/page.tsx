@@ -8,13 +8,12 @@ import DashboardThemeShell from '@/app/dashboard/DashboardThemeShell';
 import DashboardThemeToggle from '@/app/dashboard/DashboardThemeToggle';
 import SimSessionRestore from '@/app/dashboard/SimSessionRestore';
 import { getAppOrigin } from '@/lib/app-origin';
-import RiskProfileSelector from '@/app/dashboard/onboarding/risk-profile-selector';
 import {
   getDashboardAccountId,
   hasDashboardAccess,
   isGuestDashboardAccess,
 } from '@/features/hermes-dashboard/access';
-import { getDashboardOnboardingState, getStoredRiskProfile } from '@/features/hermes-dashboard/preferences';
+import { getDashboardOnboardingState } from '@/features/hermes-dashboard/preferences';
 
 export const metadata: Metadata = {
   title: 'Solace · Enter Hermes Simulation',
@@ -43,7 +42,6 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
     Array.isArray(params?.setup) ? params?.setup.includes('unavailable') : params?.setup === 'unavailable';
   const accountId = await getDashboardAccountId();
   const onboarding = await getDashboardOnboardingState(accountId);
-  const storedRiskProfile = (await getStoredRiskProfile(accountId)) ?? 'Balanced';
   const guestOpen = isGuestDashboardAccess() && !accountId;
 
   if (onboarding.complete) {
@@ -109,19 +107,11 @@ export default async function DashboardOnboardingPage({ searchParams }: Dashboar
             ) : null}
             {unavailable ? (
               <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
-                That risk profile is not available in this beta. Choose Balanced for now.
+                This beta uses the Balanced pool. Continue.
               </p>
             ) : null}
 
-            <div className="rounded-lg border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-[#0d0d0b]">
-              <p className="text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">Risk profile</p>
-              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-                Hermes will respect this bound for your simulation.
-              </p>
-              <div className="mt-4">
-                <RiskProfileSelector initialRiskProfile={storedRiskProfile} />
-              </div>
-            </div>
+            <input type="hidden" name="riskProfile" value="Balanced" />
 
             <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-5 dark:border-neutral-800 dark:bg-neutral-950/40">
               <p className="text-sm font-medium text-neutral-950 dark:text-neutral-50">

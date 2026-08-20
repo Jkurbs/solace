@@ -8,7 +8,7 @@ import type { HermesDashboardSnapshot, PortfolioEquityStateCode } from './types'
  * Dashboard chapters, empathy-driven UX layout modes.
  * Canonical stance: notes/user-experience-empathy.md
  *
- * Identity is required before capital (real product, not optional beta shortcut).
+ * Identity is required before live capital. Simulation skips it.
  */
 export type DashboardChapter =
   | 'arrival'
@@ -43,8 +43,8 @@ export function resolveDashboardChapter(snapshot: HermesDashboardSnapshot): Dash
     return 'arrival';
   }
 
-  // 2. Identity is required before first capital, not optional.
-  //    (If capital already exists from an older path, do not hide the portfolio.)
+  // 2. Identity is required before first live capital, not optional.
+  //    Simulation skips this gate. If capital already exists, show the portfolio.
   if (noCapitalYet && isIdentityVerificationIncomplete(snapshot)) {
     return 'identity';
   }

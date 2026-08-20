@@ -3,11 +3,12 @@ import type { HermesDashboardSnapshot } from './types';
 // Single source of truth for activation gates. Used by dashboard chapters and
 // the capital page so gating cannot silently drift.
 //
-// Order for a real product:
+// Order for live capital:
 //   1. Profile setup (review + capital intent)
-//   2. Identity verification (required, not optional)
+//   2. Identity verification (required before real capital)
 //   3. First deposit
 //
+// Simulation skips identity. Virtual capital should not send someone through Stripe.
 // isSetupIncomplete = anything that still blocks deposits.
 
 export function isProfileSetupIncomplete(snapshot: HermesDashboardSnapshot) {
@@ -21,6 +22,10 @@ export function isProfileSetupIncomplete(snapshot: HermesDashboardSnapshot) {
 }
 
 export function isIdentityVerificationIncomplete(snapshot: HermesDashboardSnapshot) {
+  if (snapshot.account.mode === 'SIMULATION') {
+    return false;
+  }
+
   return snapshot.account.identityVerification.status !== 'VERIFIED';
 }
 

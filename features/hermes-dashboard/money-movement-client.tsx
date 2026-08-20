@@ -338,7 +338,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
                 {setupIncomplete ? (
                   <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
                     {data.account.identityVerification.status !== 'VERIFIED'
-                      ? 'Identity verification is required before deposits open, even in simulation.'
+                      ? 'Identity verification is required before deposits open.'
                       : 'Complete setup (profile and capital intent) before deposits open.'}{' '}
                     <Link href="/dashboard" className="font-medium text-neutral-800 underline-offset-2 hover:underline dark:text-neutral-200">
                       Return to dashboard

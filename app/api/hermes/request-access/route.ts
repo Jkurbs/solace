@@ -146,12 +146,11 @@ export async function POST(request: Request) {
 
   const submission = buildSubmission(formData);
 
-  if (!submission.values.firstName || !submission.values.lastName || !submission.values.email || !submission.values.country) {
-    return NextResponse.json({ message: 'Required fields are missing.' }, { status: 400 });
-  }
-
-  if (!submission.values.capitalRange || !submission.values.objective) {
-    return NextResponse.json({ message: 'Capital range and objective are required.' }, { status: 400 });
+  if (!submission.values.firstName || !submission.values.lastName || !submission.values.email || !submission.values.capitalRange) {
+    return NextResponse.json(
+      { message: 'Name, email, and the amount you would consider are required.' },
+      { status: 400 },
+    );
   }
 
   await createAccessRequest(submission.values satisfies HermesAccessRequestInput);
