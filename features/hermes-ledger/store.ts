@@ -220,7 +220,7 @@ export async function getRecentHermesLedgerRows(limit = 5): Promise<HermesLedger
     const { data, error } = await supabase
       .from('hermes_decision_ledger')
       .select(
-        'record_id, sealed_at, decision, posture, note, outcome, pnl, resolved_at, row_class, event_type, ref',
+        'record_id, sealed_at, decision, posture, note, outcome, pnl, resolved_at, row_class, event_type, ref, prev_hash, row_hash',
       )
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -242,13 +242,13 @@ export async function getRecentHermesLedgerRows(limit = 5): Promise<HermesLedger
         outcome: row.outcome,
         pnl: row.pnl === null || row.pnl === undefined ? null : Math.round(Number(row.pnl) * 100) / 100,
         posture: row.posture,
-        prevHash: null,
+        prevHash: row.prev_hash,
         recordId: row.record_id,
         ref: row.ref,
         resolutionHash: null,
         resolvedAt: row.resolved_at,
         rowClass: (row.row_class as HermesLedgerRowClass | null) ?? null,
-        rowHash: null,
+        rowHash: row.row_hash,
         sealedAt: row.sealed_at,
       }))
       .reverse();

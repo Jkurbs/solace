@@ -15470,6 +15470,209 @@ html.dark .home-research ::selection,
   color: var(--foreground, #1c1917);
 }
 
+.home-proof .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Wet ink on a dry plate: the sealed sentence stays; your edit never sets. */
+.home-proof {
+  --home-proof-wet: #2a3d4f;
+  border-top: 1px solid var(--border, #e7e5e4);
+  padding: 5.5rem 1.25rem 5rem;
+}
+
+html[data-theme='dark'] .home-research .home-proof,
+html.dark .home-research .home-proof,
+.dark .home-research .home-proof {
+  --home-proof-wet: #8fa8ba;
+}
+
+.home-proof-inner {
+  margin: 0 auto;
+  max-width: 40rem;
+}
+
+.home-proof-dare {
+  margin: 0 0 1.75rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--muted, #78716c);
+}
+
+.home-proof-line {
+  position: relative;
+  padding-bottom: 0;
+  transition: padding-bottom 0.45s ease;
+}
+
+.home-proof.is-wet .home-proof-line {
+  padding-bottom: 0.65rem;
+}
+
+.home-proof-dry,
+.home-proof-wet {
+  margin: 0;
+  width: 100%;
+  font: inherit;
+  font-size: clamp(1.65rem, 4vw, 2.45rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.18;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.home-proof-dry {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  color: var(--foreground, #1c1917);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(0, 0);
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
+}
+
+.home-proof.is-wet .home-proof-dry {
+  opacity: 0.32;
+  transform: translate(3px, 8px);
+}
+
+.home-proof-wet {
+  position: relative;
+  z-index: 1;
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  resize: none;
+  border: none;
+  background: transparent;
+  color: var(--foreground, #1c1917);
+  caret-color: var(--foreground, #1c1917);
+  field-sizing: content;
+  transition: color 0.35s ease;
+}
+
+.home-proof.is-wet .home-proof-wet {
+  color: var(--home-proof-wet);
+  caret-color: var(--home-proof-wet);
+}
+
+.home-proof-wet:focus {
+  outline: none;
+}
+
+.home-proof-meta {
+  margin: 1.15rem 0 0;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--muted, #78716c);
+}
+
+.home-proof-hash {
+  margin: 1.35rem 0 0;
+  max-width: 36rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.68rem;
+  line-height: 1.7;
+  letter-spacing: 0.08em;
+  word-break: break-all;
+  color: var(--muted, #78716c);
+  opacity: 0.55;
+  transform: translate(0, 0);
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
+}
+
+.home-proof.is-wet .home-proof-hash {
+  opacity: 0.95;
+  transform: translate(8px, 3px);
+}
+
+.home-proof-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  margin-top: 1.75rem;
+}
+
+.home-proof-verdict {
+  margin: 0;
+  min-height: 2.7em;
+  max-width: 26rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--foreground, #1c1917);
+}
+
+.home-proof-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.home-proof-restore,
+.home-proof-link {
+  font-size: 0.9rem;
+  color: var(--muted, #78716c);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: transparent;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+
+.home-proof-restore:hover,
+.home-proof-link:hover {
+  color: var(--foreground, #1c1917);
+  text-decoration-color: color-mix(in srgb, var(--foreground, #1c1917) 30%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-proof-dry,
+  .home-proof-hash {
+    transition: opacity 0.2s ease;
+    transform: none;
+  }
+
+  .home-proof.is-wet .home-proof-dry,
+  .home-proof.is-wet .home-proof-hash {
+    transform: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .home-proof {
+    padding: 3.5rem 1.25rem 3.5rem;
+  }
+
+  .home-proof-hash {
+    font-size: 0.6rem;
+  }
+
+  .home-proof.is-wet .home-proof-dry {
+    transform: translate(2px, 6px);
+  }
+
+  .home-proof.is-wet .home-proof-hash {
+    transform: translate(5px, 2px);
+  }
+}
+
 .home-seals {
   list-style: none;
   margin: 2.5rem 0 0;

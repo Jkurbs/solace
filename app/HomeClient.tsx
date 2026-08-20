@@ -12,7 +12,7 @@ import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
 import HermesDashboardPreview from './HermesDashboardPreview';
 import { HomeMetricsBanner } from './HomeMetricsBanner';
-import { HomeScrollytellingSection } from './HomeScrollytellingSection';
+import { HomeProofSection } from './HomeProofSection';
 import OracleOrbSection from './OracleOrbSection';
 import type { ActivePrediction } from './oracle/active-predictions';
 
@@ -216,14 +216,7 @@ export default function HomeClient({
         </motion.div>
       </section>
 
-      {/* Scrollytelling Section */}
-      {showRecord && (
-        <HomeScrollytellingSection
-          sealedDecisions={sealedDecisions}
-          lastAnchoredLabel={lastAnchoredLabel}
-          isVerified={isVerified}
-        />
-      )}
+      {showRecord && <HomeProofSection rows={recentDecisions} sealedDecisions={sealedDecisions} />}
 
       {/* Hermes & Oracle Grid */}
       <section className="px-5 py-12 md:py-16">
