@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 
 import Mark from '@/app/Mark';
 import DashboardThemeToggle from '@/app/dashboard/DashboardThemeToggle';
+import { ShimmerLink } from '@/components/shimmer-link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -526,7 +527,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               verification. Capital, including simulation, opens only after identity is verified. We prefill what you
               already shared.
             </p>
-            <Button asChild size="lg" className="mt-8 w-full sm:w-auto">
+            <Button asChild size="lg" pending={capitalNavigationPending} className="mt-8 w-full sm:w-auto">
               <Link href="/dashboard/onboarding?welcome=1" onClick={() => setCapitalNavigationPending(true)}>
                 {capitalNavigationPending ? 'Opening' : 'Continue setup'}
                 <ArrowRight size={16} aria-hidden="true" />
@@ -578,6 +579,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 size="lg"
                 onClick={() => identityVerification.mutate()}
                 disabled={identityVerification.isPending || identityVerified}
+                pending={identityVerification.isPending}
                 className="w-full sm:w-auto"
               >
                 <ShieldCheck size={16} aria-hidden="true" />
@@ -650,7 +652,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               </p>
             ) : null}
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button asChild size="lg" className="w-full sm:w-auto">
+              <Button asChild size="lg" pending={capitalNavigationPending} className="w-full sm:w-auto">
                 <Link href="/dashboard/capital" onClick={() => setCapitalNavigationPending(true)}>
                   {capitalNavigationPending
                     ? 'Opening'
@@ -728,7 +730,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
           <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">{equityState.detail}</p>
 
           <Button asChild variant="secondary" className="w-full sm:w-auto sm:justify-self-start">
-            <Link href="/dashboard/capital">View capital</Link>
+            <ShimmerLink href="/dashboard/capital">View capital</ShimmerLink>
           </Button>
           {foot}
         </div>
@@ -837,7 +839,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                     Today&apos;s change appears after a real day mark, a dash is honest, not a zero gain.
                   </p>
                 ) : null}
-                <Button asChild className="w-full sm:w-auto sm:justify-self-start">
+                <Button asChild pending={capitalNavigationPending} className="w-full sm:w-auto sm:justify-self-start">
                   <Link href="/dashboard/capital" onClick={() => setCapitalNavigationPending(true)}>
                     {capitalNavigationPending ? 'Opening' : 'Move capital'}
                     <ArrowRight size={16} aria-hidden="true" />

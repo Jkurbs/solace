@@ -11995,6 +11995,93 @@ h2 {
   }
 }
 
+/* Fast gloss on a click that is still waiting on the next route. */
+.btn-shimmer,
+.btn-shimmer-ink {
+  position: relative;
+}
+
+.btn-shimmer {
+  isolation: isolate;
+}
+
+.btn-shimmer.is-shimmering {
+  overflow: hidden;
+}
+
+.btn-shimmer-ink {
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-shimmer::after,
+.btn-shimmer-ink::after {
+  content: '';
+  position: absolute;
+  top: -45%;
+  bottom: -45%;
+  left: 0;
+  width: 45%;
+  transform: translateX(-160%) skewX(-22deg);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(255 255 255 / 0%) 28%,
+    rgb(255 255 255 / 0.28) 46%,
+    rgb(255 255 255 / 0.72) 50%,
+    rgb(255 255 255 / 0.28) 54%,
+    rgb(255 255 255 / 0%) 72%,
+    transparent 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.btn-shimmer-ink::after {
+  width: 58%;
+  mix-blend-mode: plus-lighter;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(255 255 255 / 0%) 32%,
+    rgb(255 255 255 / 0.7) 50%,
+    rgb(255 255 255 / 0%) 68%,
+    transparent 100%
+  );
+}
+
+.btn-shimmer.is-shimmering::after,
+.btn-shimmer-ink.is-shimmering::after {
+  opacity: 1;
+  animation: btn-gloss-sweep 0.62s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes btn-gloss-sweep {
+  0% {
+    transform: translateX(-160%) skewX(-22deg);
+  }
+  100% {
+    transform: translateX(340%) skewX(-22deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-shimmer.is-shimmering::after,
+  .btn-shimmer-ink.is-shimmering::after {
+    animation: none;
+    width: 100%;
+    transform: none;
+    opacity: 0.38;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, #fff 32%, transparent),
+      transparent
+    );
+  }
+}
+
 /* ============================================================
    LIGHT MODE, the paper world. Dark is the default (the
    observatory); light reuses the brief/scorecard paper register.
@@ -15695,14 +15782,16 @@ html.dark .home-research .home-proof,
 
 .home-proof-foot {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.85rem;
+  align-items: baseline;
+  justify-content: flex-end;
+  width: 100%;
   margin-top: 1.75rem;
 }
 
 .home-proof-verdict {
-  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0 1.5rem 0 0;
   max-width: 26rem;
   font-size: 0.95rem;
   line-height: 1.45;
@@ -15710,19 +15799,37 @@ html.dark .home-research .home-proof,
   overflow: hidden;
   max-height: 2.8em;
   opacity: 1;
-  transition: opacity 0.45s ease, max-height 0.45s ease;
+  transition: opacity 0.45s ease, max-height 0.45s ease, margin 0.45s ease, flex-basis 0.45s ease;
 }
 
 .home-proof-verdict.is-idle {
+  flex: 0 0 0;
+  max-width: 0;
   max-height: 0;
+  margin: 0;
   opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .home-proof-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 1rem;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.home-proof-restore-slot {
+  display: grid;
+  grid-template-columns: 0fr;
+  min-width: 0;
+  transition: grid-template-columns 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.home-proof-restore-slot.is-open {
+  grid-template-columns: 1fr;
 }
 
 .home-proof-restore,
@@ -15732,20 +15839,39 @@ html.dark .home-research .home-proof,
   border: none;
   padding: 0;
   cursor: pointer;
-  transition: color 0.2s ease, text-decoration-color 0.2s ease;
 }
 
 .home-proof-restore {
+  min-width: 0;
+  overflow: hidden;
+  padding-right: 0;
   color: var(--muted, #78716c);
   text-decoration: underline;
   text-underline-offset: 4px;
   text-decoration-color: color-mix(in srgb, var(--muted, #78716c) 45%, transparent);
-  transition: opacity 0.5s ease, color 0.2s ease, text-decoration-color 0.2s ease;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(0.4rem);
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    padding-right 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.2s ease,
+    text-decoration-color 0.2s ease;
 }
 
-.home-proof-restore.is-idle {
-  opacity: 0;
-  pointer-events: none;
+.home-proof-restore-slot.is-open .home-proof-restore {
+  padding-right: 1.25rem;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  transition:
+    opacity 0.28s ease 0.12s,
+    transform 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+    padding-right 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.2s ease,
+    text-decoration-color 0.2s ease;
 }
 
 .home-proof-restore:hover {
@@ -15754,11 +15880,14 @@ html.dark .home-research .home-proof,
 }
 
 .home-proof-link {
+  flex: 0 0 auto;
   color: var(--foreground, #1c1917);
   text-decoration: underline;
   text-underline-offset: 5px;
   text-decoration-thickness: 1px;
   text-decoration-color: color-mix(in srgb, var(--foreground, #1c1917) 45%, transparent);
+  white-space: nowrap;
+  transition: text-decoration-color 0.2s ease;
 }
 
 .home-proof-link:hover {
@@ -15781,6 +15910,16 @@ html.dark .home-research .home-proof,
     animation: none;
     opacity: 1;
   }
+
+  .home-proof-verdict,
+  .home-proof-restore-slot,
+  .home-proof-restore {
+    transition: none;
+  }
+
+  .home-proof-restore {
+    transform: none;
+  }
 }
 
 @media (max-width: 639px) {
@@ -15798,6 +15937,21 @@ html.dark .home-research .home-proof,
 
   .home-proof.is-wet .home-proof-hash {
     transform: translate(5px, 2px);
+  }
+
+  .home-proof-foot {
+    flex-direction: column;
+    align-items: stretch;
+    row-gap: 0.85rem;
+  }
+
+  .home-proof-verdict {
+    max-width: none;
+    margin-right: 0;
+  }
+
+  .home-proof-actions {
+    width: 100%;
   }
 }
 

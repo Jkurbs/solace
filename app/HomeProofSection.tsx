@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useReducedMotion } from 'framer-motion';
 import { useEffect, useId, useRef, useState } from 'react';
 
+import { ShimmerLink } from '@/components/shimmer-link';
 import type { HermesLedgerRow } from '@/features/hermes-ledger/store';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 
@@ -258,26 +258,28 @@ export function HomeProofSection({
         </p>
 
         <div className="home-proof-foot">
-          <div className="home-proof-actions">
-            <button
-              type="button"
-              className={`home-proof-restore${showRestore ? '' : ' is-idle'}`}
-              tabIndex={showRestore ? 0 : -1}
-              aria-hidden={!showRestore}
-              onClick={() => {
-                takeOver();
-                setDraft(SEALED_LINE);
-              }}
-            >
-              Restore
-            </button>
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="home-proof-link">
-              Open the public record <span aria-hidden="true">→</span>
-            </Link>
-          </div>
           <p className={`home-proof-verdict${showRestore ? '' : ' is-idle'}`} aria-live="polite">
             What you typed is not on the chain. This is.
           </p>
+          <div className="home-proof-actions">
+            <span className={`home-proof-restore-slot${showRestore ? ' is-open' : ''}`}>
+              <button
+                type="button"
+                className="home-proof-restore"
+                tabIndex={showRestore ? 0 : -1}
+                aria-hidden={!showRestore}
+                onClick={() => {
+                  takeOver();
+                  setDraft(SEALED_LINE);
+                }}
+              >
+                Restore
+              </button>
+            </span>
+            <ShimmerLink href={OBSERVATORY_HERMES_LEDGER_PATH} className="home-proof-link" tone="ink">
+              Open the public record <span aria-hidden="true">→</span>
+            </ShimmerLink>
+          </div>
         </div>
       </div>
     </section>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { ShimmerLink } from '@/components/shimmer-link';
 import { fetchKalshiBeliefByTicker } from '@/features/oracle/kalshi';
 import { OBSERVATORY_ORACLE_LEDGER_PATH } from '@/features/observatory/paths';
 import { OG_SIZE } from '@/lib/og-plate';
@@ -147,13 +148,13 @@ export default async function OracleBeliefPage({ params }: Props) {
         </p>
 
         <div className="oracle-belief-page-actions">
-          <Link href="/oracle" className="oracle-board-ledger-btn">
+          <ShimmerLink href="/oracle" className="oracle-board-ledger-btn">
             All Oracle beliefs
             <span aria-hidden="true">→</span>
-          </Link>
-          <Link href={OBSERVATORY_ORACLE_LEDGER_PATH} className="oracle-shell-link">
+          </ShimmerLink>
+          <ShimmerLink href={OBSERVATORY_ORACLE_LEDGER_PATH} className="oracle-shell-link" tone="ink">
             Check the ledger
-          </Link>
+          </ShimmerLink>
         </div>
       </article>
     </main>

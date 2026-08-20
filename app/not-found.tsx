@@ -1,5 +1,4 @@
-import Link from 'next/link';
-
+import { ShimmerLink } from '@/components/shimmer-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 
@@ -19,12 +18,12 @@ export default function NotFound() {
           record elsewhere.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/" className="hx-btn hx-btn-primary">
+          <ShimmerLink href="/" className="hx-btn hx-btn-primary">
             Return home
-          </Link>
-          <Link href="/brief" className="hx-btn hx-btn-secondary">
+          </ShimmerLink>
+          <ShimmerLink href="/brief" className="hx-btn hx-btn-secondary">
             Read the brief
-          </Link>
+          </ShimmerLink>
         </div>
       </main>
 

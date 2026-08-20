@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import type { CalibrationBucket } from '../calibration';
@@ -10,6 +9,7 @@ import ShareBelief from './ShareBelief';
 import type { ResolvedQuestion } from './resolved-questions';
 import { getQuestionRead } from './resolved-questions';
 
+import { ShimmerLink } from '@/components/shimmer-link';
 import { OBSERVATORY_ORACLE_LEDGER_PATH } from '@/features/observatory/paths';
 
 export type OracleTab = 'active' | 'resolved' | 'calibration' | 'about';
@@ -109,10 +109,10 @@ export default function OracleExperience({
           Estimates the probability of real events, records each estimate before the outcome is known,
           and scores it against what actually happened. Live board begins with Bitcoin and Ethereum.
         </p>
-        <Link href={OBSERVATORY_ORACLE_LEDGER_PATH} className="oracle-board-ledger-btn">
+        <ShimmerLink href={OBSERVATORY_ORACLE_LEDGER_PATH} className="oracle-board-ledger-btn">
           Check the ledger
           <span aria-hidden="true">→</span>
-        </Link>
+        </ShimmerLink>
         <div className="oracle-board-stats" aria-label="Oracle scoreboard">
           <div>
             <strong>{resolved}</strong>

@@ -325,7 +325,13 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
                     className="h-12 min-w-0 bg-transparent px-4 text-lg font-semibold text-neutral-950 outline-none placeholder:text-neutral-400 dark:text-neutral-50 dark:placeholder:text-neutral-600"
                   />
                 </div>
-                <Button type="submit" disabled={depositDisabled} size="lg" className="w-full sm:w-auto">
+                <Button
+                  type="submit"
+                  disabled={depositDisabled}
+                  pending={moneyMovement.isPending}
+                  size="lg"
+                  className="w-full sm:w-auto"
+                >
                   <ArrowDownToLine size={16} aria-hidden="true" />
                   {moneyMovement.isPending ? 'Opening' : isSimulationMode ? 'Add simulated capital' : 'Deposit capital'}
                 </Button>
@@ -376,6 +382,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
                   type="button"
                   variant="secondary"
                   disabled={withdrawalDisabled}
+                  pending={moneyMovement.isPending}
                   onClick={() => moneyMovement.mutate({ type: 'withdraw' })}
                   size="lg"
                   className="w-full sm:w-auto"

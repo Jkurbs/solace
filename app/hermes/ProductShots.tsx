@@ -1,8 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import Link from 'next/link';
-
+import { ShimmerLink } from '@/components/shimmer-link';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 
 import HermesBoardArt from './HermesBoardArt';
@@ -65,13 +64,13 @@ export default function ProductShots() {
             </ProductWindow>
           </div>
           <div className="hermes-paper-shell hermes-product-shot-cta">
-            <Link
+            <ShimmerLink
               href={OBSERVATORY_HERMES_LEDGER_PATH}
               className="hermes-paper-btn hermes-paper-btn-primary"
             >
               Inspect the ledger
               <span aria-hidden="true">→</span>
-            </Link>
+            </ShimmerLink>
           </div>
         </figure>
 
@@ -92,10 +91,10 @@ export default function ProductShots() {
             </ProductWindow>
           </div>
           <div className="hermes-paper-shell hermes-product-shot-cta">
-            <Link href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary">
+            <ShimmerLink href="/dashboard" className="hermes-paper-btn hermes-paper-btn-primary">
               Enter Hermes
               <span aria-hidden="true">→</span>
-            </Link>
+            </ShimmerLink>
           </div>
         </figure>
       </div>

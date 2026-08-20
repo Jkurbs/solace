@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 
+import { ShimmerLink } from '@/components/shimmer-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import type { HermesLedgerRow } from '@/features/hermes-ledger/store';
@@ -212,12 +213,12 @@ export default function HomeClient({
             </motion.p>
 
             <motion.div variants={fade} className="hero-particle-ctas mt-8 flex justify-center gap-4">
-              <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-primary hero-cta-on-void">
+              <ShimmerLink href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-primary hero-cta-on-void">
                 Check the live record
-              </Link>
-              <Link href="/hermes" className="hero-cta hero-cta-secondary hero-cta-on-void">
+              </ShimmerLink>
+              <ShimmerLink href="/hermes" className="hero-cta hero-cta-secondary hero-cta-on-void">
                 Run a simulation
-              </Link>
+              </ShimmerLink>
             </motion.div>
 
             {/* Interactive Telemetry Banner
@@ -251,12 +252,13 @@ export default function HomeClient({
                 <p className="mr-4 max-w-xs text-xs leading-relaxed text-white/60">
                   An automated system that reads global market trends and manages investments directly on your behalf.
                 </p>
-                <Link
+                <ShimmerLink
                   href="/hermes"
+                  tone="ink"
                   className="flex shrink-0 items-center gap-1 font-medium text-white/70 transition-colors hover:text-white"
                 >
                   Explore Hermes <span className="text-sm">→</span>
-                </Link>
+                </ShimmerLink>
               </div>
             </div>
 
@@ -272,12 +274,13 @@ export default function HomeClient({
                 <p className="mr-4 max-w-xs text-xs leading-relaxed text-white/60">
                   A prediction system that calculates the odds of future events and tracks how accurate its forecasts turn out to be.
                 </p>
-                <Link
+                <ShimmerLink
                   href="/oracle"
+                  tone="ink"
                   className="flex shrink-0 items-center gap-1 font-medium text-white/70 transition-colors hover:text-white"
                 >
                   Explore Oracle <span className="text-sm">→</span>
-                </Link>
+                </ShimmerLink>
               </div>
             </div>
           </div>

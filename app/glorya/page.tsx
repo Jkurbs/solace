@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 
+import { ShimmerLink } from '@/components/shimmer-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import { gloryaEvaluatedNeeds, gloryaProcessScoreboard } from '@/features/glorya/evaluated-needs';
@@ -41,10 +41,10 @@ export default function GloryaPage() {
             Glorya is an instrument for allocating humanitarian capital only when intervention can change the
             outcome.
           </p>
-          <Link href={OBSERVATORY_GLORYA_LEDGER_PATH} className="glorya-ledger-btn">
+          <ShimmerLink href={OBSERVATORY_GLORYA_LEDGER_PATH} className="glorya-ledger-btn">
             Check the ledger
             <span aria-hidden="true">→</span>
-          </Link>
+          </ShimmerLink>
           <div className="glorya-globe-legend">
             <span>
               <i className="glorya-legend-dot is-evaluated" /> Evaluated

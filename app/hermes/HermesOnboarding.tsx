@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   createContext,
@@ -12,6 +11,9 @@ import {
   type ReactNode,
 } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+
+import { ShimmerLink } from '@/components/shimmer-link';
+import { cn } from '@/lib/utils';
 
 /** Legacy flag; still cleared for older clients. */
 const SIM_STARTED_KEY = 'hermes_sim_started';
@@ -493,9 +495,10 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
 
                   <button
                     type="button"
-                    className="hermes-onboard-cta"
+                    className={cn('hermes-onboard-cta', 'btn-shimmer', submitting && 'is-shimmering')}
                     onClick={startTracking}
                     disabled={submitting}
+                    aria-busy={submitting || undefined}
                   >
                     {submitting ? 'Starting…' : 'Start tracking'}
                     {!submitting ? (
@@ -545,7 +548,7 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
                     Your simulated portfolio ({allocationLabel(activeDeposit)}) is live. Closed results
                     scale to your capital. You will not join trades that were already open when you entered.
                   </p>
-                  <Link href="/dashboard" className="hermes-onboard-cta" onClick={close}>
+                  <ShimmerLink href="/dashboard" className="hermes-onboard-cta">
                     Open dashboard
                     <svg
                       viewBox="0 0 24 24"
@@ -558,7 +561,7 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
                     >
                       <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
-                  </Link>
+                  </ShimmerLink>
                 </motion.div>
               )}
             </AnimatePresence>

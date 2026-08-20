@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { ShimmerLink } from '@/components/shimmer-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import { composeObservatorySnapshot } from '@/features/observatory/compose';
@@ -167,9 +168,9 @@ export default async function ObservatoryHermesPage() {
             proves process, not a second Solace product outside the Observatory.
           </p>
           <div className="obs-card-links">
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="obs-card-primary">
+            <ShimmerLink href={OBSERVATORY_HERMES_LEDGER_PATH} className="obs-card-primary" tone="ink">
               Open decision ledger →
-            </Link>
+            </ShimmerLink>
             <a href={DOCS_API_URL} className="obs-card-secondary">
               Market API
             </a>

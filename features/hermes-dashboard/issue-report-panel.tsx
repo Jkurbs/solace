@@ -252,7 +252,7 @@ export default function IssueReportPanel() {
                 })}
               </div>
             </div>
-            <Button type="submit" disabled={bugReport.isPending} className="w-full md:w-auto">
+            <Button type="submit" disabled={bugReport.isPending} pending={bugReport.isPending} className="w-full md:w-auto">
               <Send size={16} aria-hidden="true" />
               {bugReport.isPending ? 'Submitting' : 'Submit issue'}
             </Button>

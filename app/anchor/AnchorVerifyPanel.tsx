@@ -70,7 +70,12 @@ export default function AnchorVerifyPanel({
           placeholder="Paste any chain head hash"
           className="flex-1 rounded-md border border-[var(--border)] bg-background px-4 py-2.5 font-mono text-sm outline-none ring-foreground/20 transition-all placeholder:text-muted focus:ring-2"
         />
-        <Button onClick={() => void verify()} disabled={loading || !hash.trim()} className="shrink-0">
+        <Button
+          onClick={() => void verify()}
+          disabled={loading || !hash.trim()}
+          pending={loading}
+          className="shrink-0"
+        >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           Verify
         </Button>

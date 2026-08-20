@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 
+import { ShimmerLink } from '@/components/shimmer-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
@@ -121,9 +122,9 @@ export default function HermesExperience({
                 <ExperienceHermesButton className="hero-cta hero-cta-primary">
                   Simulate Allocation Strategy
                 </ExperienceHermesButton>
-                <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-secondary">
+                <ShimmerLink href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-secondary">
                   Inspect Public Ledger
-                </Link>
+                </ShimmerLink>
               </motion.div>
 
               <motion.p variants={fade} className="text-xs text-muted mb-10">
@@ -277,12 +278,13 @@ export default function HermesExperience({
               </ol>
 
               <div className="mt-10">
-                <Link
+                <ShimmerLink
                   href={OBSERVATORY_HERMES_LEDGER_PATH}
+                  tone="ink"
                   className="text-sm underline decoration-foreground/20 underline-offset-4 transition-all hover:decoration-foreground/60"
                 >
                   Open full decision ledger
-                </Link>
+                </ShimmerLink>
               </div>
             </div>
           </section>

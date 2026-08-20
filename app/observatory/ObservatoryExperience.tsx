@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { ShimmerLink } from '@/components/shimmer-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import type { TrustLedgerDisplayRow } from '@/app/trust/TrustLedgerTable';
@@ -168,7 +169,9 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
                 Writes a probability before the event, then scores it against what happened. The
                 sample is still young.
               </p>
-              <Link href="/oracle">Open Oracle</Link>
+              <ShimmerLink href="/oracle" tone="ink">
+                Open Oracle
+              </ShimmerLink>
             </li>
             <li>
               <p className="home-vision-domain">Glorya</p>
@@ -176,7 +179,9 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
                 Does not move money until Solace has $1M cumulative revenue. Zero sealed
                 disbursements.
               </p>
-              <Link href="/glorya">Open Glorya</Link>
+              <ShimmerLink href="/glorya" tone="ink">
+                Open Glorya
+              </ShimmerLink>
             </li>
           </ul>
           <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm">
