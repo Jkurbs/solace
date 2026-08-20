@@ -15675,7 +15675,7 @@ html.dark .home-research .home-proof,
 
 .home-proof-hash {
   margin: 1.35rem 0 0;
-  min-height: 4.6em;
+  min-height: 2.4em;
   max-width: 36rem;
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.68rem;
@@ -15704,7 +15704,6 @@ html.dark .home-research .home-proof,
 
 .home-proof-verdict {
   margin: 0;
-  min-height: 2.7em;
   max-width: 26rem;
   font-size: 0.95rem;
   line-height: 1.45;
@@ -15716,6 +15715,7 @@ html.dark .home-research .home-proof,
   flex-wrap: wrap;
   align-items: center;
   gap: 1rem;
+  margin-left: auto;
 }
 
 .home-proof-restore,
@@ -15735,10 +15735,13 @@ html.dark .home-research .home-proof,
   text-decoration-color: color-mix(in srgb, var(--muted, #78716c) 45%, transparent);
 }
 
-.home-proof-restore.is-idle,
-.home-proof-verdict .is-idle {
+.home-proof-restore.is-idle {
   visibility: hidden;
   pointer-events: none;
+}
+
+.home-proof-verdict .is-idle {
+  display: none;
 }
 
 .home-proof-restore:hover {

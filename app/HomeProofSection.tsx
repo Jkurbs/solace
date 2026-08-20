@@ -264,6 +264,9 @@ export function HomeProofSection({
             </span>
           </p>
           <div className="home-proof-actions">
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="home-proof-link">
+              Open the public record <span aria-hidden="true">→</span>
+            </Link>
             <button
               type="button"
               className={`home-proof-restore${showRestore ? '' : ' is-idle'}`}
@@ -276,9 +279,6 @@ export function HomeProofSection({
             >
               Restore
             </button>
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="home-proof-link">
-              Open the public record <span aria-hidden="true">→</span>
-            </Link>
           </div>
         </div>
       </div>
