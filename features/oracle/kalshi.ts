@@ -112,12 +112,43 @@ function isActiveStatus(status: string | undefined) {
   return s === 'active' || s === 'open' || s === 'initialized';
 }
 
+const KALSHI_REQUEST_MS = 4_000;
+const KALSHI_CONCURRENCY = 3;
+
 async function fetchJson(url: string): Promise<Response> {
   return fetch(url, {
     headers: { Accept: 'application/json', 'User-Agent': 'Solace-Oracle/1.0' },
     // Keep the public board near-live; empty responses should not stick for long.
     next: { revalidate: 60 },
+    signal: AbortSignal.timeout(KALSHI_REQUEST_MS),
   });
+}
+
+async function settledPool<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>,
+): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = new Array(items.length);
+  let next = 0;
+
+  async function worker() {
+    while (true) {
+      const index = next;
+      next += 1;
+      if (index >= items.length) return;
+      try {
+        results[index] = { status: 'fulfilled', value: await fn(items[index] as T) };
+      } catch (reason) {
+        results[index] = { status: 'rejected', reason };
+      }
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, () => worker()),
+  );
+  return results;
 }
 
 async function fetchSeriesMarkets(seriesTicker: string): Promise<KalshiMarket[]> {
@@ -212,8 +243,19 @@ export type KalshiOracleSnapshot = {
  * Drops 15-minute / hourly series by never querying them.
  */
 export async function fetchKalshiBtcEthPredictions(limit = 12): Promise<KalshiOracleSnapshot> {
+  // Static export workers cannot survive a 20-way Kalshi fan-out. ISR fills the
+  // board after deploy; callers also have a page-level budget as a backstop.
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return {
+      active: [],
+      activeCount: 0,
+      asOf: new Date().toISOString(),
+      error: null,
+    };
+  }
+
   const series = [...BTC_SERIES, ...ETH_SERIES];
-  const settled = await Promise.allSettled(series.map((s) => fetchSeriesMarkets(s)));
+  const settled = await settledPool(series, KALSHI_CONCURRENCY, fetchSeriesMarkets);
 
   const rows: ActivePrediction[] = [];
   const errors: string[] = [];

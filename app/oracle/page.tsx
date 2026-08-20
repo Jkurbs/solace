@@ -15,16 +15,55 @@ export const metadata: Metadata = {
     'Oracle estimates the probability of real events, records each estimate before the outcome is known, and scores it against what actually happened. Live BTC and ETH markets from Kalshi.',
 };
 
-// Near-live Kalshi board.
+const ORACLE_FETCH_BUDGET_MS = 8_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        resolve(fallback);
+      }
+    }, ms);
+
+    promise
+      .then((value) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve(value);
+        }
+      })
+      .catch(() => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve(fallback);
+        }
+      });
+  });
+}
+
+// Near-live Kalshi board. ISR, not a build-time fan-out.
 export const revalidate = 60;
 
 export default async function OraclePage() {
-  const feed = await fetchKalshiBtcEthPredictions(12).catch((error: unknown) => ({
+  const emptyFeed = {
     active: [] as Awaited<ReturnType<typeof fetchKalshiBtcEthPredictions>>['active'],
     activeCount: 0,
     asOf: new Date().toISOString(),
-    error: error instanceof Error ? error.message : 'Kalshi feed failed',
-  }));
+    error: null as string | null,
+  };
+
+  const feed = await withTimeout(
+    fetchKalshiBtcEthPredictions(12).catch((error: unknown) => ({
+      ...emptyFeed,
+      error: error instanceof Error ? error.message : 'Kalshi feed failed',
+    })),
+    ORACLE_FETCH_BUDGET_MS,
+    { ...emptyFeed, error: 'Kalshi feed timed out' },
+  );
 
   const isLive = feed.active.length > 0 && !feed.error;
   const active = withIllustrativeOracleFallback(feed.active);
