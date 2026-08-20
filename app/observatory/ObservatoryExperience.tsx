@@ -119,6 +119,10 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
             exposure={hermes.openExposure}
             hermesVersion={hermes.hermesVersion}
             livePosture={hermes.livePosture}
+            winRate={hermes.scoreboard.performance.hitRate}
+            winRateSample={
+              hermes.scoreboard.performance.positive + hermes.scoreboard.performance.negative
+            }
           />
           <RecordTable rows={tableRows} totalSealed={hermes.sealedDecisions} />
           <p className="record-section-note mt-8 max-w-xl text-sm leading-relaxed text-muted">

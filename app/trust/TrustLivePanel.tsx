@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { formatPercent } from '@/features/hermes-ledger/scoreboard';
+
 import { hasLiveExposure, useTrustLivePulse } from './TrustLivePulse';
 
 const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
@@ -101,7 +103,22 @@ function useSecondsSince(iso: string | null) {
  * Live open exposure sits outside the historical ledger table so paging and
  * horizontal scroll never bury it. Sticky within the sheet while the page scrolls.
  */
-export default function TrustLivePanel() {
+function WinRateCell({ rate, sample }: { rate: number | null; sample: number }) {
+  return (
+    <span>
+      <em>{sample > 0 ? `Win rate · n=${sample}` : 'Win rate'}</em>
+      <strong>{formatPercent(rate)}</strong>
+    </span>
+  );
+}
+
+export default function TrustLivePanel({
+  winRate = null,
+  winRateSample = 0,
+}: {
+  winRate?: number | null;
+  winRateSample?: number;
+}) {
   const { livePosture, pulse } = useTrustLivePulse();
   const displayedPosture = resolveLivePosture(livePosture, pulse);
   const secondsSince = useSecondsSince(pulse.asOf);
@@ -124,6 +141,7 @@ export default function TrustLivePanel() {
             <em>Posture</em>
             <strong>{displayedPosture === '--' ? '—' : displayedPosture}</strong>
           </span>
+          <WinRateCell rate={winRate} sample={winRateSample} />
         </div>
       </div>
     );
@@ -165,6 +183,7 @@ export default function TrustLivePanel() {
             <strong>Open</strong>
           </span>
         ) : null}
+        <WinRateCell rate={winRate} sample={winRateSample} />
       </div>
     </div>
   );
