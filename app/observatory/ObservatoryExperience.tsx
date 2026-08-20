@@ -123,6 +123,8 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
             winRateSample={
               hermes.scoreboard.performance.positive + hermes.scoreboard.performance.negative
             }
+            expectancy={hermes.scoreboard.performance.expectancy}
+            expectancySample={hermes.scoreboard.performance.sampleSize}
           />
           <RecordTable rows={tableRows} totalSealed={hermes.sealedDecisions} />
           <p className="record-section-note mt-8 max-w-xl text-sm leading-relaxed text-muted">

@@ -9,6 +9,8 @@ export default function HeldPanel({
   livePosture,
   winRate = null,
   winRateSample = 0,
+  expectancy = null,
+  expectancySample = 0,
 }: {
   exposure: {
     asOf: string;
@@ -19,6 +21,8 @@ export default function HeldPanel({
   livePosture: string;
   winRate?: number | null;
   winRateSample?: number;
+  expectancy?: number | null;
+  expectancySample?: number;
 }) {
   return (
     <TrustLivePulseProvider
@@ -26,7 +30,12 @@ export default function HeldPanel({
       initialHermesVersion={hermesVersion}
       livePosture={livePosture}
     >
-      <TrustLivePanel winRate={winRate} winRateSample={winRateSample} />
+      <TrustLivePanel
+        winRate={winRate}
+        winRateSample={winRateSample}
+        expectancy={expectancy}
+        expectancySample={expectancySample}
+      />
     </TrustLivePulseProvider>
   );
 }

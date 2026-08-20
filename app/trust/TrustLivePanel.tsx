@@ -112,12 +112,27 @@ function WinRateCell({ rate, sample }: { rate: number | null; sample: number }) 
   );
 }
 
+function ExpectancyCell({ value, sample }: { value: number | null; sample: number }) {
+  return (
+    <span>
+      <em>{sample > 0 ? `Expectancy · n=${sample}` : 'Expectancy'}</em>
+      <strong className={value === null ? undefined : pnlToneClass(value)}>
+        {value === null ? '—' : pnlFormatter.format(value)}
+      </strong>
+    </span>
+  );
+}
+
 export default function TrustLivePanel({
   winRate = null,
   winRateSample = 0,
+  expectancy = null,
+  expectancySample = 0,
 }: {
   winRate?: number | null;
   winRateSample?: number;
+  expectancy?: number | null;
+  expectancySample?: number;
 }) {
   const { livePosture, pulse } = useTrustLivePulse();
   const displayedPosture = resolveLivePosture(livePosture, pulse);
@@ -142,6 +157,7 @@ export default function TrustLivePanel({
             <strong>{displayedPosture === '--' ? '—' : displayedPosture}</strong>
           </span>
           <WinRateCell rate={winRate} sample={winRateSample} />
+          <ExpectancyCell value={expectancy} sample={expectancySample} />
         </div>
       </div>
     );
@@ -184,6 +200,7 @@ export default function TrustLivePanel({
           </span>
         ) : null}
         <WinRateCell rate={winRate} sample={winRateSample} />
+        <ExpectancyCell value={expectancy} sample={expectancySample} />
       </div>
     </div>
   );
