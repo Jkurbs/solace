@@ -11,13 +11,13 @@ import { getAnchorChain } from '@/features/anchor/store';
 import HermesExperience, { type HermesProof, type HermesTimelineEntry } from './HermesExperience';
 
 export const metadata: Metadata = {
-  title: 'Solace · Hermes · Read the structure. Then allocate — or wait.',
+  title: 'Solace · Hermes',
   description:
-    'Hermes reads liquidity, volatility, and regime, then decides whether to allocate capital, how much, and when to exit. Every decision is sealed before the trade. Founder capital only.',
+    'Software that looks at markets and decides whether to put money in, take it out, or wait. Each decision is written before the outcome is known. You cannot invest yet.',
   openGraph: {
-    title: 'Solace · Hermes · Read the structure. Then allocate — or wait.',
+    title: 'Solace · Hermes',
     description:
-      'Hermes reads liquidity, volatility, and regime, then decides whether to allocate capital, how much, and when to exit. Every decision is sealed before the trade. Founder capital only.',
+      'Software that looks at markets and decides whether to put money in, take it out, or wait. Each decision is written before the outcome is known. You cannot invest yet.',
   },
 };
 

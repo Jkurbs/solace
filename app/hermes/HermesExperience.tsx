@@ -56,6 +56,13 @@ const stagger = {
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.06 } },
 };
 
+const expectancyFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  maximumFractionDigits: 2,
+  signDisplay: 'exceptZero',
+  style: 'currency',
+});
+
 const faqItems = [
   {
     q: 'Is Hermes a trading bot or automated signal tool?',
@@ -105,41 +112,25 @@ export default function HermesExperience({
           >
             <div className="home-hero-copy">
               <motion.p variants={fade} className="hero-particle-eyebrow">
-                Hermes · Autonomous Investment Engine
+                Hermes
               </motion.p>
 
               <motion.h1 variants={fade} className="hero-particle-title home-hero-title">
-                <span className="home-hero-line">An autonomous investment system.</span>
-                <span className="home-hero-line home-hero-line-2">Verifiable capital allocation.</span>
+                Software that looks at markets and decides whether to put money in, take it out, or wait.
               </motion.h1>
 
               <motion.p variants={fade} className="home-hero-dek">
-                Hermes continuously evaluates market structure and allocates capital automatically.
-                Inspect its live decision engine, verify the public audit trail, or run a paper simulation.
+                Each decision is written before the outcome is known. You cannot invest yet — run a
+                simulation with fake money, or check the live record.
               </motion.p>
 
-              <motion.div variants={fade} className="hero-particle-ctas mb-3 mt-6 flex flex-col sm:flex-row gap-3">
+              <motion.div variants={fade} className="hero-particle-ctas mb-10 mt-6 flex flex-col sm:flex-row gap-3">
                 <ExperienceHermesButton className="hero-cta hero-cta-primary">
-                  Simulate Allocation Strategy
+                  Run a simulation
                 </ExperienceHermesButton>
                 <ShimmerLink href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-secondary">
-                  Inspect Public Ledger
+                  Check the live record
                 </ShimmerLink>
-              </motion.div>
-
-              <motion.p variants={fade} className="text-xs text-muted mb-10">
-                Run paper capital following Hermes's live decisions. You can request allocation access directly from the simulation dashboard.
-              </motion.p>
-
-              <motion.div variants={fade} className="mb-8 max-w-2xl border-t border-border pt-6">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted">
-                  Institutional Rigor · Fully Transparent
-                </p>
-                <ul className="mt-2 text-sm text-muted space-y-1.5">
-                  <li>• <strong>Skin in the Game:</strong> Deploys exclusively with the creator's personal capital.</li>
-                  <li>• <strong>Tamper-Proof Audit Trail:</strong> Every allocation decision is cryptographically locked before capital moves, preventing retrofitted history.</li>
-                  <li>• <strong>Systematic Preservation:</strong> Designed to capture upside during expansion regimes while standing down to preserve capital during market stress.</li>
-                </ul>
               </motion.div>
 
               {showRecord && (
@@ -148,19 +139,19 @@ export default function HermesExperience({
                     <div className="home-record-readout">
                       {proof.condition && (
                         <div>
-                          <p className="home-record-label">Market Regime</p>
+                          <p className="home-record-label">Market</p>
                           <p className="home-record-value">{proof.condition}</p>
                         </div>
                       )}
                       {proof.posture && (
                         <div>
-                          <p className="home-record-label">Capital Posture</p>
+                          <p className="home-record-label">Now</p>
                           <p className="home-record-value">{proof.posture}</p>
                         </div>
                       )}
                       {proof.reason && (
                         <div>
-                          <p className="home-record-label">Investment Thesis</p>
+                          <p className="home-record-label">Why</p>
                           <p className="home-record-value home-record-value-quiet">{proof.reason}</p>
                         </div>
                       )}
@@ -173,18 +164,34 @@ export default function HermesExperience({
                         <p className="home-record-count">
                           {proof.sealedDecisions.toLocaleString('en-US')}
                         </p>
-                        <p className="home-record-label">Sealed Decisions</p>
+                        <p className="home-record-label">Sealed</p>
                       </div>
                       {lastSeal && (
                         <div>
                           <p className="home-record-meta">{lastSeal}</p>
-                          <p className="home-record-label">Last Timestamp</p>
+                          <p className="home-record-label">Last seal</p>
+                        </div>
+                      )}
+                      {proof.standDownRateLabel !== '-' && (
+                        <div>
+                          <p className="home-record-meta">{proof.standDownRateLabel}</p>
+                          <p className="home-record-label">Standing down</p>
                         </div>
                       )}
                       {proof.hitRateLabel !== '-' && (
                         <div>
                           <p className="home-record-meta">{proof.hitRateLabel}</p>
-                          <p className="home-record-label">Hit Rate · n={proof.sampleSize}</p>
+                          <p className="home-record-label">
+                            Win rate · n={proof.positive + proof.negative}
+                          </p>
+                        </div>
+                      )}
+                      {proof.expectancy !== null && (
+                        <div>
+                          <p className="home-record-meta">{expectancyFormatter.format(proof.expectancy)}</p>
+                          <p className="home-record-label">
+                            Expectancy{proof.sampleSize > 0 ? ` · n=${proof.sampleSize}` : ''}
+                          </p>
                         </div>
                       )}
                       {anchor && (
@@ -195,18 +202,15 @@ export default function HermesExperience({
                           >
                             {anchor.cadence}
                           </Link>
-                          <p className="home-record-label">Published External Anchor</p>
+                          <p className="home-record-label">Published outside our servers</p>
                         </div>
                       )}
                     </div>
                   )}
 
                   <p className="home-record-note">
-                    Personal capital deployment. Young sample
+                    Founder capital. Young sample
                     {proof.sampleSize ? ` n=${proof.sampleSize}` : ''}.
-                    {proof.standDownRateLabel !== '-'
-                      ? ` Capital in reserve ${proof.standDownRateLabel}.`
-                      : ''}
                     {proof.postureAge ? ` ${proof.postureAge}.` : ''}
                   </p>
                 </motion.div>
@@ -258,10 +262,10 @@ export default function HermesExperience({
         {timeline.length > 0 && (
           <section className="border-t border-border px-5 py-20 md:py-28">
             <div className="mx-auto max-w-6xl">
-              <p className="home-vision-kicker">Audit Trail</p>
-              <h2 className="home-vision-title">Recent allocation decisions.</h2>
+              <p className="home-vision-kicker">Recent decisions</p>
+              <h2 className="home-vision-title">From the public record.</h2>
               <p className="home-vision-dek">
-                Immutable entries from the public decision ledger. Not a backtest or hypothetical curve.
+                Sealed before the outcome. Not a backtest.
               </p>
 
               <ol className="home-seals">
@@ -283,7 +287,7 @@ export default function HermesExperience({
                   tone="ink"
                   className="text-sm underline decoration-foreground/20 underline-offset-4 transition-all hover:decoration-foreground/60"
                 >
-                  Open full decision ledger
+                  Check the live record
                 </ShimmerLink>
               </div>
             </div>
