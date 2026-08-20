@@ -8,7 +8,8 @@ import type { HermesLedgerRow } from '@/features/hermes-ledger/store';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 
 const DEMO_WAIT_S = 8;
-const DEMO_LINE = 'So, history cannot be changed.';
+const SEALED_LINE = 'Each decision is written before the outcome is known.';
+const DEMO_SUFFIX = ' So the past cannot be rewritten.';
 const TYPE_MS = 40;
 
 const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
@@ -63,8 +64,8 @@ export function HomeProofSection({
   const sectionRef = useRef<HTMLElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const reduceMotion = useReducedMotion();
-  const [draft, setDraft] = useState(row?.decision ?? '');
-  const [liveHash, setLiveHash] = useState(row?.rowHash ?? '');
+  const [draft, setDraft] = useState(SEALED_LINE);
+  const [liveHash, setLiveHash] = useState('');
   const [focused, setFocused] = useState(false);
   const [inView, setInView] = useState(false);
   const [userTookOver, setUserTookOver] = useState(false);
@@ -74,16 +75,7 @@ export function HomeProofSection({
   const userTookOverRef = useRef(false);
   const demoCancelRef = useRef(false);
   const demoStartedRef = useRef(false);
-
-  useEffect(() => {
-    setDraft(row?.decision ?? '');
-    setLiveHash(row?.rowHash ?? '');
-    setUserTookOver(false);
-    userTookOverRef.current = false;
-    demoStartedRef.current = false;
-    setSecondsLeft(null);
-    setDemoPlaying(false);
-  }, [row?.decision, row?.rowHash, row?.recordId]);
+  const waitingToType = secondsLeft === 0;
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -91,20 +83,16 @@ export function HomeProofSection({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setInView(Boolean(entry?.isIntersecting && entry.intersectionRatio >= 0.4));
+        if (entry?.isIntersecting) setInView(true);
       },
-      { threshold: [0, 0.4, 0.7] },
+      { threshold: [0, 0.15, 0.4] },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [row?.recordId]);
+  }, []);
 
   useEffect(() => {
-    if (!inView || userTookOver || demoPlaying || !row) {
-      return undefined;
-    }
-
-    if (draft !== row.decision) {
+    if (!inView || userTookOver || demoStartedRef.current) {
       return undefined;
     }
 
@@ -122,18 +110,17 @@ export function HomeProofSection({
     return () => {
       window.clearInterval(tick);
     };
-  }, [inView, userTookOver, demoPlaying, row, draft]);
+  }, [inView, userTookOver]);
 
   useEffect(() => {
-    if (secondsLeft !== 0 || userTookOver || !row || demoStartedRef.current) return undefined;
+    if (!waitingToType || userTookOver || demoStartedRef.current) return undefined;
 
     demoCancelRef.current = false;
     demoStartedRef.current = true;
     setDemoPlaying(true);
-    setSecondsLeft(null);
 
     if (reduceMotion) {
-      setDraft(DEMO_LINE);
+      setDraft(SEALED_LINE + DEMO_SUFFIX);
       setDemoPlaying(false);
       return undefined;
     }
@@ -147,9 +134,9 @@ export function HomeProofSection({
       }
 
       index += 1;
-      setDraft(DEMO_LINE.slice(0, index));
+      setDraft(SEALED_LINE + DEMO_SUFFIX.slice(0, index));
 
-      if (index >= DEMO_LINE.length) {
+      if (index >= DEMO_SUFFIX.length) {
         window.clearInterval(type);
         setDemoPlaying(false);
       }
@@ -158,7 +145,7 @@ export function HomeProofSection({
     return () => {
       window.clearInterval(type);
     };
-  }, [secondsLeft, userTookOver, row, reduceMotion]);
+  }, [waitingToType, userTookOver, reduceMotion]);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -191,8 +178,8 @@ export function HomeProofSection({
     return null;
   }
 
-  const wet = draft !== row.decision;
-  const hash = (wet ? liveHash : row.rowHash) || row.rowHash || '';
+  const wet = draft !== SEALED_LINE;
+  const hash = liveHash || row.rowHash || '';
   const sealedLabel = Number.isNaN(new Date(row.sealedAt).getTime())
     ? row.sealedAt
     : `${sealedAtFormatter.format(new Date(row.sealedAt))} UTC`;
@@ -213,14 +200,13 @@ export function HomeProofSection({
     <section ref={sectionRef} className={`home-proof${wet ? ' is-wet' : ''}`}>
       <div className="home-proof-inner">
         <p className="home-proof-dare">
-          Each decision is written before the outcome is known.
           Change a word.
           {showTimer ? <span className="home-proof-timer"> Writing in {secondsLeft}s</span> : null}
         </p>
 
         <div className="home-proof-line">
           <p className="home-proof-dry" aria-hidden="true">
-            {row.decision}
+            {SEALED_LINE}
           </p>
           <div className="home-proof-edit">
             {showCaret ? (
@@ -283,7 +269,7 @@ export function HomeProofSection({
                 className="home-proof-restore"
                 onClick={() => {
                   takeOver();
-                  setDraft(row.decision);
+                  setDraft(SEALED_LINE);
                 }}
               >
                 Restore
