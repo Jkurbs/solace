@@ -104,7 +104,10 @@ export function HomeProofSection({
   return (
     <section className={`home-proof${wet ? ' is-wet' : ''}`}>
       <div className="home-proof-inner">
-        <p className="home-proof-dare">Written before the outcome. Change a word.</p>
+        <p className="home-proof-dare">
+          Each decision is written before the outcome is known, so it cannot be changed after the fact.
+          Change a word.
+        </p>
 
         <div className="home-proof-line">
           <p className="home-proof-dry" aria-hidden="true">
@@ -151,7 +154,7 @@ export function HomeProofSection({
               </button>
             ) : null}
             <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="home-proof-link">
-              Open the public record
+              Open the public record <span aria-hidden="true">→</span>
             </Link>
           </div>
         </div>
