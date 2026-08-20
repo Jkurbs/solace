@@ -177,7 +177,8 @@ export function HomeProofSection({
   }
 
   const writing = phase === 'writing' || phase === 'paused' || phase === 'pending';
-  const wet = !writing && draft !== SEALED_LINE;
+  const sealedVisible = draft !== SEALED_LINE;
+  const wet = !writing && sealedVisible;
   const hash = liveHash || row.rowHash || '';
   const sealedLabel = Number.isNaN(new Date(row.sealedAt).getTime())
     ? row.sealedAt
@@ -195,7 +196,7 @@ export function HomeProofSection({
   return (
     <section
       ref={sectionRef}
-      className={`home-proof${wet ? ' is-wet' : ''}${writing ? ' is-writing' : ''}`}
+      className={`home-proof${sealedVisible ? ' is-wet' : ''}${writing ? ' is-writing' : ''}`}
     >
       <div className="home-proof-inner">
         <p className="home-proof-dare">Change a word.</p>

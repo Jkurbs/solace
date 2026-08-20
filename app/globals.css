@@ -15539,7 +15539,8 @@ html.dark .home-research .home-proof,
 
 .home-proof-line {
   position: relative;
-  padding-bottom: 0.65rem;
+  padding-bottom: 1.1rem;
+  overflow: visible;
 }
 
 .home-proof-sizer {
@@ -15572,20 +15573,23 @@ html.dark .home-research .home-proof,
 .home-proof-dry {
   position: absolute;
   inset: 0 auto auto 0;
+  z-index: 0;
   width: 100%;
   color: var(--foreground, #1c1917);
   opacity: 0;
   pointer-events: none;
+  transform: translate(0.14em, 0.55em);
   transition: opacity 0.45s ease;
 }
 
 .home-proof.is-wet .home-proof-dry {
-  opacity: 0.32;
+  opacity: 0.38;
 }
 
 .home-proof-edit {
   position: absolute;
   inset: 0;
+  z-index: 1;
   cursor: text;
 }
 
