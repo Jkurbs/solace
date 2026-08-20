@@ -15206,10 +15206,11 @@ html.dark .home-research ::selection,
 
 .home-hero-title.is-mission {
   display: block;
-  max-width: 12ch;
-  font-size: clamp(2.8rem, 7.2vw, 5.2rem);
-  line-height: 1.02;
+  max-width: 24ch;
+  font-size: clamp(2.15rem, 5.4vw, 3.55rem);
+  line-height: 1.08;
   letter-spacing: -0.035em;
+  text-wrap: balance;
 }
 
 .home-hero-line {
@@ -15518,8 +15519,14 @@ html.dark .home-research .home-proof,
   padding-bottom: 0.65rem;
 }
 
+.home-proof-dare .home-proof-timer {
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--muted, #78716c) 70%, var(--foreground, #1c1917));
+}
+
 .home-proof-dry,
-.home-proof-wet {
+.home-proof-wet,
+.home-proof-face {
   margin: 0;
   width: 100%;
   font: inherit;
@@ -15547,6 +15554,41 @@ html.dark .home-research .home-proof,
   transform: translate(3px, 8px);
 }
 
+.home-proof-edit {
+  position: relative;
+  cursor: text;
+}
+
+.home-proof-face {
+  color: var(--foreground, #1c1917);
+  pointer-events: none;
+}
+
+.home-proof.is-wet .home-proof-face {
+  color: var(--home-proof-wet);
+}
+
+.home-proof-caret {
+  display: inline-block;
+  width: 1.5px;
+  height: 0.86em;
+  margin-left: 0.08em;
+  background: currentColor;
+  vertical-align: -0.06em;
+  animation: home-proof-blink 1.05s steps(1, end) infinite;
+}
+
+@keyframes home-proof-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
 .home-proof-wet {
   position: relative;
   z-index: 1;
@@ -15565,6 +15607,14 @@ html.dark .home-research .home-proof,
 .home-proof.is-wet .home-proof-wet {
   color: var(--home-proof-wet);
   caret-color: var(--home-proof-wet);
+}
+
+.home-proof-wet.is-idle,
+.home-proof.is-wet .home-proof-wet.is-idle {
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  caret-color: transparent;
 }
 
 .home-proof-wet:focus {
@@ -15667,6 +15717,11 @@ html.dark .home-research .home-proof,
   .home-proof.is-wet .home-proof-dry,
   .home-proof.is-wet .home-proof-hash {
     transform: none;
+  }
+
+  .home-proof-caret {
+    animation: none;
+    opacity: 1;
   }
 }
 

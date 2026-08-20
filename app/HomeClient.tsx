@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
+import { useEffect } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -23,35 +23,20 @@ const fade = {
   show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: easeOut } },
 };
 
+const settle = {
+  hidden: { opacity: 0, y: 8, filter: 'blur(5px)' },
+  show: {
+    opacity: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    transition: { duration: 1.15, ease: easeOut },
+  },
+};
+
 const stagger = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+  show: { transition: { staggerChildren: 0.1, delayChildren: 0.08 } },
 };
-
-// Animated word
-const wordColors = {
-  financial: 'from-emerald-400 to-teal-400',
-  prediction: 'from-blue-400 to-indigo-400',
-  humanitarian: 'from-rose-400 to-pink-400',
-};
-
-function AnimatedWord({ word }: { word: string }) {
-  const colorClass = wordColors[word as keyof typeof wordColors] || 'from-gray-400 to-gray-400';
-
-  return (
-    <motion.span
-      key={word}
-      initial={{ opacity: 0, y: 20, scale: 0.8, rotate: -4 }}
-      animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
-      exit={{ opacity: 0, y: -20, scale: 0.8, rotate: 4 }}
-      transition={{ duration: 0.55, ease: [0.34, 1.56, 0.64, 1] }}
-      className={`inline-block bg-gradient-to-r ${colorClass} bg-clip-text text-transparent`}
-      style={{ textShadow: '0 0 40px rgba(255,255,255,0.15)' }}
-    >
-      {word}
-    </motion.span>
-  );
-}
 
 export type HermesTelemetry = {
   posture: string;
@@ -108,16 +93,7 @@ export default function HomeClient({
 }) {
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
-
-  const words = ['financial', 'prediction'];
-  const [wordIndex, setWordIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setWordIndex((i) => (i + 1) % words.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [words.length]);
+  const titleVariants = reduceMotion ? fade : settle;
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -171,27 +147,14 @@ export default function HomeClient({
           <div className="hero-particle-copy home-hero-copy flex w-full max-w-3xl flex-col items-center text-center">
             {/* Title */}
             <motion.h1
-              variants={fade}
+              variants={titleVariants}
               className="hero-particle-title home-hero-title is-mission text-center"
             >
-              Instruments that make{' '}
-              <span className="inline-flex justify-center min-w-[120px] text-center relative">
-                <span
-                  className="absolute inset-0 blur-2xl opacity-30 rounded-full"
-                  style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)' }}
-                />
-                <AnimatePresence mode="wait">
-                  <AnimatedWord word={words[wordIndex]} />
-                </AnimatePresence>
-              </span>{' '}
-              decisions for you.
+              Software that looks at markets and decides whether to put money in, take it out, or wait.
             </motion.h1>
 
             <motion.p variants={fade} className="home-hero-subline mx-auto max-w-xl text-center text-lg font-medium text-foreground/90">
-              Hermes is the first one. It manages money and makes market decisions on your behalf.
-            </motion.p>
-            <motion.p variants={fade} className="home-hero-dek mx-auto max-w-xl text-center text-muted mt-3">
-              Every decision is recorded, timestamped, and publicly verified in real time.
+              Hermes is the first. You cannot invest yet — watch the record, or run a simulation with fake money.
             </motion.p>
 
             <motion.div variants={fade} className="hero-particle-ctas mt-8 flex justify-center gap-4">
