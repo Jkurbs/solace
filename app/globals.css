@@ -15545,6 +15545,8 @@ html.dark .home-research .home-proof,
 .home-proof-sizer {
   visibility: hidden;
   pointer-events: none;
+  min-height: calc(1.18em * 3);
+  padding-right: 0.35em;
 }
 
 .home-proof-dare .home-proof-timer {
@@ -15574,13 +15576,11 @@ html.dark .home-research .home-proof,
   color: var(--foreground, #1c1917);
   opacity: 0;
   pointer-events: none;
-  transform: translate(0, 0);
-  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
+  transition: opacity 0.45s ease;
 }
 
 .home-proof.is-wet .home-proof-dry {
   opacity: 0.32;
-  transform: translate(3px, 8px);
 }
 
 .home-proof-edit {
@@ -15673,6 +15673,7 @@ html.dark .home-research .home-proof,
 
 .home-proof-hash {
   margin: 1.35rem 0 0;
+  min-height: 4.6em;
   max-width: 36rem;
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.68rem;
@@ -15681,13 +15682,11 @@ html.dark .home-research .home-proof,
   word-break: break-all;
   color: var(--muted, #78716c);
   opacity: 0.55;
-  transform: translate(0, 0);
-  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
+  transition: opacity 0.45s ease;
 }
 
 .home-proof.is-wet .home-proof-hash {
   opacity: 0.95;
-  transform: translate(8px, 3px);
 }
 
 .home-proof-foot {
@@ -15732,6 +15731,12 @@ html.dark .home-research .home-proof,
   text-decoration-color: color-mix(in srgb, var(--muted, #78716c) 45%, transparent);
 }
 
+.home-proof-restore.is-idle,
+.home-proof-verdict .is-idle {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .home-proof-restore:hover {
   color: var(--foreground, #1c1917);
   text-decoration-color: color-mix(in srgb, var(--foreground, #1c1917) 35%, transparent);
@@ -15774,14 +15779,6 @@ html.dark .home-research .home-proof,
 
   .home-proof-hash {
     font-size: 0.6rem;
-  }
-
-  .home-proof.is-wet .home-proof-dry {
-    transform: translate(2px, 6px);
-  }
-
-  .home-proof.is-wet .home-proof-hash {
-    transform: translate(5px, 2px);
   }
 }
 

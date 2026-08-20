@@ -177,7 +177,7 @@ export function HomeProofSection({
   }
 
   const writing = phase === 'writing' || phase === 'paused' || phase === 'pending';
-  const wet = draft !== SEALED_LINE;
+  const wet = !writing && draft !== SEALED_LINE;
   const hash = liveHash || row.rowHash || '';
   const sealedLabel = Number.isNaN(new Date(row.sealedAt).getTime())
     ? row.sealedAt
@@ -259,21 +259,23 @@ export function HomeProofSection({
 
         <div className="home-proof-foot">
           <p className="home-proof-verdict" aria-live="polite">
-            {wet ? 'What you typed is not on the chain. This is.' : ''}
+            <span className={wet ? undefined : 'is-idle'}>
+              What you typed is not on the chain. This is.
+            </span>
           </p>
           <div className="home-proof-actions">
-            {wet ? (
-              <button
-                type="button"
-                className="home-proof-restore"
-                onClick={() => {
-                  takeOver();
-                  setDraft(SEALED_LINE);
-                }}
-              >
-                Restore
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className={`home-proof-restore${wet ? '' : ' is-idle'}`}
+              tabIndex={wet ? 0 : -1}
+              aria-hidden={!wet}
+              onClick={() => {
+                takeOver();
+                setDraft(SEALED_LINE);
+              }}
+            >
+              Restore
+            </button>
             <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="home-proof-link">
               Open the public record <span aria-hidden="true">→</span>
             </Link>
