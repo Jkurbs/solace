@@ -16360,6 +16360,11 @@ button.hero-cta {
   margin-top: 1.5rem;
 }
 
+.hero-particle-ctas.is-start {
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
 /* CTAs follow site theme (paper or void) */
 .hero-cta-on-void.hero-cta-primary {
   border-color: var(--foreground, #1c1917);
