@@ -258,15 +258,7 @@ export function HomeProofSection({
         </p>
 
         <div className="home-proof-foot">
-          <p className="home-proof-verdict" aria-live="polite">
-            <span className={showRestore ? undefined : 'is-idle'}>
-              What you typed is not on the chain. This is.
-            </span>
-          </p>
           <div className="home-proof-actions">
-            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="home-proof-link">
-              Open the public record <span aria-hidden="true">→</span>
-            </Link>
             <button
               type="button"
               className={`home-proof-restore${showRestore ? '' : ' is-idle'}`}
@@ -279,7 +271,13 @@ export function HomeProofSection({
             >
               Restore
             </button>
+            <Link href={OBSERVATORY_HERMES_LEDGER_PATH} className="home-proof-link">
+              Open the public record <span aria-hidden="true">→</span>
+            </Link>
           </div>
+          <p className={`home-proof-verdict${showRestore ? '' : ' is-idle'}`} aria-live="polite">
+            What you typed is not on the chain. This is.
+          </p>
         </div>
       </div>
     </section>
