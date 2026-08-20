@@ -7,11 +7,11 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { HermesLedgerRow } from '@/features/hermes-ledger/store';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 
-const DEMO_WAIT_S = 8;
 const SEALED_LINE = 'Each decision is written before the outcome is known.';
 const DEMO_SUFFIX = ' So the past cannot be rewritten.';
+const FULL_LINE = `${SEALED_LINE}${DEMO_SUFFIX}`;
 const WRITE_MS = 36;
-const DEMO_TYPE_MS = 40;
+const PAUSE_MS = 1100;
 
 const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
@@ -53,6 +53,11 @@ function pickProofRow(rows: HermesLedgerRow[]) {
   return [...rows].reverse().find((row) => Boolean(row.rowHash && row.prevHash)) ?? null;
 }
 
+function draftRefLength(target: string) {
+  if (target === FULL_LINE) return SEALED_LINE.length;
+  return 0;
+}
+
 export function HomeProofSection({
   rows,
   sealedDecisions = null,
@@ -65,19 +70,15 @@ export function HomeProofSection({
   const sectionRef = useRef<HTMLElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const reduceMotion = useReducedMotion();
-  const [phase, setPhase] = useState<'pending' | 'writing' | 'dry'>('pending');
+  const [phase, setPhase] = useState<'pending' | 'writing' | 'paused' | 'dry'>('pending');
   const [draft, setDraft] = useState('');
   const [liveHash, setLiveHash] = useState('');
   const [focused, setFocused] = useState(false);
   const [inView, setInView] = useState(false);
   const [userTookOver, setUserTookOver] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
-  const [demoPlaying, setDemoPlaying] = useState(false);
 
   const userTookOverRef = useRef(false);
-  const demoCancelRef = useRef(false);
   const writeStartedRef = useRef(false);
-  const demoStartedRef = useRef(false);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -105,95 +106,51 @@ export function HomeProofSection({
       return undefined;
     }
 
+    let cancelled = false;
+    let timer = 0;
     setPhase('writing');
-    let index = 0;
-    const type = window.setInterval(() => {
-      if (userTookOverRef.current) {
-        window.clearInterval(type);
-        setDraft(SEALED_LINE);
-        setPhase('dry');
-        return;
-      }
 
-      index += 1;
-      setDraft(SEALED_LINE.slice(0, index));
+    const typeInto = (target: string, onDone: () => void) => {
+      let index = draftRefLength(target);
+      const tick = () => {
+        if (cancelled) return;
+        if (userTookOverRef.current) {
+          setPhase('dry');
+          return;
+        }
+        index += 1;
+        setDraft(target.slice(0, index));
+        if (index >= target.length) {
+          onDone();
+          return;
+        }
+        timer = window.setTimeout(tick, WRITE_MS);
+      };
+      timer = window.setTimeout(tick, WRITE_MS);
+    };
 
-      if (index >= SEALED_LINE.length) {
-        window.clearInterval(type);
-        setPhase('dry');
-      }
-    }, WRITE_MS);
+    typeInto(SEALED_LINE, () => {
+      if (cancelled || userTookOverRef.current) return;
+      setPhase('paused');
+      timer = window.setTimeout(() => {
+        if (cancelled) return;
+        if (userTookOverRef.current) {
+          setPhase('dry');
+          return;
+        }
+        setPhase('writing');
+        typeInto(FULL_LINE, () => {
+          if (cancelled || userTookOverRef.current) return;
+          setPhase('dry');
+        });
+      }, PAUSE_MS);
+    });
 
     return () => {
-      window.clearInterval(type);
+      cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [inView, reduceMotion]);
-
-  useEffect(() => {
-    if (phase !== 'dry' || userTookOver || demoPlaying || demoStartedRef.current) {
-      return undefined;
-    }
-
-    setSecondsLeft(DEMO_WAIT_S);
-    const tick = window.setInterval(() => {
-      setSecondsLeft((left) => {
-        if (left === null || left <= 1) {
-          window.clearInterval(tick);
-          return 0;
-        }
-        return left - 1;
-      });
-    }, 1000);
-
-    return () => {
-      window.clearInterval(tick);
-    };
-  }, [phase, userTookOver, demoPlaying]);
-
-  useEffect(() => {
-    if (secondsLeft !== 0 || userTookOver || demoStartedRef.current || phase !== 'dry') {
-      return undefined;
-    }
-
-    demoCancelRef.current = false;
-    demoStartedRef.current = true;
-    setDemoPlaying(true);
-    setSecondsLeft(null);
-
-    if (reduceMotion) {
-      setDraft(SEALED_LINE + DEMO_SUFFIX);
-      setDemoPlaying(false);
-      return undefined;
-    }
-
-    let index = 0;
-    const type = window.setInterval(() => {
-      if (demoCancelRef.current || userTookOverRef.current) {
-        window.clearInterval(type);
-        setDemoPlaying(false);
-        return;
-      }
-
-      index += 1;
-      setDraft(SEALED_LINE + DEMO_SUFFIX.slice(0, index));
-
-      if (index >= DEMO_SUFFIX.length) {
-        window.clearInterval(type);
-        setDemoPlaying(false);
-      }
-    }, DEMO_TYPE_MS);
-
-    return () => {
-      window.clearInterval(type);
-    };
-  }, [secondsLeft, userTookOver, phase, reduceMotion]);
-
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = `${el.scrollHeight}px`;
-  }, [draft, focused]);
 
   useEffect(() => {
     if (!row?.prevHash || !row.rowHash) return undefined;
@@ -219,27 +176,20 @@ export function HomeProofSection({
     return null;
   }
 
-  const writing = phase === 'writing';
-  const wet = phase === 'dry' && draft !== SEALED_LINE;
+  const writing = phase === 'writing' || phase === 'paused' || phase === 'pending';
+  const wet = draft !== SEALED_LINE;
   const hash = liveHash || row.rowHash || '';
   const sealedLabel = Number.isNaN(new Date(row.sealedAt).getTime())
     ? row.sealedAt
     : `${sealedAtFormatter.format(new Date(row.sealedAt))} UTC`;
   const showCaret = !focused;
-  const showTimer = phase === 'dry' && !userTookOver && !demoPlaying && secondsLeft !== null && secondsLeft > 0;
-  const sizerText = draft.length > SEALED_LINE.length ? draft : SEALED_LINE;
+  const sizerText = draft.length > FULL_LINE.length ? draft : FULL_LINE;
 
   function takeOver() {
     if (userTookOverRef.current) return;
     userTookOverRef.current = true;
-    demoCancelRef.current = true;
     setUserTookOver(true);
-    setDemoPlaying(false);
-    setSecondsLeft(null);
-    if (phase !== 'dry') {
-      setDraft(SEALED_LINE);
-      setPhase('dry');
-    }
+    setPhase('dry');
   }
 
   return (
@@ -248,10 +198,7 @@ export function HomeProofSection({
       className={`home-proof${wet ? ' is-wet' : ''}${writing ? ' is-writing' : ''}`}
     >
       <div className="home-proof-inner">
-        <p className="home-proof-dare">
-          {phase === 'dry' ? 'Change a word.' : '\u00a0'}
-          {showTimer ? <span className="home-proof-timer"> Trying a word in {secondsLeft}s</span> : null}
-        </p>
+        <p className="home-proof-dare">Change a word.</p>
 
         <div className="home-proof-line">
           <p className="home-proof-sizer" aria-hidden="true">

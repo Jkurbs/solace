@@ -15531,6 +15531,7 @@ html.dark .home-research .home-proof,
 .home-proof-dare {
   margin: 0 0 1.75rem;
   max-width: 34rem;
+  min-height: 1.5em;
   font-size: 1.02rem;
   line-height: 1.5;
   color: var(--muted, #78716c);
@@ -15538,11 +15539,6 @@ html.dark .home-research .home-proof,
 
 .home-proof-line {
   position: relative;
-  padding-bottom: 0;
-  transition: padding-bottom 0.45s ease;
-}
-
-.home-proof.is-wet .home-proof-line {
   padding-bottom: 0.65rem;
 }
 
@@ -15593,15 +15589,7 @@ html.dark .home-research .home-proof,
   cursor: text;
 }
 
-.home-proof.is-writing .home-proof-hash,
-.home-proof.is-writing .home-proof-why,
-.home-proof.is-writing .home-proof-meta {
-  opacity: 0;
-}
 
-.home-proof.is-writing .home-proof-hash {
-  transform: none;
-}
 
 .home-proof-face {
   color: var(--foreground, #1c1917);
