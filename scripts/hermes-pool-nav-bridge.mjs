@@ -447,10 +447,20 @@ function buildPublicPositions(snapshot) {
 
   return positions
     .map((position) => {
+      const info = position?.info && typeof position.info === 'object' && !Array.isArray(position.info) ? position.info : {};
       const symbol = normalizeSymbol(position?.symbol || position?.exchange_symbol);
       const side = String(position?.side || '').trim().toUpperCase() === 'SHORT' ? 'SHORT' : 'LONG';
+      const openedAt = getIsoDate(position?.openedAt, position?.opened_at, position?.openTime, info.openTime);
+      const positionId = String(
+        position?.sourcePositionId || position?.source_position_id || position?.positionId || info.positionId || info.position_id || '',
+      ).trim();
 
-      return { side, symbol };
+      return {
+        side,
+        symbol,
+        ...(openedAt ? { openedAt } : {}),
+        ...(positionId ? { positionId } : {}),
+      };
     })
     .filter((position) => position.symbol && ['LONG', 'SHORT'].includes(position.side));
 }

@@ -22,18 +22,37 @@ import { listHermesLedgerRows, listUnpairedHermesOpenRows, sealHermesLedgerRow }
 // 4) Restart re-open: killing the ingest/API drops memory. If the snapshot
 //    is empty too, the next mark looks like a brand-new path and reseals.
 //    The sealed chain is the source of truth: adopt unpaired open rows
-//    before minting, and never let unpaired opens exceed live positions.
+//    only when the tracking book looks lost (restart), never after a
+//    real close — leftover unpaired spam must not swallow a new path.
 const OPEN_PATHS_KEY = 'hermes_open_paths';
-/** Ignore mark-driven re-opens for the same symbol:side after a close. */
+/** Ignore mark-driven re-opens for the same identity after a close. */
 const RECENTLY_CLOSED_TTL_MS = 20 * 60 * 1000;
 
-type OpenEntry = { recordId: string; openedAt: string };
+type OpenEntry = {
+  recordId: string;
+  openedAt: string;
+  positionId?: string;
+  exchangeOpenedAt?: string;
+};
 type OpenPathState = Record<string, OpenEntry>;
+type CloseRecord = {
+  closedAt: string;
+  positionId?: string;
+  openedAt?: string;
+  /** A later healthy mark omitted this key, so a reappearance is a new path. */
+  confirmedAbsent?: boolean;
+};
 
 type OpenPathBook = {
   opens: OpenPathState;
-  /** ISO timestamps of recent closes, keyed by SYMBOL:SIDE. */
-  recentlyClosed: Record<string, string>;
+  recentlyClosed: Record<string, CloseRecord>;
+};
+
+type LivePosition = {
+  symbol: string;
+  side: string;
+  openedAt?: string;
+  positionId?: string;
 };
 
 function identitySymbol(symbol: string) {
@@ -79,9 +98,9 @@ function canonicalizeBook(book: OpenPathBook): boolean {
     }
   }
 
-  const recentlyClosed: Record<string, string> = {};
+  const recentlyClosed: Record<string, CloseRecord> = {};
 
-  for (const [key, closedAt] of Object.entries(book.recentlyClosed)) {
+  for (const [key, closed] of Object.entries(book.recentlyClosed)) {
     const canonical = canonicalKeyFromStored(key);
 
     if (canonical !== key) {
@@ -90,8 +109,8 @@ function canonicalizeBook(book: OpenPathBook): boolean {
 
     const existing = recentlyClosed[canonical];
 
-    if (!existing || new Date(closedAt).getTime() > new Date(existing).getTime()) {
-      recentlyClosed[canonical] = closedAt;
+    if (!existing || new Date(closed.closedAt).getTime() > new Date(existing.closedAt).getTime()) {
+      recentlyClosed[canonical] = closed;
     }
   }
 
@@ -101,11 +120,40 @@ function canonicalizeBook(book: OpenPathBook): boolean {
   return changed;
 }
 
-function parsePositionIdentity(
-  record: Record<string, unknown>,
-  seen: Set<string>,
-  parsed: Array<{ symbol: string; side: string }>,
-) {
+function readIsoField(value: unknown): string | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const ms = value > 1e12 ? value : value * 1000;
+    const date = new Date(ms);
+    return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+  }
+
+  if (typeof value !== 'string' || !value.trim()) {
+    return undefined;
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+function readPositionId(record: Record<string, unknown>): string | undefined {
+  const raw = record.sourcePositionId ?? record.source_position_id ?? record.positionId ?? record.position_id ?? record.id;
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return String(raw);
+  }
+
+  return typeof raw === 'string' && raw.trim() ? raw.trim() : undefined;
+}
+
+function readOpenedAt(record: Record<string, unknown>): string | undefined {
+  return (
+    readIsoField(record.openedAt) ??
+    readIsoField(record.opened_at) ??
+    readIsoField(record.openTime) ??
+    readIsoField(record.open_time)
+  );
+}
+
+function parsePositionIdentity(record: Record<string, unknown>, seen: Set<string>, parsed: LivePosition[]) {
   const symbol = typeof record.symbol === 'string' ? record.symbol.trim().toUpperCase() : '';
   const side = typeof record.side === 'string' ? record.side.trim().toUpperCase() : '';
 
@@ -120,14 +168,17 @@ function parsePositionIdentity(
   }
 
   seen.add(key);
-  parsed.push({ side, symbol });
+  const openedAt = readOpenedAt(record);
+  const positionId = readPositionId(record);
+  parsed.push({
+    side,
+    symbol,
+    ...(openedAt ? { openedAt } : {}),
+    ...(positionId ? { positionId } : {}),
+  });
 }
 
-function parseAllocationIdentity(
-  record: Record<string, unknown>,
-  seen: Set<string>,
-  parsed: Array<{ symbol: string; side: string }>,
-) {
+function parseAllocationIdentity(record: Record<string, unknown>, seen: Set<string>, parsed: LivePosition[]) {
   const side = typeof record.side === 'string' ? record.side.trim().toUpperCase() : '';
   const asset = typeof record.asset === 'string' ? record.asset.trim().toUpperCase() : '';
 
@@ -138,7 +189,7 @@ function parseAllocationIdentity(
   parsePositionIdentity({ side, symbol: `${asset}-USDT` }, seen, parsed);
 }
 
-export function parsePublicPositions(rawPayload: unknown): Array<{ symbol: string; side: string }> {
+export function parsePublicPositions(rawPayload: unknown): LivePosition[] {
   if (!rawPayload || typeof rawPayload !== 'object') {
     return [];
   }
@@ -210,6 +261,47 @@ function isLegacyOpenStateRecord(stored: Record<string, unknown>): boolean {
   return isLegacyOpenState(stored);
 }
 
+function closeRecordFromStored(value: unknown): CloseRecord | null {
+  if (typeof value === 'string') {
+    return { closedAt: value };
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const closedAt = typeof record.closedAt === 'string' ? record.closedAt : null;
+
+  if (!closedAt) {
+    return null;
+  }
+
+  return {
+    closedAt,
+    ...(typeof record.positionId === 'string' && record.positionId ? { positionId: record.positionId } : {}),
+    ...(typeof record.openedAt === 'string' && record.openedAt ? { openedAt: record.openedAt } : {}),
+    ...(record.confirmedAbsent === true ? { confirmedAbsent: true } : {}),
+  };
+}
+
+function closeMapFromStored(value: unknown): Record<string, CloseRecord> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  const mapped: Record<string, CloseRecord> = {};
+
+  for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+    const closed = closeRecordFromStored(entry);
+    if (closed) {
+      mapped[key] = closed;
+    }
+  }
+
+  return mapped;
+}
+
 function bookFromStored(stored: unknown): OpenPathBook {
   if (!stored || typeof stored !== 'object' || Array.isArray(stored)) {
     return emptyBook();
@@ -223,12 +315,7 @@ function bookFromStored(stored: unknown): OpenPathBook {
           record.opens && typeof record.opens === 'object' && !Array.isArray(record.opens)
             ? ({ ...record.opens } as OpenPathState)
             : {},
-        recentlyClosed:
-          record.recentlyClosed &&
-          typeof record.recentlyClosed === 'object' &&
-          !Array.isArray(record.recentlyClosed)
-            ? ({ ...record.recentlyClosed } as Record<string, string>)
-            : {},
+        recentlyClosed: closeMapFromStored(record.recentlyClosed),
       };
 
   canonicalizeBook(book);
@@ -239,12 +326,12 @@ function bookFromStored(stored: unknown): OpenPathBook {
 /** Prefer the book that knows more active opens / newer close cooldowns. */
 function mergeBooks(a: OpenPathBook, b: OpenPathBook): OpenPathBook {
   const opens: OpenPathState = { ...a.opens, ...b.opens };
-  const recentlyClosed: Record<string, string> = { ...a.recentlyClosed };
+  const recentlyClosed: Record<string, CloseRecord> = { ...a.recentlyClosed };
 
-  for (const [key, closedAt] of Object.entries(b.recentlyClosed)) {
+  for (const [key, closed] of Object.entries(b.recentlyClosed)) {
     const existing = recentlyClosed[key];
-    if (!existing || new Date(closedAt).getTime() > new Date(existing).getTime()) {
-      recentlyClosed[key] = closedAt;
+    if (!existing || new Date(closed.closedAt).getTime() > new Date(existing.closedAt).getTime()) {
+      recentlyClosed[key] = closed;
     }
   }
 
@@ -282,11 +369,11 @@ async function writeBook(book: OpenPathBook): Promise<boolean> {
   return ok;
 }
 
-function pruneRecentlyClosed(recentlyClosed: Record<string, string>, nowMs: number) {
+function pruneRecentlyClosed(recentlyClosed: Record<string, CloseRecord>, nowMs: number) {
   let changed = false;
 
-  for (const [key, closedAt] of Object.entries(recentlyClosed)) {
-    const closedMs = new Date(closedAt).getTime();
+  for (const [key, closed] of Object.entries(recentlyClosed)) {
+    const closedMs = new Date(closed.closedAt).getTime();
 
     if (!Number.isFinite(closedMs) || nowMs - closedMs > RECENTLY_CLOSED_TTL_MS) {
       delete recentlyClosed[key];
@@ -297,16 +384,60 @@ function pruneRecentlyClosed(recentlyClosed: Record<string, string>, nowMs: numb
   return changed;
 }
 
-function isInCloseCooldown(recentlyClosed: Record<string, string>, key: string, nowMs: number) {
-  const closedAt = recentlyClosed[key];
+function markConfirmedAbsences(book: OpenPathBook, liveKeys: Set<string>) {
+  let changed = false;
 
-  if (!closedAt) {
+  for (const [key, closed] of Object.entries(book.recentlyClosed)) {
+    if (!liveKeys.has(key) && !closed.confirmedAbsent) {
+      book.recentlyClosed[key] = { ...closed, confirmedAbsent: true };
+      changed = true;
+    }
+  }
+
+  return changed;
+}
+
+/** Lagging mark of the same closed path, not a genuine new open. */
+function shouldSuppressOpen(
+  recentlyClosed: Record<string, CloseRecord>,
+  key: string,
+  incoming: Pick<LivePosition, 'openedAt' | 'positionId'>,
+  nowMs: number,
+) {
+  const closed = recentlyClosed[key];
+
+  if (!closed) {
     return false;
   }
 
-  const closedMs = new Date(closedAt).getTime();
+  const closedMs = new Date(closed.closedAt).getTime();
 
-  return Number.isFinite(closedMs) && nowMs - closedMs <= RECENTLY_CLOSED_TTL_MS;
+  if (!Number.isFinite(closedMs) || nowMs - closedMs > RECENTLY_CLOSED_TTL_MS) {
+    return false;
+  }
+
+  // A later mark already showed this path gone. Reappearance is a new path.
+  if (closed.confirmedAbsent) {
+    return false;
+  }
+
+  if (incoming.positionId && closed.positionId && incoming.positionId !== closed.positionId) {
+    return false;
+  }
+
+  if (incoming.openedAt) {
+    const openedMs = new Date(incoming.openedAt).getTime();
+
+    if (Number.isFinite(openedMs) && openedMs > closedMs) {
+      return false;
+    }
+
+    if (closed.openedAt && incoming.openedAt !== closed.openedAt) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 // Serialize open/close book mutations on this instance (concurrent mark posts).
@@ -332,22 +463,22 @@ function nextHermesRecordId(rows: Array<{ recordId: string }>) {
   return `HMS-${String(nextRecordNumber).padStart(3, '0')}`;
 }
 
-function livePathKeys(positions: Array<{ symbol: string; side: string }>) {
+function livePathKeys(positions: LivePosition[]) {
   const keys: string[] = [];
-  const seen = new Set<string>();
+  const byKey = new Map<string, LivePosition>();
 
   for (const position of positions) {
     const key = pathKey(position.symbol, position.side);
 
-    if (seen.has(key)) {
+    if (byKey.has(key)) {
       continue;
     }
 
-    seen.add(key);
+    byKey.set(key, position);
     keys.push(key);
   }
 
-  return keys;
+  return { byKey, keys };
 }
 
 function adoptUnpairedOpen(
@@ -397,10 +528,15 @@ export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: 
       // Do NOT drop opens when a mark omits a symbol. Only popOpenPathRef
       // (trade close) removes tracking, prevents unpaired opens + re-spam.
 
-      const liveKeys = livePathKeys(positions);
-      const untracked = liveKeys.filter(
-        (key) => !book.opens[key] && !isInCloseCooldown(book.recentlyClosed, key, nowMs),
-      );
+      const { byKey, keys: liveKeys } = livePathKeys(positions);
+      changed = markConfirmedAbsences(book, new Set(liveKeys)) || changed;
+      const untracked = liveKeys.filter((key) => {
+        if (book.opens[key]) {
+          return false;
+        }
+
+        return !shouldSuppressOpen(book.recentlyClosed, key, byKey.get(key) ?? {}, nowMs);
+      });
 
       if (!untracked.length) {
         if (changed) {
@@ -411,10 +547,12 @@ export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: 
       }
 
       const unpaired = await listUnpairedHermesOpenRows();
-
-      // Chain already has enough open rows for the live book (typical after
-      // an API restart that dropped the tracking snapshot). Adopt first.
-      const neededSeals = Math.max(0, liveKeys.length - unpaired.length);
+      const liveMapped = liveKeys.some((key) => Boolean(book.opens[key]));
+      const justClosed = Object.keys(book.recentlyClosed).length > 0;
+      // Adopt leftover unpaired opens only after a lost tracking book
+      // (restart). A real close + new path must mint a new row.
+      const bookLooksLost = !liveMapped && !justClosed;
+      const neededSeals = bookLooksLost ? Math.max(0, liveKeys.length - unpaired.length) : untracked.length;
       const adoptCount = Math.max(0, untracked.length - neededSeals);
       const sealKeys: string[] = [];
 
@@ -435,7 +573,8 @@ export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: 
       const snapshot = sealKeys.length ? await getStoredHermesBriefSnapshot().catch(() => null) : null;
 
       for (const key of sealKeys) {
-        if (book.opens[key] || isInCloseCooldown(book.recentlyClosed, key, nowMs)) {
+        const incoming: Pick<LivePosition, 'openedAt' | 'positionId'> = byKey.get(key) ?? {};
+        if (book.opens[key] || shouldSuppressOpen(book.recentlyClosed, key, incoming, nowMs)) {
           continue;
         }
 
@@ -447,14 +586,15 @@ export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: 
         book.recentlyClosed = merged.recentlyClosed;
         memoryBook = cloneBook(book);
 
-        if (book.opens[key] || isInCloseCooldown(book.recentlyClosed, key, nowMs)) {
+        if (book.opens[key] || shouldSuppressOpen(book.recentlyClosed, key, incoming, nowMs)) {
           continue;
         }
 
         // Another instance may have sealed while this one had an empty book.
-        // If the chain already covers the live book, never mint a surplus open.
+        // Never adopt leftover unpaired rows after a real close.
         const latestUnpaired = await listUnpairedHermesOpenRows();
-        if (latestUnpaired.length >= liveKeys.length) {
+        const stillLost = !liveKeys.some((liveKey) => Boolean(book.opens[liveKey])) && Object.keys(book.recentlyClosed).length === 0;
+        if (stillLost && latestUnpaired.length >= liveKeys.length) {
           if (adoptUnpairedOpen(book, key, latestUnpaired)) {
             changed = true;
             await writeBook(book);
@@ -475,7 +615,12 @@ export async function trackOpenPathsFromMark(rawPayload: unknown, effectiveAt?: 
         });
 
         if (row) {
-          book.opens[key] = { openedAt: sealedAt, recordId: row.recordId };
+          book.opens[key] = {
+            openedAt: sealedAt,
+            recordId: row.recordId,
+            ...(incoming.positionId ? { positionId: incoming.positionId } : {}),
+            ...(incoming.openedAt ? { exchangeOpenedAt: incoming.openedAt } : {}),
+          };
           changed = true;
           // Persist immediately so the next mark (or concurrent request after
           // this write) sees the open and does not spam another seal.
@@ -528,7 +673,11 @@ export async function popOpenPathRef(symbol: string, side: string): Promise<stri
 
       // Always record the close cooldown, even if we lacked an open entry
       // (pre-schema or state loss), still blocks ghost re-opens from stale marks.
-      book.recentlyClosed[key] = closedAt;
+      book.recentlyClosed[key] = {
+        closedAt,
+        ...(entry?.positionId ? { positionId: entry.positionId } : {}),
+        ...(entry?.exchangeOpenedAt ? { openedAt: entry.exchangeOpenedAt } : {}),
+      };
       pruneRecentlyClosed(book.recentlyClosed, Date.now());
 
       if (entry) {
