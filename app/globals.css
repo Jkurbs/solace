@@ -15206,17 +15206,34 @@ html.dark .home-research ::selection,
 
 .home-hero-title.is-mission {
   display: block;
-  max-width: 13ch;
+  max-width: 14ch;
   font-size: clamp(2.8rem, 7.2vw, 5.2rem);
   line-height: 1.02;
   letter-spacing: -0.035em;
 }
 
 .home-hero-typed {
-  display: inline;
+  display: inline-block;
+  position: relative;
+  vertical-align: baseline;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.home-hero-typed-sizer {
+  display: block;
+  visibility: hidden;
+  pointer-events: none;
+  border-bottom: 0.08em solid transparent;
+  padding-bottom: 0.02em;
+}
+
+.home-hero-typed-text {
+  position: absolute;
+  left: 0;
+  top: 0;
   border-bottom: 0.08em solid color-mix(in srgb, currentColor 38%, transparent);
   padding-bottom: 0.02em;
-  white-space: nowrap;
 }
 
 .home-hero-typed-ink {

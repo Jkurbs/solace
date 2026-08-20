@@ -29,8 +29,9 @@ const stagger = {
 };
 
 const DECISION_WORDS = ['financial', 'prediction', 'humanitarian'] as const;
-const TYPE_MS = 72;
-const DELETE_MS = 42;
+const LONGEST_DECISION_WORD = 'humanitarian';
+const TYPE_MS = 78;
+const DELETE_MS = 36;
 const HOLD_MS = 2400;
 
 function TypedDecisionWord({ reduced }: { reduced: boolean }) {
@@ -78,8 +79,13 @@ function TypedDecisionWord({ reduced }: { reduced: boolean }) {
 
   return (
     <span className="home-hero-typed">
-      {settled}
-      {arriving ? <span className="home-hero-typed-ink">{arriving}</span> : null}
+      <span className="home-hero-typed-sizer" aria-hidden="true">
+        {LONGEST_DECISION_WORD}
+      </span>
+      <span className="home-hero-typed-text">
+        {settled}
+        {arriving ? <span className="home-hero-typed-ink">{arriving}</span> : null}
+      </span>
     </span>
   );
 }
