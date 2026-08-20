@@ -7,7 +7,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { HermesLedgerRow } from '@/features/hermes-ledger/store';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 
-const DEMO_WAIT_S = 8;
+const DEMO_WAIT_S = 5;
 const SEALED_LINE = 'Each decision is written before the outcome is known.';
 const DEMO_SUFFIX = ' So the past cannot be rewritten.';
 const FULL_LINE = `${SEALED_LINE}${DEMO_SUFFIX}`;
