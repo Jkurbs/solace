@@ -68,6 +68,7 @@ export function HomeProofSection({
   const [liveHash, setLiveHash] = useState('');
   const [focused, setFocused] = useState(false);
   const [inView, setInView] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
   const [userTookOver, setUserTookOver] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [demoPlaying, setDemoPlaying] = useState(false);
@@ -78,21 +79,32 @@ export function HomeProofSection({
   const waitingToType = secondsLeft === 0;
 
   useEffect(() => {
+    const onScroll = () => {
+      if (window.scrollY > 40) setHasScrolled(true);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
     const el = sectionRef.current;
     if (!el) return undefined;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry?.isIntersecting) setInView(true);
+        if (entry && entry.isIntersecting && entry.intersectionRatio >= 0.4) {
+          setInView(true);
+        }
       },
-      { threshold: [0, 0.15, 0.4] },
+      { threshold: [0.4, 0.6, 0.8] },
     );
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
-    if (!inView || userTookOver || demoStartedRef.current) {
+    if (!hasScrolled || !inView || userTookOver || demoStartedRef.current) {
       return undefined;
     }
 
@@ -110,7 +122,7 @@ export function HomeProofSection({
     return () => {
       window.clearInterval(tick);
     };
-  }, [inView, userTookOver]);
+  }, [hasScrolled, inView, userTookOver]);
 
   useEffect(() => {
     if (!waitingToType || userTookOver || demoStartedRef.current) return undefined;
