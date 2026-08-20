@@ -150,11 +150,26 @@ export default function HomeClient({
               variants={titleVariants}
               className="hero-particle-title home-hero-title is-mission text-center"
             >
-              Software that looks at markets and decides whether to put money in, take it out, or wait.
+              Software that decides about one hard thing at a time — and writes it down first.
             </motion.h1>
 
+            <motion.ul variants={fade} className="home-hero-inventory">
+              <li>
+                <Link href="/hermes">Money in markets</Link>
+                <span>Live</span>
+              </li>
+              <li>
+                <Link href="/oracle">Whether a forecast comes true</Link>
+                <span>Scored in public</span>
+              </li>
+              <li>
+                <Link href="/glorya">Where help should go</Link>
+                <span>Not yet</span>
+              </li>
+            </motion.ul>
+
             <motion.p variants={fade} className="home-hero-subline mx-auto max-w-xl text-center text-lg font-medium text-foreground/90">
-              Hermes is the first. You cannot invest yet — watch the record, or run a simulation with fake money.
+              Hermes is the first you can watch. You cannot invest yet — open the record, or run a simulation with fake money.
             </motion.p>
 
             <motion.div variants={fade} className="hero-particle-ctas mt-8 flex justify-center gap-4">
