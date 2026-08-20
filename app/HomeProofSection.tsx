@@ -72,6 +72,7 @@ export function HomeProofSection({
   const [userTookOver, setUserTookOver] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [demoPlaying, setDemoPlaying] = useState(false);
+  const [demoKey, setDemoKey] = useState(0);
 
   const userTookOverRef = useRef(false);
   const demoCancelRef = useRef(false);
@@ -111,7 +112,7 @@ export function HomeProofSection({
     return () => {
       window.clearInterval(tick);
     };
-  }, [inView, userTookOver]);
+  }, [inView, userTookOver, demoKey]);
 
   useEffect(() => {
     if (!waitingToType || userTookOver || demoStartedRef.current) return undefined;
@@ -192,6 +193,19 @@ export function HomeProofSection({
     setSecondsLeft(null);
   }
 
+  function restore() {
+    demoCancelRef.current = true;
+    userTookOverRef.current = false;
+    demoStartedRef.current = false;
+    setUserTookOver(false);
+    setDemoPlaying(false);
+    setDraft(SEALED_LINE);
+    setSecondsLeft(DEMO_WAIT_S);
+    setFocused(false);
+    textareaRef.current?.blur();
+    setDemoKey((key) => key + 1);
+  }
+
   return (
     <section ref={sectionRef} className={`home-proof${wet ? ' is-wet' : ''}`}>
       <div className="home-proof-inner">
@@ -268,10 +282,7 @@ export function HomeProofSection({
                 className="home-proof-restore"
                 tabIndex={showRestore ? 0 : -1}
                 aria-hidden={!showRestore}
-                onClick={() => {
-                  takeOver();
-                  setDraft(SEALED_LINE);
-                }}
+                onClick={restore}
               >
                 Restore
               </button>
