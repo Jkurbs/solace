@@ -15327,6 +15327,18 @@ html.dark .home-research ::selection,
   color: color-mix(in srgb, currentColor 38%, transparent);
 }
 
+@media (max-width: 767px) {
+  .home-hero-title.is-mission .home-hero-typed {
+    display: block;
+    margin: 0.06em auto;
+  }
+
+  .home-hero-title.is-mission .home-hero-typed-text {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
 .home-hero-line {
   display: block;
   max-width: 16ch;
