@@ -15206,62 +15206,21 @@ html.dark .home-research ::selection,
 
 .home-hero-title.is-mission {
   display: block;
-  max-width: 18ch;
-  font-size: clamp(2.2rem, 5.6vw, 3.7rem);
-  line-height: 1.06;
+  max-width: 13ch;
+  font-size: clamp(2.8rem, 7.2vw, 5.2rem);
+  line-height: 1.02;
   letter-spacing: -0.035em;
-  text-wrap: balance;
 }
 
-.home-hero-inventory {
-  list-style: none;
-  margin: 1.85rem auto 0;
-  padding: 0;
-  width: 100%;
-  max-width: 22rem;
-  text-align: left;
+.home-hero-typed {
+  display: inline;
+  border-bottom: 0.08em solid color-mix(in srgb, currentColor 38%, transparent);
+  padding-bottom: 0.02em;
+  white-space: nowrap;
 }
 
-.home-hero-inventory li {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.55rem 0;
-  border-top: 1px solid var(--border, #e7e5e4);
-  font-size: 0.95rem;
-  line-height: 1.35;
-  letter-spacing: -0.015em;
-}
-
-.home-hero-inventory li:last-child {
-  border-bottom: 1px solid var(--border, #e7e5e4);
-}
-
-.home-hero-inventory a {
-  color: var(--foreground, #1c1917);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-thickness: 1px;
-  text-decoration-color: color-mix(in srgb, var(--foreground, #1c1917) 28%, transparent);
-}
-
-.home-hero-inventory a:hover {
-  text-decoration-color: var(--foreground, #1c1917);
-}
-
-.home-hero-inventory span {
-  flex-shrink: 0;
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
-  color: var(--muted, #78716c);
-}
-
-@media (max-width: 639px) {
-  .home-hero-inventory li {
-    flex-direction: column;
-    gap: 0.15rem;
-  }
+.home-hero-typed-ink {
+  color: color-mix(in srgb, currentColor 38%, transparent);
 }
 
 .home-hero-line {
@@ -15275,12 +15234,12 @@ html.dark .home-research ::selection,
 }
 
 .home-hero-subline {
-  margin: 1.35rem auto 0;
+  margin: 1rem auto 0;
   max-width: 28rem;
-  font-size: clamp(1.02rem, 1.8vw, 1.2rem);
+  font-size: clamp(1.15rem, 2.2vw, 1.45rem);
   font-weight: 400;
-  letter-spacing: -0.015em;
-  line-height: 1.45;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
   color: color-mix(in srgb, var(--foreground, #1c1917) 82%, var(--muted, #78716c));
 }
 
