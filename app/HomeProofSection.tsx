@@ -8,7 +8,7 @@ import type { HermesLedgerRow } from '@/features/hermes-ledger/store';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 
 const DEMO_WAIT_S = 8;
-const DEMO_SUFFIX = ' — after the fact';
+const DEMO_LINE = 'So, history cannot be changed.';
 const TYPE_MS = 40;
 
 const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
@@ -49,10 +49,6 @@ async function computeRowHash(row: {
 
 function pickProofRow(rows: HermesLedgerRow[]) {
   return [...rows].reverse().find((row) => Boolean(row.rowHash && row.prevHash)) ?? null;
-}
-
-function demoText(sealed: string) {
-  return sealed.endsWith(DEMO_SUFFIX) ? `${sealed} now` : `${sealed}${DEMO_SUFFIX}`;
 }
 
 export function HomeProofSection({
@@ -131,21 +127,18 @@ export function HomeProofSection({
   useEffect(() => {
     if (secondsLeft !== 0 || userTookOver || !row || demoStartedRef.current) return undefined;
 
-    const sealed = row.decision;
-    const target = demoText(sealed);
     demoCancelRef.current = false;
     demoStartedRef.current = true;
     setDemoPlaying(true);
     setSecondsLeft(null);
 
     if (reduceMotion) {
-      setDraft(target);
+      setDraft(DEMO_LINE);
       setDemoPlaying(false);
       return undefined;
     }
 
     let index = 0;
-    const extra = target.slice(sealed.length);
     const type = window.setInterval(() => {
       if (demoCancelRef.current || userTookOverRef.current) {
         window.clearInterval(type);
@@ -154,9 +147,9 @@ export function HomeProofSection({
       }
 
       index += 1;
-      setDraft(sealed + extra.slice(0, index));
+      setDraft(DEMO_LINE.slice(0, index));
 
-      if (index >= extra.length) {
+      if (index >= DEMO_LINE.length) {
         window.clearInterval(type);
         setDemoPlaying(false);
       }
@@ -220,9 +213,9 @@ export function HomeProofSection({
     <section ref={sectionRef} className={`home-proof${wet ? ' is-wet' : ''}`}>
       <div className="home-proof-inner">
         <p className="home-proof-dare">
-          Each decision is written before the outcome is known, so it cannot be changed after the fact.
+          Each decision is written before the outcome is known.
           Change a word.
-          {showTimer ? <span className="home-proof-timer"> Trying a word in {secondsLeft}s</span> : null}
+          {showTimer ? <span className="home-proof-timer"> Writing in {secondsLeft}s</span> : null}
         </p>
 
         <div className="home-proof-line">
@@ -258,6 +251,10 @@ export function HomeProofSection({
             />
           </div>
         </div>
+
+        <p className="home-proof-why">
+          If the call can be edited after the fill, it isn’t proof. It’s a story.
+        </p>
 
         <p className="home-proof-meta">
           {row.recordId}

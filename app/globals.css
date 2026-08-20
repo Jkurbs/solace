@@ -15648,6 +15648,14 @@ html.dark .home-research .home-proof,
   outline: none;
 }
 
+.home-proof-why {
+  margin: 1.15rem 0 0;
+  max-width: 32rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--muted, #78716c);
+}
+
 .home-proof-meta {
   margin: 1.15rem 0 0;
   font-family: var(--font-mono), ui-monospace, monospace;
