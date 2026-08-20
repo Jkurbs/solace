@@ -15546,11 +15546,17 @@ html.dark .home-research .home-proof,
   padding-bottom: 0.65rem;
 }
 
+.home-proof-sizer {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .home-proof-dare .home-proof-timer {
   font-variant-numeric: tabular-nums;
   color: color-mix(in srgb, var(--muted, #78716c) 70%, var(--foreground, #1c1917));
 }
 
+.home-proof-sizer,
 .home-proof-dry,
 .home-proof-wet,
 .home-proof-face {
@@ -15582,8 +15588,19 @@ html.dark .home-research .home-proof,
 }
 
 .home-proof-edit {
-  position: relative;
+  position: absolute;
+  inset: 0;
   cursor: text;
+}
+
+.home-proof.is-writing .home-proof-hash,
+.home-proof.is-writing .home-proof-why,
+.home-proof.is-writing .home-proof-meta {
+  opacity: 0;
+}
+
+.home-proof.is-writing .home-proof-hash {
+  transform: none;
 }
 
 .home-proof-face {
@@ -15654,6 +15671,7 @@ html.dark .home-research .home-proof,
   font-size: 0.95rem;
   line-height: 1.45;
   color: var(--muted, #78716c);
+  transition: opacity 0.45s ease;
 }
 
 .home-proof-meta {
@@ -15662,6 +15680,7 @@ html.dark .home-research .home-proof,
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   color: var(--muted, #78716c);
+  transition: opacity 0.45s ease;
 }
 
 .home-proof-hash {

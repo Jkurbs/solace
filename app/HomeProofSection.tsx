@@ -10,7 +10,8 @@ import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 const DEMO_WAIT_S = 8;
 const SEALED_LINE = 'Each decision is written before the outcome is known.';
 const DEMO_SUFFIX = ' So the past cannot be rewritten.';
-const TYPE_MS = 40;
+const WRITE_MS = 36;
+const DEMO_TYPE_MS = 40;
 
 const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
@@ -64,28 +65,19 @@ export function HomeProofSection({
   const sectionRef = useRef<HTMLElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const reduceMotion = useReducedMotion();
-  const [draft, setDraft] = useState(SEALED_LINE);
+  const [phase, setPhase] = useState<'pending' | 'writing' | 'dry'>('pending');
+  const [draft, setDraft] = useState('');
   const [liveHash, setLiveHash] = useState('');
   const [focused, setFocused] = useState(false);
   const [inView, setInView] = useState(false);
-  const [hasScrolled, setHasScrolled] = useState(false);
   const [userTookOver, setUserTookOver] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [demoPlaying, setDemoPlaying] = useState(false);
 
   const userTookOverRef = useRef(false);
   const demoCancelRef = useRef(false);
+  const writeStartedRef = useRef(false);
   const demoStartedRef = useRef(false);
-  const waitingToType = secondsLeft === 0;
-
-  useEffect(() => {
-    const onScroll = () => {
-      if (window.scrollY > 40) setHasScrolled(true);
-    };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -101,10 +93,44 @@ export function HomeProofSection({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [row?.recordId]);
 
   useEffect(() => {
-    if (!hasScrolled || !inView || userTookOver || demoStartedRef.current) {
+    if (!inView || writeStartedRef.current) return undefined;
+    writeStartedRef.current = true;
+
+    if (reduceMotion || userTookOverRef.current) {
+      setDraft(SEALED_LINE);
+      setPhase('dry');
+      return undefined;
+    }
+
+    setPhase('writing');
+    let index = 0;
+    const type = window.setInterval(() => {
+      if (userTookOverRef.current) {
+        window.clearInterval(type);
+        setDraft(SEALED_LINE);
+        setPhase('dry');
+        return;
+      }
+
+      index += 1;
+      setDraft(SEALED_LINE.slice(0, index));
+
+      if (index >= SEALED_LINE.length) {
+        window.clearInterval(type);
+        setPhase('dry');
+      }
+    }, WRITE_MS);
+
+    return () => {
+      window.clearInterval(type);
+    };
+  }, [inView, reduceMotion]);
+
+  useEffect(() => {
+    if (phase !== 'dry' || userTookOver || demoPlaying || demoStartedRef.current) {
       return undefined;
     }
 
@@ -122,14 +148,17 @@ export function HomeProofSection({
     return () => {
       window.clearInterval(tick);
     };
-  }, [hasScrolled, inView, userTookOver]);
+  }, [phase, userTookOver, demoPlaying]);
 
   useEffect(() => {
-    if (!waitingToType || userTookOver || demoStartedRef.current) return undefined;
+    if (secondsLeft !== 0 || userTookOver || demoStartedRef.current || phase !== 'dry') {
+      return undefined;
+    }
 
     demoCancelRef.current = false;
     demoStartedRef.current = true;
     setDemoPlaying(true);
+    setSecondsLeft(null);
 
     if (reduceMotion) {
       setDraft(SEALED_LINE + DEMO_SUFFIX);
@@ -152,12 +181,12 @@ export function HomeProofSection({
         window.clearInterval(type);
         setDemoPlaying(false);
       }
-    }, TYPE_MS);
+    }, DEMO_TYPE_MS);
 
     return () => {
       window.clearInterval(type);
     };
-  }, [waitingToType, userTookOver, reduceMotion]);
+  }, [secondsLeft, userTookOver, phase, reduceMotion]);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -190,14 +219,15 @@ export function HomeProofSection({
     return null;
   }
 
-  const wet = draft !== SEALED_LINE;
+  const writing = phase === 'writing';
+  const wet = phase === 'dry' && draft !== SEALED_LINE;
   const hash = liveHash || row.rowHash || '';
   const sealedLabel = Number.isNaN(new Date(row.sealedAt).getTime())
     ? row.sealedAt
     : `${sealedAtFormatter.format(new Date(row.sealedAt))} UTC`;
   const showCaret = !focused;
-  const showTimer =
-    !userTookOver && !demoPlaying && secondsLeft !== null && secondsLeft > 0;
+  const showTimer = phase === 'dry' && !userTookOver && !demoPlaying && secondsLeft !== null && secondsLeft > 0;
+  const sizerText = draft.length > SEALED_LINE.length ? draft : SEALED_LINE;
 
   function takeOver() {
     if (userTookOverRef.current) return;
@@ -206,17 +236,27 @@ export function HomeProofSection({
     setUserTookOver(true);
     setDemoPlaying(false);
     setSecondsLeft(null);
+    if (phase !== 'dry') {
+      setDraft(SEALED_LINE);
+      setPhase('dry');
+    }
   }
 
   return (
-    <section ref={sectionRef} className={`home-proof${wet ? ' is-wet' : ''}`}>
+    <section
+      ref={sectionRef}
+      className={`home-proof${wet ? ' is-wet' : ''}${writing ? ' is-writing' : ''}`}
+    >
       <div className="home-proof-inner">
         <p className="home-proof-dare">
-          Change a word.
-          {showTimer ? <span className="home-proof-timer"> Writing in {secondsLeft}s</span> : null}
+          {phase === 'dry' ? 'Change a word.' : '\u00a0'}
+          {showTimer ? <span className="home-proof-timer"> Trying a word in {secondsLeft}s</span> : null}
         </p>
 
         <div className="home-proof-line">
+          <p className="home-proof-sizer" aria-hidden="true">
+            {sizerText}
+          </p>
           <p className="home-proof-dry" aria-hidden="true">
             {SEALED_LINE}
           </p>
