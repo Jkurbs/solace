@@ -15539,8 +15539,7 @@ html.dark .home-research .home-proof,
 
 .home-proof-line {
   position: relative;
-  padding-bottom: 1.1rem;
-  overflow: visible;
+  padding-bottom: 0.65rem;
 }
 
 .home-proof-sizer {
@@ -15573,23 +15572,22 @@ html.dark .home-research .home-proof,
 .home-proof-dry {
   position: absolute;
   inset: 0 auto auto 0;
-  z-index: 0;
   width: 100%;
   color: var(--foreground, #1c1917);
   opacity: 0;
   pointer-events: none;
-  transform: translate(0.14em, 0.55em);
-  transition: opacity 0.45s ease;
+  transform: translate(0, 0);
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
 }
 
 .home-proof.is-wet .home-proof-dry {
-  opacity: 0.38;
+  opacity: 0.32;
+  transform: translate(3px, 8px);
 }
 
 .home-proof-edit {
   position: absolute;
   inset: 0;
-  z-index: 1;
   cursor: text;
 }
 
@@ -15686,11 +15684,13 @@ html.dark .home-research .home-proof,
   word-break: break-all;
   color: var(--muted, #78716c);
   opacity: 0.55;
-  transition: opacity 0.45s ease;
+  transform: translate(0, 0);
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
 }
 
 .home-proof.is-wet .home-proof-hash {
   opacity: 0.95;
+  transform: translate(8px, 3px);
 }
 
 .home-proof-foot {
@@ -15783,6 +15783,14 @@ html.dark .home-research .home-proof,
 
   .home-proof-hash {
     font-size: 0.6rem;
+  }
+
+  .home-proof.is-wet .home-proof-dry {
+    transform: translate(2px, 6px);
+  }
+
+  .home-proof.is-wet .home-proof-hash {
+    transform: translate(5px, 2px);
   }
 }
 
