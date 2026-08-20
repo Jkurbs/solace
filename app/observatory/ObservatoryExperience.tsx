@@ -9,7 +9,7 @@ import RecordTable from './RecordTable';
 import VerifyOnDemand from './VerifyOnDemand';
 import type { ActivePrediction } from '@/app/oracle/active-predictions';
 import type { ResolvedQuestion } from '@/app/oracle/resolved-questions';
-import type { LedgerScoreboard } from '@/features/hermes-ledger/scoreboard';
+import { formatPercent, type LedgerScoreboard } from '@/features/hermes-ledger/scoreboard';
 import type { GloryaEvaluatedNeed } from '@/features/glorya/types';
 
 export type OracleChainData = {
@@ -55,9 +55,19 @@ export type HermesChainData = {
 
 const TABLE_WINDOW = 80;
 
+const expectancyFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  maximumFractionDigits: 2,
+  signDisplay: 'exceptZero',
+  style: 'currency',
+});
+
 export default function ObservatoryExperience({ hermes }: { hermes: HermesChainData }) {
   const tableRows = hermes.rows.slice(0, TABLE_WINDOW);
   const lastSeal = tableRows.find((row) => row.sealedAt && row.sealedAt !== 'Pending')?.sealedAt ?? null;
+  const { hitRate, expectancy, sampleSize, positive, negative } = hermes.scoreboard.performance;
+  const winRateN = positive + negative;
+  const winRateLabel = formatPercent(hitRate);
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased">
@@ -97,6 +107,20 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
                   <p className="home-record-label">Standing down</p>
                 </div>
               )}
+              {winRateLabel !== '-' && (
+                <div>
+                  <p className="home-record-meta">{winRateLabel}</p>
+                  <p className="home-record-label">Win rate · n={winRateN}</p>
+                </div>
+              )}
+              {expectancy !== null && (
+                <div>
+                  <p className="home-record-meta">{expectancyFormatter.format(expectancy)}</p>
+                  <p className="home-record-label">
+                    Expectancy{sampleSize > 0 ? ` · n=${sampleSize}` : ''}
+                  </p>
+                </div>
+              )}
               {hermes.anchor && (
                 <div>
                   <Link href={hermes.anchor.href} className="home-record-meta home-record-link">
@@ -119,12 +143,6 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
             exposure={hermes.openExposure}
             hermesVersion={hermes.hermesVersion}
             livePosture={hermes.livePosture}
-            winRate={hermes.scoreboard.performance.hitRate}
-            winRateSample={
-              hermes.scoreboard.performance.positive + hermes.scoreboard.performance.negative
-            }
-            expectancy={hermes.scoreboard.performance.expectancy}
-            expectancySample={hermes.scoreboard.performance.sampleSize}
           />
           <RecordTable rows={tableRows} totalSealed={hermes.sealedDecisions} />
           <p className="record-section-note mt-8 max-w-xl text-sm leading-relaxed text-muted">
