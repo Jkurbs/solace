@@ -16353,6 +16353,7 @@ button.hero-cta {
 
 .hero-particle-ctas {
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
@@ -16362,7 +16363,13 @@ button.hero-cta {
 
 .hero-particle-ctas.is-start {
   justify-content: flex-start;
-  align-items: flex-start;
+  align-items: center;
+}
+
+.hero-particle-ctas .hero-cta {
+  flex: 0 0 auto;
+  width: auto;
+  white-space: nowrap;
 }
 
 /* CTAs follow site theme (paper or void) */

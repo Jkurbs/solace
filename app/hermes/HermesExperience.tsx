@@ -124,7 +124,7 @@ export default function HermesExperience({
                 simulation with fake money, or check the live record.
               </motion.p>
 
-              <motion.div variants={fade} className="hero-particle-ctas is-start mb-10 mt-6 flex flex-col sm:flex-row gap-3">
+              <motion.div variants={fade} className="hero-particle-ctas is-start mb-10 mt-6">
                 <ExperienceHermesButton className="hero-cta hero-cta-primary">
                   Run a simulation
                 </ExperienceHermesButton>
