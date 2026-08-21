@@ -252,7 +252,7 @@ export function HomeProofSection({
         </div>
 
         <p className="home-proof-why">
-          If the call can be edited after the fill, it isn’t proof. It’s a story.
+          If the decision can be edited after the taking place, it isn’t proof. It’s a story.
         </p>
 
         <p className="home-proof-meta">
