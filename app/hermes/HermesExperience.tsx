@@ -221,19 +221,20 @@ export default function HermesExperience({
 
         <section className="home-vision border-t border-border px-5 py-20 md:py-28">
           <div className="mx-auto max-w-6xl">
-            <p className="home-vision-kicker">The Operating Cycle</p>
-            <h2 className="home-vision-title">Evaluate. Decide. Lock. Or preserve capital.</h2>
+            <p className="home-vision-kicker">How it works</p>
+            <h2 className="home-vision-title">Look. Decide. Write it down. Or wait.</h2>
             <p className="home-vision-dek">
-              A price target is not an investment thesis. Hermes commits capital only when liquidity, market structure, and macro regime agree. Most of the time, the optimal action is capital preservation.
+              Hermes looks at markets, then either puts money in or stays in cash. Most of the time, it waits. The
+              choice is written down before anything happens.
             </p>
 
             <ol className="home-vision-ladder">
               <li>
                 <span className="home-vision-index">01</span>
                 <div>
-                  <p className="home-vision-domain">Evaluate</p>
+                  <p className="home-vision-domain">Look</p>
                   <p>
-                    Analyzes liquidity paths, order book imbalance, and regime dynamics across timeframes to determine if market conditions support capital deployment.
+                    It reads whether the market is clear enough to put money in. If it is not, Hermes waits.
                   </p>
                 </div>
               </li>
@@ -242,16 +243,18 @@ export default function HermesExperience({
                 <div>
                   <p className="home-vision-domain">Decide</p>
                   <p>
-                    Determines exact asset allocation, exposure scaling, invalidation levels, and exit conditions. If regime stability breaks down, Hermes stands down into cash reserves.
+                    If it acts, it chooses what to hold, how much, and when it would get out. If that stops being true,
+                    it goes back to cash.
                   </p>
                 </div>
               </li>
               <li>
                 <span className="home-vision-index">03</span>
                 <div>
-                  <p className="home-vision-domain">Lock</p>
+                  <p className="home-vision-domain">Write it down</p>
                   <p>
-                    The decision parameter is written to an immutable public chain before capital moves. Changing an old entry breaks the cryptographic chain.
+                    The decision is published before money moves. After that, nobody can quietly change what was
+                    decided.
                   </p>
                 </div>
               </li>
