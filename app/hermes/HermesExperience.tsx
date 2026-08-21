@@ -116,11 +116,11 @@ export default function HermesExperience({
               </motion.p>
 
               <motion.h1 variants={fade} className="hero-particle-title home-hero-title">
-                Software that looks at markets and decides whether to put money in, take it out, or wait.
+                Instrument that looks at markets and decides whether to put money in, take it out, or wait.
               </motion.h1>
 
               <motion.p variants={fade} className="home-hero-dek">
-                Each decision is written before the outcome is known. You cannot invest yet — run a
+                Each decision is written before the outcome is known. You cannot invest yet. Run a
                 simulation with fake money, or check the live record.
               </motion.p>
 
