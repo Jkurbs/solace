@@ -41,7 +41,7 @@ export type LedgerScoreboard = {
     negative: number;
     /** positive / (positive + negative); null when no directional outcomes. */
     hitRate: number | null;
-    /** Mean PnL on the sealed resolved sample; null when empty. */
+    /** Mean return per sealed close; 0..± rate, null when unmeasurable. */
     expectancy: number | null;
     /** Mean seal→resolve duration in hours; null when unmeasurable. */
     avgResolveHours: number | null;
@@ -51,6 +51,8 @@ export type LedgerScoreboard = {
 export type LedgerScoreboardOptions = {
   /** Live open position count from pool source marks (bridge). */
   liveOpenPaths?: number | null;
+  /** Return rate per close, keyed by ledger record id. */
+  closeReturnByRecordId?: Map<string, number>;
 };
 
 function isSystem(row: HermesLedgerRow) {
@@ -139,16 +141,17 @@ export function computeLedgerScoreboard(
   let positive = 0;
   let neutral = 0;
   let negative = 0;
-  let pnlSum = 0;
   let pnlCount = 0;
+  let returnSum = 0;
+  let returnCount = 0;
   const durations: number[] = [];
+  const returns = options.closeReturnByRecordId;
 
   for (const row of sealedResolved) {
     if (row.pnl === null) {
       continue;
     }
 
-    pnlSum += row.pnl;
     pnlCount += 1;
 
     if (row.pnl > 0) {
@@ -157,6 +160,13 @@ export function computeLedgerScoreboard(
       negative += 1;
     } else {
       neutral += 1;
+    }
+
+    const rate = returns?.get(row.recordId);
+
+    if (typeof rate === 'number' && Number.isFinite(rate) && Math.abs(rate) <= 5) {
+      returnSum += rate;
+      returnCount += 1;
     }
 
     const durationMs = resolveDurationMs(row, openById);
@@ -168,7 +178,7 @@ export function computeLedgerScoreboard(
 
   const directional = positive + negative;
   const hitRate = directional > 0 ? positive / directional : null;
-  const expectancy = pnlCount > 0 ? Math.round((pnlSum / pnlCount) * 100) / 100 : null;
+  const expectancy = returnCount > 0 ? returnSum / returnCount : null;
   const avgResolveHours =
     durations.length > 0
       ? Math.round((durations.reduce((total, ms) => total + ms, 0) / durations.length / 3_600_000) * 10) / 10

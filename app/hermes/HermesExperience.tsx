@@ -7,6 +7,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { ShimmerLink } from '@/components/shimmer-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import { formatPercent } from '@/features/hermes-ledger/scoreboard';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 
 import { ExperienceHermesButton, HermesOnboardingProvider } from './HermesOnboarding';
@@ -55,13 +56,6 @@ const stagger = {
   hidden: {},
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.06 } },
 };
-
-const expectancyFormatter = new Intl.NumberFormat('en-US', {
-  currency: 'USD',
-  maximumFractionDigits: 2,
-  signDisplay: 'exceptZero',
-  style: 'currency',
-});
 
 const faqItems = [
   {
@@ -188,7 +182,7 @@ export default function HermesExperience({
                       )}
                       {proof.expectancy !== null && (
                         <div>
-                          <p className="home-record-meta">{expectancyFormatter.format(proof.expectancy)}</p>
+                          <p className="home-record-meta">{formatPercent(proof.expectancy, 1)}</p>
                           <p className="home-record-label">
                             Expectancy{proof.sampleSize > 0 ? ` · n=${proof.sampleSize}` : ''}
                           </p>

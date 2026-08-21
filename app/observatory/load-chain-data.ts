@@ -6,7 +6,7 @@ import type { TrustLedgerDisplayRow } from '@/app/trust/TrustLedgerTable';
 import { formatRelativeTime } from '@/features/anchor/format';
 import { getAnchorChain } from '@/features/anchor/store';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
-import { correctSealedClosePnls } from '@/features/hermes-ledger/close-pnl';
+import { closeReturnByRecordId, correctSealedClosePnls } from '@/features/hermes-ledger/close-pnl';
 import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
 import { computeLedgerScoreboard, formatPercent } from '@/features/hermes-ledger/scoreboard';
 import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
@@ -94,6 +94,7 @@ export async function loadHermesChainData(): Promise<HermesChainData> {
   );
 
   const scoreboard = computeLedgerScoreboard(displayRows, {
+    closeReturnByRecordId: closeReturnByRecordId(realizedTrades),
     liveOpenPaths: openExposure ? openExposure.positions.length : null,
   });
 

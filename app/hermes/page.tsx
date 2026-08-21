@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
+import { closeReturnByRecordId, correctSealedClosePnls } from '@/features/hermes-ledger/close-pnl';
 import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
 import { computeLedgerScoreboard, formatPercent } from '@/features/hermes-ledger/scoreboard';
 import { listHermesLedgerProcessRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { hermesVersion } from '@/features/hermes-version';
+import { getRecentHermesRealizedTradeEvents } from '@/features/ledger/hermes-realized-trades';
 import { getAnchorChain } from '@/features/anchor/store';
 
 import HermesExperience, { type HermesProof, type HermesTimelineEntry } from './HermesExperience';
@@ -24,6 +26,7 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 const TELEMETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const HERMES_POOL_ID = process.env.HERMES_POOL_ID ?? 'pool_balanced_v1';
 
 const sealedAtFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
@@ -52,14 +55,27 @@ function formatConstant(value: string) {
 }
 
 async function getHermesProof(): Promise<HermesProof> {
-  const [brief, reading, ledgerRows, openExposure] = await Promise.all([
+  const [brief, reading, ledgerRows, openExposure, realizedTrades] = await Promise.all([
     getStoredHermesBriefSnapshot().catch(() => null),
     getStoredHermesPublicReading().catch(() => null),
     listHermesLedgerProcessRows(1500).catch(() => []),
     getHermesOpenExposure().catch(() => null),
+    getRecentHermesRealizedTradeEvents({ limit: 1500, poolId: HERMES_POOL_ID }).catch(() => []),
   ]);
 
-  const scoreboard = computeLedgerScoreboard(ledgerRows, {
+  const scoredRows = correctSealedClosePnls(
+    ledgerRows,
+    realizedTrades.map((trade) => ({
+      fees: trade.fees,
+      funding: trade.funding,
+      netPnl: trade.netPnl,
+      realizedPnl: trade.realizedPnl,
+      sourceTradeId: trade.sourceTradeId,
+    })),
+  );
+
+  const scoreboard = computeLedgerScoreboard(scoredRows, {
+    closeReturnByRecordId: closeReturnByRecordId(realizedTrades),
     liveOpenPaths: openExposure ? openExposure.positions.length : null,
   });
 

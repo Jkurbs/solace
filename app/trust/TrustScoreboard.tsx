@@ -5,13 +5,6 @@ import { useState } from 'react';
 import type { LedgerScoreboard } from '@/features/hermes-ledger/scoreboard';
 import { formatHours, formatPercent } from '@/features/hermes-ledger/scoreboard';
 
-const pnlFormatter = new Intl.NumberFormat('en-US', {
-  currency: 'USD',
-  maximumFractionDigits: 2,
-  signDisplay: 'exceptZero',
-  style: 'currency',
-});
-
 function Metric({
   label,
   value,
@@ -109,8 +102,8 @@ export default function TrustScoreboard({ scoreboard }: { scoreboard: LedgerScor
           />
           <Metric
             label="Expectancy"
-            value={performance.expectancy === null ? '-' : pnlFormatter.format(performance.expectancy)}
-            detail={performance.sampleSize ? `Mean PnL · n=${performance.sampleSize}` : 'Sealed resolved only'}
+            value={formatPercent(performance.expectancy, 1)}
+            detail={performance.sampleSize ? `Avg return per close · n=${performance.sampleSize}` : 'Sealed resolved only'}
           />
           <Metric
             label="Avg time to resolve"

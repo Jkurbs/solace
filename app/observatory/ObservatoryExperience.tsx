@@ -56,13 +56,6 @@ export type HermesChainData = {
 
 const TABLE_WINDOW = 80;
 
-const expectancyFormatter = new Intl.NumberFormat('en-US', {
-  currency: 'USD',
-  maximumFractionDigits: 2,
-  signDisplay: 'exceptZero',
-  style: 'currency',
-});
-
 export default function ObservatoryExperience({ hermes }: { hermes: HermesChainData }) {
   const tableRows = hermes.rows.slice(0, TABLE_WINDOW);
   const lastSeal = tableRows.find((row) => row.sealedAt && row.sealedAt !== 'Pending')?.sealedAt ?? null;
@@ -116,7 +109,7 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
               )}
               {expectancy !== null && (
                 <div>
-                  <p className="home-record-meta">{expectancyFormatter.format(expectancy)}</p>
+                  <p className="home-record-meta">{formatPercent(expectancy, 1)}</p>
                   <p className="home-record-label">
                     Expectancy{sampleSize > 0 ? ` · n=${sampleSize}` : ''}
                   </p>
