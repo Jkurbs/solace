@@ -272,9 +272,6 @@ export function HomeProofSection({
         </p>
 
         <div className="home-proof-foot">
-          <p className={`home-proof-verdict${showRestore ? '' : ' is-idle'}`} aria-live="polite">
-            What you typed is not on the chain. This is.
-          </p>
           <div className="home-proof-actions">
             <span className={`home-proof-restore-slot${showRestore ? ' is-open' : ''}`}>
               <button
