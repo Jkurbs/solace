@@ -534,7 +534,7 @@ function getActiveSnapshotFromLedger(
         }
       : baseSnapshot.outlook,
     allocation,
-    activity: visibleActivity.slice(0, 5),
+    activity: visibleActivity.slice(0, 80),
     commentary: fundingPending
       ? equityState.detail
       : baseSnapshot.commentary,

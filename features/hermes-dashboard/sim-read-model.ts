@@ -103,7 +103,7 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     listTrackedOpenPaths().catch(() => []),
     getHermesRealizedTradeEventsForSimulation({
       after: startedAt,
-      limit: 40,
+      limit: 100,
       poolId,
     }).catch(() => [] as HermesRealizedTradeEvent[]),
     getLatestPoolAllocationSnapshot(poolId).catch(() => null),
@@ -276,7 +276,7 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
       note,
     },
     allocation,
-    activity: activity.slice(0, 8),
+    activity: activity.slice(0, 80),
     commentary:
       market?.summary ??
       brief?.summary ??

@@ -84,6 +84,7 @@ const fallbackAllocationColors: Record<DashboardTheme, string[]> = {
 };
 
 const liveRefreshIntervalMs = 5_000;
+const decisionPreviewCount = 6;
 
 function getAllocationColor(asset: string, index: number, theme: DashboardTheme) {
   const resolvedTheme: DashboardTheme = theme === 'light' ? 'light' : 'dark';
@@ -137,6 +138,57 @@ function formatActivityDate(value: Date | string) {
   const parts = activityDatePartsFormatter.formatToParts(coerceDate(value));
 
   return `${getDatePart(parts, 'month')} ${getDatePart(parts, 'day')}`;
+}
+
+function DecisionList({ activity }: { activity: HermesDashboardSnapshot['activity'] }) {
+  const [showEarlier, setShowEarlier] = useState(false);
+  const extra = activity.length - decisionPreviewCount;
+  const visible = extra > 0 && !showEarlier ? activity.slice(0, decisionPreviewCount) : activity;
+
+  if (activity.length === 0) {
+    return (
+      <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
+        No closes on your book yet. Hermes will open a path when conditions clear.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <ol className="grid gap-0">
+        {visible.map((item) => {
+          const timestamp = coerceDate(item.timestamp);
+
+          return (
+            <li
+              key={`${timestamp.toISOString()}-${item.summary}`}
+              className="grid grid-cols-[4.5rem_1fr] gap-4 border-t border-neutral-200 py-4 first:border-t-0 first:pt-0 last:pb-0 dark:border-neutral-800"
+            >
+              <time className="text-sm text-neutral-500 dark:text-neutral-400" dateTime={timestamp.toISOString()}>
+                {formatActivityDate(timestamp)}
+              </time>
+              <span className="text-sm font-medium text-neutral-950 dark:text-neutral-50">{item.summary}</span>
+            </li>
+          );
+        })}
+      </ol>
+      {extra > 0 ? (
+        <Button
+          type="button"
+          variant="secondary"
+          className="mt-4 w-full sm:w-auto"
+          aria-expanded={showEarlier}
+          onClick={() => setShowEarlier((open) => !open)}
+        >
+          {showEarlier
+            ? 'Show recent only'
+            : extra === 1
+              ? 'Show earlier decision'
+              : 'Show earlier decisions'}
+        </Button>
+      ) : null}
+    </>
+  );
 }
 
 function formatUpdatedAt(value: Date | string) {
@@ -737,28 +789,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             <CardTitle>Recent decisions</CardTitle>
           </CardHeader>
           <CardContent>
-            {data.activity.length === 0 ? (
-              <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
-                No closes on your book yet. Hermes will open a path when conditions clear.
-              </p>
-            ) : null}
-            <ol className="grid gap-0">
-              {data.activity.map((item) => {
-                const timestamp = coerceDate(item.timestamp);
-
-                return (
-                  <li
-                    key={`${timestamp.toISOString()}-${item.summary}`}
-                    className="grid grid-cols-[4.5rem_1fr] gap-4 border-t border-neutral-200 py-4 first:border-t-0 first:pt-0 last:pb-0 dark:border-neutral-800"
-                  >
-                    <time className="text-sm text-neutral-500 dark:text-neutral-400" dateTime={timestamp.toISOString()}>
-                      {formatActivityDate(timestamp)}
-                    </time>
-                    <span className="text-sm font-medium text-neutral-950 dark:text-neutral-50">{item.summary}</span>
-                  </li>
-                );
-              })}
-            </ol>
+            <DecisionList activity={data.activity} />
           </CardContent>
         </Card>
 
