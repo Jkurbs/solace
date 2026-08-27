@@ -15,6 +15,14 @@ import type { HermesDashboardSnapshot, RiskProfile } from './types';
 const DEFAULT_POOL_ID = process.env.HERMES_POOL_ID ?? 'pool_balanced_v1';
 /** Used only when live source equity is missing. Never a floor on a known book. */
 const FALLBACK_REFERENCE_CAPITAL = 100_000;
+/**
+ * Closes are sized like the live book when that book is a real account.
+ * Source cash equity is often a thin print (hundreds) while PnL is already a
+ * ~$10k book — never divide into that cash print, or a $40 close becomes
+ * thousands. Floor at the smallest sim allocation so $10k / $50k / $100k
+ * guests see proportional dollars.
+ */
+const REFERENCE_BOOK_FLOOR = 10_000;
 
 const tradePnlFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
@@ -46,10 +54,9 @@ function tradeClosePnl(event: HermesRealizedTradeEvent) {
 
 /**
  * Map founder close dollars onto this guest's capital.
- * Live KuCoin cash equity is often a few hundred dollars while close P&L is
- * already sized like a ~$10k book. Flooring the book at $100k made $10k
- * guests see 10¢ on the dollar. Only scale down when the live book is larger
- * than the guest; never inflate by dividing into a tiny source-equity print.
+ * Use the live book when it is at least a $10k account; otherwise treat
+ * closes as a $10k book so $50k / $100k sims scale up instead of printing
+ * founder exchange dollars 1:1.
  */
 function scaleShare(userCapital: number, founderCapital: number) {
   if (!Number.isFinite(userCapital) || userCapital <= 0) {
@@ -57,9 +64,9 @@ function scaleShare(userCapital: number, founderCapital: number) {
   }
 
   const live = Number.isFinite(founderCapital) && founderCapital > 0 ? founderCapital : 0;
-  const ref = Math.max(live, userCapital, 1);
+  const reference = Math.max(live, REFERENCE_BOOK_FLOOR);
 
-  return userCapital / ref;
+  return userCapital / reference;
 }
 
 function mapEnvironment(label: string): HermesDashboardSnapshot['outlook']['environment'] {
