@@ -4,6 +4,8 @@ import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
+import { waitlistCapitalRanges } from '@/features/access-review/capital-range';
+
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
 export default function RequestAccessForm() {
@@ -126,10 +128,11 @@ export default function RequestAccessForm() {
                   <option value="" disabled>
                     Select...
                   </option>
-                  <option value="$10k-$25k">$10k-$25k</option>
-                  <option value="$25k-$100k">$25k-$100k</option>
-                  <option value="$100k-$250k">$100k-$250k</option>
-                  <option value="$250k+">$250k+</option>
+                  {waitlistCapitalRanges.map((range) => (
+                    <option key={range.value} value={range.value}>
+                      {range.label}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="hermes-form-field">

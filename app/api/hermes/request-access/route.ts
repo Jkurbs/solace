@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
+import { isWaitlistCapitalRange } from '@/features/access-review/capital-range';
 import { createAccessRequest } from '@/features/access-review/store';
 import type { HermesAccessRequestInput } from '@/features/access-review/types';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
-const recipientEmail = process.env.HERMES_ACCESS_RECIPIENT_EMAIL ?? 'jkurbs18@gmail.com';
+const recipientEmail = process.env.HERMES_ACCESS_RECIPIENT_EMAIL ?? 'kerby@solace.fyi';
+const mailUnavailableMessage =
+  'The request did not reach us (mail server). Try again. If it repeats, email kerby@solace.fyi with your name and the amount you would consider.';
 
 const fieldLabels = [
   ['firstName', 'First name'],
@@ -74,28 +77,38 @@ function buildSubmission(formData: FormData) {
     }),
     {} as RequestAccessValues,
   );
+  const source = getField(formData, 'source') === 'waitlist' ? 'waitlist' : 'access-request';
+  const name = `${values.firstName} ${values.lastName}`.trim();
+  const rows = fieldLabels
+    .filter(([key]) => values[key] || key === 'firstName' || key === 'lastName' || key === 'email' || key === 'capitalRange')
+    .map(([key, label]) =>
+      key === 'capitalRange' && source === 'waitlist' ? ([key, 'Amount you would consider'] as const) : ([key, label] as const),
+    );
+  const heading = source === 'waitlist' ? 'Hermes waitlist' : 'Hermes access request';
+  const subject = values.capitalRange
+    ? `${heading}: ${name} · ${values.capitalRange}`
+    : `${heading}: ${name}`;
 
   return {
-    values,
-    subject: `Hermes access request: ${values.firstName} ${values.lastName}`.trim(),
-    text: fieldLabels
-      .map(([key, label]) => `${label}: ${values[key] || '-'}`)
-      .join('\n'),
     html: `
-      <h2>Hermes access request</h2>
+      <h2>${escapeHtml(heading)}</h2>
       <table cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
-        ${fieldLabels
+        ${rows
           .map(
             ([key, label]) => `
               <tr>
                 <td style="border: 1px solid #ddd; font-weight: 700;">${escapeHtml(label)}</td>
-                <td style="border: 1px solid #ddd;">${escapeHtml(values[key] || '-').replace(/\n/g, '<br />')}</td>
+                <td style="border: 1px solid #ddd;">${escapeHtml(values[key] || '—').replace(/\n/g, '<br />')}</td>
               </tr>
             `,
           )
           .join('')}
       </table>
     `,
+    source,
+    subject,
+    text: rows.map(([key, label]) => `${label}: ${values[key] || '—'}`).join('\n'),
+    values,
   };
 }
 
@@ -133,7 +146,10 @@ export async function POST(request: Request) {
 
   if (!allowed) {
     return NextResponse.json(
-      { message: 'Too many requests. Please try again later.' },
+      {
+        message:
+          'Too many waitlist submissions from this network in 10 minutes. Wait 10 minutes or email kerby@solace.fyi with your name and the amount you would consider.',
+      },
       { headers: { 'Retry-After': String(retryAfterSeconds) }, status: 429 },
     );
   }
@@ -153,14 +169,18 @@ export async function POST(request: Request) {
     );
   }
 
-  await createAccessRequest(submission.values satisfies HermesAccessRequestInput);
+  if (!isWaitlistCapitalRange(submission.values.capitalRange)) {
+    return NextResponse.json(
+      { message: 'Choose an amount from the list. The minimum is $1k.' },
+      { status: 400 },
+    );
+  }
 
   const smtpConfig = getSmtpConfig();
 
   if (!smtpConfig) {
     logEmailDeliveryIssue(submission, 'SMTP is not configured');
-
-    return requestReceivedResponse(request);
+    return NextResponse.json({ message: mailUnavailableMessage }, { status: 503 });
   }
 
   const transporter = nodemailer.createTransport({
@@ -184,6 +204,13 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     logEmailDeliveryIssue(submission, error);
+    return NextResponse.json({ message: mailUnavailableMessage }, { status: 503 });
+  }
+
+  try {
+    await createAccessRequest(submission.values satisfies HermesAccessRequestInput);
+  } catch (error) {
+    console.warn('[hermes-request-access] Stored copy failed after email sent.', error);
   }
 
   return requestReceivedResponse(request);

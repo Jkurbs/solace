@@ -3,6 +3,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { waitlistCapitalRanges } from '@/features/access-review/capital-range';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -35,7 +36,7 @@ export default function WaitlistForm() {
       if (!response.ok) {
         throw new Error(
           payload?.message ??
-            'The request did not reach us. Try again. If it repeats, email hello@solace.fyi with your name.',
+            'The request did not reach us. Try again. If it repeats, email kerby@solace.fyi with your name and the amount you would consider.',
         );
       }
 
@@ -46,7 +47,7 @@ export default function WaitlistForm() {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : 'The request did not reach us. Try again. If it repeats, email hello@solace.fyi with your name.',
+          : 'The request did not reach us. Try again. If it repeats, email kerby@solace.fyi with your name and the amount you would consider.',
       );
       formRef.current?.querySelector<HTMLInputElement>('input, select, textarea')?.focus();
     }
@@ -113,13 +114,15 @@ export default function WaitlistForm() {
             <option value="" disabled>
               Select
             </option>
-            <option value="$10k-$25k">$10k–$25k</option>
-            <option value="$25k-$100k">$25k–$100k</option>
-            <option value="$100k-$250k">$100k–$250k</option>
-            <option value="$250k+">$250k+</option>
+            {waitlistCapitalRanges.map((range) => (
+              <option key={range.value} value={range.value}>
+                {range.label}
+              </option>
+            ))}
           </select>
         </label>
       </div>
+      <input type="hidden" name="source" value="waitlist" />
 
       {submitState === 'error' ? (
         <p className="mt-4 text-sm leading-6 text-red-700 dark:text-red-300" role="alert">
