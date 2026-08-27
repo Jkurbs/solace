@@ -252,7 +252,7 @@ export function HomeProofSection({
         </div>
 
         <p className="home-proof-why">
-          A decision only means something if you can prove what was decided before the outcome.
+          Great decisions only mean something if you can prove they were made before the outcomes were known.
         </p>
 
         <p className="home-proof-meta">
