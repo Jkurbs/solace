@@ -210,7 +210,7 @@ export function HomeProofSection({
     <section ref={sectionRef} className={`home-proof${wet ? ' is-wet' : ''}`}>
       <div className="home-proof-inner">
         <p className="home-proof-dare">
-          Change a word.
+          Try to erase the sentence.
           {showTimer ? <span className="home-proof-timer"> Writing in {secondsLeft}s</span> : null}
         </p>
 

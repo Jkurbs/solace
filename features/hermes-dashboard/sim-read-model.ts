@@ -13,7 +13,7 @@ import type { GuestSimSession } from './sim-session';
 import type { HermesDashboardSnapshot, RiskProfile } from './types';
 
 const DEFAULT_POOL_ID = process.env.HERMES_POOL_ID ?? 'pool_balanced_v1';
-/** When source equity is unknown, scale against this founder-capital reference. */
+/** Used only when live source equity is missing. Never a floor on a known book. */
 const FALLBACK_REFERENCE_CAPITAL = 100_000;
 
 const tradePnlFormatter = new Intl.NumberFormat('en-US', {
@@ -44,9 +44,22 @@ function tradeClosePnl(event: HermesRealizedTradeEvent) {
   return Math.abs(reconstructed - event.netPnl) < 0.02 ? event.realizedPnl : event.netPnl;
 }
 
-function scaleShare(depositAmount: number, referenceCapital: number) {
-  const ref = Math.max(referenceCapital, depositAmount, 1);
-  return Math.min(1, depositAmount / ref);
+/**
+ * Map founder close dollars onto this guest's capital.
+ * Live KuCoin cash equity is often a few hundred dollars while close P&L is
+ * already sized like a ~$10k book. Flooring the book at $100k made $10k
+ * guests see 10¢ on the dollar. Only scale down when the live book is larger
+ * than the guest; never inflate by dividing into a tiny source-equity print.
+ */
+function scaleShare(userCapital: number, founderCapital: number) {
+  if (!Number.isFinite(userCapital) || userCapital <= 0) {
+    return 0;
+  }
+
+  const live = Number.isFinite(founderCapital) && founderCapital > 0 ? founderCapital : 0;
+  const ref = Math.max(live, userCapital, 1);
+
+  return userCapital / ref;
 }
 
 function mapEnvironment(label: string): HermesDashboardSnapshot['outlook']['environment'] {
@@ -96,12 +109,9 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     getLatestPoolAllocationSnapshot(poolId).catch(() => null),
   ]);
 
-  const referenceCapital = Math.max(
-    openExposure?.grossEquity ?? 0,
-    FALLBACK_REFERENCE_CAPITAL,
-    depositAmount,
-  );
-  const share = scaleShare(depositAmount, referenceCapital);
+  const founderCapital = openExposure?.grossEquity ?? 0;
+  const share = scaleShare(depositAmount, founderCapital);
+  const referenceCapital = founderCapital > 0 ? founderCapital : FALLBACK_REFERENCE_CAPITAL;
 
   const startedMs = new Date(startedAt).getTime();
   const participatingOpens = openPaths.filter((path) => {
