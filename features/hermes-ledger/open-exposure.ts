@@ -20,6 +20,15 @@ export type HermesOpenExposure = {
 
 const FRESHNESS_MS = 24 * 60 * 60 * 1000;
 
+function isDegradedSourceMark(rawPayload: unknown) {
+  if (!rawPayload || typeof rawPayload !== 'object') {
+    return false;
+  }
+
+  const payload = rawPayload as Record<string, unknown>;
+  return payload.positions_source === 'error' || payload.account_source === 'error';
+}
+
 function readSourceUnrealizedPnl(row: { source_unrealized_pnl: unknown; raw_payload: unknown }) {
   const raw = row.raw_payload;
 
@@ -58,20 +67,10 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
     // mark, flagged positions_source/account_source: "error", with zeroed
     // PnL. Prefer the newest HEALTHY mark per pool so the public number never
     // flickers to $0.00 on a bad fetch.
-    const isDegraded = (rawPayload: unknown) => {
-      if (!rawPayload || typeof rawPayload !== 'object') {
-        return false;
-      }
-
-      const payload = rawPayload as Record<string, unknown>;
-
-      return payload.positions_source === 'error' || payload.account_source === 'error';
-    };
-
     const latestByPool = new Map<string, (typeof data)[number]>();
 
     for (const row of data) {
-      if (!latestByPool.has(row.pool_id) && !isDegraded(row.raw_payload)) {
+      if (!latestByPool.has(row.pool_id) && !isDegradedSourceMark(row.raw_payload)) {
         latestByPool.set(row.pool_id, row);
       }
     }
@@ -112,6 +111,73 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
     };
   } catch (error) {
     console.warn('[hermes-ledger] Open exposure read failed.', error);
+    return null;
+  }
+}
+
+/**
+ * Source-account equity at or just before `at`, so a guest sim can scale
+ * against the book they entered, not a later drawdown remainder.
+ */
+export async function getHermesSourceEquityAt({
+  at,
+  poolId,
+}: {
+  at: string;
+  poolId: string;
+}): Promise<number | null> {
+  if (!isSupabaseDataClientConfigured() || !poolId.trim() || !at) {
+    return null;
+  }
+
+  if (!Number.isFinite(new Date(at).getTime())) {
+    return null;
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    const { data, error } = await supabase
+      .from('hermes_pool_source_marks')
+      .select('source_equity,effective_at,raw_payload')
+      .eq('pool_id', poolId)
+      .lte('effective_at', at)
+      .order('effective_at', { ascending: false })
+      .limit(12);
+
+    if (error) {
+      console.warn('[hermes-ledger] Source equity-at lookup failed.', error.message);
+      return null;
+    }
+
+    const healthy = (data ?? []).find((row) => {
+      const equity = Number(row.source_equity ?? 0);
+      return Number.isFinite(equity) && equity > 0 && !isDegradedSourceMark(row.raw_payload);
+    });
+
+    if (healthy) {
+      return Math.round(Number(healthy.source_equity) * 100) / 100;
+    }
+
+    const { data: after, error: afterError } = await supabase
+      .from('hermes_pool_source_marks')
+      .select('source_equity,effective_at,raw_payload')
+      .eq('pool_id', poolId)
+      .gte('effective_at', at)
+      .order('effective_at', { ascending: true })
+      .limit(12);
+
+    if (afterError) {
+      return null;
+    }
+
+    const next = (after ?? []).find((row) => {
+      const equity = Number(row.source_equity ?? 0);
+      return Number.isFinite(equity) && equity > 0 && !isDegradedSourceMark(row.raw_payload);
+    });
+
+    return next ? Math.round(Number(next.source_equity) * 100) / 100 : null;
+  } catch (error) {
+    console.warn('[hermes-ledger] Source equity-at lookup failed.', error);
     return null;
   }
 }

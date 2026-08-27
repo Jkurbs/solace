@@ -2,7 +2,7 @@ import 'server-only';
 
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
 import { listTrackedOpenPaths } from '@/features/hermes-ledger/path-tracking';
-import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
+import { getHermesOpenExposure, getHermesSourceEquityAt } from '@/features/hermes-ledger/open-exposure';
 import { getHermesPublicMarketRead } from '@/features/hermes-market/read';
 import { getLatestPoolAllocationSnapshot } from '@/features/ledger/pool-allocations';
 import { getHermesRealizedTradeEventsForSimulation } from '@/features/ledger/hermes-realized-trades';
@@ -15,14 +15,6 @@ import type { HermesDashboardSnapshot, RiskProfile } from './types';
 const DEFAULT_POOL_ID = process.env.HERMES_POOL_ID ?? 'pool_balanced_v1';
 /** Used only when live source equity is missing. Never a floor on a known book. */
 const FALLBACK_REFERENCE_CAPITAL = 100_000;
-/**
- * Closes are sized like the live book when that book is a real account.
- * Source cash equity is often a thin print (hundreds) while PnL is already a
- * ~$10k book — never divide into that cash print, or a $40 close becomes
- * thousands. Floor at the smallest sim allocation so $10k / $50k / $100k
- * guests see proportional dollars.
- */
-const REFERENCE_BOOK_FLOOR = 10_000;
 
 const tradePnlFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
@@ -53,20 +45,21 @@ function tradeClosePnl(event: HermesRealizedTradeEvent) {
 }
 
 /**
- * Map founder close dollars onto this guest's capital.
- * Use the live book when it is at least a $10k account; otherwise treat
- * closes as a $10k book so $50k / $100k sims scale up instead of printing
- * founder exchange dollars 1:1.
+ * Map founder dollars onto this guest's capital the same way pool NAV does:
+ * guestPnL = founderPnL * (guestBook / sourceEquity).
+ * A $141 source book with −$17 open is −12%; an $8.7k sim must show that
+ * percentage, not the raw −$17.
  */
 function scaleShare(userCapital: number, founderCapital: number) {
   if (!Number.isFinite(userCapital) || userCapital <= 0) {
     return 0;
   }
 
-  const live = Number.isFinite(founderCapital) && founderCapital > 0 ? founderCapital : 0;
-  const reference = Math.max(live, REFERENCE_BOOK_FLOOR);
+  if (!Number.isFinite(founderCapital) || founderCapital <= 0) {
+    return 0;
+  }
 
-  return userCapital / reference;
+  return userCapital / founderCapital;
 }
 
 function mapEnvironment(label: string): HermesDashboardSnapshot['outlook']['environment'] {
@@ -103,7 +96,7 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
   const startedAt = session.startedAt;
   const updatedAt = new Date().toISOString();
 
-  const [market, brief, openExposure, openPaths, tradeEvents, allocationSnapshot] = await Promise.all([
+  const [market, brief, openExposure, openPaths, tradeEvents, allocationSnapshot, equityAtEntry] = await Promise.all([
     getHermesPublicMarketRead().catch(() => null),
     getStoredHermesBriefSnapshot().catch(() => null),
     getHermesOpenExposure().catch(() => null),
@@ -114,10 +107,13 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
       poolId,
     }).catch(() => [] as HermesRealizedTradeEvent[]),
     getLatestPoolAllocationSnapshot(poolId).catch(() => null),
+    getHermesSourceEquityAt({ at: startedAt, poolId }).catch(() => null),
   ]);
 
-  const founderCapital = openExposure?.grossEquity ?? 0;
-  const share = scaleShare(depositAmount, founderCapital);
+  const founderNow = openExposure?.grossEquity ?? 0;
+  const founderStart = equityAtEntry && equityAtEntry > 0 ? equityAtEntry : founderNow;
+  const share = scaleShare(depositAmount, founderStart);
+  const founderCapital = founderNow;
   const referenceCapital = founderCapital > 0 ? founderCapital : FALLBACK_REFERENCE_CAPITAL;
 
   const startedMs = new Date(startedAt).getTime();
@@ -131,13 +127,11 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
   const inAPath = participatingOpens.length > 0 && (openExposure === null || liveOpenCount > 0);
 
   // Closed-order PnL: founder/KuCoin dollars scaled to this guest's capital.
-  let realizedPnl = 0;
   const tradeActivity: HermesDashboardSnapshot['activity'] = [];
 
   for (const event of tradeEvents) {
     const founderPnl = tradeClosePnl(event);
     const userPnl = roundCurrency(founderPnl * share);
-    realizedPnl = roundCurrency(realizedPnl + userPnl);
     tradeActivity.push({
       timestamp: event.closedAt,
       summary: `Closed ${event.side === 'LONG' ? 'long' : 'short'} · ${tradePnlFormatter.format(userPnl)}`,
@@ -149,8 +143,14 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
   const founderUnrealized = openExposure?.unrealizedPnl ?? 0;
   const unrealizedPnl = inAPath ? roundCurrency(founderUnrealized * share) : 0;
 
-  const profit = roundCurrency(realizedPnl + unrealizedPnl);
-  const value = roundCurrency(depositAmount + profit);
+  // Headline equity tracks the live book: same return as source since entry.
+  // Open PnL is that same share, so −$17 on $141 is −12% of the sim too.
+  const value =
+    founderStart > 0 && founderNow > 0
+      ? roundCurrency(depositAmount * (founderNow / founderStart))
+      : roundCurrency(depositAmount + unrealizedPnl);
+  const profit = roundCurrency(value - depositAmount);
+  const realizedPnl = roundCurrency(profit - unrealizedPnl);
   const sinceInception = depositAmount > 0 ? roundPercent((profit / depositAmount) * 100) : 0;
 
   const postureRaw = market?.posture ?? (brief ? titleCase(brief.posture) : 'Standing Down');
