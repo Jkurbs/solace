@@ -12,13 +12,23 @@ import {
 } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
+import ResumeSimulationButton from '@/app/ResumeSimulationButton';
 import { ShimmerLink } from '@/components/shimmer-link';
+import {
+  SIM_STARTED_KEY,
+  persistSimSession,
+  readStoredSimSession,
+  restoreGuestSimSession,
+  type StoredSimSession,
+  useHasGuestSimSession,
+} from '@/features/hermes-dashboard/sim-session-client';
 import { cn } from '@/lib/utils';
 
-/** Legacy flag; still cleared for older clients. */
-const SIM_STARTED_KEY = 'hermes_sim_started';
-/** Durable device-local sim identity (no credentials). Keep in sync with server. */
-export const SIM_SESSION_STORAGE_KEY = 'hermes_sim_session_v1';
+export {
+  SIM_SESSION_STORAGE_KEY,
+  clearPersistedSimSession,
+  persistSimSession,
+} from '@/features/hermes-dashboard/sim-session-client';
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -83,14 +93,6 @@ export const SIM_ALLOCATIONS = [
 
 export type SimAllocation = (typeof SIM_ALLOCATIONS)[number]['value'];
 
-type StoredSimSession = {
-  version: 1;
-  sessionId: string;
-  startedAt: string;
-  depositAmount: number;
-  riskProfile: string;
-};
-
 type OnboardingContextValue = {
   open: () => void;
 };
@@ -105,45 +107,7 @@ export function useHermesOnboarding() {
   return ctx;
 }
 
-function readStoredSimSession(): StoredSimSession | null {
-  try {
-    const raw = window.localStorage.getItem(SIM_SESSION_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<StoredSimSession>;
-    if (
-      parsed?.version !== 1 ||
-      typeof parsed.sessionId !== 'string' ||
-      typeof parsed.startedAt !== 'string' ||
-      typeof parsed.depositAmount !== 'number' ||
-      typeof parsed.riskProfile !== 'string'
-    ) {
-      return null;
-    }
-    return parsed as StoredSimSession;
-  } catch {
-    return null;
-  }
-}
-
-export function persistSimSession(session: StoredSimSession) {
-  try {
-    window.localStorage.setItem(SIM_SESSION_STORAGE_KEY, JSON.stringify(session));
-    window.localStorage.setItem(SIM_STARTED_KEY, '1');
-  } catch {
-    // storage blocked
-  }
-}
-
-export function clearPersistedSimSession() {
-  try {
-    window.localStorage.removeItem(SIM_SESSION_STORAGE_KEY);
-    window.localStorage.removeItem(SIM_STARTED_KEY);
-  } catch {
-    // ignore
-  }
-}
-
-/** Opens the simulation onboarding sheet. Use on every Experience Hermes entry. */
+/** Opens the simulation onboarding sheet. Returning devices get Open dashboard instead. */
 export function ExperienceHermesButton({
   className,
   children = (
@@ -157,6 +121,11 @@ export function ExperienceHermesButton({
   ...rest
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const { open } = useHermesOnboarding();
+  const hasSimSession = useHasGuestSimSession();
+
+  if (hasSimSession) {
+    return <ResumeSimulationButton className={className} />;
+  }
 
   return (
     <button
@@ -202,39 +171,6 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
     }, 300);
   }, []);
 
-  const restoreSession = useCallback(async (stored: StoredSimSession) => {
-    const response = await fetch('/api/dashboard/onboarding/open-simulation', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ restore: true, session: stored }),
-      credentials: 'same-origin',
-    });
-
-    if (!response.ok) {
-      return false;
-    }
-
-    const payload = (await response.json().catch(() => null)) as {
-      ok?: boolean;
-      session?: StoredSimSession;
-    } | null;
-
-    if (payload?.ok === false) {
-      return false;
-    }
-
-    if (payload?.session) {
-      persistSimSession(payload.session);
-    } else {
-      persistSimSession(stored);
-    }
-
-    return true;
-  }, []);
-
   const open = useCallback(async () => {
     setError(null);
     setSubmitting(false);
@@ -246,23 +182,20 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
       setStep('returning');
       setIsOpen(true);
 
-      try {
-        const ok = await restoreSession(stored);
-        setSubmitting(false);
-        if (ok) {
-          router.push('/dashboard');
-          close();
-          return;
-        }
-        // Stored session rejected: clear and offer a fresh start.
-        clearPersistedSimSession();
+      const result = await restoreGuestSimSession(stored);
+      setSubmitting(false);
+      if (result === 'opened') {
+        router.push('/dashboard');
+        close();
+        return;
+      }
+      if (result === 'invalid') {
         setStep('explain');
         setError('Your previous simulation could not be restored on this device. Start again below.');
-      } catch {
-        setSubmitting(false);
-        setStep('explain');
-        setError('We could not reach your simulation just now. Try again in a moment.');
+        return;
       }
+      setStep('explain');
+      setError('We could not reach your simulation just now. Try again in a moment.');
       return;
     }
 
@@ -278,7 +211,7 @@ export function HermesOnboardingProvider({ children }: { children: ReactNode }) 
 
     setStep('explain');
     setIsOpen(true);
-  }, [close, restoreSession, router]);
+  }, [close, router]);
 
   useEffect(() => {
     if (!isOpen) return;

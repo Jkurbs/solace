@@ -3,35 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const SIM_SESSION_STORAGE_KEY = 'hermes_sim_session_v1';
-
-type StoredSimSession = {
-  version: 1;
-  sessionId: string;
-  startedAt: string;
-  depositAmount: number;
-  riskProfile: string;
-};
-
-function readStoredSimSession(): StoredSimSession | null {
-  try {
-    const raw = window.localStorage.getItem(SIM_SESSION_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<StoredSimSession>;
-    if (
-      parsed?.version !== 1 ||
-      typeof parsed.sessionId !== 'string' ||
-      typeof parsed.startedAt !== 'string' ||
-      typeof parsed.depositAmount !== 'number' ||
-      typeof parsed.riskProfile !== 'string'
-    ) {
-      return null;
-    }
-    return parsed as StoredSimSession;
-  } catch {
-    return null;
-  }
-}
+import { readStoredSimSession, restoreGuestSimSession } from '@/features/hermes-dashboard/sim-session-client';
 
 /**
  * When cookies are missing but this device already ran a simulation, rehydrate
@@ -49,44 +21,16 @@ export default function SimSessionRestore() {
     setStatus('restoring');
 
     (async () => {
-      try {
-        const response = await fetch('/api/dashboard/onboarding/open-simulation', {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ restore: true, session: stored }),
-          credentials: 'same-origin',
-        });
+      const result = await restoreGuestSimSession(stored);
+      if (cancelled) return;
 
-        if (cancelled) return;
-
-        if (!response.ok) {
-          setStatus('failed');
-          return;
-        }
-
-        const payload = (await response.json().catch(() => null)) as { ok?: boolean; session?: StoredSimSession } | null;
-        if (payload?.ok === false) {
-          setStatus('failed');
-          return;
-        }
-
-        if (payload?.session) {
-          try {
-            window.localStorage.setItem(SIM_SESSION_STORAGE_KEY, JSON.stringify(payload.session));
-            window.localStorage.setItem('hermes_sim_started', '1');
-          } catch {
-            // ignore
-          }
-        }
-
-        router.replace('/dashboard');
-        router.refresh();
-      } catch {
-        if (!cancelled) setStatus('failed');
+      if (result !== 'opened') {
+        setStatus('failed');
+        return;
       }
+
+      router.replace('/dashboard');
+      router.refresh();
     })();
 
     return () => {

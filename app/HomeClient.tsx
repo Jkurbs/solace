@@ -7,6 +7,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { ShimmerLink } from '@/components/shimmer-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import { useHasGuestSimSession } from '@/features/hermes-dashboard/sim-session-client';
 import type { HermesLedgerRow } from '@/features/hermes-ledger/store';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
@@ -16,6 +17,7 @@ import { HomeMetricsBanner } from './HomeMetricsBanner';
 import { HomeProofSection } from './HomeProofSection';
 import OracleOrbSection from './OracleOrbSection';
 import type { ActivePrediction } from './oracle/active-predictions';
+import ResumeSimulationButton from './ResumeSimulationButton';
 
 const easeOut = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -146,6 +148,7 @@ export default function HomeClient({
 }) {
   const reduceMotion = useReducedMotion();
   const heroInitial = reduceMotion ? false : 'hidden';
+  const hasSimSession = useHasGuestSimSession();
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -213,12 +216,23 @@ export default function HomeClient({
             </motion.p>
 
             <motion.div variants={fade} className="hero-particle-ctas mt-8 flex justify-center gap-4">
-              <ShimmerLink href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-primary hero-cta-on-void">
-                Check the live record
-              </ShimmerLink>
-              <ShimmerLink href="/hermes" className="hero-cta hero-cta-secondary hero-cta-on-void">
-                Run a simulation
-              </ShimmerLink>
+              {hasSimSession ? (
+                <>
+                  <ResumeSimulationButton className="hero-cta hero-cta-primary hero-cta-on-void" />
+                  <ShimmerLink href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-secondary hero-cta-on-void">
+                    Check the live record
+                  </ShimmerLink>
+                </>
+              ) : (
+                <>
+                  <ShimmerLink href={OBSERVATORY_HERMES_LEDGER_PATH} className="hero-cta hero-cta-primary hero-cta-on-void">
+                    Check the live record
+                  </ShimmerLink>
+                  <ShimmerLink href="/hermes" className="hero-cta hero-cta-secondary hero-cta-on-void">
+                    Run a simulation
+                  </ShimmerLink>
+                </>
+              )}
             </motion.div>
 
             {/* Interactive Telemetry Banner

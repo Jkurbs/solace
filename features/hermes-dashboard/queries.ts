@@ -1,3 +1,4 @@
+import { clearPersistedSimSession } from './sim-session-client';
 import type { HermesDashboardSnapshot, MoneyMovementType, RiskProfile } from './types';
 
 export const hermesDashboardQueryKey = ['hermes-dashboard', 'snapshot'] as const;
@@ -108,13 +109,8 @@ export async function logoutUser() {
     throw new Error(payload.message ?? 'Logout failed.');
   }
 
-  // Clear device-local simulation identity so "Experience Hermes" can start fresh.
-  try {
-    window.localStorage.removeItem('hermes_sim_session_v1');
-    window.localStorage.removeItem('hermes_sim_started');
-  } catch {
-    // ignore storage failures
-  }
+  // Clear device-local simulation identity so "Run a simulation" can start fresh.
+  clearPersistedSimSession();
 
   window.location.assign(payload.url ?? '/');
 
