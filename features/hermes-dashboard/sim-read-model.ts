@@ -118,6 +118,10 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     const openedMs = new Date(path.openedAt).getTime();
     return Number.isFinite(openedMs) && openedMs >= startedMs;
   });
+  // Require a live mark to agree, so a stale tracking book cannot flash
+  // "In Strategy" on and off between refreshes.
+  const liveOpenCount = openExposure?.positions.length ?? 0;
+  const inAPath = participatingOpens.length > 0 && (openExposure === null || liveOpenCount > 0);
 
   // Closed-order PnL: founder/KuCoin dollars scaled to this guest's capital.
   let realizedPnl = 0;
@@ -136,8 +140,7 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
   // Open PnL only when Hermes holds paths opened after this guest entered.
   // Pre-entry open exposure is never attributed.
   const founderUnrealized = openExposure?.unrealizedPnl ?? 0;
-  const unrealizedPnl =
-    participatingOpens.length > 0 ? roundCurrency(founderUnrealized * share) : 0;
+  const unrealizedPnl = inAPath ? roundCurrency(founderUnrealized * share) : 0;
 
   const profit = roundCurrency(realizedPnl + unrealizedPnl);
   const value = roundCurrency(depositAmount + profit);
@@ -156,26 +159,12 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     : 0;
   const founderGross = Math.max(openExposure?.grossEquity ?? referenceCapital, 1);
   const founderDeployedPct =
-    founderAllocated > 0
-      ? roundPercent(Math.min(100, (founderAllocated / founderGross) * 100))
-      : deployedPaths > 0
-        ? 60
-        : 0;
-  const deployedCapital =
-    participatingOpens.length > 0
-      ? founderDeployedPct
-      : mapOperatingStatus(postureRaw) === 'ACTIVE' && deployedPaths > 0
-        ? 0 // Hermes is live but only on pre-entry paths; guest stays in cash
-        : 0;
+    founderAllocated > 0 ? roundPercent(Math.min(100, (founderAllocated / founderGross) * 100)) : 0;
+  const deployedCapital = inAPath ? founderDeployedPct : 0;
 
   const allocatedCapital = roundCurrency((value * deployedCapital) / 100);
   const availableBalance = roundCurrency(Math.max(0, value - allocatedCapital));
-  const operatingStatus =
-    participatingOpens.length > 0
-      ? mapOperatingStatus(postureRaw)
-      : deployedPaths > 0
-        ? 'WAIT' // instrument is active elsewhere; guest is not in those paths
-        : mapOperatingStatus(postureRaw);
+  const operatingStatus = inAPath ? mapOperatingStatus(postureRaw) : 'WAIT';
 
   const activity: HermesDashboardSnapshot['activity'] = [
     ...tradeActivity,
@@ -189,26 +178,17 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     },
   ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-  const stance =
-    participatingOpens.length > 0
-      ? titleCase(postureRaw)
-      : deployedPaths > 0
-        ? 'Waiting for next path'
-        : titleCase(postureRaw);
-
-  const note =
-    participatingOpens.length > 0
-      ? market?.summary ??
-        brief?.summary ??
-        'Hermes is managing simulation capital on paths opened after you entered.'
-      : tradeEvents.length > 0
-        ? 'Recent closes after you entered are reflected below. Hermes will open the next path when conditions clear.'
-        : 'Simulation is live. You only participate in paths Hermes opens after you entered, so early waiting is expected.';
+  const stance = inAPath ? titleCase(postureRaw) : 'Waiting for next path';
+  const note = inAPath
+    ? market?.summary ??
+      brief?.summary ??
+      'Hermes is managing simulation capital on paths opened after you entered.'
+    : 'Hermes will open the next path when conditions clear. That is expected. Capital stays yours.';
 
   // Never publish pool tickers in simulation. Pre-entry opens are not on this
   // guest's book — they stay in cash until Hermes opens a path after they entered.
   const allocation =
-    participatingOpens.length > 0 && deployedCapital > 0
+    inAPath && deployedCapital > 0
       ? deployedCapital >= 100
         ? [{ asset: 'In Strategy', percentage: 100 }]
         : [
@@ -271,7 +251,7 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
       cashBalance: availableBalance,
       fees: 0,
       funding: 0,
-      openPnlIncluded: participatingOpens.length > 0,
+      openPnlIncluded: inAPath,
       realizedPnl,
       reservedMargin: 0,
       unrealizedPnl,
@@ -280,7 +260,7 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     status: {
       status: operatingStatus,
       riskProfile,
-      conviction: mapConviction(postureRaw, participatingOpens.length || deployedPaths),
+      conviction: mapConviction(postureRaw, inAPath ? participatingOpens.length || deployedPaths : 0),
       deployedCapital,
     },
     outlook: {

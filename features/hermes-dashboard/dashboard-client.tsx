@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Check, Clock3, HelpCircle, LogOut, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -279,6 +279,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
     queryKey: hermesDashboardQueryKey,
     queryFn: getHermesDashboardSnapshot,
     initialData: initialSnapshot,
+    placeholderData: keepPreviousData,
     refetchInterval: liveRefreshIntervalMs,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
@@ -645,46 +646,15 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   }
 
   // ── Chapters: live + standing_down (funded) ─────────────────────────────
-  const isStandingDown = chapter === 'standing_down';
+  const waitingForNextPath =
+    data.status.deployedCapital <= 0 ||
+    data.allocation.every((item) => item.asset === 'Cash' || item.percentage <= 0);
 
   return (
     <main className={shellClass}>
       {header}
       <div className="mx-auto grid max-w-3xl gap-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         {errorBanner}
-
-        <section
-          className="flex flex-col gap-4 rounded-lg border border-neutral-950 bg-neutral-950 px-5 py-5 text-white sm:flex-row sm:items-center sm:justify-between dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-950 sm:px-6"
-          aria-label="Capital waitlist"
-        >
-          <div className="max-w-xl">
-            <p className="text-base font-semibold tracking-tight">Join the waitlist</p>
-            <p className="mt-1 text-sm leading-6 text-white/75 dark:text-neutral-700">
-              Hermes is founder capital only. You cannot invest yet. Ask to be considered when a place opens.
-            </p>
-          </div>
-          <Button
-            asChild
-            size="lg"
-            className="w-full shrink-0 bg-white text-neutral-950 hover:bg-neutral-100 dark:bg-neutral-950 dark:text-white dark:hover:bg-neutral-800 sm:w-auto"
-          >
-            <Link href="/dashboard/waitlist">
-              Join the waitlist
-              <ArrowRight size={16} aria-hidden="true" />
-            </Link>
-          </Button>
-        </section>
-
-        {isStandingDown ? (
-          <div
-            role="status"
-            className="rounded-lg border border-neutral-300 bg-neutral-100 px-5 py-4 text-sm leading-6 text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900/80 dark:text-neutral-200"
-          >
-            <strong className="font-semibold text-neutral-950 dark:text-neutral-50">Hermes is standing down.</strong>{' '}
-            Choosing not to press is part of the design, not a fault on your account. Capital remains yours; activity
-            resumes when conditions warrant.
-          </div>
-        ) : null}
 
         <motion.section
           initial={false}
@@ -732,7 +702,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
           <CardContent>
             {data.allocation.length === 0 ? (
               <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
-                No allocation yet. Cash sits until Hermes opens a path.
+                Cash sits until Hermes opens a path.
               </p>
             ) : (
               <div className="grid gap-3">
@@ -754,6 +724,11 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
                 ))}
               </div>
             )}
+            {waitingForNextPath ? (
+              <p className="mt-4 text-sm leading-6 text-neutral-500 dark:text-neutral-400" role="status">
+                Hermes will open the next path when conditions clear. That is expected. Capital stays yours.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -764,7 +739,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
           <CardContent>
             {data.activity.length === 0 ? (
               <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
-                No decisions recorded yet. Closes and allocation updates will appear here.
+                No closes on your book yet. Hermes will open a path when conditions clear.
               </p>
             ) : null}
             <ol className="grid gap-0">
@@ -786,6 +761,28 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             </ol>
           </CardContent>
         </Card>
+
+        <section
+          className="flex flex-col gap-4 rounded-lg border border-neutral-950 bg-neutral-950 px-5 py-5 text-white sm:flex-row sm:items-center sm:justify-between dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-950 sm:px-6"
+          aria-label="Capital waitlist"
+        >
+          <div className="max-w-xl">
+            <p className="text-base font-semibold tracking-tight">Join the waitlist</p>
+            <p className="mt-1 text-sm leading-6 text-white/75 dark:text-neutral-700">
+              Hermes is founder capital only. You cannot invest yet. Ask to be considered when a place opens.
+            </p>
+          </div>
+          <Button
+            asChild
+            size="lg"
+            className="w-full shrink-0 bg-white text-neutral-950 hover:bg-neutral-100 dark:bg-neutral-950 dark:text-white dark:hover:bg-neutral-800 sm:w-auto"
+          >
+            <Link href="/dashboard/waitlist">
+              Join the waitlist
+              <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+          </Button>
+        </section>
 
         {foot}
       </div>
