@@ -210,7 +210,7 @@ export function HomeProofSection({
     <section ref={sectionRef} className={`home-proof${wet ? ' is-wet' : ''}`}>
       <div className="home-proof-inner">
         <p className="home-proof-dare">
-          Try to delete the sentence.
+          Change a word.
           {showTimer ? <span className="home-proof-timer"> Writing in {secondsLeft}s</span> : null}
         </p>
 
@@ -252,7 +252,7 @@ export function HomeProofSection({
         </div>
 
         <p className="home-proof-why">
-          If the decision can be edited after taking place, it isn’t proof. It’s a story.
+          A decision only means something if you can prove what was decided before the outcome.
         </p>
 
         <p className="home-proof-meta">
