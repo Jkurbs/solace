@@ -18,6 +18,7 @@ import {
   getHermesDashboardSnapshot,
   hermesDashboardQueryKey,
   logoutUser,
+  stabilizeSimulationEquity,
   startMoneyMovement,
 } from './queries';
 import { isSetupIncomplete } from './setup';
@@ -138,7 +139,11 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
   const queryClient = useQueryClient();
   const { data, isError, isFetching } = useQuery({
     queryKey: hermesDashboardQueryKey,
-    queryFn: getHermesDashboardSnapshot,
+    queryFn: async () =>
+      stabilizeSimulationEquity(
+        queryClient.getQueryData<HermesDashboardSnapshot>(hermesDashboardQueryKey),
+        await getHermesDashboardSnapshot(),
+      ),
     initialData: initialSnapshot,
     refetchInterval: liveRefreshIntervalMs,
     refetchIntervalInBackground: true,

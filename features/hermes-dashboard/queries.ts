@@ -25,6 +25,50 @@ export type SubmitBugReportResponse = {
   title: string;
 };
 
+/**
+ * A missed live mark used to publish deposit as equity ($10k), then the next
+ * tick restored the real book ($650). Hold the previous book across that blink.
+ */
+export function stabilizeSimulationEquity(
+  previous: HermesDashboardSnapshot | undefined,
+  next: HermesDashboardSnapshot,
+): HermesDashboardSnapshot {
+  if (!previous || previous.account.mode !== 'SIMULATION' || next.account.mode !== 'SIMULATION') {
+    return next;
+  }
+
+  const deposited = next.portfolio.deposited;
+  if (!(deposited > 0)) {
+    return next;
+  }
+
+  const snappedToDeposit = Math.abs(next.portfolio.value - deposited) <= 1;
+  const previousWasLive = Math.abs(previous.portfolio.value - deposited) > Math.max(25, deposited * 0.05);
+  const jumpRatio =
+    Math.abs(next.portfolio.value - previous.portfolio.value) / Math.max(Math.abs(previous.portfolio.value), 1);
+
+  if (!snappedToDeposit || !previousWasLive || jumpRatio < 0.5) {
+    return next;
+  }
+
+  return {
+    ...next,
+    portfolio: {
+      ...next.portfolio,
+      allocatedCapital: previous.portfolio.allocatedCapital,
+      availableBalance: previous.portfolio.availableBalance,
+      availableToWithdraw: previous.portfolio.availableToWithdraw,
+      cashBalance: previous.portfolio.cashBalance,
+      profit: previous.portfolio.profit,
+      realizedPnl: previous.portfolio.realizedPnl,
+      sinceInception: previous.portfolio.sinceInception,
+      unrealizedPnl: previous.portfolio.unrealizedPnl,
+      value: previous.portfolio.value,
+      withdrawable: previous.portfolio.withdrawable,
+    },
+  };
+}
+
 export async function getHermesDashboardSnapshot(): Promise<HermesDashboardSnapshot> {
   const response = await fetch('/api/dashboard', {
     cache: 'no-store',

@@ -16,6 +16,13 @@ const DEFAULT_POOL_ID = process.env.HERMES_POOL_ID ?? 'pool_balanced_v1';
 /** Used only when live source equity is missing. Never a floor on a known book. */
 const FALLBACK_REFERENCE_CAPITAL = 100_000;
 
+type HeldSimNav = {
+  founderNow: number;
+  founderStart: number;
+};
+
+const heldSimNavBySession = new Map<string, HeldSimNav>();
+
 const tradePnlFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
   signDisplay: 'always',
@@ -45,10 +52,51 @@ function tradeClosePnl(event: HermesRealizedTradeEvent) {
 }
 
 /**
+ * Guest owns live open PnL when the live book has a path opened after they
+ * entered. Path-tracking can lag a close→reopen (re-open cooldown), so a
+ * post-entry close plus a live position also counts — otherwise equity
+ * (source NAV) moves and Open PnL stays frozen at $0.
+ */
+function guestOwnsLiveOpenPnl({
+  hasPostEntryClose,
+  liveMarkPresent,
+  livePositions,
+  participatingTrackedOpens,
+  startedMs,
+}: {
+  hasPostEntryClose: boolean;
+  liveMarkPresent: boolean;
+  livePositions: Array<{ openedAt?: string }>;
+  participatingTrackedOpens: number;
+  startedMs: number;
+}) {
+  if (!liveMarkPresent) {
+    return participatingTrackedOpens > 0;
+  }
+
+  if (livePositions.length === 0) {
+    return false;
+  }
+
+  const openedMs = livePositions.map((position) =>
+    position.openedAt ? new Date(position.openedAt).getTime() : Number.NaN,
+  );
+  const knownPreEntry = openedMs.every((ms) => Number.isFinite(ms) && ms < startedMs);
+  if (knownPreEntry) {
+    return false;
+  }
+
+  const knownPostEntry = openedMs.some((ms) => Number.isFinite(ms) && ms >= startedMs);
+  if (knownPostEntry) {
+    return true;
+  }
+
+  return participatingTrackedOpens > 0 || hasPostEntryClose;
+}
+
+/**
  * Map founder dollars onto this guest's capital the same way pool NAV does:
  * guestPnL = founderPnL * (guestBook / sourceEquity).
- * A $141 source book with −$17 open is −12%; an $8.7k sim must show that
- * percentage, not the raw −$17.
  */
 function scaleShare(userCapital: number, founderCapital: number) {
   if (!Number.isFinite(userCapital) || userCapital <= 0) {
@@ -110,8 +158,16 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     getHermesSourceEquityAt({ at: startedAt, poolId }).catch(() => null),
   ]);
 
-  const founderNow = openExposure?.grossEquity ?? 0;
-  const founderStart = equityAtEntry && equityAtEntry > 0 ? equityAtEntry : founderNow;
+  const liveNow = openExposure && openExposure.grossEquity > 0 ? openExposure.grossEquity : 0;
+  const liveStart = equityAtEntry && equityAtEntry > 0 ? equityAtEntry : 0;
+  const heldNav = heldSimNavBySession.get(session.sessionId);
+  // Never substitute live-now for entry equity: that forces NAV = 1 and flashes
+  // the deposit ($10k) over the real scaled book ($650).
+  const founderNow = liveNow > 0 ? liveNow : heldNav?.founderNow ?? 0;
+  const founderStart = liveStart > 0 ? liveStart : heldNav?.founderStart ?? 0;
+  if (founderNow > 0 && founderStart > 0) {
+    heldSimNavBySession.set(session.sessionId, { founderNow, founderStart });
+  }
   const share = scaleShare(depositAmount, founderStart);
   const founderCapital = founderNow;
   const referenceCapital = founderCapital > 0 ? founderCapital : FALLBACK_REFERENCE_CAPITAL;
@@ -121,10 +177,13 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     const openedMs = new Date(path.openedAt).getTime();
     return Number.isFinite(openedMs) && openedMs >= startedMs;
   });
-  // Require a live mark to agree, so a stale tracking book cannot flash
-  // "In Strategy" on and off between refreshes.
-  const liveOpenCount = openExposure?.positions.length ?? 0;
-  const inAPath = participatingOpens.length > 0 && (openExposure === null || liveOpenCount > 0);
+  const inAPath = guestOwnsLiveOpenPnl({
+    hasPostEntryClose: tradeEvents.length > 0,
+    liveMarkPresent: openExposure !== null,
+    livePositions: openExposure?.positions ?? [],
+    participatingTrackedOpens: participatingOpens.length,
+    startedMs,
+  });
 
   // Closed-order PnL: founder/KuCoin dollars scaled to this guest's capital.
   const tradeActivity: HermesDashboardSnapshot['activity'] = [];
@@ -144,11 +203,11 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
   const unrealizedPnl = inAPath ? roundCurrency(founderUnrealized * share) : 0;
 
   // Headline equity tracks the live book: same return as source since entry.
-  // Open PnL is that same share, so −$17 on $141 is −12% of the sim too.
+  // If this tick has no live book, hold the last good NAV — never snap to deposit.
   const value =
     founderStart > 0 && founderNow > 0
       ? roundCurrency(depositAmount * (founderNow / founderStart))
-      : roundCurrency(depositAmount + unrealizedPnl);
+      : depositAmount;
   const profit = roundCurrency(value - depositAmount);
   const realizedPnl = roundCurrency(profit - unrealizedPnl);
   const sinceInception = depositAmount > 0 ? roundPercent((profit / depositAmount) * 100) : 0;

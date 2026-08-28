@@ -25,6 +25,7 @@ import {
 import {
   getHermesDashboardSnapshot,
   hermesDashboardQueryKey,
+  stabilizeSimulationEquity,
   logoutUser,
   startIdentityVerification,
 } from './queries';
@@ -329,7 +330,11 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const queryClient = useQueryClient();
   const { data, dataUpdatedAt, isError, isFetching } = useQuery({
     queryKey: hermesDashboardQueryKey,
-    queryFn: getHermesDashboardSnapshot,
+    queryFn: async () =>
+      stabilizeSimulationEquity(
+        queryClient.getQueryData<HermesDashboardSnapshot>(hermesDashboardQueryKey),
+        await getHermesDashboardSnapshot(),
+      ),
     initialData: initialSnapshot,
     placeholderData: keepPreviousData,
     refetchInterval: liveRefreshIntervalMs,

@@ -14,8 +14,8 @@ export type HermesOpenExposure = {
   /** 0..1 fraction below peak equity; 0 when at or above the peak. */
   drawdownFromPeak: number;
   asOf: string;
-  /** Open position identities (symbol + side only, never size or entry). */
-  positions: Array<{ symbol: string; side: string }>;
+  /** Open position identities (symbol + side only, never size). */
+  positions: Array<{ symbol: string; side: string; openedAt?: string }>;
 };
 
 const FRESHNESS_MS = 24 * 60 * 60 * 1000;
@@ -70,20 +70,18 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
     const latestByPool = new Map<string, (typeof data)[number]>();
 
     for (const row of data) {
-      if (!latestByPool.has(row.pool_id) && !isDegradedSourceMark(row.raw_payload)) {
-        latestByPool.set(row.pool_id, row);
-      }
-    }
-
-    // A pool with only degraded marks in the window falls back to its newest
-    // row, a stale-but-real number beats none, and the as-of stamp stays honest.
-    for (const row of data) {
-      if (!latestByPool.has(row.pool_id)) {
-        latestByPool.set(row.pool_id, row);
-      }
+      const equity = Number(row.source_equity ?? 0);
+      if (latestByPool.has(row.pool_id)) continue;
+      if (isDegradedSourceMark(row.raw_payload)) continue;
+      if (!Number.isFinite(equity) || equity <= 0) continue;
+      latestByPool.set(row.pool_id, row);
     }
 
     const latest = [...latestByPool.values()];
+    if (!latest.length) {
+      return null;
+    }
+
     const asOf = latest
       .map((row) => row.effective_at)
       .sort()
@@ -94,7 +92,13 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
       return null;
     }
 
-    const positions = latest.flatMap((row) => parsePublicPositions(row.raw_payload));
+    const positions = latest.flatMap((row) =>
+      parsePublicPositions(row.raw_payload).map((position) => ({
+        side: position.side,
+        symbol: position.symbol,
+        ...(position.openedAt ? { openedAt: position.openedAt } : {}),
+      })),
+    );
     const grossEquity = latest.reduce((total, row) => total + Number(row.source_equity ?? 0), 0);
     const unrealizedPnl = latest.reduce((total, row) => total + readSourceUnrealizedPnl(row), 0);
     // Peak equity across the recent mark window (single Hermes pool today).
@@ -115,6 +119,20 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
   }
 }
 
+const equityAtEntryCache = new Map<string, number>();
+
+function cacheKeyForEquityAt(poolId: string, at: string) {
+  return `${poolId}:${at}`;
+}
+
+function readCachedEquityAt(poolId: string, at: string) {
+  return equityAtEntryCache.get(cacheKeyForEquityAt(poolId, at)) ?? null;
+}
+
+function writeCachedEquityAt(poolId: string, at: string, equity: number) {
+  equityAtEntryCache.set(cacheKeyForEquityAt(poolId, at), equity);
+}
+
 /**
  * Source-account equity at or just before `at`, so a guest sim can scale
  * against the book they entered, not a later drawdown remainder.
@@ -127,12 +145,14 @@ export async function getHermesSourceEquityAt({
   poolId: string;
 }): Promise<number | null> {
   if (!isSupabaseDataClientConfigured() || !poolId.trim() || !at) {
-    return null;
+    return readCachedEquityAt(poolId, at);
   }
 
   if (!Number.isFinite(new Date(at).getTime())) {
     return null;
   }
+
+  const cached = readCachedEquityAt(poolId, at);
 
   try {
     const supabase = await createSupabaseDataClient();
@@ -142,11 +162,11 @@ export async function getHermesSourceEquityAt({
       .eq('pool_id', poolId)
       .lte('effective_at', at)
       .order('effective_at', { ascending: false })
-      .limit(12);
+      .limit(40);
 
     if (error) {
       console.warn('[hermes-ledger] Source equity-at lookup failed.', error.message);
-      return null;
+      return cached;
     }
 
     const healthy = (data ?? []).find((row) => {
@@ -155,7 +175,9 @@ export async function getHermesSourceEquityAt({
     });
 
     if (healthy) {
-      return Math.round(Number(healthy.source_equity) * 100) / 100;
+      const equity = Math.round(Number(healthy.source_equity) * 100) / 100;
+      writeCachedEquityAt(poolId, at, equity);
+      return equity;
     }
 
     const { data: after, error: afterError } = await supabase
@@ -164,10 +186,10 @@ export async function getHermesSourceEquityAt({
       .eq('pool_id', poolId)
       .gte('effective_at', at)
       .order('effective_at', { ascending: true })
-      .limit(12);
+      .limit(40);
 
     if (afterError) {
-      return null;
+      return cached;
     }
 
     const next = (after ?? []).find((row) => {
@@ -175,9 +197,15 @@ export async function getHermesSourceEquityAt({
       return Number.isFinite(equity) && equity > 0 && !isDegradedSourceMark(row.raw_payload);
     });
 
-    return next ? Math.round(Number(next.source_equity) * 100) / 100 : null;
+    if (!next) {
+      return cached;
+    }
+
+    const equity = Math.round(Number(next.source_equity) * 100) / 100;
+    writeCachedEquityAt(poolId, at, equity);
+    return equity;
   } catch (error) {
     console.warn('[hermes-ledger] Source equity-at lookup failed.', error);
-    return null;
+    return cached;
   }
 }
