@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { parsePublicPositions } from '@/features/hermes-ledger/path-tracking';
+import { listTrackedOpenPaths, parsePublicPositions } from '@/features/hermes-ledger/path-tracking';
 import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/supabase/server';
 
 // Live open-exposure read for the public ledger strip: unrealized PnL from
@@ -29,6 +29,59 @@ function isDegradedSourceMark(rawPayload: unknown) {
   return payload.positions_source === 'error' || payload.account_source === 'error';
 }
 
+function positionsFromTrackedKeys(keys: string[]) {
+  const seen = new Set<string>();
+  const positions: HermesOpenExposure['positions'] = [];
+
+  for (const key of keys) {
+    const separator = key.lastIndexOf(':');
+    if (separator <= 0) continue;
+
+    const symbol = key.slice(0, separator).trim().toUpperCase();
+    const side = key.slice(separator + 1).trim().toUpperCase();
+
+    if (!symbol || (side !== 'LONG' && side !== 'SHORT') || seen.has(`${symbol}:${side}`)) {
+      continue;
+    }
+
+    seen.add(`${symbol}:${side}`);
+    positions.push({ side, symbol });
+  }
+
+  return positions;
+}
+
+type SourceMarkRow = {
+  pool_id: string;
+  source_equity: unknown;
+  source_unrealized_pnl: unknown;
+  source_reserved_margin?: unknown;
+  effective_at: string;
+  raw_payload: unknown;
+};
+
+function isInconsistentEmptyBook(row: SourceMarkRow) {
+  if (parsePublicPositions(row.raw_payload).length > 0) {
+    return false;
+  }
+
+  const reserved = Number(row.source_reserved_margin ?? 0);
+  const unrealized = readSourceUnrealizedPnl(row);
+
+  // Empty positions with residual margin or open PnL is a dropped book, not a close.
+  return (Number.isFinite(reserved) && reserved > 0.5) || Math.abs(unrealized) > 1e-6;
+}
+
+function isUnusableLiveMark(row: SourceMarkRow) {
+  const equity = Number(row.source_equity ?? 0);
+  return (
+    isDegradedSourceMark(row.raw_payload) ||
+    !Number.isFinite(equity) ||
+    equity <= 0 ||
+    isInconsistentEmptyBook(row)
+  );
+}
+
 function readSourceUnrealizedPnl(row: { source_unrealized_pnl: unknown; raw_payload: unknown }) {
   const raw = row.raw_payload;
 
@@ -55,7 +108,7 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
     const supabase = await createSupabaseDataClient();
     const { data, error } = await supabase
       .from('hermes_pool_source_marks')
-      .select('pool_id,source_equity,source_unrealized_pnl,effective_at,raw_payload')
+      .select('pool_id,source_equity,source_unrealized_pnl,source_reserved_margin,effective_at,raw_payload')
       .order('effective_at', { ascending: false })
       .limit(60);
 
@@ -65,15 +118,12 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
 
     // When the bridge's exchange fetch fails transiently it still publishes a
     // mark, flagged positions_source/account_source: "error", with zeroed
-    // PnL. Prefer the newest HEALTHY mark per pool so the public number never
-    // flickers to $0.00 on a bad fetch.
+    // PnL — or an empty book while margin is still reserved. Prefer the newest
+    // HEALTHY mark per pool so the public number never flickers to flat.
     const latestByPool = new Map<string, (typeof data)[number]>();
 
     for (const row of data) {
-      const equity = Number(row.source_equity ?? 0);
-      if (latestByPool.has(row.pool_id)) continue;
-      if (isDegradedSourceMark(row.raw_payload)) continue;
-      if (!Number.isFinite(equity) || equity <= 0) continue;
+      if (latestByPool.has(row.pool_id) || isUnusableLiveMark(row)) continue;
       latestByPool.set(row.pool_id, row);
     }
 
@@ -92,13 +142,20 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
       return null;
     }
 
-    const positions = latest.flatMap((row) =>
+    let positions = latest.flatMap((row) =>
       parsePublicPositions(row.raw_payload).map((position) => ({
         side: position.side,
         symbol: position.symbol,
         ...(position.openedAt ? { openedAt: position.openedAt } : {}),
       })),
     );
+
+    if (!positions.length) {
+      const tracked = await listTrackedOpenPaths().catch(() => []);
+      if (tracked.length) {
+        positions = positionsFromTrackedKeys(tracked.map((entry) => entry.key));
+      }
+    }
     const grossEquity = latest.reduce((total, row) => total + Number(row.source_equity ?? 0), 0);
     const unrealizedPnl = latest.reduce((total, row) => total + readSourceUnrealizedPnl(row), 0);
     // Peak equity across the recent mark window (single Hermes pool today).

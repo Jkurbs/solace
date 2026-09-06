@@ -23,6 +23,8 @@ type TrustLivePulseContextValue = {
 
 const PULSE_MS = 1_000;
 const SAFETY_REFRESH_MS = 60_000;
+/** Consecutive timestamped empty books required before dropping live exposure. */
+const FLAT_CONFIRM_TICKS = 3;
 
 const TrustLivePulseContext = createContext<TrustLivePulseContextValue | null>(null);
 
@@ -85,14 +87,49 @@ export function TrustLivePulseProvider({
   const [pulse, setPulse] = useState<LedgerPulse>(() => toPulse(initialExposure, initialHermesVersion));
   const lastStructural = useRef<string | null>(null);
   const lastRefresh = useRef<number>(Date.now());
+  const inFlight = useRef(false);
+  const emptyStreak = useRef(0);
 
   useEffect(() => {
     let stopped = false;
 
+    const applyPulse = (nextPulse: LedgerPulse) => {
+      setPulse((previous) => {
+        if (hasLiveExposure(nextPulse)) {
+          emptyStreak.current = 0;
+          return nextPulse;
+        }
+
+        // Missed read (no asOf): keep the last book instead of flashing flat.
+        if (!nextPulse.asOf) {
+          return previous;
+        }
+
+        if (hasLiveExposure(previous)) {
+          emptyStreak.current += 1;
+          if (emptyStreak.current < FLAT_CONFIRM_TICKS) {
+            return {
+              ...previous,
+              chainHead: nextPulse.chainHead ?? previous.chainHead,
+              hermesVersion: nextPulse.hermesVersion ?? previous.hermesVersion,
+              hermesVersionLabel: nextPulse.hermesVersionLabel ?? previous.hermesVersionLabel,
+              latestRecordId: nextPulse.latestRecordId ?? previous.latestRecordId,
+              rowCount: nextPulse.rowCount || previous.rowCount,
+            };
+          }
+        }
+
+        emptyStreak.current = 0;
+        return nextPulse;
+      });
+    };
+
     const tick = async () => {
-      if (stopped || document.visibilityState !== 'visible') {
+      if (stopped || document.visibilityState !== 'visible' || inFlight.current) {
         return;
       }
+
+      inFlight.current = true;
 
       try {
         const response = await fetch(`/api/hermes/ledger-pulse?ts=${Date.now()}`, { cache: 'no-store' });
@@ -102,7 +139,7 @@ export function TrustLivePulseProvider({
         }
 
         const nextPulse = (await response.json()) as LedgerPulse;
-        setPulse(nextPulse);
+        applyPulse(nextPulse);
 
         const structural = structuralFingerprint(nextPulse);
 
@@ -127,6 +164,8 @@ export function TrustLivePulseProvider({
           lastRefresh.current = Date.now();
           router.refresh();
         }
+      } finally {
+        inFlight.current = false;
       }
     };
 
