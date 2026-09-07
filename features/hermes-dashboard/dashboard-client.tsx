@@ -805,7 +805,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
           <CardHeader className="pb-4">
             <CardTitle>Recent decisions</CardTitle>
             <p className="mt-1 text-sm leading-6 text-neutral-500 dark:text-neutral-400">
-              Each line is written down before anyone knows if it was right.
+              Each decision is written down before anyone knows if it was right.
             </p>
           </CardHeader>
           <CardContent>

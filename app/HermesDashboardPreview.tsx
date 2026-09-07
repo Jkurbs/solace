@@ -128,7 +128,7 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
       <div className="mb-4">
         <p className="text-sm font-medium text-white/90">Hermes is deciding.</p>
         <p className="mt-1 text-xs leading-relaxed text-white/50">
-          Each line is written down before anyone knows if it was right.
+          Each decision is written down before anyone knows if it was right.
         </p>
       </div>
 
