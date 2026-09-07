@@ -197,7 +197,7 @@ export default function HomeClient({
           initial={heroInitial}
           animate="show"
           variants={stagger}
-          className="hero-particle-layout relative z-10 mx-auto flex min-h-[70vh] max-w-6xl flex-col items-center justify-center px-5 py-20 md:min-h-[75vh] md:py-28"
+          className="hero-particle-layout relative z-10 mx-auto flex min-h-[calc(100svh-4rem)] max-w-6xl flex-col items-center justify-center px-5 py-28 md:py-36"
         >
           <div className="hero-particle-copy home-hero-copy flex w-full max-w-3xl flex-col items-center text-center">
             {/* Title */}
@@ -251,11 +251,11 @@ export default function HomeClient({
       {showRecord && <HomeProofSection rows={recentDecisions} sealedDecisions={sealedDecisions} />}
 
       {/* Hermes & Oracle Grid */}
-      <section className="px-5 py-12 md:py-16">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+      <section className="home-chapter border-t border-border">
+        <div className="home-chapter-inner">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-10">
             {/* Hermes Card */}
-            <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
+            <div className="group relative flex min-h-[28rem] flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-8 shadow-2xl transition-all duration-300 hover:border-white/20 md:min-h-[36rem] md:p-10">
               <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
                 Hermes
               </h3>
@@ -274,7 +274,7 @@ export default function HomeClient({
             </div>
 
             {/* Oracle Card */}
-            <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-6 shadow-2xl transition-all duration-300 hover:border-white/20">
+            <div className="group relative flex min-h-[28rem] flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-8 shadow-2xl transition-all duration-300 hover:border-white/20 md:min-h-[36rem] md:p-10">
               <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
                 Oracle
               </h3>
@@ -299,8 +299,8 @@ export default function HomeClient({
       </section>
 
       {/* Machinery Section */}
-      <section className="home-vision border-t border-border px-5 py-20 md:py-28">
-        <div className="mx-auto max-w-6xl">
+      <section className="home-vision home-chapter border-t border-border">
+        <div className="home-chapter-inner">
           <p className="home-vision-kicker">The Machinery Underneath</p>
           <h2 className="home-vision-title">Observation, execution, and public proof.</h2>
           <p className="home-vision-dek">
@@ -341,7 +341,7 @@ export default function HomeClient({
       </section>
 
       {/* Footer */}
-      <section className="border-t border-border px-5 py-16 md:py-20">
+      <section className="border-t border-border px-5 py-24 md:py-32">
         <div className="mx-auto max-w-6xl">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
             Solace is built by <span className="text-foreground">Kerby Jean</span>.

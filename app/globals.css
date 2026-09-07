@@ -15085,6 +15085,27 @@ section h3 {
   text-wrap: balance;
 }
 
+/* Homepage chapters: one idea per viewport, Figure-scale air. */
+.home-chapter {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100svh;
+  padding: 6rem 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .home-chapter {
+    padding: 8rem 1.25rem;
+  }
+}
+
+.home-chapter-inner {
+  width: 100%;
+  margin: 0 auto;
+  max-width: 72rem;
+}
+
 /* Instrument rows */
 .group:hover .font-serif {
   opacity: 0.7;
@@ -15541,10 +15562,10 @@ html.dark .home-research ::selection,
 .home-vision-title {
   margin: 0.85rem 0 0;
   max-width: 18ch;
-  font-size: clamp(2rem, 4.4vw, 3.1rem);
+  font-size: clamp(2.6rem, 6vw, 4.4rem);
   font-weight: 500;
   letter-spacing: -0.03em;
-  line-height: 1.12;
+  line-height: 1.08;
 }
 
 .home-vision-dek {
@@ -15557,9 +15578,9 @@ html.dark .home-research ::selection,
 
 .home-vision-ladder {
   list-style: none;
-  margin: 3rem 0 0;
+  margin: 4rem 0 0;
   padding: 0;
-  max-width: 40rem;
+  max-width: 44rem;
   border-top: 1px solid var(--border, #e7e5e4);
 }
 
@@ -15567,7 +15588,7 @@ html.dark .home-research ::selection,
   display: grid;
   grid-template-columns: 2.5rem 1fr;
   gap: 1.25rem;
-  padding: 1.35rem 0;
+  padding: 2rem 0;
   border-bottom: 1px solid var(--border, #e7e5e4);
 }
 
@@ -15612,8 +15633,18 @@ html.dark .home-research ::selection,
 /* Wet ink on a dry plate: the sealed sentence stays; your edit never sets. */
 .home-proof {
   --home-proof-wet: #2a3d4f;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100svh;
   border-top: 1px solid var(--border, #e7e5e4);
-  padding: 5.5rem 1.25rem 5rem;
+  padding: 6rem 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .home-proof {
+    padding: 8rem 1.25rem;
+  }
 }
 
 html[data-theme='dark'] .home-research .home-proof,
