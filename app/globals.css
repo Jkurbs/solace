@@ -15106,6 +15106,95 @@ section h3 {
   max-width: 72rem;
 }
 
+.home-instrument {
+  width: 100%;
+  max-width: 40rem;
+  min-height: 32rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #121214;
+  padding: 2rem;
+}
+
+@media (min-width: 768px) {
+  .home-instrument {
+    min-height: 38rem;
+    padding: 2.5rem;
+  }
+}
+
+.home-horizon-line {
+  margin: 0;
+  max-width: 14ch;
+  font-size: clamp(2.8rem, 7vw, 5.2rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.home-horizon-line + .home-horizon-line {
+  margin-top: 0.2em;
+  color: color-mix(in srgb, var(--foreground, #1c1917) 62%, var(--muted, #78716c));
+}
+
+.home-glorya {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 100svh;
+  overflow: hidden;
+  border-top: 1px solid var(--border, #e7e5e4);
+}
+
+.home-glorya-globe {
+  position: absolute;
+  inset: 0;
+}
+
+.home-glorya-globe .glorya-field,
+.home-glorya-globe .home-glorya-field {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 48%, rgba(41, 37, 36, 0.55), transparent 62%),
+    #0c0a09;
+}
+
+.home-glorya-copy {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3.5rem;
+}
+
+.home-glorya-line {
+  margin: 0;
+  max-width: 36rem;
+  font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+  line-height: 1.45;
+  letter-spacing: -0.02em;
+  color: color-mix(in srgb, var(--foreground, #f5f5f4) 88%, transparent);
+}
+
+.home-glorya-line a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, currentColor 28%, transparent);
+}
+
+.home-glorya-line a:hover {
+  text-decoration-color: color-mix(in srgb, currentColor 70%, transparent);
+}
+
 /* Instrument rows */
 .group:hover .font-serif {
   opacity: 0.7;

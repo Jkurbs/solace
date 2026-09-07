@@ -7,11 +7,13 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { ShimmerLink } from '@/components/shimmer-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import { gloryaEvaluatedNeeds } from '@/features/glorya/evaluated-needs';
 import { useHasGuestSimSession } from '@/features/hermes-dashboard/sim-session-client';
 import type { HermesLedgerRow } from '@/features/hermes-ledger/store';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
+import GloryaNeedField from './GloryaNeedField';
 import HermesDashboardPreview from './HermesDashboardPreview';
 import { HomeMetricsBanner } from './HomeMetricsBanner';
 import { HomeProofSection } from './HomeProofSection';
@@ -250,94 +252,65 @@ export default function HomeClient({
 
       {showRecord && <HomeProofSection rows={recentDecisions} sealedDecisions={sealedDecisions} />}
 
-      {/* Hermes & Oracle Grid */}
-      <section className="home-chapter border-t border-border">
+      <section className="home-chapter border-t border-border" aria-label="Hermes">
         <div className="home-chapter-inner">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-10">
-            {/* Hermes Card */}
-            <div className="group relative flex min-h-[28rem] flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-8 shadow-2xl transition-all duration-300 hover:border-white/20 md:min-h-[36rem] md:p-10">
-              <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
-                Hermes
-              </h3>
-              <div className="flex-1">
-                <HermesDashboardPreview decisions={recentDecisions} posture={hermesTelemetry?.posture} />
-              </div>
-              <div className="mt-6 flex items-center justify-end border-t border-white/5 pt-4 text-xs text-white/50">
-                <ShimmerLink
-                  href="/hermes"
-                  tone="ink"
-                  className="flex shrink-0 items-center gap-1 font-medium text-white/70 transition-colors hover:text-white"
-                >
-                  Explore Hermes <span className="text-sm">→</span>
-                </ShimmerLink>
-              </div>
+          <div className="home-instrument">
+            <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">Hermes</h2>
+            <div className="flex-1">
+              <HermesDashboardPreview decisions={recentDecisions} posture={hermesTelemetry?.posture} />
             </div>
-
-            {/* Oracle Card */}
-            <div className="group relative flex min-h-[28rem] flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#121214] p-8 shadow-2xl transition-all duration-300 hover:border-white/20 md:min-h-[36rem] md:p-10">
-              <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">
-                Oracle
-              </h3>
-              <div className="flex-1">
-                <OracleOrbSection predictions={oraclePredictions} />
-              </div>
-              <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-white/50">
-                <p className="mr-4 max-w-xs text-xs leading-relaxed text-white/60">
-                  A prediction system that calculates the odds of future events and tracks how accurate its forecasts turn out to be.
-                </p>
-                <ShimmerLink
-                  href="/oracle"
-                  tone="ink"
-                  className="flex shrink-0 items-center gap-1 font-medium text-white/70 transition-colors hover:text-white"
-                >
-                  Explore Oracle <span className="text-sm">→</span>
-                </ShimmerLink>
-              </div>
+            <div className="mt-6 flex items-center justify-end border-t border-white/5 pt-4 text-xs text-white/50">
+              <ShimmerLink
+                href="/hermes"
+                tone="ink"
+                className="flex shrink-0 items-center gap-1 font-medium text-white/70 transition-colors hover:text-white"
+              >
+                Explore Hermes <span className="text-sm">→</span>
+              </ShimmerLink>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Machinery Section */}
-      <section className="home-vision home-chapter border-t border-border">
+      <section className="home-chapter border-t border-border" aria-label="Oracle">
         <div className="home-chapter-inner">
-          <p className="home-vision-kicker">The Machinery Underneath</p>
-          <h2 className="home-vision-title">Observation, execution, and public proof.</h2>
-          <p className="home-vision-dek">
-            Making decisions without human bias requires high-density infrastructure. 
-            Solace connects liquidity models, regime detection, execution, and risk management to a cryptographically sealed feedback loop.
-          </p>
-
-          <ol className="home-vision-ladder mt-12">
-            <li>
-              <span className="home-vision-index">01</span>
-              <div>
-                <p className="home-vision-domain">Hermes (Markets)</p>
-                <p>
-                  Reads order flow, volatility, and structure to decide whether to allocate, how much, and when to exit. Every decision is sealed on-chain before the trade executes.
-                </p>
-              </div>
-            </li>
-            <li>
-              <span className="home-vision-index">02</span>
-              <div>
-                <p className="home-vision-domain">Oracle (Belief & Probability)</p>
-                <p>
-                  Writes a probability state before an event resolves and scores it against real-world outcomes. Continuous calibration replaces guesswork.
-                </p>
-              </div>
-            </li>
-            <li>
-              <span className="home-vision-index">03</span>
-              <div>
-                <p className="home-vision-domain">Glorya (Allocation & Need)</p>
-                <p>
-                  Evaluates real world demand and resource paths. It remains inactive until Solace crosses $1M cumulative revenue.
-                </p>
-              </div>
-            </li>
-          </ol>
+          <div className="home-instrument">
+            <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">Oracle</h2>
+            <div className="flex-1">
+              <OracleOrbSection predictions={oraclePredictions} />
+            </div>
+            <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-white/50">
+              <p className="mr-4 max-w-xs text-xs leading-relaxed text-white/60">
+                A prediction system that calculates the odds of future events and tracks how accurate its forecasts turn
+                out to be.
+              </p>
+              <ShimmerLink
+                href="/oracle"
+                tone="ink"
+                className="flex shrink-0 items-center gap-1 font-medium text-white/70 transition-colors hover:text-white"
+              >
+                Explore Oracle <span className="text-sm">→</span>
+              </ShimmerLink>
+            </div>
+          </div>
         </div>
+      </section>
+
+      <section className="home-chapter border-t border-border" aria-label="Horizon">
+        <div className="home-chapter-inner">
+          <p className="home-horizon-line">Markets first.</p>
+          <p className="home-horizon-line">The decisions aren't about markets.</p>
+        </div>
+      </section>
+
+      <section className="home-glorya" aria-label="Glorya">
+        <div className="home-glorya-globe" aria-hidden="true">
+          <GloryaNeedField compact className="home-glorya-field" needs={gloryaEvaluatedNeeds} />
+        </div>
+        <p className="home-glorya-copy home-glorya-line">
+          <Link href="/glorya">Glorya</Link>
+          {' · $0 moved. Does not move money until $1M revenue.'}
+        </p>
       </section>
 
       {/* Footer */}
