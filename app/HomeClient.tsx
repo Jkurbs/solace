@@ -8,6 +8,7 @@ import { ShimmerLink } from '@/components/shimmer-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import { gloryaEvaluatedNeeds } from '@/features/glorya/evaluated-needs';
+import { isStandingDownPosture } from '@/features/hermes-dashboard/decision-language';
 import { useHasGuestSimSession } from '@/features/hermes-dashboard/sim-session-client';
 import type { HermesLedgerRow } from '@/features/hermes-ledger/store';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
@@ -253,51 +254,41 @@ export default function HomeClient({
       {showRecord && <HomeProofSection rows={recentDecisions} sealedDecisions={sealedDecisions} />}
 
       <section className="home-chapter is-ink border-t border-border" aria-label="Hermes">
-        <div className="home-chapter-inner">
-          <div className="home-instrument">
-            <div className="mb-5">
-              <h2 className="text-3xl font-medium tracking-tight text-white md:text-4xl">Hermes</h2>
-              <p className="mt-2 max-w-md text-base leading-relaxed text-white/55">
-                It decides when your money goes to work, and when it waits.
-              </p>
-            </div>
-            <div className="flex min-h-0 flex-1 flex-col">
-              <HermesDashboardPreview decisions={recentDecisions} posture={hermesTelemetry?.posture} />
-            </div>
-            <div className="mt-5 flex items-center justify-end border-t border-white/5 pt-4 text-xs text-white/50">
-              <ShimmerLink
-                href="/hermes"
-                tone="ink"
-                className="flex shrink-0 items-center gap-1 text-sm font-medium text-white/70 transition-colors hover:text-white"
+        <div className="home-chapter-inner is-split">
+          <div className="home-instrument-copy">
+            <h2 className="home-instrument-name">Hermes</h2>
+            <p className="home-instrument-dek">It decides when your money goes to work, and when it waits.</p>
+            {hermesTelemetry ? (
+              <p
+                className={`home-live-mark${isStandingDownPosture(hermesTelemetry.posture) ? '' : ' is-working'}`}
               >
-                Explore Hermes <span>→</span>
-              </ShimmerLink>
-            </div>
+                <i aria-hidden="true" />
+                {isStandingDownPosture(hermesTelemetry.posture) ? 'Waiting' : 'At work'}
+              </p>
+            ) : null}
+            <ShimmerLink href="/hermes" tone="ink" className="home-instrument-link text-sm font-medium text-white/70 hover:text-white">
+              Explore Hermes <span>→</span>
+            </ShimmerLink>
+          </div>
+          <div className="home-instrument-stream">
+            <HermesDashboardPreview decisions={recentDecisions} posture={hermesTelemetry?.posture} />
           </div>
         </div>
       </section>
 
       <section className="home-chapter is-ink border-t border-border" aria-label="Oracle">
-        <div className="home-chapter-inner">
-          <div className="home-instrument">
-            <div className="mb-5">
-              <h2 className="text-3xl font-medium tracking-tight text-white md:text-4xl">Oracle</h2>
-              <p className="mt-2 max-w-md text-base leading-relaxed text-white/55">
-                You see the odds before something happens. Then you see how often it was right.
-              </p>
-            </div>
-            <div className="flex min-h-0 flex-1 flex-col">
-              <OracleOrbSection predictions={oraclePredictions} />
-            </div>
-            <div className="mt-5 flex items-center justify-end border-t border-white/5 pt-4 text-xs text-white/50">
-              <ShimmerLink
-                href="/oracle"
-                tone="ink"
-                className="flex shrink-0 items-center gap-1 text-sm font-medium text-white/70 transition-colors hover:text-white"
-              >
-                Explore Oracle <span>→</span>
-              </ShimmerLink>
-            </div>
+        <div className="home-chapter-inner is-split">
+          <div className="home-instrument-copy">
+            <h2 className="home-instrument-name">Oracle</h2>
+            <p className="home-instrument-dek">
+              You see the odds before something happens. Then you see how often it was right.
+            </p>
+            <ShimmerLink href="/oracle" tone="ink" className="home-instrument-link text-sm font-medium text-white/70 hover:text-white">
+              Explore Oracle <span>→</span>
+            </ShimmerLink>
+          </div>
+          <div className="home-instrument-stream">
+            <OracleOrbSection predictions={oraclePredictions} />
           </div>
         </div>
       </section>

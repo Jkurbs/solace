@@ -15125,10 +15125,125 @@ section h3 {
   flex: 1 1 auto;
   flex-direction: column;
   width: 100%;
-  max-width: 40rem;
+  max-width: 72rem;
   min-height: 0;
   height: 100%;
+  margin: 0 auto;
+}
+
+@media (min-width: 900px) {
+  .home-chapter.is-ink .home-chapter-inner.is-split {
+    display: grid;
+    grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+    gap: 3.5rem 4.5rem;
+    align-items: stretch;
+  }
+}
+
+.home-instrument-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding-bottom: 1.5rem;
+}
+
+@media (min-width: 900px) {
+  .home-instrument-copy {
+    padding-bottom: 0;
+  }
+}
+
+.home-instrument-name {
   margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(2.35rem, 4.2vw, 3.35rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  color: #fafaf9;
+}
+
+.home-instrument-dek {
+  margin: 0.85rem 0 0;
+  max-width: 22rem;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  letter-spacing: -0.015em;
+  color: rgba(245, 245, 244, 0.72);
+}
+
+.home-live-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.15rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: rgba(245, 245, 244, 0.48);
+}
+
+.home-live-mark i {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: #c4b5a0;
+}
+
+.home-live-mark.is-working i {
+  animation: home-live-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes home-live-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-live-mark.is-working i {
+    animation: none;
+  }
+}
+
+.home-instrument-link {
+  margin-top: 1.5rem;
+}
+
+.home-instrument-stream {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.home-instrument-stream::before,
+.home-instrument-stream::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 2.75rem;
+  pointer-events: none;
+}
+
+.home-instrument-stream::before {
+  top: 0;
+  background: linear-gradient(#121214, rgba(18, 18, 20, 0));
+}
+
+.home-instrument-stream::after {
+  bottom: 0;
+  background: linear-gradient(rgba(18, 18, 20, 0), #121214);
 }
 
 .home-instrument {

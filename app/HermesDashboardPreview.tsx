@@ -97,27 +97,21 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
-      <p className="mb-3 text-sm text-white/45">Each line is written down before you know if it was right.</p>
-
       <div ref={listRef} className="relative min-h-0 flex-1 overflow-hidden">
         <AnimatePresence initial={false} mode="popLayout">
           {rows.map((row) => (
             <motion.div
               key={row.key ?? row.id}
               layout="position"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              exit={{ opacity: 0, y: -16 }}
               transition={{ duration: MOTION_S, ease: [0.16, 1, 0.3, 1] }}
-              className="flex items-center gap-4 border-b border-white/10 px-1 py-3"
+              className="grid grid-cols-[4.25rem_minmax(0,1fr)] items-center gap-4 border-b border-white/[0.08] px-1"
               style={{ height: ITEM_HEIGHT }}
             >
-              <div className="min-w-0">
-                <p className={`text-sm font-medium text-white/90 ${row.live ? 'leading-snug' : 'truncate'}`}>
-                  {row.title}
-                </p>
-                <p className="text-xs text-white/40">{row.meta}</p>
-              </div>
+              <p className="text-xs tabular-nums text-white/40">{row.meta}</p>
+              <p className={`truncate text-sm text-white/90 ${row.live ? 'leading-snug' : ''}`}>{row.title}</p>
             </motion.div>
           ))}
         </AnimatePresence>

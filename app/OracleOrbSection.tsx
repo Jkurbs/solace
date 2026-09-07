@@ -59,52 +59,29 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
-      {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <p className="font-mono text-[0.65rem] font-medium uppercase tracking-[0.16em] text-white/50">
-          {sampleBoard ? 'Sample predictions' : 'Latest predictions'}
-        </p>
-      </div>
-
-      {/* Feed container */}
+      {sampleBoard ? (
+        <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-white/40">Sample</p>
+      ) : null}
       <div ref={listRef} className="relative min-h-0 flex-1 overflow-hidden">
         <AnimatePresence initial={false} mode="popLayout">
           {displayed.map(({ prediction, key }) => (
             <motion.div
               key={key}
               layout="position"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              exit={{ opacity: 0, y: -16 }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="flex items-center justify-between gap-4 border-b border-white/10 px-1 py-3"
+              className="grid grid-cols-[4.75rem_minmax(0,1fr)] items-center gap-4 border-b border-white/[0.08] px-1"
               style={{ height: ITEM_HEIGHT }}
             >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-white/90">
-                  {prediction.question}
-                </p>
-                <p className="mt-0.5 flex items-center gap-2 text-xs text-white/40">
-                  {prediction.asset && (
-                    <span
-                      className={`inline-flex rounded px-1 py-0.5 text-[0.6rem] font-medium uppercase tracking-wider ${
-                        prediction.asset === 'btc'
-                          ? 'bg-orange-500/20 text-orange-300'
-                          : 'bg-indigo-500/20 text-indigo-300'
-                      }`}
-                    >
-                      {prediction.asset.toUpperCase()}
-                    </span>
-                  )}
-                  <span>{prediction.illustrative ? 'Sample' : remainingLabel(prediction.resolvesAt)}</span>
-                </p>
-              </div>
-              <div className="shrink-0 text-right">
-                <p className="text-xl font-medium leading-none text-white [font-family:var(--font-display),Georgia,serif]">
-                  {formatProbability(prediction.probability)}
-                </p>
-                <p className="mt-1 font-mono text-[0.6rem] uppercase tracking-wider text-white/40">
-                  probability
+              <p className="font-medium tabular-nums leading-none text-white [font-family:var(--font-display),Georgia,serif] text-[1.65rem]">
+                {formatProbability(prediction.probability)}
+              </p>
+              <div className="min-w-0">
+                <p className="truncate text-sm text-white/80">{prediction.question}</p>
+                <p className="mt-0.5 text-xs text-white/40">
+                  {prediction.illustrative ? 'Sample' : remainingLabel(prediction.resolvesAt)}
                 </p>
               </div>
             </motion.div>
