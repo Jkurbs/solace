@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import type { ActivePrediction } from './oracle/active-predictions';
 
-const ITEM_HEIGHT = 68;
+const ITEM_HEIGHT = 84;
 const MIN_VISIBLE = 5;
 
 type OracleOrbSectionProps = {
@@ -87,8 +87,8 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <p className="font-mono text-[0.6rem] font-medium uppercase tracking-[0.16em] text-white/50">
+      <div className="mb-6 flex items-center justify-between">
+        <p className="font-mono text-sm font-medium uppercase tracking-[0.16em] text-white/50">
           {sampleBoard ? 'Sample predictions' : 'Latest predictions'}
         </p>
       </div>
@@ -108,10 +108,10 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
               style={{ height: ITEM_HEIGHT }}
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-white/90">
+                <p className="truncate text-lg font-medium text-white/90 md:text-xl">
                   {prediction.question}
                 </p>
-                <p className="mt-0.5 flex items-center gap-2 text-xs text-white/40">
+                <p className="mt-0.5 flex items-center gap-2 text-sm text-white/40">
                   {prediction.asset && (
                     <span
                       className={`inline-flex rounded px-1 py-0.5 text-[0.6rem] font-medium uppercase tracking-wider ${
@@ -127,10 +127,10 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
                 </p>
               </div>
               <div className="shrink-0 text-right">
-                <p className="text-lg font-medium leading-none text-white [font-family:var(--font-display),Georgia,serif]">
+                <p className="text-3xl font-medium leading-none text-white [font-family:var(--font-display),Georgia,serif]">
                   {formatProbability(prediction.probability)}
                 </p>
-                <p className="mt-1 font-mono text-[0.6rem] uppercase tracking-wider text-white/40">
+                <p className="mt-1.5 font-mono text-xs uppercase tracking-wider text-white/40">
                   probability
                 </p>
               </div>

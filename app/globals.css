@@ -15123,7 +15123,7 @@ section h3 {
   display: flex;
   flex: 1;
   flex-direction: column;
-  max-width: 48rem;
+  max-width: 56rem;
   margin: 0;
 }
 
@@ -15139,30 +15139,51 @@ section h3 {
   padding: 0;
 }
 
-.home-horizon-line {
+.home-horizon-dek {
   margin: 0;
-  max-width: 14ch;
-  font-size: clamp(2.8rem, 7vw, 5.2rem);
+  max-width: 13em;
+  font-size: clamp(1.85rem, 4.2vw, 3rem);
   font-weight: 500;
-  letter-spacing: -0.035em;
-  line-height: 1.02;
+  letter-spacing: -0.032em;
+  line-height: 1.12;
   text-wrap: balance;
 }
 
-.home-horizon-line + .home-horizon-line {
-  margin-top: 0.2em;
+.home-horizon-dek + .home-horizon-dek {
+  margin-top: 0.45em;
   color: color-mix(in srgb, var(--foreground, #1c1917) 62%, var(--muted, #78716c));
 }
 
 .home-glorya {
-  position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   min-height: 100svh;
   overflow: hidden;
   background: var(--background);
   border-top: 1px solid var(--border, #e7e5e4);
+}
+
+.home-glorya-head {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 4.5rem 1.25rem 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .home-glorya-head {
+    padding: 5.5rem 2rem 1.5rem;
+  }
+}
+
+.home-glorya-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 28rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .home-glorya-globe {
@@ -15183,14 +15204,14 @@ section h3 {
   width: 100%;
   max-width: 72rem;
   margin: 0 auto;
-  padding: 2rem 1.25rem 3.5rem;
+  padding: 1.25rem 1.25rem 2.5rem;
 }
 
 .home-glorya-line {
   margin: 0;
-  max-width: 36rem;
-  font-size: clamp(1.05rem, 1.8vw, 1.25rem);
-  line-height: 1.45;
+  max-width: 40rem;
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  line-height: 1.4;
   letter-spacing: -0.02em;
   color: var(--foreground);
 }

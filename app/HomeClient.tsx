@@ -255,17 +255,17 @@ export default function HomeClient({
       <section className="home-chapter is-ink border-t border-border" aria-label="Hermes">
         <div className="home-chapter-inner">
           <div className="home-instrument">
-            <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">Hermes</h2>
+            <h2 className="mb-4 font-mono text-sm font-medium uppercase tracking-[0.18em] text-white/60">Hermes</h2>
             <div className="min-h-0 flex-1">
               <HermesDashboardPreview decisions={recentDecisions} posture={hermesTelemetry?.posture} />
             </div>
-            <div className="mt-6 flex items-center justify-end border-t border-white/5 pt-4 text-xs text-white/50">
+            <div className="mt-6 flex items-center justify-end border-t border-white/5 pt-5 text-sm text-white/50">
               <ShimmerLink
                 href="/hermes"
                 tone="ink"
-                className="flex shrink-0 items-center gap-1 font-medium text-white/70 transition-colors hover:text-white"
+                className="flex shrink-0 items-center gap-1 text-base font-medium text-white/70 transition-colors hover:text-white"
               >
-                Explore Hermes <span className="text-sm">→</span>
+                Explore Hermes <span>→</span>
               </ShimmerLink>
             </div>
           </div>
@@ -275,42 +275,42 @@ export default function HomeClient({
       <section className="home-chapter is-ink border-t border-border" aria-label="Oracle">
         <div className="home-chapter-inner">
           <div className="home-instrument">
-            <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">Oracle</h2>
+            <h2 className="mb-4 font-mono text-sm font-medium uppercase tracking-[0.18em] text-white/60">Oracle</h2>
             <div className="min-h-0 flex-1">
               <OracleOrbSection predictions={oraclePredictions} />
             </div>
-            <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-white/50">
-              <p className="mr-4 max-w-xs text-xs leading-relaxed text-white/60">
-                A prediction system that calculates the odds of future events and tracks how accurate its forecasts turn
-                out to be.
+            <div className="mt-6 flex items-center justify-between gap-6 border-t border-white/5 pt-5 text-sm text-white/50">
+              <p className="mr-4 max-w-md text-sm leading-relaxed text-white/60">
+                Writes a probability before an event resolves, then scores it against what happened.
               </p>
               <ShimmerLink
                 href="/oracle"
                 tone="ink"
-                className="flex shrink-0 items-center gap-1 font-medium text-white/70 transition-colors hover:text-white"
+                className="flex shrink-0 items-center gap-1 text-base font-medium text-white/70 transition-colors hover:text-white"
               >
-                Explore Oracle <span className="text-sm">→</span>
+                Explore Oracle <span>→</span>
               </ShimmerLink>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="home-chapter border-t border-border" aria-label="Horizon">
-        <div className="home-chapter-inner">
-          <p className="home-horizon-line">Markets first.</p>
-          <p className="home-horizon-line">The decisions aren't about markets.</p>
-        </div>
-      </section>
-
       <section className="home-glorya" aria-label="Glorya">
-        <div className="home-glorya-globe" aria-hidden="true">
-          <GloryaNeedField compact className="home-glorya-field" needs={gloryaEvaluatedNeeds} />
+        <div className="home-glorya-head">
+          <p className="home-horizon-dek">
+            We start with money, because that&apos;s where you can check the decisions fast.
+          </p>
+          <p className="home-horizon-dek">The same kind of decision, later, in other places.</p>
         </div>
-        <p className="home-glorya-copy home-glorya-line">
-          <Link href="/glorya">Glorya</Link>
-          {' · $0 moved. Does not move money until $1M revenue.'}
-        </p>
+        <div className="home-glorya-stage">
+          <div className="home-glorya-globe" aria-hidden="true">
+            <GloryaNeedField compact className="home-glorya-field" needs={gloryaEvaluatedNeeds} />
+          </div>
+          <p className="home-glorya-copy home-glorya-line">
+            <Link href="/glorya">Glorya</Link>
+            {' · $0 moved. Does not move money until $1M revenue.'}
+          </p>
+        </div>
       </section>
 
       {/* Footer */}
