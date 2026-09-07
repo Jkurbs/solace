@@ -267,7 +267,7 @@ export default function HomeClient({
               </p>
             ) : null}
             <ShimmerLink href="/hermes" tone="ink" className="home-instrument-link text-sm font-medium text-white/70 hover:text-white">
-              Explore Hermes <span>→</span>
+              Explore Hermes <span> →</span>
             </ShimmerLink>
           </div>
           <div className="home-instrument-stream">
@@ -284,7 +284,7 @@ export default function HomeClient({
               You see the odds before something happens. Then you see how often it was right.
             </p>
             <ShimmerLink href="/oracle" tone="ink" className="home-instrument-link text-sm font-medium text-white/70 hover:text-white">
-              Explore Oracle <span>→</span>
+              Explore Oracle <span> →</span>
             </ShimmerLink>
           </div>
           <div className="home-instrument-stream">
