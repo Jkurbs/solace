@@ -306,10 +306,10 @@ export default function HomeClient({
           <div className="home-glorya-globe" aria-hidden="true">
             <GloryaNeedField compact className="home-glorya-field" needs={gloryaEvaluatedNeeds} />
           </div>
-          <p className="home-glorya-copy home-glorya-line">
+          {/* <p className="home-glorya-copy home-glorya-line">
             <Link href="/glorya">Glorya</Link>
             {' · $0 moved. Does not move money until $1M revenue.'}
-          </p>
+          </p> */}
         </div>
       </section>
 
