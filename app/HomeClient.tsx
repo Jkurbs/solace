@@ -258,7 +258,7 @@ export default function HomeClient({
             <div className="mb-5">
               <h2 className="text-3xl font-medium tracking-tight text-white md:text-4xl">Hermes</h2>
               <p className="mt-2 max-w-md text-base leading-relaxed text-white/55">
-                Decides when to put money to work, and when to wait.
+                It decides when your money goes to work, and when it waits.
               </p>
             </div>
             <div className="flex min-h-0 flex-1 flex-col">
@@ -283,7 +283,7 @@ export default function HomeClient({
             <div className="mb-5">
               <h2 className="text-3xl font-medium tracking-tight text-white md:text-4xl">Oracle</h2>
               <p className="mt-2 max-w-md text-base leading-relaxed text-white/55">
-                Writes a probability before an event resolves, then scores it against what happened.
+                You see the odds before something happens. Then you see how often it was right.
               </p>
             </div>
             <div className="flex min-h-0 flex-1 flex-col">
