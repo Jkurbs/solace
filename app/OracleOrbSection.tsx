@@ -1,13 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+
+import { useFitSlots } from './use-fit-slots';
 
 import type { ActivePrediction } from './oracle/active-predictions';
 
 const ITEM_HEIGHT = 64;
-const MIN_VISIBLE = 3;
+const CYCLE_MS = 2400;
 
 type OracleOrbSectionProps = {
   predictions: ActivePrediction[];
@@ -32,60 +33,29 @@ function remainingLabel(iso: string) {
 }
 
 export default function OracleOrbSection({ predictions }: OracleOrbSectionProps) {
-  const [displayed, setDisplayed] = useState<ActivePrediction[]>([]);
-  const [started, setStarted] = useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
-  const [visibleCount, setVisibleCount] = useState(MIN_VISIBLE);
+  const { ref: listRef, slots } = useFitSlots(ITEM_HEIGHT, 3);
+  const [offset, setOffset] = useState(0);
   const sampleBoard = predictions.length > 0 && predictions.every((prediction) => prediction.illustrative);
 
   useEffect(() => {
-    const el = listRef.current;
-    if (!el) return undefined;
+    if (predictions.length < 2 || slots < 1) {
+      return undefined;
+    }
 
-    const update = () => {
-      setVisibleCount(Math.max(MIN_VISIBLE, Math.floor(el.clientHeight / ITEM_HEIGHT)));
-    };
+    const cycle = window.setInterval(() => {
+      setOffset((current) => current + 1);
+    }, CYCLE_MS);
 
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+    return () => window.clearInterval(cycle);
+  }, [predictions.length, slots]);
 
-  const windowSlots =
-    predictions.length <= 1 ? predictions.length : Math.min(visibleCount, predictions.length - 1);
-
-  useEffect(() => {
-    if (predictions.length === 0) return undefined;
-    const initialCount = Math.min(windowSlots, predictions.length);
-    let step = 0;
-    const timer = setInterval(() => {
-      step += 1;
-      setDisplayed(predictions.slice(0, Math.min(step, initialCount)));
-      if (step >= initialCount) {
-        clearInterval(timer);
-        setStarted(true);
-      }
-    }, 550);
-    return () => clearInterval(timer);
-  }, [predictions, windowSlots]);
-
-  useEffect(() => {
-    if (!started || predictions.length <= windowSlots) return undefined;
-    const cycle = setInterval(() => {
-      setDisplayed((current) => {
-        if (current.length === 0) return current;
-        const next = [...current];
-        next.shift();
-        const lastId = current[current.length - 1]?.id;
-        const lastIndex = predictions.findIndex((p) => p.id === lastId);
-        const nextIndex = (lastIndex + 1) % predictions.length;
-        next.push(predictions[nextIndex]);
-        return next;
-      });
-    }, 2400);
-    return () => clearInterval(cycle);
-  }, [started, predictions, windowSlots]);
+  const displayed =
+    predictions.length === 0 || slots < 1
+      ? []
+      : Array.from({ length: slots }, (_, index) => {
+          const prediction = predictions[(offset + index) % predictions.length];
+          return { prediction, key: `${prediction.id}:${offset + index}` };
+        });
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -99,9 +69,9 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
       {/* Feed container */}
       <div ref={listRef} className="relative min-h-0 flex-1 overflow-hidden">
         <AnimatePresence initial={false} mode="popLayout">
-          {displayed.map((prediction) => (
+          {displayed.map(({ prediction, key }) => (
             <motion.div
-              key={prediction.id}
+              key={key}
               layout="position"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

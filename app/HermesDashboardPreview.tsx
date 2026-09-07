@@ -1,7 +1,9 @@
 'use client';
 
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+import { useFitSlots } from './use-fit-slots';
 
 import {
   decisionTitle,
@@ -19,6 +21,7 @@ type HermesDashboardPreviewProps = {
 
 type StreamRow = {
   id: string;
+  key?: string;
   kind: DecisionKind;
   live?: boolean;
   meta: string;
@@ -26,8 +29,6 @@ type StreamRow = {
 };
 
 const ITEM_HEIGHT = 56;
-const MIN_VISIBLE = 4;
-const REVEAL_MS = 280;
 const CYCLE_MS = 1300;
 const MOTION_S = 0.22;
 
@@ -56,80 +57,25 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
   const reduceMotion = useReducedMotion();
   const waiting = isStandingDownPosture(posture);
   const copy = waitingCopy();
-  const listRef = useRef<HTMLDivElement>(null);
-  const [visibleCount, setVisibleCount] = useState(MIN_VISIBLE);
+  const { ref: listRef, slots } = useFitSlots(ITEM_HEIGHT);
   const stream = useMemo(
     () => decisions.filter((row) => row.rowClass !== 'system').map(toStreamRow),
     [decisions],
   );
-  const historySlots =
-    stream.length <= 1
-      ? stream.length
-      : Math.min(waiting ? Math.max(1, visibleCount - 1) : visibleCount, stream.length - 1);
+  const historySlots = waiting ? Math.max(0, slots - 1) : slots;
+  const [offset, setOffset] = useState(0);
 
   useEffect(() => {
-    const el = listRef.current;
-    if (!el) return undefined;
-
-    const update = () => {
-      setVisibleCount(Math.max(MIN_VISIBLE, Math.floor(el.clientHeight / ITEM_HEIGHT)));
-    };
-
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-  const [displayed, setDisplayed] = useState<StreamRow[]>([]);
-  const [started, setStarted] = useState(false);
-
-  useEffect(() => {
-    const initialCount = Math.min(historySlots, stream.length);
-
-    if (reduceMotion || initialCount === 0) {
-      setDisplayed(stream.slice(0, initialCount));
-      setStarted(stream.length > initialCount);
-      return undefined;
-    }
-
-    setDisplayed([]);
-    setStarted(false);
-    let step = 0;
-    const timer = window.setInterval(() => {
-      step += 1;
-      setDisplayed(stream.slice(0, Math.min(step, initialCount)));
-      if (step >= initialCount) {
-        window.clearInterval(timer);
-        setStarted(true);
-      }
-    }, REVEAL_MS);
-
-    return () => window.clearInterval(timer);
-  }, [historySlots, reduceMotion, stream]);
-
-  useEffect(() => {
-    if (reduceMotion || !started || stream.length <= historySlots) {
+    if (reduceMotion || stream.length < 2 || historySlots < 1) {
       return undefined;
     }
 
     const cycle = window.setInterval(() => {
-      setDisplayed((current) => {
-        if (current.length === 0) {
-          return current;
-        }
-
-        const next = [...current];
-        next.shift();
-        const lastId = current[current.length - 1]?.id;
-        const lastIndex = stream.findIndex((row) => row.id === lastId);
-        const nextIndex = (lastIndex + 1) % stream.length;
-        next.push(stream[nextIndex]);
-        return next;
-      });
+      setOffset((current) => current + 1);
     }, CYCLE_MS);
 
     return () => window.clearInterval(cycle);
-  }, [historySlots, reduceMotion, started, stream]);
+  }, [historySlots, reduceMotion, stream.length]);
 
   const waitingRow: StreamRow | null = waiting
     ? {
@@ -140,7 +86,14 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
         title: copy.liveWaiting,
       }
     : null;
-  const rows = waitingRow ? [waitingRow, ...displayed] : displayed;
+  const historyRows =
+    stream.length === 0 || historySlots < 1
+      ? []
+      : Array.from({ length: historySlots }, (_, index) => {
+          const row = stream[(offset + index) % stream.length];
+          return { ...row, key: `${row.id}:${offset + index}` };
+        });
+  const rows = waitingRow ? [waitingRow, ...historyRows] : historyRows;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -155,7 +108,7 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
         <AnimatePresence initial={false} mode="popLayout">
           {rows.map((row) => (
             <motion.div
-              key={row.id}
+              key={row.key ?? row.id}
               layout="position"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
