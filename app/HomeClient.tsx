@@ -260,12 +260,9 @@ export default function HomeClient({
                 Hermes
               </h3>
               <div className="flex-1">
-                <HermesDashboardPreview decisions={recentDecisions} />
+                <HermesDashboardPreview decisions={recentDecisions} posture={hermesTelemetry?.posture} />
               </div>
-              <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-white/50">
-                <p className="mr-4 max-w-xs text-xs leading-relaxed text-white/60">
-                  An automated system that reads global market trends and manages investments directly on your behalf.
-                </p>
+              <div className="mt-6 flex items-center justify-end border-t border-white/5 pt-4 text-xs text-white/50">
                 <ShimmerLink
                   href="/hermes"
                   tone="ink"
