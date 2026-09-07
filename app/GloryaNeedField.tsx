@@ -12,6 +12,8 @@ import { THEME_CHANGE_EVENT, readSiteTheme, type SiteTheme } from '@/lib/theme';
 type GloryaNeedFieldProps = {
   needs: GloryaEvaluatedNeed[];
   compact?: boolean;
+  /** Cycle highlights and travel beads — homepage activity, not a toy. */
+  cycle?: boolean;
   className?: string;
 };
 
@@ -58,7 +60,12 @@ function makeCircleTexture() {
   return tex;
 }
 
-export default function GloryaNeedField({ needs, compact = false, className = '' }: GloryaNeedFieldProps) {
+export default function GloryaNeedField({
+  needs,
+  compact = false,
+  cycle = false,
+  className = '',
+}: GloryaNeedFieldProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -234,6 +241,7 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
 
       const arcMats: THREE.LineBasicMaterial[] = [];
       const arcGeos: THREE.BufferGeometry[] = [];
+      const travelers: Array<{ mesh: THREE.Mesh; pts: THREE.Vector3[]; phase: number; speed: number }> = [];
       // Arcs read as evaluation paths between needs — keep them in compact
       // portraits so the home card shows “decisions,” not only a static globe.
       if (needsRef.current.length >= 2) {
@@ -253,12 +261,32 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
           const mat = new THREE.LineBasicMaterial({
             color: hex,
             transparent: true,
-            opacity: compact ? 0.32 : 0.26,
+            opacity: cycle ? 0.42 : compact ? 0.32 : 0.26,
             depthWrite: false,
           });
           arcMats.push(mat);
           arcGeos.push(geo);
           root.add(new THREE.Line(geo, mat));
+
+          if (cycle) {
+            const bead = new THREE.Mesh(
+              new THREE.SphereGeometry(0.018, 10, 10),
+              new THREE.MeshBasicMaterial({
+                color: hex,
+                transparent: true,
+                opacity: 0.95,
+                depthWrite: false,
+              }),
+            );
+            bead.position.copy(curvePts[0]);
+            root.add(bead);
+            travelers.push({
+              mesh: bead,
+              pts: curvePts,
+              phase: Math.random(),
+              speed: 0.08 + Math.random() * 0.05,
+            });
+          }
         }
       }
 
@@ -273,11 +301,14 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
       let lastY = 0;
       let velX = 0;
       let velY = 0;
-      let autoSpin = reducedMotion ? 0 : 0.085;
+      let autoSpin = reducedMotion ? 0 : cycle ? 0.14 : 0.085;
       const targetRot = { x: 0.12, y: -0.55 };
       root.rotation.x = targetRot.x;
       root.rotation.y = targetRot.y;
       let hoverId: string | null = null;
+      let cycleIndex = 0;
+      let lastCycleAt = performance.now();
+      const cycleMs = 3400;
 
       const canRun = () => inView && pageVisible && !isWebglPaused() && !reducedMotion;
 
@@ -292,7 +323,7 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
       const setHover = (id: string | null) => {
         if (hoverId === id) return;
         hoverId = id;
-        if (!compact) setActiveId(id);
+        if (!compact || cycle) setActiveId(id);
         for (const marker of markers) {
           const on = marker.need.id === id;
           (marker.core.material as THREE.MeshBasicMaterial).opacity = on ? 1 : 0.95;
@@ -318,6 +349,10 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
         const found = markers.find((m) => m.core === obj || m.halo === obj);
         setHover(found?.need.id ?? null);
       };
+
+      if (cycle && markers[0] && !reducedMotion) {
+        setHover(markers[0].need.id);
+      }
 
       const onPointerDown = (event: PointerEvent) => {
         if (event.button !== 0) return;
@@ -391,13 +426,37 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
         root.rotation.x += (targetRot.x - root.rotation.x) * 0.1;
         root.rotation.y += (targetRot.y - root.rotation.y) * 0.1;
 
-        const t = performance.now() / 1000;
+        const now = performance.now();
+        const t = now / 1000;
+
+        if (cycle && markers.length && !reducedMotion && now - lastCycleAt > cycleMs) {
+          lastCycleAt = now;
+          cycleIndex = (cycleIndex + 1) % markers.length;
+          const next = markers[cycleIndex];
+          if (next) {
+            setHover(next.need.id);
+            setActiveId(next.need.id);
+          }
+        }
+
         for (const marker of markers) {
           if (marker.need.id === hoverId) continue;
-          const pulse = 1 + Math.sin(t * 1.8 + marker.need.needScore * 5) * 0.06;
+          const pulse = 1 + Math.sin(t * 1.8 + marker.need.needScore * 5) * (cycle ? 0.1 : 0.06);
           marker.halo.scale.setScalar(pulse);
         }
-        landMat.opacity = 0.84 + Math.sin(t * 0.3) * 0.03;
+
+        for (const traveler of travelers) {
+          traveler.phase = (traveler.phase + traveler.speed * 0.016) % 1;
+          const span = traveler.pts.length - 1;
+          const f = traveler.phase * span;
+          const i = Math.min(span - 1, Math.floor(f));
+          const local = f - i;
+          const a = traveler.pts[i];
+          const b = traveler.pts[i + 1];
+          if (a && b) {
+            traveler.mesh.position.lerpVectors(a, b, local);
+          }
+        }
 
         renderer.render(scene, camera);
         frameId = requestAnimationFrame(animate);
@@ -472,6 +531,10 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
           marker.halo.geometry.dispose();
           (marker.halo.material as THREE.Material).dispose();
         }
+        for (const traveler of travelers) {
+          traveler.mesh.geometry.dispose();
+          (traveler.mesh.material as THREE.Material).dispose();
+        }
         for (const geo of arcGeos) geo.dispose();
         for (const mat of arcMats) mat.dispose();
         renderer.dispose();
@@ -485,7 +548,7 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
       disposed = true;
       cleanupScene?.();
     };
-  }, [compact]);
+  }, [compact, cycle]);
 
   const active = needs.find((n) => n.id === activeId) ?? null;
 
@@ -493,18 +556,24 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
     <div className={`glorya-field ${compact ? 'is-compact' : 'is-full'} ${className}`.trim()}>
       <div ref={mountRef} className="glorya-field-mount" />
       {loadError ? <p className="glorya-field-error">{loadError}</p> : null}
-      {!compact ? (
-        <div className={`glorya-field-readout ${active ? 'is-active' : ''}`} aria-live="polite">
+      {!compact || cycle ? (
+        <div className={`glorya-field-readout ${active ? 'is-active' : ''} ${cycle ? 'is-cycle' : ''}`} aria-live="polite">
           {active ? (
             <>
               <strong>{gloryaPlaceLabel(active)}</strong>
-              <span>
-                {active.focus} · need {active.needScore.toFixed(2)} ·{' '}
-                {active.status === 'standing_down' ? 'Standing down' : 'Evaluated'}
-              </span>
-              <em>{active.note}</em>
+              {cycle ? (
+                <em>{active.status === 'standing_down' ? 'Standing down' : 'Evaluated'}</em>
+              ) : (
+                <>
+                  <span>
+                    {active.focus} · need {active.needScore.toFixed(2)} ·{' '}
+                    {active.status === 'standing_down' ? 'Standing down' : 'Evaluated'}
+                  </span>
+                  <em>{active.note}</em>
+                </>
+              )}
             </>
-          ) : (
+          ) : compact ? null : (
             <>
               <strong>City markers</strong>
               <span>Hover for place · need · status</span>

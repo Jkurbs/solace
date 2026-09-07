@@ -97,12 +97,7 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
-      <div className="mb-4">
-        <p className="text-lg font-medium tracking-tight text-white/90">Hermes is deciding.</p>
-        <p className="mt-1 max-w-md text-sm leading-relaxed text-white/50">
-          Each line is written down before anyone knows if it was right.
-        </p>
-      </div>
+      <p className="mb-3 text-sm text-white/45">Each line is written down before anyone knows if it was right.</p>
 
       <div ref={listRef} className="relative min-h-0 flex-1 overflow-hidden">
         <AnimatePresence initial={false} mode="popLayout">

@@ -15232,6 +15232,25 @@ section h3 {
   text-decoration-color: color-mix(in srgb, currentColor 70%, transparent);
 }
 
+.home-glorya .glorya-field-readout.is-cycle {
+  left: max(1.25rem, calc((100% - 72rem) / 2 + 1.25rem));
+  right: auto;
+  bottom: 1.5rem;
+  width: min(20rem, calc(100% - 2.5rem));
+  border-color: color-mix(in srgb, var(--foreground) 14%, transparent);
+  background: color-mix(in srgb, var(--background) 82%, transparent);
+  color: var(--muted);
+  box-shadow: none;
+}
+
+.home-glorya .glorya-field-readout.is-cycle strong {
+  color: var(--foreground);
+}
+
+.home-glorya .glorya-field-readout.is-cycle em {
+  color: var(--muted);
+}
+
 /* Instrument rows */
 .group:hover .font-serif {
   opacity: 0.7;

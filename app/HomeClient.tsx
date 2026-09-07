@@ -255,7 +255,12 @@ export default function HomeClient({
       <section className="home-chapter is-ink border-t border-border" aria-label="Hermes">
         <div className="home-chapter-inner">
           <div className="home-instrument">
-            <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">Hermes</h2>
+            <div className="mb-5">
+              <h2 className="text-3xl font-medium tracking-tight text-white md:text-4xl">Hermes</h2>
+              <p className="mt-2 max-w-md text-base leading-relaxed text-white/55">
+                Decides when to put money to work, and when to wait.
+              </p>
+            </div>
             <div className="flex min-h-0 flex-1 flex-col">
               <HermesDashboardPreview decisions={recentDecisions} posture={hermesTelemetry?.posture} />
             </div>
@@ -275,14 +280,16 @@ export default function HomeClient({
       <section className="home-chapter is-ink border-t border-border" aria-label="Oracle">
         <div className="home-chapter-inner">
           <div className="home-instrument">
-            <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">Oracle</h2>
+            <div className="mb-5">
+              <h2 className="text-3xl font-medium tracking-tight text-white md:text-4xl">Oracle</h2>
+              <p className="mt-2 max-w-md text-base leading-relaxed text-white/55">
+                Writes a probability before an event resolves, then scores it against what happened.
+              </p>
+            </div>
             <div className="flex min-h-0 flex-1 flex-col">
               <OracleOrbSection predictions={oraclePredictions} />
             </div>
-            <div className="mt-5 flex items-center justify-between gap-6 border-t border-white/5 pt-4 text-xs text-white/50">
-              <p className="mr-4 max-w-md text-xs leading-relaxed text-white/60">
-                Writes a probability before an event resolves, then scores it against what happened.
-              </p>
+            <div className="mt-5 flex items-center justify-end border-t border-white/5 pt-4 text-xs text-white/50">
               <ShimmerLink
                 href="/oracle"
                 tone="ink"
@@ -304,7 +311,7 @@ export default function HomeClient({
         </div>
         <div className="home-glorya-stage">
           <div className="home-glorya-globe" aria-hidden="true">
-            <GloryaNeedField compact className="home-glorya-field" needs={gloryaEvaluatedNeeds} />
+            <GloryaNeedField compact cycle className="home-glorya-field" needs={gloryaEvaluatedNeeds} />
           </div>
           {/* <p className="home-glorya-copy home-glorya-line">
             <Link href="/glorya">Glorya</Link>
