@@ -25,8 +25,8 @@ type StreamRow = {
   title: string;
 };
 
-const ITEM_HEIGHT = 72;
-const MIN_VISIBLE = 6;
+const ITEM_HEIGHT = 56;
+const MIN_VISIBLE = 4;
 const REVEAL_MS = 280;
 const CYCLE_MS = 1300;
 const MOTION_S = 0.22;
@@ -141,9 +141,9 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="mb-6">
-        <p className="text-2xl font-medium tracking-tight text-white/90 md:text-3xl">Hermes is deciding.</p>
-        <p className="mt-2 max-w-lg text-base leading-relaxed text-white/50">
+      <div className="mb-4">
+        <p className="text-lg font-medium tracking-tight text-white/90">Hermes is deciding.</p>
+        <p className="mt-1 max-w-md text-sm leading-relaxed text-white/50">
           Each line is written down before anyone knows if it was right.
         </p>
       </div>
@@ -162,10 +162,10 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
               style={{ height: ITEM_HEIGHT }}
             >
               <div className="min-w-0">
-                <p className={`text-lg font-medium text-white/90 md:text-xl ${row.live ? 'leading-snug' : 'truncate'}`}>
+                <p className={`text-sm font-medium text-white/90 ${row.live ? 'leading-snug' : 'truncate'}`}>
                   {row.title}
                 </p>
-                <p className="text-sm text-white/40">{row.meta}</p>
+                <p className="text-xs text-white/40">{row.meta}</p>
               </div>
             </motion.div>
           ))}

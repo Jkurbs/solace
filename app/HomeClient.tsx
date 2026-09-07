@@ -199,7 +199,7 @@ export default function HomeClient({
           initial={heroInitial}
           animate="show"
           variants={stagger}
-          className="hero-particle-layout relative z-10 mx-auto flex min-h-[calc(100svh-4rem)] max-w-6xl flex-col items-center justify-center px-5 py-28 md:py-36"
+          className="hero-particle-layout relative z-10 mx-auto flex min-h-[70vh] max-w-6xl flex-col items-center justify-center px-5 py-20 md:min-h-[75vh] md:py-28"
         >
           <div className="hero-particle-copy home-hero-copy flex w-full max-w-3xl flex-col items-center text-center">
             {/* Title */}
@@ -255,15 +255,15 @@ export default function HomeClient({
       <section className="home-chapter is-ink border-t border-border" aria-label="Hermes">
         <div className="home-chapter-inner">
           <div className="home-instrument">
-            <h2 className="mb-4 font-mono text-sm font-medium uppercase tracking-[0.18em] text-white/60">Hermes</h2>
+            <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">Hermes</h2>
             <div className="min-h-0 flex-1">
               <HermesDashboardPreview decisions={recentDecisions} posture={hermesTelemetry?.posture} />
             </div>
-            <div className="mt-6 flex items-center justify-end border-t border-white/5 pt-5 text-sm text-white/50">
+            <div className="mt-5 flex items-center justify-end border-t border-white/5 pt-4 text-xs text-white/50">
               <ShimmerLink
                 href="/hermes"
                 tone="ink"
-                className="flex shrink-0 items-center gap-1 text-base font-medium text-white/70 transition-colors hover:text-white"
+                className="flex shrink-0 items-center gap-1 text-sm font-medium text-white/70 transition-colors hover:text-white"
               >
                 Explore Hermes <span>→</span>
               </ShimmerLink>
@@ -275,18 +275,18 @@ export default function HomeClient({
       <section className="home-chapter is-ink border-t border-border" aria-label="Oracle">
         <div className="home-chapter-inner">
           <div className="home-instrument">
-            <h2 className="mb-4 font-mono text-sm font-medium uppercase tracking-[0.18em] text-white/60">Oracle</h2>
+            <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">Oracle</h2>
             <div className="min-h-0 flex-1">
               <OracleOrbSection predictions={oraclePredictions} />
             </div>
-            <div className="mt-6 flex items-center justify-between gap-6 border-t border-white/5 pt-5 text-sm text-white/50">
-              <p className="mr-4 max-w-md text-sm leading-relaxed text-white/60">
+            <div className="mt-5 flex items-center justify-between gap-6 border-t border-white/5 pt-4 text-xs text-white/50">
+              <p className="mr-4 max-w-md text-xs leading-relaxed text-white/60">
                 Writes a probability before an event resolves, then scores it against what happened.
               </p>
               <ShimmerLink
                 href="/oracle"
                 tone="ink"
-                className="flex shrink-0 items-center gap-1 text-base font-medium text-white/70 transition-colors hover:text-white"
+                className="flex shrink-0 items-center gap-1 text-sm font-medium text-white/70 transition-colors hover:text-white"
               >
                 Explore Oracle <span>→</span>
               </ShimmerLink>
@@ -314,7 +314,7 @@ export default function HomeClient({
       </section>
 
       {/* Footer */}
-      <section className="border-t border-border px-5 py-24 md:py-32">
+      <section className="border-t border-border px-5 py-16 md:py-20">
         <div className="mx-auto max-w-6xl">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
             Solace is built by <span className="text-foreground">Kerby Jean</span>.
