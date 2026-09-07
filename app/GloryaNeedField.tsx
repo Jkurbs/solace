@@ -206,6 +206,7 @@ export default function GloryaNeedField({
         need: GloryaEvaluatedNeed;
         core: THREE.Mesh;
         halo: THREE.Mesh;
+        focus: number;
       };
       const markers: Marker[] = [];
       const markerRoots: THREE.Object3D[] = [];
@@ -235,7 +236,7 @@ export default function GloryaNeedField({
 
         root.add(halo);
         root.add(core);
-        markers.push({ need, core, halo });
+        markers.push({ need, core, halo, focus: 0 });
         markerRoots.push(core, halo);
       });
 
@@ -256,7 +257,7 @@ export default function GloryaNeedField({
           if (!a || !b) continue;
           const pa = latLonToVector3(a.lat, a.lon, radius);
           const pb = latLonToVector3(b.lat, b.lon, radius);
-          const curvePts = greatCirclePoints(pa, pb, compact ? 48 : 64, 0.12 + Math.abs(a.lat - b.lat) * 0.0015);
+          const curvePts = greatCirclePoints(pa, pb, cycle ? 96 : compact ? 48 : 64, 0.12 + Math.abs(a.lat - b.lat) * 0.0015);
           const geo = new THREE.BufferGeometry().setFromPoints(curvePts);
           const mat = new THREE.LineBasicMaterial({
             color: hex,
@@ -284,7 +285,7 @@ export default function GloryaNeedField({
               mesh: bead,
               pts: curvePts,
               phase: Math.random(),
-              speed: 0.08 + Math.random() * 0.05,
+              speed: 0.045 + Math.random() * 0.025,
             });
           }
         }
@@ -301,14 +302,15 @@ export default function GloryaNeedField({
       let lastY = 0;
       let velX = 0;
       let velY = 0;
-      let autoSpin = reducedMotion ? 0 : cycle ? 0.14 : 0.085;
+      let autoSpin = reducedMotion ? 0 : cycle ? 0.055 : 0.085;
       const targetRot = { x: 0.12, y: -0.55 };
       root.rotation.x = targetRot.x;
       root.rotation.y = targetRot.y;
       let hoverId: string | null = null;
       let cycleIndex = 0;
       let lastCycleAt = performance.now();
-      const cycleMs = 3400;
+      const cycleMs = 5200;
+      let lastFrameAt = performance.now();
 
       const canRun = () => inView && pageVisible && !isWebglPaused() && !reducedMotion;
 
@@ -324,14 +326,6 @@ export default function GloryaNeedField({
         if (hoverId === id) return;
         hoverId = id;
         if (!compact || cycle) setActiveId(id);
-        for (const marker of markers) {
-          const on = marker.need.id === id;
-          (marker.core.material as THREE.MeshBasicMaterial).opacity = on ? 1 : 0.95;
-          (marker.halo.material as THREE.MeshBasicMaterial).opacity = on ? 0.32 : 0.15;
-          const s = on ? 1.55 : 1;
-          marker.core.scale.setScalar(s);
-          marker.halo.scale.setScalar(on ? 1.7 : 1);
-        }
       };
 
       const pick = (clientX: number, clientY: number) => {
@@ -412,21 +406,25 @@ export default function GloryaNeedField({
           return;
         }
 
+        const now = performance.now();
+        const dt = Math.min(0.05, (now - lastFrameAt) / 1000);
+        lastFrameAt = now;
+        const damp = (k: number) => 1 - Math.exp(-k * dt);
+
         if (!dragging) {
-          targetRot.y += autoSpin * 0.016;
+          targetRot.y += autoSpin * dt;
           targetRot.y += velX;
           targetRot.x = Math.max(-0.55, Math.min(0.55, targetRot.x + velY));
-          velX *= 0.935;
-          velY *= 0.935;
+          velX *= Math.exp(-4.2 * dt);
+          velY *= Math.exp(-4.2 * dt);
           if (Math.abs(velX) + Math.abs(velY) < 0.00012 && autoSpin === 0 && !reducedMotion) {
-            autoSpin = 0.07;
+            autoSpin = cycle ? 0.05 : 0.07;
           }
         }
 
-        root.rotation.x += (targetRot.x - root.rotation.x) * 0.1;
-        root.rotation.y += (targetRot.y - root.rotation.y) * 0.1;
+        root.rotation.x += (targetRot.x - root.rotation.x) * damp(7);
+        root.rotation.y += (targetRot.y - root.rotation.y) * damp(7);
 
-        const now = performance.now();
         const t = now / 1000;
 
         if (cycle && markers.length && !reducedMotion && now - lastCycleAt > cycleMs) {
@@ -435,18 +433,21 @@ export default function GloryaNeedField({
           const next = markers[cycleIndex];
           if (next) {
             setHover(next.need.id);
-            setActiveId(next.need.id);
           }
         }
 
         for (const marker of markers) {
-          if (marker.need.id === hoverId) continue;
-          const pulse = 1 + Math.sin(t * 1.8 + marker.need.needScore * 5) * (cycle ? 0.1 : 0.06);
-          marker.halo.scale.setScalar(pulse);
+          const target = marker.need.id === hoverId ? 1 : 0;
+          marker.focus += (target - marker.focus) * damp(3.2);
+          const breathe = 1 + Math.sin(t * 1.15 + marker.need.needScore * 5) * (0.04 + marker.focus * 0.05);
+          marker.core.scale.setScalar((1 + marker.focus * 0.42) * (0.98 + marker.focus * 0.04));
+          marker.halo.scale.setScalar((1 + marker.focus * 0.55) * breathe);
+          (marker.core.material as THREE.MeshBasicMaterial).opacity = 0.82 + marker.focus * 0.18;
+          (marker.halo.material as THREE.MeshBasicMaterial).opacity = 0.1 + marker.focus * 0.22;
         }
 
         for (const traveler of travelers) {
-          traveler.phase = (traveler.phase + traveler.speed * 0.016) % 1;
+          traveler.phase = (traveler.phase + traveler.speed * dt) % 1;
           const span = traveler.pts.length - 1;
           const f = traveler.phase * span;
           const i = Math.min(span - 1, Math.floor(f));
@@ -456,6 +457,9 @@ export default function GloryaNeedField({
           if (a && b) {
             traveler.mesh.position.lerpVectors(a, b, local);
           }
+          const fade = Math.sin(traveler.phase * Math.PI);
+          (traveler.mesh.material as THREE.MeshBasicMaterial).opacity = 0.15 + fade * 0.8;
+          traveler.mesh.scale.setScalar(0.75 + fade * 0.45);
         }
 
         renderer.render(scene, camera);
