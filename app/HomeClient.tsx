@@ -199,7 +199,7 @@ export default function HomeClient({
           initial={heroInitial}
           animate="show"
           variants={stagger}
-          className="hero-particle-layout relative z-10 mx-auto flex min-h-[70vh] max-w-6xl flex-col items-center justify-center px-5 py-20 md:min-h-[75vh] md:py-28"
+          className="hero-particle-layout relative z-10 mx-auto flex min-h-[calc(100svh-4rem)] max-w-6xl flex-col items-center justify-center px-5 py-28 md:py-36"
         >
           <div className="hero-particle-copy home-hero-copy flex w-full max-w-3xl flex-col items-center text-center">
             {/* Title */}
@@ -314,7 +314,7 @@ export default function HomeClient({
       </section>
 
       {/* Footer */}
-      <section className="border-t border-border px-5 py-16 md:py-20">
+      <section className="border-t border-border px-5 py-24 md:py-32">
         <div className="mx-auto max-w-6xl">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
             Solace is built by <span className="text-foreground">Kerby Jean</span>.

@@ -111,7 +111,7 @@ export default async function Home() {
       HOME_FETCH_BUDGET_MS,
       { anchors: [], head: null, count: 0, verified: false, breaks: [] },
     ),
-    withTimeout(getRecentHermesLedgerRows(5).catch(() => []), HOME_FETCH_BUDGET_MS, []),
+    withTimeout(getRecentHermesLedgerRows(24).catch(() => []), HOME_FETCH_BUDGET_MS, []),
     withTimeout(
       fetchKalshiBtcEthPredictions(5).catch(() => ({ active: [], activeCount: 0, asOf: new Date().toISOString() })),
       HOME_FETCH_BUDGET_MS,

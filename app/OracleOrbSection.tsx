@@ -52,9 +52,12 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
     return () => observer.disconnect();
   }, []);
 
+  const windowSlots =
+    predictions.length <= 1 ? predictions.length : Math.min(visibleCount, predictions.length - 1);
+
   useEffect(() => {
     if (predictions.length === 0) return undefined;
-    const initialCount = Math.min(visibleCount, predictions.length);
+    const initialCount = Math.min(windowSlots, predictions.length);
     let step = 0;
     const timer = setInterval(() => {
       step += 1;
@@ -65,10 +68,10 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
       }
     }, 550);
     return () => clearInterval(timer);
-  }, [predictions, visibleCount]);
+  }, [predictions, windowSlots]);
 
   useEffect(() => {
-    if (!started || predictions.length <= visibleCount) return undefined;
+    if (!started || predictions.length <= windowSlots) return undefined;
     const cycle = setInterval(() => {
       setDisplayed((current) => {
         if (current.length === 0) return current;
@@ -82,7 +85,7 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
       });
     }, 2400);
     return () => clearInterval(cycle);
-  }, [started, predictions, visibleCount]);
+  }, [started, predictions, windowSlots]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">

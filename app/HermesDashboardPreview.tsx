@@ -62,7 +62,10 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
     () => decisions.filter((row) => row.rowClass !== 'system').map(toStreamRow),
     [decisions],
   );
-  const historySlots = waiting ? Math.max(1, visibleCount - 1) : visibleCount;
+  const historySlots =
+    stream.length <= 1
+      ? stream.length
+      : Math.min(waiting ? Math.max(1, visibleCount - 1) : visibleCount, stream.length - 1);
 
   useEffect(() => {
     const el = listRef.current;
