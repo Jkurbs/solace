@@ -58,7 +58,7 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
         });
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <p className="font-mono text-[0.65rem] font-medium uppercase tracking-[0.16em] text-white/50">

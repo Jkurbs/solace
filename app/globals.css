@@ -15107,6 +15107,7 @@ section h3 {
 
 .home-chapter.is-ink {
   justify-content: stretch;
+  height: 100svh;
   min-height: 100svh;
   background: #121214;
   color: #f5f5f4;
@@ -15121,18 +15122,22 @@ section h3 {
 
 .home-chapter.is-ink .home-chapter-inner {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   flex-direction: column;
+  width: 100%;
   max-width: 40rem;
+  min-height: 0;
+  height: 100%;
   margin: 0;
 }
 
 .home-instrument {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   flex-direction: column;
   width: 100%;
   min-height: 0;
+  height: 100%;
   margin: 0;
   overflow: hidden;
   background: transparent;

@@ -13,8 +13,7 @@ export function useFitSlots(itemHeight: number, fallback = 4) {
       return undefined;
     }
 
-    const update = () => {
-      const height = el.clientHeight;
+    const update = (height: number) => {
       if (height <= 0) {
         return;
       }
@@ -22,9 +21,12 @@ export function useFitSlots(itemHeight: number, fallback = 4) {
       setSlots(Math.max(1, Math.floor(height / itemHeight)));
     };
 
-    update();
-    const frame = window.requestAnimationFrame(update);
-    const observer = new ResizeObserver(update);
+    update(el.clientHeight);
+    const frame = window.requestAnimationFrame(() => update(el.clientHeight));
+    const observer = new ResizeObserver((entries) => {
+      const next = entries[0]?.contentRect.height ?? el.clientHeight;
+      update(next);
+    });
     observer.observe(el);
 
     return () => {

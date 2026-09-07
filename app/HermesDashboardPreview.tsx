@@ -96,7 +96,7 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
   const rows = waitingRow ? [waitingRow, ...historyRows] : historyRows;
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       <div className="mb-4">
         <p className="text-lg font-medium tracking-tight text-white/90">Hermes is deciding.</p>
         <p className="mt-1 max-w-md text-sm leading-relaxed text-white/50">

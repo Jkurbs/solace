@@ -256,7 +256,7 @@ export default function HomeClient({
         <div className="home-chapter-inner">
           <div className="home-instrument">
             <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">Hermes</h2>
-            <div className="min-h-0 flex-1">
+            <div className="flex min-h-0 flex-1 flex-col">
               <HermesDashboardPreview decisions={recentDecisions} posture={hermesTelemetry?.posture} />
             </div>
             <div className="mt-5 flex items-center justify-end border-t border-white/5 pt-4 text-xs text-white/50">
@@ -276,7 +276,7 @@ export default function HomeClient({
         <div className="home-chapter-inner">
           <div className="home-instrument">
             <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">Oracle</h2>
-            <div className="min-h-0 flex-1">
+            <div className="flex min-h-0 flex-1 flex-col">
               <OracleOrbSection predictions={oraclePredictions} />
             </div>
             <div className="mt-5 flex items-center justify-between gap-6 border-t border-white/5 pt-4 text-xs text-white/50">
