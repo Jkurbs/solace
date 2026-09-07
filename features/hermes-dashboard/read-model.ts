@@ -253,7 +253,7 @@ function getAllocationActivityLabel(allocationSnapshot: PoolAllocationSnapshot) 
     .sort((first, second) => second.percentage - first.percentage);
 
   if (!activeAllocations.length) {
-    return 'Put money to work';
+    return 'Putting money to work';
   }
 
   const cashOnly = activeAllocations.length === 1 && activeAllocations[0]?.side === 'CASH';
@@ -262,7 +262,7 @@ function getAllocationActivityLabel(allocationSnapshot: PoolAllocationSnapshot) 
     return 'All in cash';
   }
 
-  return 'Put money to work';
+  return 'Putting money to work';
 }
 
 function getAllocationFingerprint(allocationSnapshot: PoolAllocationSnapshot) {

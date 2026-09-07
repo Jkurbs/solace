@@ -46,7 +46,7 @@ export function closeOutcomeLabel(pnl?: number | null, outcome?: string | null):
 export function decisionTitle(kind: DecisionKind) {
   switch (kind) {
     case 'in':
-      return 'Put money to work';
+      return 'Putting money to work';
     case 'out':
       return 'All in cash';
     case 'wait':
@@ -124,7 +124,7 @@ export function translateDashboardActivity(summary: string) {
   }
 
   if (/Opened a path/i.test(text) || /open(?:s|ed)? the next path/i.test(text) || /opens a path/i.test(text)) {
-    return 'Put money to work';
+    return 'Putting money to work';
   }
 
   if (/moved allocation to cash/i.test(text)) {
@@ -132,7 +132,7 @@ export function translateDashboardActivity(summary: string) {
   }
 
   if (/allocation updated/i.test(text)) {
-    return 'Put money to work';
+    return 'Putting money to work';
   }
 
   if (/^Waiting for next path$/i.test(text)) {
@@ -144,9 +144,9 @@ export function translateDashboardActivity(summary: string) {
 
 export function waitingCopy() {
   return {
-    emptyDecisions: 'No decisions on your book yet. Hermes will put money to work when conditions clear.',
+    emptyDecisions: 'No decisions on your book yet. Hermes will Putting money to work when conditions clear.',
     cashUntil: 'Cash sits until Hermes puts money to work.',
-    nextWhenClear: 'Hermes will put money to work when conditions clear. That is expected. Capital stays yours.',
+    nextWhenClear: 'Hermes will Putting money to work when conditions clear. That is expected. Capital stays yours.',
     liveWaiting: 'Waiting',
     liveWaitingDetail: 'Looking, not putting money in',
     stance: 'Waiting',

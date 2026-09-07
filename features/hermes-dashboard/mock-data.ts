@@ -52,7 +52,7 @@ export const hermesDashboardSnapshot: HermesDashboardSnapshot = {
     { asset: 'Other', percentage: 20 },
   ],
   activity: [
-    { timestamp: '2026-06-15T14:10:00.000Z', summary: 'Put money to work' },
+    { timestamp: '2026-06-15T14:10:00.000Z', summary: 'Putting money to work' },
     { timestamp: '2026-06-14T19:20:00.000Z', summary: 'All in cash' },
     { timestamp: '2026-06-13T15:35:00.000Z', summary: 'All in cash · Gave back' },
   ],

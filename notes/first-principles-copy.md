@@ -25,7 +25,7 @@ If a new visitor needs a glossary to understand a button, nav title, or feature 
 
 **Broken (insider or ornamental):** Observatory, Anchor, Gates, Era I, posture, Brier, liquidity path, instruments, domains are earned.
 
-**Literal (say the thing):** Public decision record. Daily hash published outside our servers. Conditions that must clear before we take outside capital. What Hermes is doing right now. How often predictions were wrong. Software that decides whether to put money to work.
+**Literal (say the thing):** Public decision record. Daily hash published outside our servers. Conditions that must clear before we take outside capital. What Hermes is doing right now. How often predictions were wrong. Software that decides whether to Putting money to work.
 
 Keep product names (Solace, Hermes, Oracle, Glorya) — they are proper nouns. Do not make the visitor learn a second vocabulary around them.
 
