@@ -48,7 +48,7 @@ export function decisionTitle(kind: DecisionKind) {
     case 'in':
       return 'Put money to work';
     case 'out':
-      return 'Took money out';
+      return 'All in cash';
     case 'wait':
       return 'Waited';
     case 'void':
@@ -58,10 +58,10 @@ export function decisionTitle(kind: DecisionKind) {
   }
 }
 
-export function formatTookMoneyOutSummary(pnl?: number | null, outcome?: string | null) {
+export function formatCloseDecisionSummary(pnl?: number | null, outcome?: string | null) {
   const { label } = closeOutcomeLabel(pnl, outcome);
 
-  return label ? `Took money out · ${label}` : 'Took money out';
+  return label ? `All in cash · ${label}` : 'All in cash';
 }
 
 export function ledgerDecisionKind(row: {
@@ -104,7 +104,23 @@ export function translateDashboardActivity(summary: string) {
     const match = text.match(/([+\-−]?\$[\d,]+(?:\.\d+)?)/);
     const pnl = match ? Number(match[1].replace(/[$,]/g, '').replace('−', '-')) : null;
 
-    return formatTookMoneyOutSummary(Number.isFinite(pnl) ? pnl : null);
+    return formatCloseDecisionSummary(Number.isFinite(pnl) ? pnl : null);
+  }
+
+  if (/^Took money out/i.test(text) || /^Brought it back to cash/i.test(text) || /^All in cash/i.test(text)) {
+    if (/Gained/i.test(text)) {
+      return formatCloseDecisionSummary(1);
+    }
+
+    if (/Gave back/i.test(text)) {
+      return formatCloseDecisionSummary(-1);
+    }
+
+    if (/Flat/i.test(text)) {
+      return formatCloseDecisionSummary(0);
+    }
+
+    return formatCloseDecisionSummary(null);
   }
 
   if (/Opened a path/i.test(text) || /open(?:s|ed)? the next path/i.test(text) || /opens a path/i.test(text)) {
@@ -112,7 +128,7 @@ export function translateDashboardActivity(summary: string) {
   }
 
   if (/moved allocation to cash/i.test(text)) {
-    return 'Moved to cash';
+    return 'All in cash';
   }
 
   if (/allocation updated/i.test(text)) {

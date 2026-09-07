@@ -9,7 +9,7 @@ import { getHermesRealizedTradeEventsForSimulation } from '@/features/ledger/her
 import type { HermesRealizedTradeEvent } from '@/features/ledger/types';
 
 import { dashboardFieldSources, hermesDashboardContractVersion } from './contract';
-import { formatTookMoneyOutSummary, waitingCopy } from './decision-language';
+import { formatCloseDecisionSummary, waitingCopy } from './decision-language';
 import type { GuestSimSession } from './sim-session';
 import type { HermesDashboardSnapshot, RiskProfile } from './types';
 
@@ -188,7 +188,7 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     const userPnl = roundCurrency(founderPnl * share);
     tradeActivity.push({
       timestamp: event.closedAt,
-      summary: formatTookMoneyOutSummary(userPnl),
+      summary: formatCloseDecisionSummary(userPnl),
     });
   }
 

@@ -4,7 +4,6 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
-  closeOutcomeLabel,
   decisionTitle,
   isStandingDownPosture,
   ledgerDecisionKind,
@@ -23,8 +22,6 @@ type StreamRow = {
   kind: DecisionKind;
   live?: boolean;
   meta: string;
-  status: string;
-  statusTone: 'pos' | 'neg' | null;
   title: string;
 };
 
@@ -46,26 +43,13 @@ function formatActivityDate(value: string) {
 
 function toStreamRow(row: HermesLedgerRow): StreamRow {
   const kind = ledgerDecisionKind(row);
-  const meta = formatActivityDate(row.sealedAt);
 
-  if (kind === 'in') {
-    return { id: row.recordId, kind, meta, status: 'Open', statusTone: null, title: decisionTitle(kind) };
-  }
-
-  if (kind === 'out') {
-    const result = closeOutcomeLabel(row.pnl, row.outcome);
-
-    return {
-      id: row.recordId,
-      kind,
-      meta,
-      status: result.label,
-      statusTone: result.tone,
-      title: decisionTitle(kind),
-    };
-  }
-
-  return { id: row.recordId, kind, meta, status: '', statusTone: null, title: decisionTitle(kind) };
+  return {
+    id: row.recordId,
+    kind,
+    meta: formatActivityDate(row.sealedAt),
+    title: decisionTitle(kind),
+  };
 }
 
 export default function HermesDashboardPreview({ decisions, posture = null }: HermesDashboardPreviewProps) {
@@ -134,8 +118,6 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
         kind: 'wait',
         live: true,
         meta: copy.liveWaitingDetail,
-        status: '',
-        statusTone: null,
         title: copy.liveWaiting,
       }
     : null;
@@ -160,7 +142,7 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: MOTION_S, ease: [0.16, 1, 0.3, 1] }}
-              className="flex items-center justify-between gap-4 border-b border-white/10 px-1 py-3"
+              className="flex items-center gap-4 border-b border-white/10 px-1 py-3"
               style={{ height: ITEM_HEIGHT }}
             >
               <div className="min-w-0">
@@ -169,19 +151,6 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
                 </p>
                 <p className="text-xs text-white/40">{row.meta}</p>
               </div>
-              {row.status ? (
-                <span
-                  className={`shrink-0 text-sm font-medium ${
-                    row.statusTone === 'pos'
-                      ? 'text-emerald-400'
-                      : row.statusTone === 'neg'
-                        ? 'text-red-400'
-                        : 'text-white/50'
-                  }`}
-                >
-                  {row.status}
-                </span>
-              ) : null}
             </motion.div>
           ))}
         </AnimatePresence>

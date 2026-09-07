@@ -15,7 +15,7 @@ import type {
 } from '@/features/ledger/types';
 
 import { dashboardFieldSources, hermesDashboardContractVersion } from './contract';
-import { formatTookMoneyOutSummary } from './decision-language';
+import { formatCloseDecisionSummary } from './decision-language';
 import { hermesDashboardSnapshot } from './mock-data';
 import { buildLiveOpenSimulationDashboardSnapshot } from './sim-read-model';
 import { getGuestSimSessionFromCookies, type GuestSimSession } from './sim-session';
@@ -259,7 +259,7 @@ function getAllocationActivityLabel(allocationSnapshot: PoolAllocationSnapshot) 
   const cashOnly = activeAllocations.length === 1 && activeAllocations[0]?.side === 'CASH';
 
   if (cashOnly) {
-    return 'Moved to cash';
+    return 'All in cash';
   }
 
   return 'Put money to work';
@@ -316,7 +316,7 @@ function getTradeEventActivity(events: HermesRealizedTradeEvent[], capitalShare 
 
     return {
       timestamp: event.closedAt,
-      summary: formatTookMoneyOutSummary(userPnl),
+      summary: formatCloseDecisionSummary(userPnl),
     };
   });
 }
