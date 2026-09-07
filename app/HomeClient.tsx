@@ -252,11 +252,11 @@ export default function HomeClient({
 
       {showRecord && <HomeProofSection rows={recentDecisions} sealedDecisions={sealedDecisions} />}
 
-      <section className="home-chapter border-t border-border" aria-label="Hermes">
+      <section className="home-chapter is-ink border-t border-border" aria-label="Hermes">
         <div className="home-chapter-inner">
           <div className="home-instrument">
             <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">Hermes</h2>
-            <div className="flex-1">
+            <div className="min-h-0 flex-1">
               <HermesDashboardPreview decisions={recentDecisions} posture={hermesTelemetry?.posture} />
             </div>
             <div className="mt-6 flex items-center justify-end border-t border-white/5 pt-4 text-xs text-white/50">
@@ -272,11 +272,11 @@ export default function HomeClient({
         </div>
       </section>
 
-      <section className="home-chapter border-t border-border" aria-label="Oracle">
+      <section className="home-chapter is-ink border-t border-border" aria-label="Oracle">
         <div className="home-chapter-inner">
           <div className="home-instrument">
             <h2 className="mb-3 font-mono text-xs font-medium uppercase tracking-widest text-white/60">Oracle</h2>
-            <div className="flex-1">
+            <div className="min-h-0 flex-1">
               <OracleOrbSection predictions={oraclePredictions} />
             </div>
             <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4 text-xs text-white/50">

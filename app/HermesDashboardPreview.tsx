@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   decisionTitle,
@@ -26,7 +26,7 @@ type StreamRow = {
 };
 
 const ITEM_HEIGHT = 56;
-const VISIBLE_COUNT = 4;
+const MIN_VISIBLE = 6;
 const REVEAL_MS = 280;
 const CYCLE_MS = 1300;
 const MOTION_S = 0.22;
@@ -56,11 +56,27 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
   const reduceMotion = useReducedMotion();
   const waiting = isStandingDownPosture(posture);
   const copy = waitingCopy();
+  const listRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(MIN_VISIBLE);
   const stream = useMemo(
     () => decisions.filter((row) => row.rowClass !== 'system').map(toStreamRow),
     [decisions],
   );
-  const historySlots = waiting ? VISIBLE_COUNT - 1 : VISIBLE_COUNT;
+  const historySlots = waiting ? Math.max(1, visibleCount - 1) : visibleCount;
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return undefined;
+
+    const update = () => {
+      setVisibleCount(Math.max(MIN_VISIBLE, Math.floor(el.clientHeight / ITEM_HEIGHT)));
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const [displayed, setDisplayed] = useState<StreamRow[]>([]);
   const [started, setStarted] = useState(false);
 
@@ -124,7 +140,7 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
   const rows = waitingRow ? [waitingRow, ...displayed] : displayed;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <div className="mb-4">
         <p className="text-sm font-medium text-white/90">Hermes is deciding.</p>
         <p className="mt-1 text-xs leading-relaxed text-white/50">
@@ -132,7 +148,7 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
         </p>
       </div>
 
-      <div className="relative flex-1 overflow-hidden" style={{ height: VISIBLE_COUNT * ITEM_HEIGHT }}>
+      <div ref={listRef} className="relative min-h-0 flex-1 overflow-hidden">
         <AnimatePresence initial={false} mode="popLayout">
           {rows.map((row) => (
             <motion.div

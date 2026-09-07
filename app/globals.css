@@ -15106,25 +15106,37 @@ section h3 {
   max-width: 72rem;
 }
 
-.home-instrument {
-  width: 100%;
-  max-width: 40rem;
-  min-height: 32rem;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border-radius: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.home-chapter.is-ink {
+  justify-content: stretch;
   background: #121214;
-  padding: 2rem;
+  color: #f5f5f4;
+  padding: 5rem 1.25rem 3rem;
 }
 
 @media (min-width: 768px) {
-  .home-instrument {
-    min-height: 38rem;
-    padding: 2.5rem;
+  .home-chapter.is-ink {
+    padding: 5.5rem 2rem 3.5rem;
   }
+}
+
+.home-chapter.is-ink .home-chapter-inner {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  max-width: 48rem;
+  margin: 0;
+}
+
+.home-instrument {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+  padding: 0;
 }
 
 .home-horizon-line {
@@ -15149,6 +15161,7 @@ section h3 {
   justify-content: flex-end;
   min-height: 100svh;
   overflow: hidden;
+  background: var(--background);
   border-top: 1px solid var(--border, #e7e5e4);
 }
 
@@ -15161,9 +15174,7 @@ section h3 {
 .home-glorya-globe .home-glorya-field {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse 70% 60% at 50% 48%, rgba(41, 37, 36, 0.55), transparent 62%),
-    #0c0a09;
+  background: transparent;
 }
 
 .home-glorya-copy {
@@ -15181,7 +15192,7 @@ section h3 {
   font-size: clamp(1.05rem, 1.8vw, 1.25rem);
   line-height: 1.45;
   letter-spacing: -0.02em;
-  color: color-mix(in srgb, var(--foreground, #f5f5f4) 88%, transparent);
+  color: var(--foreground);
 }
 
 .home-glorya-line a {

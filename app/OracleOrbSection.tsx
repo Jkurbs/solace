@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { ActivePrediction } from './oracle/active-predictions';
 
 const ITEM_HEIGHT = 68;
-const VISIBLE_COUNT = 3;
+const MIN_VISIBLE = 5;
 
 type OracleOrbSectionProps = {
   predictions: ActivePrediction[];
@@ -34,11 +34,27 @@ function remainingLabel(iso: string) {
 export default function OracleOrbSection({ predictions }: OracleOrbSectionProps) {
   const [displayed, setDisplayed] = useState<ActivePrediction[]>([]);
   const [started, setStarted] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(MIN_VISIBLE);
   const sampleBoard = predictions.length > 0 && predictions.every((prediction) => prediction.illustrative);
 
   useEffect(() => {
+    const el = listRef.current;
+    if (!el) return undefined;
+
+    const update = () => {
+      setVisibleCount(Math.max(MIN_VISIBLE, Math.floor(el.clientHeight / ITEM_HEIGHT)));
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (predictions.length === 0) return undefined;
-    const initialCount = Math.min(VISIBLE_COUNT, predictions.length);
+    const initialCount = Math.min(visibleCount, predictions.length);
     let step = 0;
     const timer = setInterval(() => {
       step += 1;
@@ -49,10 +65,10 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
       }
     }, 550);
     return () => clearInterval(timer);
-  }, [predictions]);
+  }, [predictions, visibleCount]);
 
   useEffect(() => {
-    if (!started || predictions.length <= VISIBLE_COUNT) return undefined;
+    if (!started || predictions.length <= visibleCount) return undefined;
     const cycle = setInterval(() => {
       setDisplayed((current) => {
         if (current.length === 0) return current;
@@ -66,10 +82,10 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
       });
     }, 2400);
     return () => clearInterval(cycle);
-  }, [started, predictions]);
+  }, [started, predictions, visibleCount]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <p className="font-mono text-[0.6rem] font-medium uppercase tracking-[0.16em] text-white/50">
@@ -78,10 +94,7 @@ export default function OracleOrbSection({ predictions }: OracleOrbSectionProps)
       </div>
 
       {/* Feed container */}
-      <div
-        className="relative flex-1 overflow-hidden"
-        style={{ height: VISIBLE_COUNT * ITEM_HEIGHT }}
-      >
+      <div ref={listRef} className="relative min-h-0 flex-1 overflow-hidden">
         <AnimatePresence initial={false} mode="popLayout">
           {displayed.map((prediction) => (
             <motion.div

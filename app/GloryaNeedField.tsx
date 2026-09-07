@@ -7,6 +7,7 @@ import { buildEarthPointCloud } from '@/features/glorya/earth-points';
 import { gloryaPlaceLabel, type GloryaEvaluatedNeed } from '@/features/glorya/types';
 import { getRenderPixelRatio } from '@/lib/webgl-dpr';
 import { isWebglPaused, observeWebglMountVisibility, subscribeWebglPause } from '@/lib/webgl-lifecycle';
+import { THEME_CHANGE_EVENT, readSiteTheme, type SiteTheme } from '@/lib/theme';
 
 type GloryaNeedFieldProps = {
   needs: GloryaEvaluatedNeed[];
@@ -137,6 +138,7 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       });
+      const landColors = cloud.colors.slice();
       root.add(new THREE.Points(landGeo, landMat));
 
       // Soft limb glow, neutral, barely cool.
@@ -167,6 +169,31 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
         }),
       );
       root.add(atmosphere);
+
+      const applyTheme = (theme: SiteTheme) => {
+        const dark = theme === 'dark';
+        landMat.blending = dark ? THREE.AdditiveBlending : THREE.NormalBlending;
+        landMat.opacity = dark ? 0.88 : 0.78;
+        landMat.needsUpdate = true;
+        const colorAttr = landGeo.getAttribute('color');
+        for (let i = 0; i < landColors.length; i += 3) {
+          colorAttr.setXYZ(
+            i / 3,
+            landColors[i] * (dark ? 1 : 0.36),
+            landColors[i + 1] * (dark ? 1 : 0.3),
+            landColors[i + 2] * (dark ? 1 : 0.26),
+          );
+        }
+        colorAttr.needsUpdate = true;
+        (atmosphere.material as THREE.ShaderMaterial).uniforms.uColor.value.setHex(dark ? 0x9aa8c8 : 0x8a8680);
+      };
+
+      applyTheme(readSiteTheme());
+      const onThemeChange = (event: Event) => {
+        const detail = (event as CustomEvent<SiteTheme>).detail;
+        if (detail === 'light' || detail === 'dark') applyTheme(detail);
+      };
+      window.addEventListener(THEME_CHANGE_EVENT, onThemeChange);
 
       type Marker = {
         need: GloryaEvaluatedNeed;
@@ -425,6 +452,7 @@ export default function GloryaNeedField({ needs, compact = false, className = ''
         unsubPause();
         visibilityWatch.disconnect();
         resizeObserver.disconnect();
+        window.removeEventListener(THEME_CHANGE_EVENT, onThemeChange);
         document.removeEventListener('visibilitychange', onDocVisibility);
         if (!compact) {
           renderer.domElement.removeEventListener('pointerdown', onPointerDown);
