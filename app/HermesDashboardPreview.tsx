@@ -3,6 +3,14 @@
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 
+import {
+  closeOutcomeLabel,
+  decisionTitle,
+  isStandingDownPosture,
+  ledgerDecisionKind,
+  waitingCopy,
+  type DecisionKind,
+} from '@/features/hermes-dashboard/decision-language';
 import type { HermesLedgerRow } from '@/features/hermes-ledger/store';
 
 type HermesDashboardPreviewProps = {
@@ -10,11 +18,9 @@ type HermesDashboardPreviewProps = {
   posture?: string | null;
 };
 
-type StreamKind = 'in' | 'out' | 'wait' | 'void' | 'note';
-
 type StreamRow = {
   id: string;
-  kind: StreamKind;
+  kind: DecisionKind;
   live?: boolean;
   meta: string;
   status: string;
@@ -38,79 +44,16 @@ function formatActivityDate(value: string) {
   });
 }
 
-function isStandingDown(posture: string | null | undefined) {
-  const normalized = (posture ?? '').toUpperCase().replace(/[\s-]+/g, '_');
-
-  return normalized.includes('STANDING_DOWN') || normalized === 'RISK_OFF';
-}
-
-function streamKind(row: HermesLedgerRow): StreamKind {
-  if (row.eventType === 'open' || row.decision.startsWith('Opened a path')) {
-    return 'in';
-  }
-
-  if (row.eventType === 'close' || /^Closed\s/i.test(row.decision)) {
-    return 'out';
-  }
-
-  if (row.eventType === 'void') {
-    return 'void';
-  }
-
-  const posture = row.posture.trim().toUpperCase();
-  const text = `${row.decision} ${row.note} ${row.outcome ?? ''}`.toLowerCase();
-
-  if (
-    posture === 'STANDING_DOWN' ||
-    posture === 'RISK_OFF' ||
-    /\b(stand(?:ing)?\s*down|wait(?:ing)?|no[-\s]?trade)\b/.test(text)
-  ) {
-    return 'wait';
-  }
-
-  return 'note';
-}
-
-function closeStatus(row: HermesLedgerRow): { label: string; tone: 'pos' | 'neg' | null } {
-  const outcome = (row.outcome ?? '').toLowerCase();
-
-  if (outcome.includes('advanced') || outcome.includes('gained')) {
-    return { label: 'Gained', tone: 'pos' };
-  }
-
-  if (outcome.includes('gave back')) {
-    return { label: 'Gave back', tone: 'neg' };
-  }
-
-  if (outcome.includes('flat')) {
-    return { label: 'Flat', tone: null };
-  }
-
-  if (row.pnl != null) {
-    if (row.pnl > 0) {
-      return { label: 'Gained', tone: 'pos' };
-    }
-
-    if (row.pnl < 0) {
-      return { label: 'Gave back', tone: 'neg' };
-    }
-
-    return { label: 'Flat', tone: null };
-  }
-
-  return { label: '', tone: null };
-}
-
 function toStreamRow(row: HermesLedgerRow): StreamRow {
-  const kind = streamKind(row);
+  const kind = ledgerDecisionKind(row);
   const meta = formatActivityDate(row.sealedAt);
 
   if (kind === 'in') {
-    return { id: row.recordId, kind, meta, status: 'Open', statusTone: null, title: 'Put money to work' };
+    return { id: row.recordId, kind, meta, status: 'Open', statusTone: null, title: decisionTitle(kind) };
   }
 
   if (kind === 'out') {
-    const result = closeStatus(row);
+    const result = closeOutcomeLabel(row.pnl, row.outcome);
 
     return {
       id: row.recordId,
@@ -118,24 +61,17 @@ function toStreamRow(row: HermesLedgerRow): StreamRow {
       meta,
       status: result.label,
       statusTone: result.tone,
-      title: 'Took money out',
+      title: decisionTitle(kind),
     };
   }
 
-  if (kind === 'void') {
-    return { id: row.recordId, kind, meta, status: '', statusTone: null, title: 'Called off' };
-  }
-
-  if (kind === 'wait') {
-    return { id: row.recordId, kind, meta, status: '', statusTone: null, title: 'Waited' };
-  }
-
-  return { id: row.recordId, kind, meta, status: '', statusTone: null, title: 'A decision was written down' };
+  return { id: row.recordId, kind, meta, status: '', statusTone: null, title: decisionTitle(kind) };
 }
 
 export default function HermesDashboardPreview({ decisions, posture = null }: HermesDashboardPreviewProps) {
   const reduceMotion = useReducedMotion();
-  const waiting = isStandingDown(posture);
+  const waiting = isStandingDownPosture(posture);
+  const copy = waitingCopy();
   const stream = useMemo(
     () => decisions.filter((row) => row.rowClass !== 'system').map(toStreamRow),
     [decisions],
@@ -197,11 +133,10 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
         id: 'live-waiting',
         kind: 'wait',
         live: true,
-        meta: 'Live',
+        meta: copy.liveWaitingDetail,
         status: '',
         statusTone: null,
-        title: 'Waiting',
-        meta: 'Looking, not putting money in',
+        title: copy.liveWaiting,
       }
     : null;
   const rows = waitingRow ? [waitingRow, ...displayed] : displayed;

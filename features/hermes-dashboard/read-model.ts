@@ -15,6 +15,7 @@ import type {
 } from '@/features/ledger/types';
 
 import { dashboardFieldSources, hermesDashboardContractVersion } from './contract';
+import { formatTookMoneyOutSummary } from './decision-language';
 import { hermesDashboardSnapshot } from './mock-data';
 import { buildLiveOpenSimulationDashboardSnapshot } from './sim-read-model';
 import { getGuestSimSessionFromCookies, type GuestSimSession } from './sim-session';
@@ -252,25 +253,16 @@ function getAllocationActivityLabel(allocationSnapshot: PoolAllocationSnapshot) 
     .sort((first, second) => second.percentage - first.percentage);
 
   if (!activeAllocations.length) {
-    return 'Hermes allocation updated';
+    return 'Put money to work';
   }
 
   const cashOnly = activeAllocations.length === 1 && activeAllocations[0]?.side === 'CASH';
 
   if (cashOnly) {
-    return 'Hermes moved allocation to cash';
+    return 'Moved to cash';
   }
 
-  const allocationSummary = activeAllocations
-    .slice(0, 3)
-    .map((allocation) => {
-      const side = allocation.side && allocation.side !== 'CASH' ? ` ${allocation.side.toLowerCase()}` : '';
-
-      return `${allocation.asset}${side} ${roundPercent(allocation.percentage)}%`;
-    })
-    .join(', ');
-
-  return `Hermes allocation updated: ${allocationSummary}`;
+  return 'Put money to work';
 }
 
 function getAllocationFingerprint(allocationSnapshot: PoolAllocationSnapshot) {
@@ -308,12 +300,6 @@ function getAllocationActivity(
   }, []);
 }
 
-const tradePnlFormatter = new Intl.NumberFormat('en-US', {
-  currency: 'USD',
-  signDisplay: 'always',
-  style: 'currency',
-});
-
 // Real fills from the Hermes stream, rendered in the activity feed.
 // Scale pool/KuCoin notional to this account's capital share so activity
 // matches the user's book, not founder exchange dollars.
@@ -330,7 +316,7 @@ function getTradeEventActivity(events: HermesRealizedTradeEvent[], capitalShare 
 
     return {
       timestamp: event.closedAt,
-      summary: `Closed ${event.symbol} ${event.side === 'LONG' ? 'long' : 'short'} · ${tradePnlFormatter.format(userPnl)}`,
+      summary: formatTookMoneyOutSummary(userPnl),
     };
   });
 }

@@ -22,6 +22,7 @@ import {
   resolveDashboardChapter,
   type DashboardChapter,
 } from './chapters';
+import { translateDashboardActivity, waitingCopy } from './decision-language';
 import {
   getHermesDashboardSnapshot,
   hermesDashboardQueryKey,
@@ -120,11 +121,7 @@ function getEquityStateBadgeClass(code: HermesDashboardSnapshot['portfolio']['eq
 }
 
 function formatAllocationLabel(item: HermesDashboardSnapshot['allocation'][number]) {
-  if (!item.side || item.side === 'CASH') {
-    return item.asset;
-  }
-
-  return `${item.asset} ${item.side === 'SHORT' ? 'Short' : 'Long'}`;
+  return item.asset;
 }
 
 function coerceDate(value: Date | string) {
@@ -141,24 +138,39 @@ function formatActivityDate(value: Date | string) {
   return `${getDatePart(parts, 'month')} ${getDatePart(parts, 'day')}`;
 }
 
-function DecisionList({ activity }: { activity: HermesDashboardSnapshot['activity'] }) {
+function DecisionList({
+  activity,
+  waiting,
+}: {
+  activity: HermesDashboardSnapshot['activity'];
+  waiting: boolean;
+}) {
   const [showEarlier, setShowEarlier] = useState(false);
+  const copy = waitingCopy();
   const extra = activity.length - decisionPreviewCount;
   const visible = extra > 0 && !showEarlier ? activity.slice(0, decisionPreviewCount) : activity;
 
-  if (activity.length === 0) {
-    return (
-      <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
-        No closes on your book yet. Hermes will open a path when conditions clear.
-      </p>
-    );
+  if (activity.length === 0 && !waiting) {
+    return <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">{copy.emptyDecisions}</p>;
   }
 
   return (
     <>
       <ol className="grid gap-0">
+        {waiting ? (
+          <li className="grid grid-cols-[4.5rem_1fr] gap-4 py-4 first:pt-0 last:pb-0">
+            <span className="text-sm text-neutral-500 dark:text-neutral-400">Live</span>
+            <span className="text-sm font-medium text-neutral-950 dark:text-neutral-50">
+              {copy.liveWaiting}
+              <span className="mt-1 block text-sm font-normal text-neutral-500 dark:text-neutral-400">
+                {copy.liveWaitingDetail}
+              </span>
+            </span>
+          </li>
+        ) : null}
         {visible.map((item) => {
           const timestamp = coerceDate(item.timestamp);
+          const summary = translateDashboardActivity(item.summary);
 
           return (
             <li
@@ -168,7 +180,7 @@ function DecisionList({ activity }: { activity: HermesDashboardSnapshot['activit
               <time className="text-sm text-neutral-500 dark:text-neutral-400" dateTime={timestamp.toISOString()}>
                 {formatActivityDate(timestamp)}
               </time>
-              <span className="text-sm font-medium text-neutral-950 dark:text-neutral-50">{item.summary}</span>
+              <span className="text-sm font-medium text-neutral-950 dark:text-neutral-50">{summary}</span>
             </li>
           );
         })}
@@ -759,7 +771,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
           <CardContent>
             {data.allocation.length === 0 ? (
               <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
-                Cash sits until Hermes opens a path.
+                {waitingCopy().cashUntil}
               </p>
             ) : (
               <div className="grid gap-3">
@@ -783,7 +795,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
             )}
             {waitingForNextPath ? (
               <p className="mt-4 text-sm leading-6 text-neutral-500 dark:text-neutral-400" role="status">
-                Hermes will open the next path when conditions clear. That is expected. Capital stays yours.
+                {waitingCopy().nextWhenClear}
               </p>
             ) : null}
           </CardContent>
@@ -792,9 +804,12 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle>Recent decisions</CardTitle>
+            <p className="mt-1 text-sm leading-6 text-neutral-500 dark:text-neutral-400">
+              Each line is written down before anyone knows if it was right.
+            </p>
           </CardHeader>
           <CardContent>
-            <DecisionList activity={data.activity} />
+            <DecisionList activity={data.activity} waiting={waitingForNextPath} />
           </CardContent>
         </Card>
 

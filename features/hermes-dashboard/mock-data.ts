@@ -52,9 +52,9 @@ export const hermesDashboardSnapshot: HermesDashboardSnapshot = {
     { asset: 'Other', percentage: 20 },
   ],
   activity: [
-    { timestamp: '2026-06-15T14:10:00.000Z', summary: 'Increased BTC allocation' },
-    { timestamp: '2026-06-14T19:20:00.000Z', summary: 'Reduced cash reserves' },
-    { timestamp: '2026-06-13T15:35:00.000Z', summary: 'Reduced PEPE exposure' },
+    { timestamp: '2026-06-15T14:10:00.000Z', summary: 'Put money to work' },
+    { timestamp: '2026-06-14T19:20:00.000Z', summary: 'Moved to cash' },
+    { timestamp: '2026-06-13T15:35:00.000Z', summary: 'Took money out · Gave back' },
   ],
   commentary:
     'Hermes remains selectively deployed while preserving liquidity for emerging opportunities. Current conditions favor continuation over aggressive expansion.',

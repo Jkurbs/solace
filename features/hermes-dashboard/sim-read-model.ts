@@ -9,6 +9,7 @@ import { getHermesRealizedTradeEventsForSimulation } from '@/features/ledger/her
 import type { HermesRealizedTradeEvent } from '@/features/ledger/types';
 
 import { dashboardFieldSources, hermesDashboardContractVersion } from './contract';
+import { formatTookMoneyOutSummary, waitingCopy } from './decision-language';
 import type { GuestSimSession } from './sim-session';
 import type { HermesDashboardSnapshot, RiskProfile } from './types';
 
@@ -22,12 +23,6 @@ type HeldSimNav = {
 };
 
 const heldSimNavBySession = new Map<string, HeldSimNav>();
-
-const tradePnlFormatter = new Intl.NumberFormat('en-US', {
-  currency: 'USD',
-  signDisplay: 'always',
-  style: 'currency',
-});
 
 function roundCurrency(value: number) {
   return Math.round(value * 100) / 100;
@@ -193,7 +188,7 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     const userPnl = roundCurrency(founderPnl * share);
     tradeActivity.push({
       timestamp: event.closedAt,
-      summary: `Closed ${event.side === 'LONG' ? 'long' : 'short'} · ${tradePnlFormatter.format(userPnl)}`,
+      summary: formatTookMoneyOutSummary(userPnl),
     });
   }
 
@@ -244,15 +239,16 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     },
   ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-  const stance = inAPath ? titleCase(postureRaw) : 'Waiting for next path';
+  const copy = waitingCopy();
+  const stance = inAPath ? titleCase(postureRaw) : copy.stance;
   const note = inAPath
     ? market?.summary ??
       brief?.summary ??
-      'Hermes is managing simulation capital on paths opened after you entered.'
-    : 'Hermes will open the next path when conditions clear. That is expected. Capital stays yours.';
+      'Hermes is managing simulation capital on decisions made after you entered.'
+    : copy.nextWhenClear;
 
   // Never publish pool tickers in simulation. Pre-entry opens are not on this
-  // guest's book — they stay in cash until Hermes opens a path after they entered.
+  // guest's book — they stay in cash until Hermes puts money to work after they entered.
   const allocation =
     inAPath && deployedCapital > 0
       ? deployedCapital >= 100
@@ -339,7 +335,7 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     commentary:
       market?.summary ??
       brief?.summary ??
-      'This is simulation capital. Closed results below use your allocation size, not founder exchange notional. Paths open before you entered are not on your book.',
+      'This is simulation capital. Results below use your allocation size, not founder exchange notional. Decisions made before you entered are not on your book.',
     illustrative: {
       // Money and activity are live-derived; narrative stance uses public Hermes reads.
       status: false,
