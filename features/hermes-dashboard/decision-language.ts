@@ -148,7 +148,6 @@ export function waitingCopy() {
     cashUntil: 'Cash sits until Hermes puts money to work.',
     nextWhenClear: 'Hermes will Putting money to work when conditions clear. That is expected. Capital stays yours.',
     liveWaiting: 'Waiting',
-    liveWaitingDetail: 'Looking, not putting money in',
     stance: 'Waiting',
   };
 }

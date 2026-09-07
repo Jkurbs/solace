@@ -82,7 +82,7 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
         id: 'live-waiting',
         kind: 'wait',
         live: true,
-        meta: copy.liveWaitingDetail,
+        meta: 'Live',
         title: copy.liveWaiting,
       }
     : null;
@@ -111,7 +111,7 @@ export default function HermesDashboardPreview({ decisions, posture = null }: He
               style={{ height: ITEM_HEIGHT }}
             >
               <p className="text-xs tabular-nums text-white/40">{row.meta}</p>
-              <p className={`truncate text-sm text-white/90 ${row.live ? 'leading-snug' : ''}`}>{row.title}</p>
+              <p className="truncate text-sm text-white/90">{row.title}</p>
             </motion.div>
           ))}
         </AnimatePresence>

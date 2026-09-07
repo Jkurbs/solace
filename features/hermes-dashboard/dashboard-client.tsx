@@ -162,9 +162,6 @@ function DecisionList({
             <span className="text-sm text-neutral-500 dark:text-neutral-400">Live</span>
             <span className="text-sm font-medium text-neutral-950 dark:text-neutral-50">
               {copy.liveWaiting}
-              <span className="mt-1 block text-sm font-normal text-neutral-500 dark:text-neutral-400">
-                {copy.liveWaitingDetail}
-              </span>
             </span>
           </li>
         ) : null}
