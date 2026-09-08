@@ -57,7 +57,7 @@ const steps = [
         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
       </svg>
     ),
-    title: 'Real trades, simulated money',
+    title: 'Real investments, simulated money',
     text: 'Hermes makes the same decisions it makes with founder capital. You just track them with play money.',
     tone: 'green' as const,
   },
