@@ -144,9 +144,9 @@ export function translateDashboardActivity(summary: string) {
 
 export function waitingCopy() {
   return {
-    emptyDecisions: 'No decisions on your book yet. Hermes will Putting money to work when conditions clear.',
+    emptyDecisions: 'No decisions on your book yet. Hermes will put money to work when conditions clear.',
     cashUntil: 'Cash sits until Hermes puts money to work.',
-    nextWhenClear: 'Hermes will Putting money to work when conditions clear. That is expected. Capital stays yours.',
+    nextWhenClear: 'Hermes will put money to work when conditions clear. That is expected. Capital stays yours.',
     liveWaiting: 'Waiting',
     stance: 'Waiting',
   };
