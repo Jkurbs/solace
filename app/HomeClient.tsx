@@ -331,14 +331,6 @@ export default function HomeClient({
               Notes
             </Link>
             <a
-              href="https://github.com/Jkurbs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30"
-            >
-              GitHub
-            </a>
-            <a
               href="mailto:hello@solace.fyi"
               className="text-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/30"
             >
