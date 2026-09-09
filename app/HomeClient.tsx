@@ -296,7 +296,7 @@ export default function HomeClient({
       <section className="home-glorya" aria-label="Glorya">
         <div className="home-glorya-head">
           <p className="home-horizon-dek">
-            We start with money, because that&apos;s where you can check the decisions fast.
+            We start with money, because that&apos;s where you can check decisions quality fast.
           </p>
           <p className="home-horizon-dek">The same kind of decision, later, in other places.</p>
         </div>
