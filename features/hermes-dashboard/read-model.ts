@@ -15,7 +15,7 @@ import type {
 } from '@/features/ledger/types';
 
 import { dashboardFieldSources, hermesDashboardContractVersion } from './contract';
-import { formatCloseDecisionSummary } from './decision-language';
+import { formatAllocationActivity, formatTradeCloseSummary, translateDashboardActivity } from './decision-language';
 import { hermesDashboardSnapshot } from './mock-data';
 import { buildLiveOpenSimulationDashboardSnapshot } from './sim-read-model';
 import { getGuestSimSessionFromCookies, type GuestSimSession } from './sim-session';
@@ -247,22 +247,7 @@ function getFreshHermesPoolAllocation(
 }
 
 function getAllocationActivityLabel(allocationSnapshot: PoolAllocationSnapshot) {
-  const activeAllocations = allocationSnapshot.allocations
-    .filter((allocation) => allocation.percentage > 0)
-    .slice()
-    .sort((first, second) => second.percentage - first.percentage);
-
-  if (!activeAllocations.length) {
-    return 'Putting money to work';
-  }
-
-  const cashOnly = activeAllocations.length === 1 && activeAllocations[0]?.side === 'CASH';
-
-  if (cashOnly) {
-    return 'All in cash';
-  }
-
-  return 'Putting money to work';
+  return formatAllocationActivity(allocationSnapshot.allocations);
 }
 
 function getAllocationFingerprint(allocationSnapshot: PoolAllocationSnapshot) {
@@ -316,7 +301,12 @@ function getTradeEventActivity(events: HermesRealizedTradeEvent[], capitalShare 
 
     return {
       timestamp: event.closedAt,
-      summary: formatCloseDecisionSummary(userPnl),
+      summary: formatTradeCloseSummary({
+        pnl: userPnl,
+        rawPayload: event.rawPayload,
+        side: event.side,
+        symbol: event.symbol,
+      }),
     };
   });
 }
@@ -436,7 +426,7 @@ function getActiveSnapshotFromLedger(
     ...allocationActivity,
     ...(hermesActivity.length ? hermesActivity : ledger.activities).map((activity) => ({
       timestamp: activity.createdAt,
-      summary: activity.message,
+      summary: translateDashboardActivity(activity.message),
     })),
   ].sort((first, second) => new Date(second.timestamp).getTime() - new Date(first.timestamp).getTime());
   const portfolioValue = poolProjection?.position.equity ?? ledger.portfolio.value;

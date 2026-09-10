@@ -25,7 +25,19 @@ If a new visitor needs a glossary to understand a button, nav title, or feature 
 
 **Broken (insider or ornamental):** Observatory, Anchor, Gates, Era I, posture, Brier, liquidity path, instruments, domains are earned.
 
-**Literal (say the thing):** Public decision record. Daily hash published outside our servers. Conditions that must clear before we take outside capital. What Hermes is doing right now. How often predictions were wrong. Software that decides whether to Putting money to work.
+**Literal (say the thing):** Public decision record. Daily hash published outside our servers. Conditions that must clear before we take outside capital. What Hermes is doing right now. How often predictions were wrong. Software that decides whether to buy assets — and when to wait.
+
+Hermes dashboard copy translates desk jargon at the language layer (`features/hermes-dashboard/decision-language.ts`). Do not teach the user a glossary.
+
+| Hermes did | User sees |
+|---|---|
+| Entered long BTC | Bought Bitcoin |
+| Entered short SOL | Protected against a Solana drop |
+| Exited position to USDC | Moved to cash |
+| All in cash | Holding cash |
+| Putting money to work | Buying assets |
+| Liquidated / stopped out | Sold to protect your capital |
+| Hedged | Insured your portfolio |
 
 Keep product names (Solace, Hermes, Oracle, Glorya) — they are proper nouns. Do not make the visitor learn a second vocabulary around them.
 
@@ -42,7 +54,7 @@ Delete pleasantries, marketing fluff, filler, and theatrical punctuation.
 | Instead of | Write |
 |---|---|
 | We are delighted to help you easily configure your automated notification preferences below. | Email notifications: On / Off. |
-| Tools that make smart choices when nobody knows what happens next. | Software that decides when to put capital to work — and when to wait. |
+| Tools that make smart choices when nobody knows what happens next. | Software that decides when to buy assets — and when to wait. |
 | Three special programs built to keep people calm during scary moments. | Three systems. Hermes is live. The other two are earlier. |
 | Independent research company building instruments that help capital, and eventually other domains, make better decisions under uncertainty. | We build software that decides under uncertainty. It starts with capital. |
 | [ Check Any Choice Receipt ] | Open the public record |

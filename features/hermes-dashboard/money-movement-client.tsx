@@ -294,7 +294,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
 
         <div className="grid gap-4 sm:grid-cols-3">
           <MoneyMetric label="Available Balance" value={isAwaitingDeposit ? 'Pending' : formatCurrency(availableBalance)} />
-          <MoneyMetric label="In Strategy" value={isAwaitingDeposit ? '-' : formatCurrency(allocatedCapital)} tone="muted" />
+          <MoneyMetric label="Investing" value={isAwaitingDeposit ? '-' : formatCurrency(allocatedCapital)} tone="muted" />
           <MoneyMetric label="Withdrawable" tone={withdrawable > 0 ? 'green' : 'muted'} value={isAwaitingDeposit ? 'Pending' : formatCurrency(withdrawable)} />
         </div>
 

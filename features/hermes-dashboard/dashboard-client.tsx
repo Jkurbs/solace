@@ -22,7 +22,7 @@ import {
   resolveDashboardChapter,
   type DashboardChapter,
 } from './chapters';
-import { translateDashboardActivity, waitingCopy } from './decision-language';
+import { formatAllocationLabel, translateDashboardActivity, waitingCopy } from './decision-language';
 import {
   getHermesDashboardSnapshot,
   hermesDashboardQueryKey,
@@ -75,8 +75,10 @@ const updatedAtPartsFormatter = new Intl.DateTimeFormat('en-US', {
 const allocationColorsByAsset: Record<string, Record<DashboardTheme, string>> = {
   BTC: { dark: '#f2eadb', light: '#151515' },
   Cash: { dark: '#697067', light: '#d9ded7' },
+  ETH: { dark: '#8b8dff', light: '#4f46e5' },
   'In Strategy': { dark: '#87dbc0', light: '#0f766e' },
   Other: { dark: '#d8a85b', light: '#c89245' },
+  SOL: { dark: '#c4a6ff', light: '#7c3aed' },
   SUI: { dark: '#6ea8ff', light: '#2f72d6' },
 };
 
@@ -91,8 +93,25 @@ const decisionPreviewCount = 6;
 function getAllocationColor(asset: string, index: number, theme: DashboardTheme) {
   const resolvedTheme: DashboardTheme = theme === 'light' ? 'light' : 'dark';
   const fallbackColors = fallbackAllocationColors[resolvedTheme];
+  const cashColor = allocationColorsByAsset.Cash[resolvedTheme];
+  let base = asset.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 
-  return allocationColorsByAsset[asset]?.[resolvedTheme] ?? fallbackColors[index % fallbackColors.length];
+  if (base === 'CASH' || base === 'USD' || base === 'USDC' || base === 'USDT') {
+    return cashColor;
+  }
+
+  for (const quote of ['USDTM', 'USDT', 'USDC', 'USD', 'PERP']) {
+    if (base.endsWith(quote) && base.length > quote.length) {
+      base = base.slice(0, -quote.length);
+      break;
+    }
+  }
+
+  return (
+    allocationColorsByAsset[asset]?.[resolvedTheme] ??
+    allocationColorsByAsset[base]?.[resolvedTheme] ??
+    fallbackColors[index % fallbackColors.length]
+  );
 }
 
 function formatCurrency(value: number, options: { signed?: boolean; whole?: boolean } = {}) {
@@ -118,10 +137,6 @@ function getEquityStateBadgeClass(code: HermesDashboardSnapshot['portfolio']['eq
   }
 
   return 'border-neutral-200 bg-neutral-100 text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300';
-}
-
-function formatAllocationLabel(item: HermesDashboardSnapshot['allocation'][number]) {
-  return item.asset;
 }
 
 function coerceDate(value: Date | string) {
@@ -714,7 +729,7 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   // ── Chapters: live + standing_down (funded) ─────────────────────────────
   const waitingForNextPath =
     data.status.deployedCapital <= 0 ||
-    data.allocation.every((item) => item.asset === 'Cash' || item.percentage <= 0);
+    data.allocation.every((item) => formatAllocationLabel(item) === 'Cash' || item.percentage <= 0);
 
   return (
     <main className={shellClass}>

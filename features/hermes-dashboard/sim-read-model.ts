@@ -9,7 +9,7 @@ import { getHermesRealizedTradeEventsForSimulation } from '@/features/ledger/her
 import type { HermesRealizedTradeEvent } from '@/features/ledger/types';
 
 import { dashboardFieldSources, hermesDashboardContractVersion } from './contract';
-import { formatCloseDecisionSummary, waitingCopy } from './decision-language';
+import { formatTradeCloseSummary, waitingCopy } from './decision-language';
 import type { GuestSimSession } from './sim-session';
 import type { HermesDashboardSnapshot, RiskProfile } from './types';
 
@@ -188,7 +188,12 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     const userPnl = roundCurrency(founderPnl * share);
     tradeActivity.push({
       timestamp: event.closedAt,
-      summary: formatCloseDecisionSummary(userPnl),
+      summary: formatTradeCloseSummary({
+        pnl: userPnl,
+        rawPayload: event.rawPayload,
+        side: event.side,
+        symbol: event.symbol,
+      }),
     });
   }
 
@@ -248,7 +253,7 @@ export async function buildLiveOpenSimulationDashboardSnapshot(
     : copy.nextWhenClear;
 
   // Never publish pool tickers in simulation. Pre-entry opens are not on this
-  // guest's book — they stay in cash until Hermes puts money to work after they entered.
+  // guest's book — they stay in cash until Hermes buys assets after they entered.
   const allocation =
     inAPath && deployedCapital > 0
       ? deployedCapital >= 100
