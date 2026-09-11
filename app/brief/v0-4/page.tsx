@@ -160,7 +160,7 @@ export default function BriefPage() {
           </div>
           <div className="mt-6 max-w-2xl space-y-4 text-base leading-8 text-[#3f3a30]">
             <p>
-              I don&rsquo;t have a background in institutional trading, asset management, or quantitative
+              I don&rsquo;t have a background in institutional investing, asset management, or quantitative
               finance. I&rsquo;m not going to imply otherwise.
             </p>
             <p>

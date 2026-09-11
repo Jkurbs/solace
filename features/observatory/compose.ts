@@ -186,7 +186,7 @@ function composeOracle(now: Date): InstrumentObservation {
     ],
     activity,
     href: '/oracle',
-    disclosure: 'Scorekeeping and calibration: not a live trading feed.',
+    disclosure: 'Scorekeeping and calibration: not a live investment feed.',
   };
 }
 
