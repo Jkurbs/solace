@@ -7,36 +7,54 @@ import SiteHeader from '@/components/site-header';
 export const metadata: Metadata = {
   title: 'Solace · Privacy Policy',
   description:
-    'What Solace collects, how it is used, and what it is never used for. Solace does not sell personal information. June 2026.',
+    'How Solace collects, uses, and protects information across its non-custodial web3 platform. Last updated September 12, 2026.',
 };
 
 const sections = [
   {
     number: '01',
-    title: 'Information collected',
+    title: 'Information We Do Not Collect',
     body: [
-      'Solace may collect information you submit through request forms, account registration, and product usage. In practice this means your name, your email, and the responses you provide in an access request.',
+      'Because Solace prioritizes user privacy and utilizes a non-custodial web3 architecture, we do not store, view, or retain your private cryptographic keys, passphrases, seed phrases, or raw credit/debit card financial credentials.',
     ],
   },
   {
     number: '02',
-    title: 'How information is used',
+    title: 'Information We Collect',
     body: [
-      'Information is used to evaluate access requests, to operate and improve Solace products, and to communicate with you about your access and the service.',
+      'Public Blockchain Data: When you connect an independent non-custodial wallet (such as through the Privy framework), we log your public wallet address to map your account profile data, record transaction history within the Platform dashboard, and track simulated performance histories.',
+      'Device and Usage Logs: We may automatically collect standard data transmitted by your web browser, including your Internet Protocol (IP) address, browser type, operating system, and timestamp data to assist with geographic blocking compliance, fraud preventative actions, and UI optimization.',
+      'Communications Data: If you contact us directly via hello@solace.fyi, we retain your email address and any submitted text to process your support request.',
     ],
   },
   {
     number: '03',
-    title: 'Data sharing',
+    title: 'Third-Party Service Processors',
     body: [
-      'Solace does not sell personal information. Information may be shared with service providers strictly to operate the service (for example, identity verification and payment processing), and as required by law.',
+      'Our Platform integrates external financial and identity infrastructure components, specifically the Stripe Crypto Onramp. When utilizing these gateways, Stripe collects user information directly, including identity verification data, personal KYC logs, and credit card parameters. This collection is governed exclusively by Stripe\'s individual Privacy Policy and compliance guidelines.',
     ],
   },
   {
     number: '04',
-    title: 'Data retention',
+    title: 'How We Use Information',
     body: [
-      'Information is kept only as long as needed to operate the service and meet legal obligations. You may request deletion of your information by contacting Solace.',
+      'We utilize collected logs to operate, maintain, and secure the Platform frontend tracking interfaces.',
+      'We validate and enforce geographic geofencing restrictions to comply with regulatory limitations.',
+      'We debug, optimize, and enhance the responsiveness of the backend execution handlers.',
+    ],
+  },
+  {
+    number: '05',
+    title: 'Information Security',
+    body: [
+      'We apply industry-standard technical controls to safeguard data routed through our servers. However, because no transmission method over the internet is completely infallible, we cannot guarantee absolute security over information sent to us electronically.',
+    ],
+  },
+  {
+    number: '06',
+    title: 'Updates to This Policy',
+    body: [
+      'We reserve the right to revise this Privacy Policy at any time. Any changes will be indicated on this page by modifying the "Last Updated" timestamp at the top of the section.',
     ],
   },
 ];
@@ -51,17 +69,18 @@ export default function PrivacyPage() {
           Solace Privacy Policy
         </p>
         <h1 className="mt-5 max-w-2xl font-serif text-5xl font-medium leading-tight text-[var(--paper-ink)] md:text-7xl">
-          What we collect, and what we never do with it.
+          What we collect, what we never store, and how we protect it.
         </h1>
         <p className="mt-6 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-[var(--paper-muted)]">
-          Effective June 2026 · Limited beta
+          Last updated September 12, 2026 · Non-custodial
         </p>
 
         <div className="mt-10 border-t border-[var(--paper-line)] pt-8 text-base leading-8 text-[var(--paper-body)]">
           <p>
-            This policy describes what information Solace collects, how it is used, and how it is
-            protected. It is deliberately brief, and will be reviewed and expanded by counsel as
-            Solace matures.
+            Solace ("we", "our", or "us") operates the website located at solace.fyi (the
+            "Platform"). This Privacy Policy describes how we collect, utilize, and protect
+            information when you interact with our software utilities, data analytical views, and
+            non-custodial infrastructure interfaces.
           </p>
         </div>
 
@@ -88,19 +107,18 @@ export default function PrivacyPage() {
             </section>
           ))}
 
-          <section id="section-05" className="border-t border-[var(--paper-line)] pt-8">
+          <section id="section-07" className="border-t border-[var(--paper-line)] pt-8">
             <div className="grid gap-5 md:grid-cols-[6rem_1fr]">
-              <p className="font-mono text-xs text-[var(--paper-muted)]">05</p>
+              <p className="font-mono text-xs text-[var(--paper-muted)]">07</p>
               <div>
                 <h2 className="font-serif text-3xl font-medium text-[var(--paper-ink)] md:text-4xl">
-                  Contact
+                  Contact Us
                 </h2>
                 <div className="mt-5 space-y-4 text-base leading-8 text-[var(--paper-body)]">
                   <p>
-                    Questions about privacy, or a request to access or delete your information, can
-                    be sent to{' '}
-                    <a href="mailto:privacy@solace.fyi" className="brief-author-link">
-                      privacy@solace.fyi
+                    If you have questions regarding these privacy parameters, please notify us at{' '}
+                    <a href="mailto:hello@solace.fyi" className="brief-author-link">
+                      hello@solace.fyi
                     </a>
                     .
                   </p>

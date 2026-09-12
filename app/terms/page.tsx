@@ -7,43 +7,58 @@ import SiteHeader from '@/components/site-header';
 export const metadata: Metadata = {
   title: 'Solace · Terms of Service',
   description:
-    'The terms under which Solace and Hermes are provided. Beta status, no guarantees, access at discretion. June 2026.',
+    'Terms governing access to Solace, Hermes, and Oracle. Non-custodial software, third-party gateways, eligibility restrictions, and limitation of liability. Last updated September 12, 2026.',
 };
 
 const sections = [
   {
     number: '01',
-    title: 'Beta status',
+    title: 'Acceptance of Terms',
     body: [
-      'Solace and Hermes are currently provided as a limited beta service. They may change, be interrupted, or be discontinued at any time, without notice.',
+      `By accessing or using the Platform, you agree to be bound by these Terms and our Privacy Policy. If you are registering or using the Platform as an individual sole proprietor or on behalf of an entity, you represent that you have the legal authority to bind yourself or that entity to these conditions. If you do not agree, you must immediately cease using the Platform.`,
     ],
   },
   {
     number: '02',
-    title: 'No guarantee',
+    title: 'Description of Services',
     body: [
-      'Solace makes no guarantees regarding performance, outcomes, profitability, or future results. Nothing on this site is an offer of advisory services or investment advice.',
+      `Solace functions strictly as a software development, research, and data analytics provider. The Platform designs and publishes non-custodial software tools, analytics interfaces, and algorithmic tracking parameters (including the "Hermes" and "Oracle" modules). The Platform provides both simulated performance tracking profiles ("Demo Mode") and interfaces allowing users to connect independent, non-custodial cryptographic wallets.`,
     ],
   },
   {
     number: '03',
-    title: 'Access',
+    title: 'Non-Custodial Nature of Software',
     body: [
-      'Access to Hermes and other Solace instruments is granted at Solace’s discretion and may be revoked at any time. Access may be subject to eligibility and applicable regulation.',
+      `You explicitly acknowledge and agree that Solace is a non-custodial software application. Solace does not hold, store, manage, safeguard, or maintain custody or control over your digital assets, private cryptographic keys, or fiat currency reserves. Any digital asset transactions initiated through the Platform are executed directly by you via third-party web3 wallet management solutions (such as Privy) and independent public blockchain protocols.`,
     ],
   },
   {
     number: '04',
-    title: 'Intellectual property',
+    title: 'Third-Party Integrations and Gateways',
     body: [
-      'All software, content, branding, and materials remain the property of Solace. Nothing here grants a license to copy, modify, or redistribute them.',
+      `The Platform utilizes independent, third-party service providers to facilitate ecosystem actions, including Stripe, Inc. for fiat-to-crypto gateway access ("Stripe Crypto Onramp"). Your utilization of any third-party payment infrastructure is governed strictly by the respective provider's terms, conditions, and compliance frameworks. Solace is not liable for transaction declines, service interruptions, or regulatory account limitations imposed by third-party processors.`,
     ],
   },
   {
     number: '05',
-    title: 'Limitation of liability',
+    title: 'Eligibility and Geographic Restrictions',
     body: [
-      'Solace is provided as-is, without warranties of any kind. To the fullest extent permitted by law, Solace is not liable for any loss or damage arising from use of the service.',
+      `You represent and warrant that you are at least 18 years of age and possess the legal capacity to enter into a binding agreement. You further certify that you are not a resident or citizen of, or located within, any jurisdiction embargoed by the United States or subject to international sanctions.`,
+      `Pursuant to financial service restrictions, residents of high-risk jurisdictions and specific domestic states, including the State of Hawaii and the State of New York, are explicitly prohibited from utilizing the Platform's live transaction mechanisms or integrated fiat-to-crypto systems.`,
+    ],
+  },
+  {
+    number: '06',
+    title: 'No Financial or Investment Advice',
+    body: [
+      `All information, metrics, tracking profiles, and quantitative models displayed on Solace are provided strictly for educational, informational, and software testing purposes. Solace does not offer investment advice, financial planning services, portfolio management, or legal counsel. The historical performance of any simulated strategy or algorithmic parameter does not guarantee or imply future results.`,
+    ],
+  },
+  {
+    number: '07',
+    title: 'Limitation of Liability',
+    body: [
+      `TO THE MAXIMUM EXTENT PERMITTED BY LAW, SOLACE AND ITS OPERATORS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, REVENUE, DIGITAL ASSETS, PRIVATE KEYS, OR DATA, WHETHER INCURRED DIRECTLY OR INDIRECTLY, RESULTING FROM (I) YOUR ACCESS TO OR USE OF THE PLATFORM; (II) ANY CONDUCT OR CONTENT OF ANY THIRD PARTY ON THE SERVICE; OR (III) THE PERFORMANCE, VULNERABILITY, OR EXPLOIT OF ANY DEPLOYED SMART CONTRACTS.`,
     ],
   },
 ];
@@ -61,14 +76,14 @@ export default function TermsPage() {
           The terms, kept short and honest.
         </h1>
         <p className="mt-6 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-[var(--paper-muted)]">
-          Effective June 2026 · Limited beta · No performance claims
+          Last updated September 12, 2026 · Non-custodial · No performance claims
         </p>
 
         <div className="mt-10 border-t border-[var(--paper-line)] pt-8 text-base leading-8 text-[var(--paper-body)]">
           <p>
-            These terms govern your access to and use of Solace, Hermes, and related products. They
-            are deliberately brief. They will be reviewed and expanded by counsel as Solace matures;
-            for now, clarity matters more than length.
+            Welcome to Solace (the "Platform"), accessible via solace.fyi. Please read these Terms
+            of Service ("Terms") carefully before using our website, services, or any associated
+            software interfaces.
           </p>
         </div>
 
@@ -95,18 +110,19 @@ export default function TermsPage() {
             </section>
           ))}
 
-          <section id="section-06" className="border-t border-[var(--paper-line)] pt-8">
+          <section id="section-08" className="border-t border-[var(--paper-line)] pt-8">
             <div className="grid gap-5 md:grid-cols-[6rem_1fr]">
-              <p className="font-mono text-xs text-[var(--paper-muted)]">06</p>
+              <p className="font-mono text-xs text-[var(--paper-muted)]">08</p>
               <div>
                 <h2 className="font-serif text-3xl font-medium text-[var(--paper-ink)] md:text-4xl">
-                  Contact
+                  Contact Information
                 </h2>
                 <div className="mt-5 space-y-4 text-base leading-8 text-[var(--paper-body)]">
                   <p>
-                    Questions about these terms can be sent to{' '}
-                    <a href="mailto:legal@solace.fyi" className="brief-author-link">
-                      legal@solace.fyi
+                    For support, compliance inquiries, or legal notifications, please contact the
+                    Platform administration team via email at{' '}
+                    <a href="mailto:hello@solace.fyi" className="brief-author-link">
+                      hello@solace.fyi
                     </a>
                     .
                   </p>
