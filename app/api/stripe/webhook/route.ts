@@ -269,6 +269,11 @@ function isSolaceDepositSession(session: Stripe.Checkout.Session) {
   return session.metadata?.purpose === 'solace_deposit' && Boolean(session.metadata.ledger_account_id);
 }
 
+function isSolaceCryptoOnrampSession(session: any) {
+  // TODO: Update type when Stripe SDK adds Crypto Onramp support
+  return session.metadata?.solace_user === 'true' && Boolean(session.metadata.account_id);
+}
+
 async function postCheckoutDeposit(event: Stripe.Event, stripe: Stripe) {
   const session = event.data.object as Stripe.Checkout.Session;
 
@@ -334,6 +339,201 @@ async function markCheckoutSession(event: Stripe.Event, status: 'expired' | 'fai
   return markStripeDepositSessionStatus(session.id, status);
 }
 
+/**
+ * Check if this is a Solace live upgrade session
+ */
+function isSolaceLiveUpgradeSession(session: Stripe.Checkout.Session | any) {
+  return session.metadata?.purpose === 'live_upgrade' && Boolean(session.metadata.account_id);
+}
+
+/**
+ * Handle live upgrade: SIMULATION → LIVE account transition
+ * Triggered when user completes Stripe deposit to upgrade from paper trading to live
+ */
+async function handleLiveUpgrade(event: Stripe.Event) {
+  const session = event.data.object as Stripe.Checkout.Session;
+
+  if (!isSolaceLiveUpgradeSession(session)) {
+    return true;
+  }
+
+  const accountId = session.metadata?.account_id;
+  const smartAccount = session.metadata?.smart_account;
+
+  console.info('[stripe-webhook] Live upgrade session completed.', {
+    eventId: event.id,
+    sessionId: session.id,
+    accountId,
+    smartAccount,
+    amount: session.amount_total,
+  });
+
+  if (!accountId) {
+    console.warn('[stripe-webhook] Live upgrade missing account_id', {
+      eventId: event.id,
+      sessionId: session.id,
+    });
+    return false;
+  }
+
+  // Import Supabase here to avoid circular dependencies
+  const { createSupabaseDataClient } = await import('@/lib/supabase/server');
+  const supabase = await createSupabaseDataClient();
+
+  const now = new Date().toISOString();
+
+  try {
+    // Update account from SIMULATION to LIVE
+    const { error: accountError } = await supabase
+      .from('ledger_accounts')
+      .update({
+        account_mode: 'LIVE',
+        updated_at: now,
+      })
+      .eq('id', accountId);
+
+    if (accountError) {
+      console.error('[stripe-webhook] Live upgrade account update failed:', accountError);
+      return false;
+    }
+
+    // Record the deposit in ledger
+    const amount = session.amount_total ? session.amount_total / 100 : 0;
+    const currency: 'USD' = 'USD'; // Force USD for now - Stripe Onramp currently only supports USD
+
+    const { error: depositError } = await supabase
+      .from('solace_deposits')
+      .upsert({
+        id: `dep_${session.id}`,
+        ledger_account_id: accountId,
+        amount,
+        currency,
+        provider: 'stripe',
+        provider_reference: session.id,
+        status: 'posted',
+        posted_at: now,
+      });
+
+    if (depositError) {
+      console.warn('[stripe-webhook] Live upgrade deposit recording failed:', depositError.message);
+      // Continue even if deposit recording fails - account is already LIVE
+    }
+
+    // Record activity
+    const { error: activityError } = await supabase
+      .from('solace_activities')
+      .insert({
+        id: `act_${session.id}_upgrade`,
+        ledger_account_id: accountId,
+        type: 'live_upgrade',
+        message: 'User upgraded from simulation to live trading via Stripe',
+        created_at: now,
+      });
+
+    if (activityError) {
+      console.warn('[stripe-webhook] Live upgrade activity recording failed:', activityError.message);
+    }
+
+    // Update session status
+    await markStripeDepositSessionStatus(session.id, 'posted');
+
+    console.info('[stripe-webhook] Live upgrade completed successfully.', {
+      accountId,
+      amount,
+      currency,
+    });
+
+    return true;
+  } catch (error) {
+    console.error('[stripe-webhook] Live upgrade handler failed:', error);
+    return false;
+  }
+}
+
+/**
+ * Handle Stripe Crypto Onramp completion
+ * USDC was sent directly to user's smart account (not Solace treasury)
+ * TODO: Update when Stripe SDK adds Crypto Onramp support
+ */
+async function handleCryptoOnrampCompleted(event: Stripe.Event, stripe: Stripe) {
+  const session = event.data.object as any;
+
+  if (!isSolaceCryptoOnrampSession(session)) {
+    return true;
+  }
+
+  console.info('[stripe-webhook] Crypto Onramp session completed.', {
+    eventId: event.id,
+    sessionId: session.id,
+    destinationWallet: session.destination_wallet,
+    amount: session.transaction_details.fiat.amount,
+    currency: session.transaction_details.fiat.currency,
+  });
+
+  const accountId = session.metadata?.account_id;
+  const amount = session.transaction_details.fiat.amount / 100; // cents to dollars
+  const currency = session.transaction_details.fiat.currency.toUpperCase();
+  const destinationWallet = session.destination_wallet;
+  const occurredAt = new Date(event.created * 1000).toISOString();
+
+  if (!accountId || !amount || currency !== 'USD') {
+    console.warn('[stripe-webhook] Crypto Onramp deposit is missing required ledger metadata.', {
+      accountId,
+      amount,
+      currency,
+      eventId: event.id,
+      sessionId: session.id,
+    });
+
+    return false;
+  }
+
+  // For Crypto Onramp, USDC was sent directly to user's smart account
+  // We just need to record that the deposit was initiated
+  // The actual USDC transfer happens on-chain and is user-controlled
+  const posted = await postStripeCheckoutDeposit({
+    accountId,
+    amount,
+    checkoutSessionId: session.id,
+    currency: 'USD',
+    occurredAt,
+    paymentIntentId: null, // No payment intent for Crypto Onramp
+    settlement: {
+      grossAmount: amount * 100, // Reconstruct in cents
+      netAmount: amount * 100,
+      status: 'available',
+      stripeFeeAmount: 0, // Stripe fees are handled differently for Crypto Onramp
+      availableOn: occurredAt,
+      stripeCreatedAt: occurredAt,
+      balanceTransactionId: null,
+      balanceType: null,
+      chargeId: null,
+      exchangeRate: null,
+      reportingCategory: null,
+    },
+  });
+
+  if (!posted) {
+    console.warn('[stripe-webhook] Crypto Onramp deposit could not be posted.', {
+      eventId: event.id,
+      sessionId: session.id,
+    });
+
+    return false;
+  }
+
+  // Update session status
+  await markStripeDepositSessionStatus(session.id, 'posted');
+
+  console.info('[stripe-webhook] Crypto Onramp deposit posted successfully.', {
+    accountId,
+    amount,
+    destinationWallet,
+  });
+
+  return true;
+}
+
 export async function POST(request: Request) {
   const stripe = getStripeServerClient();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -365,7 +565,12 @@ export async function POST(request: Request) {
   switch (event.type) {
     case 'checkout.session.completed':
     case 'checkout.session.async_payment_succeeded':
-      processed = await postCheckoutDeposit(event, stripe);
+      // Handle both regular deposits and live upgrades
+      if (isSolaceLiveUpgradeSession(event.data.object as Stripe.Checkout.Session)) {
+        processed = await handleLiveUpgrade(event);
+      } else {
+        processed = await postCheckoutDeposit(event, stripe);
+      }
       break;
     case 'balance.available':
       processed = await refreshPendingStripeSettlements(stripe, event);
@@ -376,6 +581,10 @@ export async function POST(request: Request) {
     case 'checkout.session.expired':
       processed = await markCheckoutSession(event, 'expired');
       break;
+    // NEW: Handle Stripe Crypto Onramp events (enable when SDK supports it)
+    // case 'crypto.onramp_session.completed':
+    //   processed = await handleCryptoOnrampCompleted(event, stripe);
+    //   break;
     case 'identity.verification_session.verified':
     case 'identity.verification_session.requires_input':
     case 'identity.verification_session.canceled':

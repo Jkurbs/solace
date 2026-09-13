@@ -131,7 +131,7 @@ export default function HermesExperience({
               <motion.p variants={fade} className="home-hero-dek">
                 Hermes observes markets, decides when capital should act, and
                 executes within explicit constraints. The capital remains yours.
-                Hermes receives permission to act—not ownership.
+                Hermes receives permission to act, not ownership.
               </motion.p>
 
               <motion.div

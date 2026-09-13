@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAppOrigin } from '@/lib/app-origin';
 import { cn } from '@/lib/utils';
+import { useUserSmartAccount, usePrivyUser } from '@/lib/privy/client';
 
 import {
   getHermesDashboardSnapshot,
@@ -137,6 +138,14 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
   const [logoutStatus, setLogoutStatus] = useState('');
   const { theme } = useDashboardTheme();
   const queryClient = useQueryClient();
+
+  const { user } = usePrivyUser();
+  console.log('[debug] linkedAccounts', user?.linkedAccounts?.map((a) => a.type));
+  
+  // Privy wallet integration
+  const { smartAccount, isLoading: walletLoading, isAuthenticated } = useUserSmartAccount();
+  const { login } = usePrivyUser();
+  
   const { data, isError, isFetching } = useQuery({
     queryKey: hermesDashboardQueryKey,
     queryFn: async () =>
@@ -152,7 +161,8 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
   });
 
   const moneyMovement = useMutation({
-    mutationFn: ({ amount, type }: { amount?: number; type: MoneyMovementType }) => startMoneyMovement(type, amount),
+    mutationFn: ({ amount, type }: { amount?: number; type: MoneyMovementType }) => 
+      startMoneyMovement(type, amount, smartAccount || undefined),
     onMutate() {
       setActionStatus('');
     },
@@ -185,6 +195,18 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
       return;
     }
 
+    if (!smartAccount) {
+      // If the user is already authenticated but has no smart wallet, a plain
+      // login() call is a no-op. Force a fresh session so createOnLogin runs
+      // and the smart wallet is provisioned.
+      if (isAuthenticated) {
+        setActionStatus('Preparing your wallet. Please sign out and back in from the dashboard to finish setup.');
+      } else {
+        login();
+      }
+      return;
+    }
+
     moneyMovement.mutate({ amount, type: 'deposit' });
   }
 
@@ -201,7 +223,7 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
   const withdrawable = data.portfolio.withdrawable ?? data.portfolio.availableToWithdraw;
   const allocatedCapital = data.portfolio.allocatedCapital ?? 0;
   const fundingCopy = getFundingCopy(data);
-  const depositDisabled = moneyMovement.isPending || setupIncomplete;
+  const depositDisabled = moneyMovement.isPending || setupIncomplete || walletLoading;
   const withdrawalDisabled = moneyMovement.isPending || isAwaitingDeposit || isFundingPending || withdrawable <= 0;
 
   return (
@@ -340,6 +362,30 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
                   <ArrowDownToLine size={16} aria-hidden="true" />
                   {moneyMovement.isPending ? 'Opening' : isSimulationMode ? 'Add simulated capital' : 'Deposit capital'}
                 </Button>
+                {walletLoading ? (
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    <span className="animate-pulse">Loading wallet...</span>
+                  </p>
+                ) : smartAccount ? (
+                  <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm dark:border-neutral-800 dark:bg-neutral-900/60">
+                    <p className="font-medium text-neutral-700 dark:text-neutral-300">Your Smart Account</p>
+                    <p className="font-mono text-xs mt-1 text-neutral-600 dark:text-neutral-400">
+                      {smartAccount.slice(0, 6)}...{smartAccount.slice(-4)}
+                    </p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">
+                      USDC will be deposited directly here
+                    </p>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => login()}
+                    className="w-full"
+                  >
+                    Connect Wallet
+                  </Button>
+                )}
                 {setupIncomplete ? (
                   <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
                     {data.account.identityVerification.status !== 'VERIFIED'
@@ -352,8 +398,8 @@ export function MoneyMovementPage({ initialSnapshot }: MoneyMovementPageProps) {
                 ) : (
                   <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
                     {isSimulationMode
-                      ? 'Simulation deposits use Stripe sandbox when configured and still pass through the Solace treasury record.'
-                      : 'Deposits are recorded to the ledger before treasury allocation and Hermes deployment.'}
+                      ? 'Simulation deposits use Stripe sandbox when configured.'
+                      : 'Deposits go directly to your smart account. No treasury custody.'}
                   </p>
                 )}
               </form>

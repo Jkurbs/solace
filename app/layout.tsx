@@ -4,6 +4,7 @@ import { GeistMono } from "geist/font/mono";
 import { Analytics } from "@vercel/analytics/next";
 
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { Providers } from "./providers";
 
 import "./globals.css";
 
