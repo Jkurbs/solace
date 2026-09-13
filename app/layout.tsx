@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { Providers } from "./providers";
 
 import "./globals.css";
 
@@ -67,7 +68,7 @@ export default function RootLayout({
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

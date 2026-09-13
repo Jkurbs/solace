@@ -30,6 +30,8 @@ import {
   logoutUser,
   startIdentityVerification,
 } from './queries';
+import { useUserSmartAccount } from '@/lib/privy/client';
+import { StripeOnrampModal } from '@/components/StripeOnrampModal';
 import type { DashboardTheme } from './theme';
 import { useDashboardTheme } from './use-dashboard-theme';
 import type { HermesDashboardSnapshot } from './types';
@@ -350,7 +352,9 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
   const [capitalNavigationPending, setCapitalNavigationPending] = useState(false);
   const [identityStatus, setIdentityStatus] = useState('');
   const [logoutStatus, setLogoutStatus] = useState('');
+  const [showOnrampModal, setShowOnrampModal] = useState(false);
   const { theme } = useDashboardTheme();
+  const { smartAccount } = useUserSmartAccount();
   const queryClient = useQueryClient();
   const { data, dataUpdatedAt, isError, isFetching } = useQuery({
     queryKey: hermesDashboardQueryKey,
@@ -426,12 +430,6 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               <span className="hidden sm:inline">Join the waitlist</span>
             </Link>
           </Button>
-          <Link
-            href="/dashboard/capital"
-            className="hidden font-bold text-neutral-700 transition-colors hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-neutral-50 sm:inline"
-          >
-            Capital
-          </Link>
           <Badge variant={isSimulationMode ? 'secondary' : 'success'}>
             {isSimulationMode ? 'Simulation' : 'Live'}
           </Badge>
@@ -645,15 +643,26 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               </p>
             ) : null}
             <div className="mt-8">
-              <Button asChild size="lg" pending={capitalNavigationPending} className="w-full sm:w-auto">
-                <Link href="/dashboard/capital" onClick={() => setCapitalNavigationPending(true)}>
-                  {capitalNavigationPending
-                    ? 'Opening'
-                    : isSimulationMode
-                      ? 'Add simulation capital'
-                      : 'Add capital'}
-                  <ArrowRight size={16} aria-hidden="true" />
-                </Link>
+              <Button
+                type="button"
+                size="lg"
+                onClick={() => {
+                  if (isSimulationMode) {
+                    setShowOnrampModal(true);
+                  } else {
+                    setCapitalNavigationPending(true);
+                    window.location.href = '/dashboard/capital';
+                  }
+                }}
+                pending={capitalNavigationPending}
+                className="w-full sm:w-auto"
+              >
+                {capitalNavigationPending
+                  ? 'Opening'
+                  : isSimulationMode
+                    ? 'Deposit Real Funds'
+                    : 'Add capital'}
+                <ArrowRight size={16} aria-hidden="true" />
               </Button>
             </div>
             <p className="mt-4 text-sm leading-6 text-neutral-500 dark:text-neutral-400">
@@ -767,12 +776,23 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
               value={formatCurrency(openPnl, { signed: true })}
               positive={openPnl > 0}
             />
-            <Button asChild pending={capitalNavigationPending} className="w-full sm:w-auto">
-              <Link href="/dashboard/capital" onClick={() => setCapitalNavigationPending(true)}>
-                {capitalNavigationPending ? 'Opening' : 'Move capital'}
+            {isSimulationMode ? (
+              <Button
+                type="button"
+                onClick={() => setShowOnrampModal(true)}
+                className="w-full sm:w-auto"
+              >
+                Deposit Real Funds
                 <ArrowRight size={16} aria-hidden="true" />
-              </Link>
-            </Button>
+              </Button>
+            ) : (
+              <Button asChild pending={capitalNavigationPending} className="w-full sm:w-auto">
+                <Link href="/dashboard/capital" onClick={() => setCapitalNavigationPending(true)}>
+                  {capitalNavigationPending ? 'Opening' : 'Move capital'}
+                  <ArrowRight size={16} aria-hidden="true" />
+                </Link>
+              </Button>
+            )}
           </div>
         </motion.section>
 
@@ -849,6 +869,17 @@ export function HermesDashboard({ initialSnapshot }: HermesDashboardProps) {
 
         {foot}
       </div>
+      
+      {/* Stripe Onramp Modal - for SIMULATION → LIVE upgrade */}
+      {showOnrampModal && (
+        <StripeOnrampModal
+          onClose={() => setShowOnrampModal(false)}
+          onComplete={() => {
+            setShowOnrampModal(false);
+            queryClient.invalidateQueries({ queryKey: hermesDashboardQueryKey });
+          }}
+        />
+      )}
     </main>
   );
 }
