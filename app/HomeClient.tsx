@@ -237,16 +237,12 @@ export default function HomeClient({
                 </>
               )}
             </motion.div>
-
-            {/* Interactive Telemetry Banner
-            {showRecord && (
-              <motion.div variants={fade} className="mt-12 w-full">
-                <HomeMetricsBanner
-                  decisionsCount={sealedDecisions ?? 0}
-                  lastAnchoredLabel={lastAnchoredLabel}
-                />
-              </motion.div>
-            )} */}
+              <motion.p
+                variants={fade}
+                className="mt-5 text-center text-xs font-medium tracking-wide text-muted"
+              >
+                Secure Platform Identity &amp; Processing via Stripe and Privy
+             </motion.p>
           </div>
         </motion.div>
       </section>
