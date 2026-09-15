@@ -150,6 +150,30 @@ export default function HermesExperience({
                 </ShimmerLink>
               </motion.div>
 
+              <motion.p
+                variants={fade}
+                className="mt-5 text-center text-xs font-medium tracking-wide text-muted"
+              >
+                Secure Platform Identity &amp; Processing via{" "}
+                <a
+                  href="https://stripe.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4 transition-opacity hover:opacity-70"
+                >
+                  Stripe
+                </a>{" "}
+                and{" "}
+                <a
+                  href="https://www.privy.io"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4 transition-opacity hover:opacity-70"
+                >
+                  Privy
+                </a>
+              </motion.p>
+
               {showRecord && (
                 <motion.div
                   variants={fade}
@@ -465,6 +489,27 @@ export default function HermesExperience({
               deploys personal capital to establish an unalterable track
               record. Nothing on this site constitutes an offer to manage
               outside funds or financial advice.
+            </p>
+
+            <p className="mt-4 text-xs font-medium tracking-wide text-muted">
+              Secure Platform Identity &amp; Processing via{" "}
+              <a
+                href="https://stripe.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 transition-opacity hover:opacity-70"
+              >
+                Stripe
+              </a>{" "}
+              and{" "}
+              <a
+                href="https://www.privy.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 transition-opacity hover:opacity-70"
+              >
+                Privy
+              </a>
             </p>
 
             <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
