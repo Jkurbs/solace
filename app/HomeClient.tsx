@@ -246,7 +246,7 @@ export default function HomeClient({
                   href="https://stripe.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition-opacity hover:opacity-70"
+                  className="underline underline-offset-4 transition-opacity hover:opacity-70"
                 >
                   Stripe
                 </a>{" "}
@@ -255,7 +255,7 @@ export default function HomeClient({
                   href="https://www.privy.io"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition-opacity hover:opacity-70"
+                  className="underline underline-offset-4 transition-opacity hover:opacity-70"
                 >
                   Privy
                 </a>
