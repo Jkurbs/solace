@@ -237,12 +237,29 @@ export default function HomeClient({
                 </>
               )}
             </motion.div>
-              <motion.p
+            <motion.p
                 variants={fade}
                 className="mt-5 text-center text-xs font-medium tracking-wide text-muted"
               >
-                Secure Platform Identity &amp; Processing via Stripe and Privy
-             </motion.p>
+                Secure Platform Identity &amp; Processing via{" "}
+                <a
+                  href="https://stripe.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-opacity hover:opacity-70"
+                >
+                  Stripe
+                </a>{" "}
+                and{" "}
+                <a
+                  href="https://www.privy.io"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-opacity hover:opacity-70"
+                >
+                  Privy
+                </a>
+              </motion.p>
           </div>
         </motion.div>
       </section>
