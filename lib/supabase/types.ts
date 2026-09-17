@@ -231,6 +231,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      hermes_ledger_public_stats: {
+        Row: {
+          id: string;
+          sealed_decisions: number;
+          sided_positive: number;
+          sided_negative: number;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          sealed_decisions?: number;
+          sided_positive?: number;
+          sided_negative?: number;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          sealed_decisions?: number;
+          sided_positive?: number;
+          sided_negative?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       hermes_decision_ledger: {
         Row: {
           record_id: string;

@@ -5,6 +5,7 @@ import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import type { TrustLedgerDisplayRow } from '@/app/trust/TrustLedgerTable';
 import ShareLedger from '@/app/trust/ShareLedger';
+import VerifyInBrowser from '@/app/trust/VerifyInBrowser';
 import HeldPanel from './HeldPanel';
 import RecordTable from './RecordTable';
 import VerifyOnDemand from './VerifyOnDemand';
@@ -80,6 +81,10 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
             Every decision is written down before anyone knows if it was right. You can check the
             chain. Founder capital. Young sample.
           </p>
+
+          <div className="record-hero-ctas">
+            <VerifyInBrowser label="Verify ledger" />
+          </div>
 
           <div className="home-record mt-10 md:mt-12" aria-label="Hermes record">
             <div className="home-record-counts">

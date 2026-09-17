@@ -1,10 +1,12 @@
 import 'server-only';
 
+import { getRuntimeSnapshot, saveRuntimeSnapshot } from '@/features/runtime-snapshots/store';
 import { hermesVersion } from '@/features/hermes-version';
 import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/supabase/server';
 import type { Database } from '@/lib/supabase/types';
 
 import { computeLedgerResolutionHash, computeLedgerRowHash, LEDGER_GENESIS_PREV_HASH } from './hash';
+import { computeLedgerScoreboard } from './scoreboard';
 
 export type HermesLedgerRowClass = 'sealed' | 'backfill' | 'system';
 export type HermesLedgerEventType = 'open' | 'close' | 'void';
@@ -204,6 +206,179 @@ export async function getHermesLedgerPulse(): Promise<LedgerPulseValue | null> {
     console.warn('[hermes-ledger] Pulse read failed.', error);
     return pulseHeadCache?.value ?? null;
   }
+}
+
+export type HermesPublicRecord = {
+  decisions: number;
+  hitRate: number | null;
+  sidedCloses: number;
+};
+
+const PUBLIC_RECORD_SNAPSHOT_KEY = 'hermes_public_record';
+const PUBLIC_RECORD_MS = 4_000;
+let publicRecordCache: { expiresAt: number; value: HermesPublicRecord | null } | null = null;
+
+type PublicRecordCounts = {
+  sealedDecisions: number;
+  sidedPositive: number;
+  sidedNegative: number;
+};
+
+function recordFromCounts(counts: PublicRecordCounts): HermesPublicRecord | null {
+  const sidedCloses = counts.sidedPositive + counts.sidedNegative;
+  if (counts.sealedDecisions <= 0) {
+    return null;
+  }
+
+  return {
+    decisions: counts.sealedDecisions,
+    hitRate: sidedCloses > 0 ? counts.sidedPositive / sidedCloses : null,
+    sidedCloses,
+  };
+}
+
+function countsFromUnknown(value: unknown): PublicRecordCounts | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const sealedDecisions = Number(record.sealedDecisions);
+  const sidedPositive = Number(record.sidedPositive);
+  const sidedNegative = Number(record.sidedNegative);
+
+  if (![sealedDecisions, sidedPositive, sidedNegative].every((n) => Number.isFinite(n) && n >= 0)) {
+    return null;
+  }
+
+  return { sealedDecisions, sidedPositive, sidedNegative };
+}
+
+function isMissingPublicStatsTable(message: string) {
+  return (
+    message.includes('hermes_ledger_public_stats') &&
+    (message.includes('Could not find') || message.includes('does not exist') || message.includes('schema cache'))
+  );
+}
+
+async function readPublicStatsTable(): Promise<PublicRecordCounts | null> {
+  if (!isSupabaseDataClientConfigured()) {
+    return null;
+  }
+
+  try {
+    const supabase = await createSupabaseDataClient();
+    const { data, error } = await supabase
+      .from('hermes_ledger_public_stats')
+      .select('sealed_decisions,sided_positive,sided_negative')
+      .eq('id', 'public')
+      .maybeSingle();
+
+    if (error) {
+      if (!isMissingPublicStatsTable(error.message)) {
+        console.warn('[hermes-ledger] Public stats read failed.', error.message);
+      }
+
+      return null;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return {
+      sealedDecisions: data.sealed_decisions,
+      sidedPositive: data.sided_positive,
+      sidedNegative: data.sided_negative,
+    };
+  } catch (error) {
+    console.warn('[hermes-ledger] Public stats read failed.', error);
+    return null;
+  }
+}
+
+async function seedPublicRecordCounts(): Promise<PublicRecordCounts | null> {
+  const rows = await listHermesLedgerProcessRows(1500);
+  if (!rows.length) {
+    return null;
+  }
+
+  const scoreboard = computeLedgerScoreboard(rows);
+  const counts: PublicRecordCounts = {
+    sealedDecisions: scoreboard.process.sealedDecisions,
+    sidedPositive: scoreboard.performance.positive,
+    sidedNegative: scoreboard.performance.negative,
+  };
+  await saveRuntimeSnapshot(PUBLIC_RECORD_SNAPSHOT_KEY, counts);
+  return counts;
+}
+
+function publicRecordDeltaForRow(input: {
+  rowClass?: HermesLedgerRowClass | null;
+  eventType?: HermesLedgerEventType | null;
+  outcome?: string | null;
+  pnl?: number | null;
+  countDecision?: boolean;
+}): PublicRecordCounts {
+  const counts: PublicRecordCounts = { sealedDecisions: 0, sidedPositive: 0, sidedNegative: 0 };
+
+  if (input.countDecision && input.rowClass !== 'system') {
+    counts.sealedDecisions = 1;
+  }
+
+  if (
+    input.rowClass !== 'backfill' &&
+    input.eventType !== 'open' &&
+    input.outcome &&
+    typeof input.pnl === 'number' &&
+    Number.isFinite(input.pnl)
+  ) {
+    if (input.pnl > 0) {
+      counts.sidedPositive = 1;
+    } else if (input.pnl < 0) {
+      counts.sidedNegative = 1;
+    }
+  }
+
+  return counts;
+}
+
+async function applyPublicRecordDelta(delta: PublicRecordCounts) {
+  publicRecordCache = null;
+
+  if (delta.sealedDecisions === 0 && delta.sidedPositive === 0 && delta.sidedNegative === 0) {
+    return;
+  }
+
+  if (await readPublicStatsTable()) {
+    return;
+  }
+
+  const existing = countsFromUnknown(await getRuntimeSnapshot(PUBLIC_RECORD_SNAPSHOT_KEY));
+  if (!existing) {
+    await seedPublicRecordCounts();
+    return;
+  }
+
+  await saveRuntimeSnapshot(PUBLIC_RECORD_SNAPSHOT_KEY, {
+    sealedDecisions: existing.sealedDecisions + delta.sealedDecisions,
+    sidedPositive: existing.sidedPositive + delta.sidedPositive,
+    sidedNegative: existing.sidedNegative + delta.sidedNegative,
+  });
+}
+
+export async function getHermesPublicRecord(): Promise<HermesPublicRecord | null> {
+  if (publicRecordCache && publicRecordCache.expiresAt > Date.now()) {
+    return publicRecordCache.value;
+  }
+
+  const counts =
+    (await readPublicStatsTable()) ??
+    countsFromUnknown(await getRuntimeSnapshot(PUBLIC_RECORD_SNAPSHOT_KEY)) ??
+    (await seedPublicRecordCounts());
+  const value = counts ? recordFromCounts(counts) : null;
+  publicRecordCache = { expiresAt: Date.now() + PUBLIC_RECORD_MS, value };
+  return value;
 }
 
 export async function listHermesLedgerRows(limit = 50): Promise<HermesLedgerRow[]> {
@@ -478,7 +653,19 @@ export async function sealHermesLedgerRow(input: {
         .maybeSingle();
 
       if (!error) {
-        return data ? fromRow(data) : null;
+        const sealed = data ? fromRow(data) : null;
+        if (sealed) {
+          await applyPublicRecordDelta(
+            publicRecordDeltaForRow({
+              countDecision: true,
+              eventType: sealed.eventType,
+              outcome: sealed.outcome,
+              pnl: sealed.pnl,
+              rowClass: sealed.rowClass,
+            }),
+          );
+        }
+        return sealed;
       }
 
       if (error.code === '23505') {
@@ -556,7 +743,19 @@ export async function resolveHermesLedgerRow(input: {
       return null;
     }
 
-    return data ? fromRow(data) : null;
+    const resolved = data ? fromRow(data) : null;
+    if (resolved) {
+      await applyPublicRecordDelta(
+        publicRecordDeltaForRow({
+          countDecision: false,
+          eventType: resolved.eventType,
+          outcome: resolved.outcome,
+          pnl: resolved.pnl,
+          rowClass: resolved.rowClass,
+        }),
+      );
+    }
+    return resolved;
   } catch (error) {
     console.warn('[hermes-ledger] Resolve failed.', error);
     return null;

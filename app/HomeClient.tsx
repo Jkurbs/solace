@@ -258,7 +258,7 @@ export default function HomeClient({
             className={`hero-spine${record.hitRate === null ? ' is-single' : ''}`}
             aria-label={
               record.hitRate !== null
-                ? `${record.decisions.toLocaleString('en-US')} decisions written. Right ${formatPercent(record.hitRate)} of the time it chose a side, from ${record.sidedCloses.toLocaleString('en-US')} sided closes. Young sample. Open the public record.`
+                ? `${record.decisions.toLocaleString('en-US')} decisions written. Right ${formatPercent(record.hitRate, 1)} of the time it chose a side, from ${record.sidedCloses.toLocaleString('en-US')} sided closes. Young sample. Open the public record.`
                 : `${record.decisions.toLocaleString('en-US')} decisions written. Open the public record.`
             }
           >
@@ -271,7 +271,7 @@ export default function HomeClient({
                 <>
                   <span className="hero-spine-rule" aria-hidden="true" />
                   <span className="hero-spine-measure">
-                    <strong>{formatPercent(record.hitRate)}</strong>
+                    <strong>{formatPercent(record.hitRate, 1)}</strong>
                     <span>Overall Precision</span>
                   </span>
                 </>

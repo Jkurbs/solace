@@ -3,8 +3,7 @@ import type { Metadata } from 'next';
 import { formatRelativeTime } from '@/features/anchor/format';
 import { getLatestAnchorFast } from '@/features/anchor/store';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
-import { computeLedgerScoreboard } from '@/features/hermes-ledger/scoreboard';
-import { getHermesLedgerPulse, getRecentHermesLedgerRows, listHermesLedgerProcessRows } from '@/features/hermes-ledger/store';
+import { getHermesLedgerPulse, getHermesPublicRecord, getRecentHermesLedgerRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { fetchKalshiBtcEthPredictions } from '@/features/oracle/kalshi';
 
@@ -104,12 +103,12 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [hermesTelemetry, ledgerPulse, latestAnchor, recentDecisions, processRows, oracleFeed] = await Promise.all([
+  const [hermesTelemetry, ledgerPulse, latestAnchor, recentDecisions, publicRecord, oracleFeed] = await Promise.all([
     withTimeout(getHermesTelemetry().catch(() => null), HOME_FETCH_BUDGET_MS, null),
     withTimeout(getHermesLedgerPulse().catch(() => null), HOME_FETCH_BUDGET_MS, null),
     withTimeout(getLatestAnchorFast().catch(() => null), HOME_FETCH_BUDGET_MS, null),
     withTimeout(getRecentHermesLedgerRows(80).catch(() => []), HOME_FETCH_BUDGET_MS, []),
-    withTimeout(listHermesLedgerProcessRows(400).catch(() => []), HOME_FETCH_BUDGET_MS, []),
+    withTimeout(getHermesPublicRecord().catch(() => null), HOME_FETCH_BUDGET_MS, null),
     withTimeout(
       fetchKalshiBtcEthPredictions(24).catch(() => ({ active: [], activeCount: 0, asOf: new Date().toISOString() })),
       HOME_FETCH_BUDGET_MS,
@@ -124,22 +123,10 @@ export default async function Home() {
     ),
   );
 
-  const scoreboard = computeLedgerScoreboard(processRows.length ? processRows : recentDecisions);
   const sealedDecisions =
-    ledgerPulse && ledgerPulse.decisionCount > 0
-      ? ledgerPulse.decisionCount
-      : scoreboard.process.sealedDecisions > 0
-        ? scoreboard.process.sealedDecisions
-        : null;
-  const sidedCloses = scoreboard.performance.positive + scoreboard.performance.negative;
-  const record =
-    sealedDecisions && sealedDecisions > 0
-      ? {
-          decisions: sealedDecisions,
-          hitRate: sidedCloses > 0 ? scoreboard.performance.hitRate : null,
-          sidedCloses,
-        }
-      : null;
+    publicRecord?.decisions ??
+    (ledgerPulse && ledgerPulse.decisionCount > 0 ? ledgerPulse.decisionCount : null);
+  const record = publicRecord;
 
   const chainHead =
     ledgerPulse?.chainHead && ledgerPulse.latestSealedAt

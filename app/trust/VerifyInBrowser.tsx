@@ -119,14 +119,20 @@ async function verify(): Promise<Result> {
   };
 }
 
-function idleLabel(variant: 'default' | 'primary') {
+function idleLabel(variant: 'default' | 'primary', label?: string) {
+  if (label) {
+    return label;
+  }
+
   return variant === 'primary' ? 'Verify this chain' : 'Or run the check in your browser';
 }
 
 export default function VerifyInBrowser({
   variant = 'default',
+  label,
 }: {
   variant?: 'default' | 'primary';
+  label?: string;
 }) {
   const [state, setState] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
   const [result, setResult] = useState<Result | null>(null);
@@ -148,7 +154,7 @@ export default function VerifyInBrowser({
   return (
     <div className={`trust-verify-run${variant === 'primary' ? ' is-primary' : ''}`}>
       <button type="button" onClick={run} disabled={state === 'running'}>
-        {state === 'running' ? 'Recomputing the chain…' : idleLabel(variant)}
+        {state === 'running' ? 'Recomputing the chain…' : idleLabel(variant, label)}
       </button>
       {state === 'done' && result ? (
         result.failures.length === 0 ? (
