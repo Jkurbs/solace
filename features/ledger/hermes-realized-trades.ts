@@ -197,7 +197,9 @@ export async function getRecentHermesRealizedTradeEvents({
     const supabase = await createSupabaseDataClient();
     const { data, error } = await supabase
       .from('hermes_realized_trade_events')
-      .select('*')
+      .select(
+        'id,pool_id,source_trade_id,source_exchange,source_position_id,symbol,side,quantity,entry_price,exit_price,fees,funding,realized_pnl,net_pnl,opened_at,closed_at,created_at',
+      )
       .eq('pool_id', poolId)
       .order('closed_at', { ascending: false })
       .limit(limit);
@@ -210,7 +212,12 @@ export async function getRecentHermesRealizedTradeEvents({
       return [];
     }
 
-    return (data ?? []).map(fromHermesRealizedTradeEventRow);
+    return (data ?? []).map((row) =>
+      fromHermesRealizedTradeEventRow({
+        ...row,
+        raw_payload: {},
+      }),
+    );
   } catch (error) {
     console.warn('[hermes-realized-trades] Recent events lookup failed.', error);
     return [];

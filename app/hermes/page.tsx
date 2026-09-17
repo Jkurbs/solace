@@ -8,7 +8,7 @@ import { listHermesLedgerProcessRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
 import { hermesVersion } from '@/features/hermes-version';
 import { getRecentHermesRealizedTradeEvents } from '@/features/ledger/hermes-realized-trades';
-import { getAnchorChain } from '@/features/anchor/store';
+import { getLatestAnchorFast } from '@/features/anchor/store';
 
 import HermesExperience, { type HermesProof, type HermesTimelineEntry } from './HermesExperience';
 
@@ -60,7 +60,7 @@ async function getHermesProof(): Promise<HermesProof> {
     getStoredHermesPublicReading().catch(() => null),
     listHermesLedgerProcessRows(1500).catch(() => []),
     getHermesOpenExposure().catch(() => null),
-    getRecentHermesRealizedTradeEvents({ limit: 1500, poolId: HERMES_POOL_ID }).catch(() => []),
+    getRecentHermesRealizedTradeEvents({ limit: 200, poolId: HERMES_POOL_ID }).catch(() => []),
   ]);
 
   const scoredRows = correctSealedClosePnls(
@@ -176,18 +176,17 @@ async function getHermesProof(): Promise<HermesProof> {
 }
 
 export default async function HermesPage() {
-  const [proof, chain] = await Promise.all([
+  const [proof, latestAnchor] = await Promise.all([
     getHermesProof(),
-    getAnchorChain().catch(() => ({ anchors: [], head: null, count: 0, verified: false, breaks: [] })),
+    getLatestAnchorFast().catch(() => null),
   ]);
 
-  const anchor =
-    chain.head && chain.verified
-      ? {
-          cadence: 'every few minutes',
-          href: '/anchor',
-        }
-      : null;
+  const anchor = latestAnchor
+    ? {
+        cadence: 'every few minutes',
+        href: '/anchor',
+      }
+    : null;
 
   return <HermesExperience proof={proof} anchor={anchor} />;
 }

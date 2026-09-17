@@ -87,20 +87,35 @@ async function listLocalAnchors(): Promise<ChainAnchor[]> {
   }
 }
 
-async function listRemoteAnchors(): Promise<ChainAnchor[] | null> {
+const GITHUB_FETCH_MS = 1_500;
+
+function githubHeaders(json = false): Record<string, string> {
   const headers: Record<string, string> = {
-    Accept: 'application/vnd.github+json',
     'User-Agent': 'solace-anchor-reader',
   };
+
+  if (json) {
+    headers.Accept = 'application/vnd.github+json';
+  }
+
   if (process.env.GITHUB_TOKEN) {
     headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
   }
 
+  return headers;
+}
+
+async function fetchGithub(url: string, json = false) {
+  return fetch(url, {
+    headers: githubHeaders(json),
+    next: { revalidate: 60 },
+    signal: AbortSignal.timeout(GITHUB_FETCH_MS),
+  });
+}
+
+async function listRemoteAnchorNames(): Promise<string[] | null> {
   try {
-    const listing = await fetch(ANCHOR_REPO_CONTENTS, {
-      headers,
-      next: { revalidate: 60 },
-    });
+    const listing = await fetchGithub(ANCHOR_REPO_CONTENTS, true);
     if (!listing.ok) {
       console.warn(`[anchor] Witness repo listing failed: HTTP ${listing.status}`);
       return null;
@@ -109,25 +124,62 @@ async function listRemoteAnchors(): Promise<ChainAnchor[] | null> {
     const entries = (await listing.json()) as Array<{ name?: string; type?: string }>;
     if (!Array.isArray(entries)) return null;
 
-    const files = entries
+    return entries
       .filter((entry) => entry.type === 'file' && entry.name && ANCHOR_FILE_RE.test(entry.name))
-      .map((entry) => entry.name as string);
+      .map((entry) => entry.name as string)
+      .sort();
+  } catch (error) {
+    console.warn('[anchor] Witness repo listing failed.', error);
+    return null;
+  }
+}
 
-    const batches = await Promise.all(
-      files.map(async (name) => {
-        const response = await fetch(`${ANCHOR_RAW_BASE}/${name}`, {
-          headers: { 'User-Agent': 'solace-anchor-reader' },
-          next: { revalidate: 60 },
-        });
-        if (!response.ok) return [] as ChainAnchor[];
-        return parseAnchorFile(await response.text());
-      }),
-    );
+async function fetchRemoteAnchorFile(name: string): Promise<ChainAnchor[]> {
+  const response = await fetchGithub(`${ANCHOR_RAW_BASE}/${name}`);
+  if (!response.ok) return [];
+  return parseAnchorFile(await response.text());
+}
 
+async function listRemoteAnchors(): Promise<ChainAnchor[] | null> {
+  try {
+    const files = await listRemoteAnchorNames();
+    if (!files?.length) return files ? [] : null;
+
+    // Newest files are enough for the public "last anchored" label. Fetching
+    // the whole witness repo on every Observatory load was hanging the page.
+    const newest = files.slice(-8);
+    const batches = await Promise.all(newest.map((name) => fetchRemoteAnchorFile(name)));
     return batches.flat();
   } catch (error) {
     console.warn('[anchor] Witness repo read failed.', error);
     return null;
+  }
+}
+
+/** Latest witness only — one GitHub file, for ledger chrome that must not wait. */
+export async function getLatestAnchorFast(): Promise<ChainAnchor | null> {
+  if (memoryCache && memoryCache.expiresAt > Date.now()) {
+    return memoryCache.anchors[memoryCache.anchors.length - 1] ?? null;
+  }
+
+  const local = await listLocalAnchors();
+  const localHead = local[local.length - 1] ?? null;
+
+  try {
+    const files = await listRemoteAnchorNames();
+    const newest = files?.at(-1);
+    const remote = newest ? await fetchRemoteAnchorFile(newest) : [];
+    const head = mergeAnchors(local, remote).at(-1) ?? localHead;
+
+    const merged = mergeAnchors(local, remote);
+    if (merged.length) {
+      memoryCache = { anchors: merged, expiresAt: Date.now() + CACHE_MS };
+    }
+
+    return merged.at(-1) ?? localHead;
+  } catch (error) {
+    console.warn('[anchor] Fast head read failed.', error);
+    return localHead;
   }
 }
 

@@ -19,6 +19,11 @@ export type HermesOpenExposure = {
 };
 
 const FRESHNESS_MS = 24 * 60 * 60 * 1000;
+const LIVE_MARK_LIMIT = 12;
+const EXPOSURE_CACHE_MS = 4_000;
+
+type ExposureCache = { expiresAt: number; value: HermesOpenExposure | null };
+let exposureCache: ExposureCache | null = null;
 
 function isDegradedSourceMark(rawPayload: unknown) {
   if (!rawPayload || typeof rawPayload !== 'object') {
@@ -97,6 +102,16 @@ function readSourceUnrealizedPnl(row: { source_unrealized_pnl: unknown; raw_payl
 }
 
 export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null> {
+  if (exposureCache && exposureCache.expiresAt > Date.now()) {
+    return exposureCache.value;
+  }
+
+  const value = await readHermesOpenExposure();
+  exposureCache = { expiresAt: Date.now() + EXPOSURE_CACHE_MS, value };
+  return value;
+}
+
+async function readHermesOpenExposure(): Promise<HermesOpenExposure | null> {
   if (!isSupabaseDataClientConfigured()) {
     return null;
   }
@@ -110,7 +125,7 @@ export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null
       .from('hermes_pool_source_marks')
       .select('pool_id,source_equity,source_unrealized_pnl,source_reserved_margin,effective_at,raw_payload')
       .order('effective_at', { ascending: false })
-      .limit(60);
+      .limit(LIVE_MARK_LIMIT);
 
     if (error || !data?.length) {
       return null;

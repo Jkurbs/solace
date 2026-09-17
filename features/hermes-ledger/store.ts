@@ -132,49 +132,77 @@ async function ensureLedgerHashBackfill(supabase: SupabaseClient): Promise<strin
 
 // Lightweight change-detection read for the public pulse endpoint: two
 // cheap queries instead of the full table.
-export async function getHermesLedgerPulse(): Promise<{
+type LedgerPulseValue = {
   rowCount: number;
   decisionCount: number;
   rowNumber: number;
   latestRecordId: string | null;
   latestSealedAt: string | null;
   chainHead: string | null;
-} | null> {
+};
+
+type LedgerCountCache = { expiresAt: number; rowCount: number; decisionCount: number };
+const PULSE_HEAD_CACHE_MS = 4_000;
+const PULSE_COUNT_CACHE_MS = 60_000;
+let pulseHeadCache: { expiresAt: number; value: LedgerPulseValue | null } | null = null;
+let pulseCountCache: LedgerCountCache | null = null;
+
+export async function getHermesLedgerPulse(): Promise<LedgerPulseValue | null> {
+  if (pulseHeadCache && pulseHeadCache.expiresAt > Date.now()) {
+    return pulseHeadCache.value;
+  }
+
   if (!isSupabaseDataClientConfigured()) {
     return null;
   }
 
   try {
     const supabase = await createSupabaseDataClient();
-    const [countResult, decisionCountResult, latestResult] = await Promise.all([
-      supabase.from('hermes_decision_ledger').select('record_id', { count: 'exact', head: true }),
-      supabase
-        .from('hermes_decision_ledger')
-        .select('record_id', { count: 'exact', head: true })
-        .neq('row_class', 'system'),
+    const countsFresh = pulseCountCache && pulseCountCache.expiresAt > Date.now();
+    const [latestResult, countResult, decisionCountResult] = await Promise.all([
       supabase
         .from('hermes_decision_ledger')
         .select('record_id,row_hash,sealed_at')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
+      countsFresh
+        ? Promise.resolve(null)
+        : supabase.from('hermes_decision_ledger').select('record_id', { count: 'exact', head: true }),
+      countsFresh
+        ? Promise.resolve(null)
+        : supabase
+            .from('hermes_decision_ledger')
+            .select('record_id', { count: 'exact', head: true })
+            .neq('row_class', 'system'),
     ]);
 
-    if (countResult.error || decisionCountResult.error) {
-      return null;
+    if (!countsFresh && countResult && !countResult.error && decisionCountResult && !decisionCountResult.error) {
+      pulseCountCache = {
+        expiresAt: Date.now() + PULSE_COUNT_CACHE_MS,
+        rowCount: countResult.count ?? 0,
+        decisionCount: decisionCountResult.count ?? 0,
+      };
     }
 
-    return {
+    const counts = pulseCountCache;
+    if (!counts) {
+      return pulseHeadCache?.value ?? null;
+    }
+
+    const value = {
       chainHead: latestResult.data?.row_hash ?? null,
       latestRecordId: latestResult.data?.record_id ?? null,
       latestSealedAt: latestResult.data?.sealed_at ?? null,
-      rowCount: countResult.count ?? 0,
-      decisionCount: decisionCountResult.count ?? 0,
-      rowNumber: countResult.count ?? 0,
+      rowCount: counts.rowCount,
+      decisionCount: counts.decisionCount,
+      rowNumber: counts.rowCount,
     };
+    pulseHeadCache = { expiresAt: Date.now() + PULSE_HEAD_CACHE_MS, value };
+    return value;
   } catch (error) {
     console.warn('[hermes-ledger] Pulse read failed.', error);
-    return null;
+    return pulseHeadCache?.value ?? null;
   }
 }
 
@@ -258,7 +286,15 @@ export async function getRecentHermesLedgerRows(limit = 5): Promise<HermesLedger
   }
 }
 
+type ProcessRowsCache = { expiresAt: number; limit: number; rows: HermesLedgerRow[] };
+const PROCESS_ROWS_CACHE_MS = 20_000;
+let processRowsCache: ProcessRowsCache | null = null;
+
 export async function listHermesLedgerProcessRows(limit = 1500): Promise<HermesLedgerRow[]> {
+  if (processRowsCache && processRowsCache.expiresAt > Date.now() && processRowsCache.limit >= limit) {
+    return processRowsCache.rows.slice(-limit);
+  }
+
   if (!isSupabaseDataClientConfigured()) {
     return [];
   }
@@ -270,7 +306,7 @@ export async function listHermesLedgerProcessRows(limit = 1500): Promise<HermesL
       .select(
         'record_id, sealed_at, decision, posture, note, outcome, pnl, resolved_at, row_class, event_type, ref',
       )
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(limit);
 
     if (error) {
@@ -278,29 +314,34 @@ export async function listHermesLedgerProcessRows(limit = 1500): Promise<HermesL
         console.warn('[hermes-ledger] Process list failed.', error.message);
       }
 
-      return [];
+      return processRowsCache?.rows ?? [];
     }
 
-    return (data ?? []).map((row) => ({
-      decision: row.decision,
-      eventType: (row.event_type as HermesLedgerEventType | null) ?? null,
-      hermesVersion: null,
-      note: row.note,
-      outcome: row.outcome,
-      pnl: row.pnl === null || row.pnl === undefined ? null : Math.round(Number(row.pnl) * 100) / 100,
-      posture: row.posture,
-      prevHash: null,
-      recordId: row.record_id,
-      ref: row.ref,
-      resolutionHash: null,
-      resolvedAt: row.resolved_at,
-      rowClass: (row.row_class as HermesLedgerRowClass | null) ?? null,
-      rowHash: null,
-      sealedAt: row.sealed_at,
-    }));
+    const rows = (data ?? [])
+      .map((row) => ({
+        decision: row.decision,
+        eventType: (row.event_type as HermesLedgerEventType | null) ?? null,
+        hermesVersion: null,
+        note: row.note,
+        outcome: row.outcome,
+        pnl: row.pnl === null || row.pnl === undefined ? null : Math.round(Number(row.pnl) * 100) / 100,
+        posture: row.posture,
+        prevHash: null,
+        recordId: row.record_id,
+        ref: row.ref,
+        resolutionHash: null,
+        resolvedAt: row.resolved_at,
+        rowClass: (row.row_class as HermesLedgerRowClass | null) ?? null,
+        rowHash: null,
+        sealedAt: row.sealed_at,
+      }))
+      .reverse();
+
+    processRowsCache = { expiresAt: Date.now() + PROCESS_ROWS_CACHE_MS, limit, rows };
+    return rows;
   } catch (error) {
     console.warn('[hermes-ledger] Process list failed.', error);
-    return [];
+    return processRowsCache?.rows ?? [];
   }
 }
 

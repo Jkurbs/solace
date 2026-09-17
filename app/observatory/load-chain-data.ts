@@ -4,12 +4,12 @@ import { calibration } from '@/app/calibration';
 import { resolvedQuestions } from '@/app/oracle/resolved-questions';
 import type { TrustLedgerDisplayRow } from '@/app/trust/TrustLedgerTable';
 import { formatRelativeTime } from '@/features/anchor/format';
-import { getAnchorChain } from '@/features/anchor/store';
+import { getLatestAnchorFast } from '@/features/anchor/store';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
 import { closeReturnByRecordId, correctSealedClosePnls } from '@/features/hermes-ledger/close-pnl';
 import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
 import { computeLedgerScoreboard, formatPercent } from '@/features/hermes-ledger/scoreboard';
-import { listHermesLedgerRows } from '@/features/hermes-ledger/store';
+import { getHermesLedgerPulse, listHermesLedgerProcessRows } from '@/features/hermes-ledger/store';
 import { hermesVersion } from '@/features/hermes-version';
 import { gloryaEvaluatedNeeds, gloryaProcessScoreboard } from '@/features/glorya/evaluated-needs';
 import { getRecentHermesRealizedTradeEvents } from '@/features/ledger/hermes-realized-trades';
@@ -43,6 +43,8 @@ function formatConstant(value: string) {
     .join(' ');
 }
 
+const DISPLAY_WINDOW = 80;
+
 const placeholderRow: TrustLedgerDisplayRow = {
   row: '1',
   recordId: 'HMS-000',
@@ -64,23 +66,23 @@ const placeholderRow: TrustLedgerDisplayRow = {
 
 export async function loadHermesChainData(): Promise<HermesChainData> {
   const poolId = process.env.HERMES_POOL_ID ?? 'pool_balanced_v1';
-  const [storedRows, openExposure, briefSnapshot, realizedTrades, chain] = await Promise.all([
-    listHermesLedgerRows(1000).catch(() => []),
+  const [storedRows, openExposure, briefSnapshot, realizedTrades, latestAnchor, pulse] = await Promise.all([
+    listHermesLedgerProcessRows(400).catch(() => []),
     getHermesOpenExposure().catch(() => null),
     getStoredHermesBriefSnapshot().catch(() => null),
-    getRecentHermesRealizedTradeEvents({ limit: 500, poolId }).catch(() => []),
-    getAnchorChain().catch(() => ({ anchors: [], head: null, count: 0, verified: false, breaks: [] })),
+    getRecentHermesRealizedTradeEvents({ limit: 200, poolId }).catch(() => []),
+    getLatestAnchorFast().catch(() => null),
+    getHermesLedgerPulse().catch(() => null),
   ]);
 
-  const anchor =
-    chain.head && chain.verified
-      ? {
-          cadence: 'every few minutes' as const,
-          lastAnchoredLabel: formatRelativeTime(chain.head.sealedAt),
-          href: '/anchor',
-          label: 'cryptographically anchored' as const,
-        }
-      : null;
+  const anchor = latestAnchor
+    ? {
+        cadence: 'every few minutes' as const,
+        lastAnchoredLabel: formatRelativeTime(latestAnchor.sealedAt),
+        href: '/anchor',
+        label: 'cryptographically anchored' as const,
+      }
+    : null;
 
   const displayRows = correctSealedClosePnls(
     storedRows,
@@ -103,10 +105,12 @@ export async function loadHermesChainData(): Promise<HermesChainData> {
       ? formatConstant(briefSnapshot.posture)
       : '--';
 
-  const rows: TrustLedgerDisplayRow[] = displayRows.length
-    ? displayRows
+  const tableSource = displayRows.slice(-DISPLAY_WINDOW);
+  const rowNumberOffset = displayRows.length - tableSource.length;
+  const rows: TrustLedgerDisplayRow[] = tableSource.length
+    ? tableSource
         .map((row, index) => ({
-          row: String(index + 1),
+          row: String(rowNumberOffset + index + 1),
           recordId: row.recordId,
           sealedAt: sealedAtFormatter.format(new Date(row.sealedAt)),
           decision: row.decision,
@@ -146,7 +150,10 @@ export async function loadHermesChainData(): Promise<HermesChainData> {
     scoreboard,
     openLabel:
       scoreboard.process.openPaths === null ? '-' : String(scoreboard.process.openPaths),
-    sealedDecisions: scoreboard.process.sealedDecisions,
+    sealedDecisions:
+      pulse && pulse.decisionCount > scoreboard.process.sealedDecisions
+        ? pulse.decisionCount
+        : scoreboard.process.sealedDecisions,
     standDownRate: formatPercent(scoreboard.process.standDownRate),
     livePosture,
     hermesLabel: hermesVersion.label,

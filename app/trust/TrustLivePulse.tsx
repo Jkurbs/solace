@@ -21,7 +21,7 @@ type TrustLivePulseContextValue = {
   pulse: LedgerPulse;
 };
 
-const PULSE_MS = 1_000;
+const PULSE_MS = 4_000;
 const SAFETY_REFRESH_MS = 60_000;
 /** Consecutive timestamped empty books required before dropping live exposure. */
 const FLAT_CONFIRM_TICKS = 3;

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { formatRelativeTime } from '@/features/anchor/format';
-import { getAnchorChain } from '@/features/anchor/store';
+import { getLatestAnchorFast } from '@/features/anchor/store';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
 import { getHermesLedgerPulse, getRecentHermesLedgerRows } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
@@ -103,14 +103,10 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [hermesTelemetry, ledgerPulse, chain, recentDecisions, oracleFeed] = await Promise.all([
+  const [hermesTelemetry, ledgerPulse, latestAnchor, recentDecisions, oracleFeed] = await Promise.all([
     withTimeout(getHermesTelemetry().catch(() => null), HOME_FETCH_BUDGET_MS, null),
     withTimeout(getHermesLedgerPulse().catch(() => null), HOME_FETCH_BUDGET_MS, null),
-    withTimeout(
-      getAnchorChain().catch(() => ({ anchors: [], head: null, count: 0, verified: false, breaks: [] })),
-      HOME_FETCH_BUDGET_MS,
-      { anchors: [], head: null, count: 0, verified: false, breaks: [] },
-    ),
+    withTimeout(getLatestAnchorFast().catch(() => null), HOME_FETCH_BUDGET_MS, null),
     withTimeout(getRecentHermesLedgerRows(80).catch(() => []), HOME_FETCH_BUDGET_MS, []),
     withTimeout(
       fetchKalshiBtcEthPredictions(24).catch(() => ({ active: [], activeCount: 0, asOf: new Date().toISOString() })),
@@ -148,13 +144,12 @@ export default async function Home() {
         }
       : null;
 
-  const anchor =
-    chain.head && chain.verified
-      ? {
-          cadence: 'every few minutes',
-          lastAnchoredLabel: formatRelativeTime(chain.head.sealedAt),
-          href: '/anchor',
-        }
+  const anchor = latestAnchor
+    ? {
+        cadence: 'every few minutes',
+        lastAnchoredLabel: formatRelativeTime(latestAnchor.sealedAt),
+        href: '/anchor',
+      }
       : null;
 
   return (
