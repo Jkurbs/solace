@@ -272,7 +272,7 @@ export default function HomeClient({
                   <span className="hero-spine-rule" aria-hidden="true" />
                   <span className="hero-spine-measure">
                     <strong>{formatPercent(record.hitRate)}</strong>
-                    <span>Right most of the time</span>
+                    <span>Overall Precision</span>
                   </span>
                 </>
               ) : null}
