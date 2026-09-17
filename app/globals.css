@@ -15440,6 +15440,85 @@ html.dark .home-research ::selection,
 
 
 /* ── Hero: decision dust — theme-aware plate (paper / void) ── */
+.home-record-band {
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid var(--border, #e7e5e4);
+  padding: 3.25rem 1.25rem 3rem;
+}
+
+.hero-spine {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 28rem;
+  margin: 0;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+.hero-spine:hover,
+.hero-spine:focus-visible {
+  outline: none;
+}
+
+.hero-spine:focus-visible .hero-spine-measure strong {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.hero-spine-row {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  min-height: 5.5rem;
+}
+
+.hero-spine-measure {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.35rem 1rem;
+}
+
+.hero-spine-measure strong {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: clamp(2.05rem, 6vw, 2.7rem);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground, #1c1917);
+}
+
+.hero-spine-measure span {
+  max-width: 11rem;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  color: var(--muted, #78716c);
+}
+
+.hero-spine-rule {
+  flex: 0 0 1px;
+  width: 1px;
+  margin: 0.35rem 0;
+  background: color-mix(in srgb, var(--foreground, #1c1917) 16%, transparent);
+}
+
+.hero-spine-note {
+  margin-top: 0.35rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  color: var(--muted, #78716c);
+}
+
 .hero-particle-section {
   position: relative;
   min-height: min(92vh, 48rem);

@@ -10,13 +10,13 @@ import SiteHeader from '@/components/site-header';
 import { gloryaEvaluatedNeeds } from '@/features/glorya/evaluated-needs';
 import { isStandingDownPosture } from '@/features/hermes-dashboard/decision-language';
 import { useHasGuestSimSession } from '@/features/hermes-dashboard/sim-session-client';
+import { formatPercent } from '@/features/hermes-ledger/scoreboard';
 import type { HermesLedgerRow } from '@/features/hermes-ledger/store';
 import { OBSERVATORY_HERMES_LEDGER_PATH } from '@/features/observatory/paths';
 import { isInAppNavigationAnchor, setWebglPaused } from '@/lib/webgl-lifecycle';
 
 import GloryaNeedField from './GloryaNeedField';
 import HermesDashboardPreview from './HermesDashboardPreview';
-import { HomeMetricsBanner } from './HomeMetricsBanner';
 import { HomeProofSection } from './HomeProofSection';
 import OracleOrbSection from './OracleOrbSection';
 import type { ActivePrediction } from './oracle/active-predictions';
@@ -120,23 +120,16 @@ export type AnchorStatus = {
   href?: string;
 };
 
-// Helper to format relative time
-function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = Date.now();
-  const diff = now - date.getTime();
-  if (diff < 0) return '—';
-  const minutes = Math.round(diff / 60000);
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.round(hours / 24);
-  return `${days}d`;
-}
+export type HomeRecordSpine = {
+  decisions: number;
+  hitRate: number | null;
+  sidedCloses: number;
+};
 
 export default function HomeClient({
   hermesTelemetry,
   sealedDecisions,
+  record = null,
   chainHead = null,
   anchor = null,
   recentDecisions = [],
@@ -144,6 +137,7 @@ export default function HomeClient({
 }: {
   hermesTelemetry: HermesTelemetry | null;
   sealedDecisions: number | null;
+  record?: HomeRecordSpine | null;
   chainHead?: ChainHeadSummary | null;
   anchor?: AnchorStatus | null;
   recentDecisions?: HermesLedgerRow[];
@@ -182,14 +176,6 @@ export default function HomeClient({
 
   const showRecord =
     (sealedDecisions != null && sealedDecisions > 0) || Boolean(chainHead) || Boolean(anchor);
-
-  const lastAnchoredLabel = anchor?.lastAnchoredLabel
-    ? anchor.lastAnchoredLabel
-    : chainHead
-      ? formatRelativeTime(chainHead.sealedAtLabel)
-      : '—';
-
-  const isVerified = Boolean(anchor?.href);
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
@@ -237,6 +223,7 @@ export default function HomeClient({
                 </>
               )}
             </motion.div>
+
             <motion.p
                 variants={fade}
                 className="mt-5 text-center text-xs font-medium tracking-wide text-muted"
@@ -263,6 +250,36 @@ export default function HomeClient({
           </div>
         </motion.div>
       </section>
+
+      {record && record.decisions > 0 ? (
+        <section className="home-record-band" aria-label="Hermes public record">
+          <Link
+            href={OBSERVATORY_HERMES_LEDGER_PATH}
+            className={`hero-spine${record.hitRate === null ? ' is-single' : ''}`}
+            aria-label={
+              record.hitRate !== null
+                ? `${record.decisions.toLocaleString('en-US')} decisions written. Right ${formatPercent(record.hitRate)} of the time it chose a side, from ${record.sidedCloses.toLocaleString('en-US')} sided closes. Young sample. Open the public record.`
+                : `${record.decisions.toLocaleString('en-US')} decisions written. Open the public record.`
+            }
+          >
+            <span className="hero-spine-row">
+              <span className="hero-spine-measure">
+                <strong>{record.decisions.toLocaleString('en-US')}</strong>
+                <span>Decisions made</span>
+              </span>
+              {record.hitRate !== null ? (
+                <>
+                  <span className="hero-spine-rule" aria-hidden="true" />
+                  <span className="hero-spine-measure">
+                    <strong>{formatPercent(record.hitRate)}</strong>
+                    <span>Right most of the time</span>
+                  </span>
+                </>
+              ) : null}
+            </span>
+          </Link>
+        </section>
+      ) : null}
 
       {showRecord && <HomeProofSection rows={recentDecisions} sealedDecisions={sealedDecisions} />}
 
