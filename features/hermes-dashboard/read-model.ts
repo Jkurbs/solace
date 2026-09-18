@@ -529,6 +529,9 @@ function getActiveSnapshotFromLedger(
  * Open-access guest simulation: live Hermes paths after the guest entered,
  * scaled to their virtual capital (never raw KuCoin founder notional).
  */
+const GUEST_SNAPSHOT_TTL_MS = 5_000;
+const guestSnapshotCache = new Map<string, { expiresAt: number; value: HermesDashboardSnapshot }>();
+
 export async function getOpenSimulationDashboardSnapshot({
   depositAmount = 10_000,
   riskProfile = 'Balanced',
@@ -548,7 +551,15 @@ export async function getOpenSimulationDashboardSnapshot({
       startedAt: new Date().toISOString(),
     } satisfies GuestSimSession);
 
-  return buildLiveOpenSimulationDashboardSnapshot(resolved);
+  const cacheKey = `${resolved.sessionId}:${resolved.depositAmount}:${resolved.riskProfile}`;
+  const cached = guestSnapshotCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
+
+  const value = await buildLiveOpenSimulationDashboardSnapshot(resolved);
+  guestSnapshotCache.set(cacheKey, { expiresAt: Date.now() + GUEST_SNAPSHOT_TTL_MS, value });
+  return value;
 }
 
 export async function getHermesDashboardSnapshot({

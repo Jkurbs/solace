@@ -9,13 +9,18 @@ import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/s
 import { closeReturnByRecordId, correctSealedClosePnls } from '@/features/hermes-ledger/close-pnl';
 import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
 import { computeLedgerScoreboard, formatPercent } from '@/features/hermes-ledger/scoreboard';
-import { getHermesLedgerPulse, listHermesLedgerProcessRows } from '@/features/hermes-ledger/store';
+import {
+  getHermesLedgerPulse,
+  getHermesPublicRecord,
+  getRecentHermesLedgerRows,
+  listHermesLedgerProcessRows,
+} from '@/features/hermes-ledger/store';
 import { hermesVersion } from '@/features/hermes-version';
 import { gloryaEvaluatedNeeds, gloryaProcessScoreboard } from '@/features/glorya/evaluated-needs';
 import { getRecentHermesRealizedTradeEvents } from '@/features/ledger/hermes-realized-trades';
 import { fetchKalshiBtcEthPredictions } from '@/features/oracle/kalshi';
 
-import type { GloryaChainData, HermesChainData, OracleChainData } from './ObservatoryExperience';
+import type { GloryaChainData, HermesChainData, HermesRecordChrome, OracleChainData } from './ObservatoryExperience';
 
 const sealedAtFormatter = new Intl.DateTimeFormat('en-GB', {
   day: 'numeric',
@@ -63,6 +68,75 @@ const placeholderRow: TrustLedgerDisplayRow = {
   ref: null,
   hermesVersion: null,
 };
+
+export async function loadHermesChrome(): Promise<HermesRecordChrome> {
+  const [publicRecord, pulse, brief] = await Promise.all([
+    getHermesPublicRecord().catch(() => null),
+    getHermesLedgerPulse().catch(() => null),
+    getStoredHermesBriefSnapshot().catch(() => null),
+  ]);
+
+  const livePosture =
+    brief && brief.brief_id !== 'fallback' ? formatConstant(brief.posture) : '--';
+
+  return {
+    hermesLabel: hermesVersion.label,
+    hermesVersion: { id: hermesVersion.id, label: hermesVersion.label },
+    hitRate: publicRecord?.hitRate ?? null,
+    lastSealLabel: pulse?.latestSealedAt
+      ? sealedAtFormatter.format(new Date(pulse.latestSealedAt))
+      : null,
+    livePosture,
+    sealedDecisions: publicRecord?.decisions ?? pulse?.decisionCount ?? 0,
+    sidedCloses: publicRecord?.sidedCloses ?? 0,
+  };
+}
+
+export async function loadHermesSheet(sealedDecisions: number): Promise<{
+  openExposure: HermesChainData['openExposure'];
+  rows: TrustLedgerDisplayRow[];
+}> {
+  const [storedRows, openExposure] = await Promise.all([
+    getRecentHermesLedgerRows(80).catch(() => []),
+    getHermesOpenExposure().catch(() => null),
+  ]);
+
+  const newestFirst = [...storedRows].reverse();
+  const rowNumberOffset = Math.max(sealedDecisions - newestFirst.length, 0);
+  const rows: TrustLedgerDisplayRow[] = newestFirst.length
+    ? newestFirst.map((row, index) => ({
+        row: String(rowNumberOffset + newestFirst.length - index),
+        recordId: row.recordId,
+        sealedAt: sealedAtFormatter.format(new Date(row.sealedAt)),
+        decision: row.decision,
+        posture: formatConstant(row.posture),
+        outcome:
+          row.rowClass === 'system' ? '--' : row.eventType === 'open' ? 'Open' : row.outcome ?? '--',
+        pnl:
+          row.eventType === 'open' || row.outcome === null
+            ? '--'
+            : row.pnl === null
+              ? '--'
+              : pnlFormatter.format(row.pnl),
+        pnlTone:
+          row.outcome === null || row.pnl === null || row.pnl === 0
+            ? null
+            : row.pnl > 0
+              ? ('pos' as const)
+              : ('neg' as const),
+        note: row.note || '--',
+        rowHash: row.rowHash,
+        prevHash: row.prevHash,
+        resolutionHash: row.resolutionHash,
+        rowClass: row.rowClass,
+        eventType: row.eventType,
+        ref: row.ref,
+        hermesVersion: row.hermesVersion,
+      }))
+    : [placeholderRow];
+
+  return { openExposure, rows };
+}
 
 export async function loadHermesChainData(): Promise<HermesChainData> {
   const poolId = process.env.HERMES_POOL_ID ?? 'pool_balanced_v1';

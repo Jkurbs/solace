@@ -1,23 +1,28 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 
-import { formatRelativeTime } from '@/features/anchor/format';
-import { getLatestAnchorFast } from '@/features/anchor/store';
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
 import { getStoredHermesBriefSnapshot } from '@/features/hermes-brief-snapshot/store';
-import { getHermesLedgerPulse, getHermesPublicRecord, getRecentHermesLedgerRows } from '@/features/hermes-ledger/store';
+import { getHermesPublicRecord } from '@/features/hermes-ledger/store';
 import { getStoredHermesPublicReading } from '@/features/hermes-public-reading/store';
-import { fetchKalshiBtcEthPredictions } from '@/features/oracle/kalshi';
 
-import HomeClient, { type HermesTelemetry } from './HomeClient';
-import { withIllustrativeOracleFallback, type ActivePrediction } from './oracle/active-predictions';
+import {
+  HomeGloryaAndFooter,
+  HomeHermesChapter,
+  HomeHermesChapterFallback,
+  HomeOracleFallback,
+  HomeOracleLoader,
+  HomeProofLoader,
+  HomeRecordBand,
+  type HermesTelemetry,
+} from './HomeDeferred';
+import HomeHero from './HomeHero';
+import HomeWebglPause from './HomeWebglPause';
 
 const TELEMETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-/** Keep home SSR/ISR under platform build budgets (no full ledger / Kalshi). */
-const HOME_FETCH_BUDGET_MS = 8_000;
+const HOME_FETCH_BUDGET_MS = 3_000;
 
-// The freshness contract: telemetry renders only while a feed is fresh.
-// A stale or missing feed hides the cells entirely, never a fake pulse.
-// Hermes publishes two feeds; the brief snapshot is the primary artery, the
-// public reading a fallback. Freshest fresh feed wins.
 async function getHermesTelemetry(): Promise<HermesTelemetry | null> {
   const [brief, reading] = await Promise.all([
     getStoredHermesBriefSnapshot().catch(() => null),
@@ -87,8 +92,6 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
   });
 }
 
-// Telemetry and the ledger pulse only. No articles, Glorya, or Kalshi on the
-// homepage build path. Revalidate often enough that a sealed count stays honest.
 export const revalidate = 300;
 
 export const metadata: Metadata = {
@@ -103,67 +106,34 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [hermesTelemetry, ledgerPulse, latestAnchor, recentDecisions, publicRecord, oracleFeed] = await Promise.all([
+  const [hermesTelemetry, publicRecord] = await Promise.all([
     withTimeout(getHermesTelemetry().catch(() => null), HOME_FETCH_BUDGET_MS, null),
-    withTimeout(getHermesLedgerPulse().catch(() => null), HOME_FETCH_BUDGET_MS, null),
-    withTimeout(getLatestAnchorFast().catch(() => null), HOME_FETCH_BUDGET_MS, null),
-    withTimeout(getRecentHermesLedgerRows(80).catch(() => []), HOME_FETCH_BUDGET_MS, []),
     withTimeout(getHermesPublicRecord().catch(() => null), HOME_FETCH_BUDGET_MS, null),
-    withTimeout(
-      fetchKalshiBtcEthPredictions(24).catch(() => ({ active: [], activeCount: 0, asOf: new Date().toISOString() })),
-      HOME_FETCH_BUDGET_MS,
-      { active: [], activeCount: 0, asOf: new Date().toISOString() },
-    ),
   ]);
 
-  const oraclePredictions = withIllustrativeOracleFallback(
-    oracleFeed.active.filter(
-      (p): p is ActivePrediction & { question: string; probability: number } =>
-        Boolean(p.question) && typeof p.probability === 'number',
-    ),
-  );
-
-  const sealedDecisions =
-    publicRecord?.decisions ??
-    (ledgerPulse && ledgerPulse.decisionCount > 0 ? ledgerPulse.decisionCount : null);
-  const record = publicRecord;
-
-  const chainHead =
-    ledgerPulse?.chainHead && ledgerPulse.latestSealedAt
-      ? {
-          rowNumber: ledgerPulse.rowNumber,
-          recordId: ledgerPulse.latestRecordId ?? '—',
-          hash: ledgerPulse.chainHead,
-          sealedAtLabel: new Intl.DateTimeFormat('en-US', {
-            day: 'numeric',
-            hour: 'numeric',
-            hour12: true,
-            minute: '2-digit',
-            month: 'short',
-            timeZone: 'UTC',
-            timeZoneName: 'short',
-            year: 'numeric',
-          }).format(new Date(ledgerPulse.latestSealedAt)),
-        }
-      : null;
-
-  const anchor = latestAnchor
-    ? {
-        cadence: 'every few minutes',
-        lastAnchoredLabel: formatRelativeTime(latestAnchor.sealedAt),
-        href: '/anchor',
-      }
-      : null;
+  const sealedDecisions = publicRecord?.decisions ?? null;
+  const showProof = sealedDecisions != null && sealedDecisions > 0;
 
   return (
-    <HomeClient
-      hermesTelemetry={hermesTelemetry}
-      sealedDecisions={sealedDecisions}
-      record={record}
-      chainHead={chainHead}
-      anchor={anchor}
-      recentDecisions={recentDecisions}
-      oraclePredictions={oraclePredictions}
-    />
+    <HomeWebglPause>
+      <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased selection:bg-foreground/10">
+        <SiteHeader />
+        <HomeHero />
+        {publicRecord && publicRecord.decisions > 0 ? <HomeRecordBand record={publicRecord} /> : null}
+        {showProof ? (
+          <Suspense fallback={<section className="home-proof" aria-hidden="true" />}>
+            <HomeProofLoader sealedDecisions={sealedDecisions} />
+          </Suspense>
+        ) : null}
+        <Suspense fallback={<HomeHermesChapterFallback telemetry={hermesTelemetry} />}>
+          <HomeHermesChapter telemetry={hermesTelemetry} />
+        </Suspense>
+        <Suspense fallback={<HomeOracleFallback />}>
+          <HomeOracleLoader />
+        </Suspense>
+        <HomeGloryaAndFooter />
+        <SiteFooter />
+      </main>
+    </HomeWebglPause>
   );
 }

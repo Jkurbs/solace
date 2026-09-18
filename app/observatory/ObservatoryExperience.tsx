@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 
 import { ShimmerLink } from '@/components/shimmer-link';
@@ -6,8 +7,6 @@ import SiteHeader from '@/components/site-header';
 import type { TrustLedgerDisplayRow } from '@/app/trust/TrustLedgerTable';
 import ShareLedger from '@/app/trust/ShareLedger';
 import VerifyInBrowser from '@/app/trust/VerifyInBrowser';
-import HeldPanel from './HeldPanel';
-import RecordTable from './RecordTable';
 import VerifyOnDemand from './VerifyOnDemand';
 import type { ActivePrediction } from '@/app/oracle/active-predictions';
 import type { ResolvedQuestion } from '@/app/oracle/resolved-questions';
@@ -33,6 +32,16 @@ export type GloryaChainData = {
   needs: GloryaEvaluatedNeed[];
 };
 
+export type HermesRecordChrome = {
+  sealedDecisions: number;
+  hitRate: number | null;
+  sidedCloses: number;
+  lastSealLabel: string | null;
+  livePosture: string;
+  hermesLabel: string;
+  hermesVersion: { id: string; label: string };
+};
+
 export type HermesChainData = {
   rows: TrustLedgerDisplayRow[];
   scoreboard: LedgerScoreboard;
@@ -55,14 +64,14 @@ export type HermesChainData = {
   } | null;
 };
 
-const TABLE_WINDOW = 80;
-
-export default function ObservatoryExperience({ hermes }: { hermes: HermesChainData }) {
-  const tableRows = hermes.rows.slice(0, TABLE_WINDOW);
-  const lastSeal = tableRows.find((row) => row.sealedAt && row.sealedAt !== 'Pending')?.sealedAt ?? null;
-  const { hitRate, expectancy, sampleSize, positive, negative } = hermes.scoreboard.performance;
-  const winRateN = positive + negative;
-  const winRateLabel = formatPercent(hitRate);
+export default function ObservatoryExperience({
+  chrome,
+  children,
+}: {
+  chrome: HermesRecordChrome;
+  children: ReactNode;
+}) {
+  const winRateLabel = chrome.hitRate === null ? '-' : formatPercent(chrome.hitRate);
 
   return (
     <main className="home-research min-h-screen bg-background pt-16 text-foreground antialiased">
@@ -88,44 +97,22 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
 
           <div className="home-record mt-10 md:mt-12" aria-label="Hermes record">
             <div className="home-record-counts">
-              {hermes.sealedDecisions > 0 && (
+              {chrome.sealedDecisions > 0 && (
                 <div>
-                  <p className="home-record-count">{hermes.sealedDecisions.toLocaleString('en-US')}</p>
+                  <p className="home-record-count">{chrome.sealedDecisions.toLocaleString('en-US')}</p>
                   <p className="home-record-label">Sealed</p>
                 </div>
               )}
-              {lastSeal && (
+              {chrome.lastSealLabel && (
                 <div>
-                  <p className="home-record-meta">{lastSeal}</p>
+                  <p className="home-record-meta">{chrome.lastSealLabel}</p>
                   <p className="home-record-label">Last seal</p>
-                </div>
-              )}
-              {hermes.standDownRate && hermes.standDownRate !== '-' && (
-                <div>
-                  <p className="home-record-meta">{hermes.standDownRate}</p>
-                  <p className="home-record-label">Standing down</p>
                 </div>
               )}
               {winRateLabel !== '-' && (
                 <div>
                   <p className="home-record-meta">{winRateLabel}</p>
-                  <p className="home-record-label">Win rate · n={winRateN}</p>
-                </div>
-              )}
-              {expectancy !== null && (
-                <div>
-                  <p className="home-record-meta">{formatPercent(expectancy, 1)}</p>
-                  <p className="home-record-label">
-                    Expectancy{sampleSize > 0 ? ` · n=${sampleSize}` : ''}
-                  </p>
-                </div>
-              )}
-              {hermes.anchor && (
-                <div>
-                  <Link href={hermes.anchor.href} className="home-record-meta home-record-link">
-                    {hermes.anchor.lastAnchoredLabel}
-                  </Link>
-                  <p className="home-record-label">Published outside our servers</p>
+                  <p className="home-record-label">Win rate · n={chrome.sidedCloses}</p>
                 </div>
               )}
             </div>
@@ -136,20 +123,7 @@ export default function ObservatoryExperience({ hermes }: { hermes: HermesChainD
         </div>
       </section>
 
-      <section className="record-section border-t border-border pb-12 md:px-5 md:pb-16" aria-label="Sealed rows">
-        <div className="mx-auto max-w-6xl">
-          <HeldPanel
-            exposure={hermes.openExposure}
-            hermesVersion={hermes.hermesVersion}
-            livePosture={hermes.livePosture}
-          />
-          <RecordTable rows={tableRows} totalSealed={hermes.sealedDecisions} />
-          <p className="record-section-note mt-8 max-w-xl text-sm leading-relaxed text-muted">
-            Founder capital only. Young sample: a record, not a claim. Not an offer, not investment
-            advice.
-          </p>
-        </div>
-      </section>
+      {children}
 
       <section className="border-t border-border px-5 py-12 md:py-16">
         <div className="mx-auto max-w-6xl">

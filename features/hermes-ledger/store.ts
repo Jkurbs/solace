@@ -413,7 +413,15 @@ export async function listHermesLedgerRows(limit = 50): Promise<HermesLedgerRow[
  * Lean ledger read for homepage vault metrics. Selects only the columns the
  * process scoreboard needs, much cheaper than listHermesLedgerRows(1000) with `*`.
  */
+type RecentRowsCache = { expiresAt: number; limit: number; rows: HermesLedgerRow[] };
+const RECENT_ROWS_CACHE_MS = 20_000;
+let recentRowsCache: RecentRowsCache | null = null;
+
 export async function getRecentHermesLedgerRows(limit = 5): Promise<HermesLedgerRow[]> {
+  if (recentRowsCache && recentRowsCache.expiresAt > Date.now() && recentRowsCache.limit >= limit) {
+    return recentRowsCache.rows.slice(-limit);
+  }
+
   if (!isSupabaseDataClientConfigured()) {
     return [];
   }
@@ -436,7 +444,7 @@ export async function getRecentHermesLedgerRows(limit = 5): Promise<HermesLedger
       return [];
     }
 
-    return (data ?? [])
+    const rows = (data ?? [])
       .map((row) => ({
         decision: row.decision,
         eventType: (row.event_type as HermesLedgerEventType | null) ?? null,
@@ -455,9 +463,12 @@ export async function getRecentHermesLedgerRows(limit = 5): Promise<HermesLedger
         sealedAt: row.sealed_at,
       }))
       .reverse();
+
+    recentRowsCache = { expiresAt: Date.now() + RECENT_ROWS_CACHE_MS, limit, rows };
+    return rows;
   } catch (error) {
     console.warn('[hermes-ledger] Recent rows lookup failed.', error);
-    return [];
+    return recentRowsCache?.rows ?? [];
   }
 }
 
