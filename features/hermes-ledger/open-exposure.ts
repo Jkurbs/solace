@@ -1,7 +1,9 @@
 import 'server-only';
 
 import { listTrackedOpenPaths, parsePublicPositions } from '@/features/hermes-ledger/path-tracking';
+import { getRuntimeSnapshot, saveRuntimeSnapshot } from '@/features/runtime-snapshots/store';
 import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/supabase/server';
+import type { Json } from '@/lib/supabase/types';
 
 // Live open-exposure read for the public ledger strip: unrealized PnL from
 // the latest NAV mark per pool, and drawdown measured from the historical
@@ -21,6 +23,7 @@ export type HermesOpenExposure = {
 const FRESHNESS_MS = 24 * 60 * 60 * 1000;
 const LIVE_MARK_LIMIT = 12;
 const EXPOSURE_CACHE_MS = 4_000;
+const LIVE_OVERLAY_KEY = 'hermes_live_overlay';
 
 type ExposureCache = { expiresAt: number; value: HermesOpenExposure | null };
 let exposureCache: ExposureCache | null = null;
@@ -101,13 +104,128 @@ function readSourceUnrealizedPnl(row: { source_unrealized_pnl: unknown; raw_payl
   return Number(row.source_unrealized_pnl ?? 0);
 }
 
+function parseStoredOverlay(value: unknown): HermesOpenExposure | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const asOf = typeof record.asOf === 'string' ? record.asOf : '';
+  const unrealizedPnl = Number(record.unrealizedPnl);
+  const grossEquity = Number(record.grossEquity);
+  const peakEquity = Number(record.peakEquity);
+  const drawdownFromPeak = Number(record.drawdownFromPeak);
+  const positions = Array.isArray(record.positions)
+    ? record.positions.flatMap((entry) => {
+        if (!entry || typeof entry !== 'object') {
+          return [];
+        }
+
+        const position = entry as Record<string, unknown>;
+        const symbol = String(position.symbol ?? '').trim().toUpperCase();
+        const side = String(position.side ?? '').trim().toUpperCase();
+
+        if (!symbol || (side !== 'LONG' && side !== 'SHORT')) {
+          return [];
+        }
+
+        return [
+          {
+            side,
+            symbol,
+            ...(typeof position.openedAt === 'string' ? { openedAt: position.openedAt } : {}),
+          },
+        ];
+      })
+    : [];
+
+  if (!asOf || !Number.isFinite(unrealizedPnl) || !Number.isFinite(grossEquity) || !Number.isFinite(peakEquity)) {
+    return null;
+  }
+
+  if (Date.now() - new Date(asOf).getTime() > FRESHNESS_MS) {
+    return null;
+  }
+
+  return {
+    asOf,
+    drawdownFromPeak: Number.isFinite(drawdownFromPeak) ? drawdownFromPeak : 0,
+    grossEquity,
+    peakEquity,
+    positions,
+    unrealizedPnl,
+  };
+}
+
+function rememberOverlay(value: HermesOpenExposure | null) {
+  exposureCache = { expiresAt: Date.now() + EXPOSURE_CACHE_MS, value };
+}
+
+export async function ingestHermesLiveOverlay(mark: {
+  effectiveAt: string;
+  grossEquity: number;
+  rawPayload: unknown;
+  reservedMargin: number;
+  unrealizedPnl: number;
+}) {
+  const row: SourceMarkRow = {
+    effective_at: mark.effectiveAt,
+    pool_id: 'live',
+    raw_payload: mark.rawPayload,
+    source_equity: mark.grossEquity,
+    source_reserved_margin: mark.reservedMargin,
+    source_unrealized_pnl: mark.unrealizedPnl,
+  };
+
+  if (isUnusableLiveMark(row)) {
+    return;
+  }
+
+  let positions = parsePublicPositions(mark.rawPayload).map((position) => ({
+    side: position.side,
+    symbol: position.symbol,
+    ...(position.openedAt ? { openedAt: position.openedAt } : {}),
+  }));
+
+  if (!positions.length) {
+    const tracked = await listTrackedOpenPaths().catch(() => []);
+    if (tracked.length) {
+      positions = positionsFromTrackedKeys(tracked.map((entry) => entry.key));
+    }
+  }
+
+  const previous = parseStoredOverlay(await getRuntimeSnapshot(LIVE_OVERLAY_KEY));
+  const grossEquity = Math.round(mark.grossEquity * 100) / 100;
+  const peakEquity = Math.round(Math.max(grossEquity, previous?.peakEquity ?? grossEquity) * 100) / 100;
+  const overlay: HermesOpenExposure = {
+    asOf: mark.effectiveAt,
+    drawdownFromPeak: peakEquity > 0 ? Math.max(0, (peakEquity - grossEquity) / peakEquity) : 0,
+    grossEquity,
+    peakEquity,
+    positions,
+    unrealizedPnl: Math.round(mark.unrealizedPnl * 10_000) / 10_000,
+  };
+
+  await saveRuntimeSnapshot(LIVE_OVERLAY_KEY, overlay as unknown as Json);
+  rememberOverlay(overlay);
+}
+
 export async function getHermesOpenExposure(): Promise<HermesOpenExposure | null> {
   if (exposureCache && exposureCache.expiresAt > Date.now()) {
     return exposureCache.value;
   }
 
+  const stored = parseStoredOverlay(await getRuntimeSnapshot(LIVE_OVERLAY_KEY));
+  if (stored) {
+    rememberOverlay(stored);
+    return stored;
+  }
+
   const value = await readHermesOpenExposure();
-  exposureCache = { expiresAt: Date.now() + EXPOSURE_CACHE_MS, value };
+  if (value) {
+    await saveRuntimeSnapshot(LIVE_OVERLAY_KEY, value as unknown as Json);
+  }
+  rememberOverlay(value);
   return value;
 }
 

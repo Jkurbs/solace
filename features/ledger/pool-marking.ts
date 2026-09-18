@@ -2,6 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
+import { ingestHermesLiveOverlay } from '@/features/hermes-ledger/open-exposure';
 import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/supabase/server';
 import type { Database, Json } from '@/lib/supabase/types';
 
@@ -560,6 +561,16 @@ async function insertHermesSourceMark({
     console.warn('[pool-marking] Hermes source mark insert failed.', error.message);
     return null;
   }
+
+  await ingestHermesLiveOverlay({
+    effectiveAt,
+    grossEquity: normalizeAmount(input.grossEquity),
+    rawPayload: rawPayload,
+    reservedMargin: normalizeAmount(input.reservedMargin),
+    unrealizedPnl: normalizeSourceUnrealizedPnl(input.unrealizedPnl),
+  }).catch((error) => {
+    console.warn('[pool-marking] Live overlay ingest failed.', error);
+  });
 
   return fromHermesPoolSourceMarkRow(data);
 }
