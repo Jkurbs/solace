@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { unstable_cache } from 'next/cache';
+
 import { getRuntimeSnapshot, saveRuntimeSnapshot } from '@/features/runtime-snapshots/store';
 import { hermesVersion } from '@/features/hermes-version';
 import { createSupabaseDataClient, isSupabaseDataClientConfigured } from '@/lib/supabase/server';
@@ -345,6 +347,7 @@ function publicRecordDeltaForRow(input: {
 
 async function applyPublicRecordDelta(delta: PublicRecordCounts) {
   publicRecordCache = null;
+  recentRowsCache = null;
 
   if (delta.sealedDecisions === 0 && delta.sidedPositive === 0 && delta.sidedNegative === 0) {
     return;
@@ -413,62 +416,73 @@ export async function listHermesLedgerRows(limit = 50): Promise<HermesLedgerRow[
  * Lean ledger read for homepage vault metrics. Selects only the columns the
  * process scoreboard needs, much cheaper than listHermesLedgerRows(1000) with `*`.
  */
-type RecentRowsCache = { expiresAt: number; limit: number; rows: HermesLedgerRow[] };
-const RECENT_ROWS_CACHE_MS = 20_000;
+type RecentRowsCache = { headId: string; limit: number; rows: HermesLedgerRow[] };
 let recentRowsCache: RecentRowsCache | null = null;
 
-export async function getRecentHermesLedgerRows(limit = 5): Promise<HermesLedgerRow[]> {
-  if (recentRowsCache && recentRowsCache.expiresAt > Date.now() && recentRowsCache.limit >= limit) {
-    return recentRowsCache.rows.slice(-limit);
-  }
+const loadRecentHermesLedgerRowsCached = unstable_cache(
+  async (limit: number, _headId: string) => queryRecentHermesLedgerRows(limit),
+  ['hermes-recent-ledger-rows'],
+  { revalidate: 3600 },
+);
 
+async function queryRecentHermesLedgerRows(limit: number): Promise<HermesLedgerRow[]> {
   if (!isSupabaseDataClientConfigured()) {
     return [];
   }
 
-  try {
-    const supabase = await createSupabaseDataClient();
-    const { data, error } = await supabase
-      .from('hermes_decision_ledger')
-      .select(
-        'record_id, sealed_at, decision, posture, note, outcome, pnl, resolved_at, row_class, event_type, ref, prev_hash, row_hash',
-      )
-      .order('created_at', { ascending: false })
-      .limit(limit);
+  const supabase = await createSupabaseDataClient();
+  const { data, error } = await supabase
+    .from('hermes_decision_ledger')
+    .select(
+      'record_id, sealed_at, decision, posture, note, outcome, pnl, resolved_at, row_class, event_type, ref, prev_hash, row_hash',
+    )
+    .order('created_at', { ascending: false })
+    .limit(limit);
 
-    if (error) {
-      if (!isMissingLedgerTable(error.message)) {
-        console.warn('[hermes-ledger] Recent rows lookup failed.', error.message);
-      }
-
-      return [];
+  if (error) {
+    if (!isMissingLedgerTable(error.message)) {
+      console.warn('[hermes-ledger] Recent rows lookup failed.', error.message);
     }
 
-    const rows = (data ?? [])
-      .map((row) => ({
-        decision: row.decision,
-        eventType: (row.event_type as HermesLedgerEventType | null) ?? null,
-        hermesVersion: null,
-        note: row.note,
-        outcome: row.outcome,
-        pnl: row.pnl === null || row.pnl === undefined ? null : Math.round(Number(row.pnl) * 100) / 100,
-        posture: row.posture,
-        prevHash: row.prev_hash,
-        recordId: row.record_id,
-        ref: row.ref,
-        resolutionHash: null,
-        resolvedAt: row.resolved_at,
-        rowClass: (row.row_class as HermesLedgerRowClass | null) ?? null,
-        rowHash: row.row_hash,
-        sealedAt: row.sealed_at,
-      }))
-      .reverse();
+    return [];
+  }
 
-    recentRowsCache = { expiresAt: Date.now() + RECENT_ROWS_CACHE_MS, limit, rows };
-    return rows;
+  return (data ?? [])
+    .map((row) => ({
+      decision: row.decision,
+      eventType: (row.event_type as HermesLedgerEventType | null) ?? null,
+      hermesVersion: null,
+      note: row.note,
+      outcome: row.outcome,
+      pnl: row.pnl === null || row.pnl === undefined ? null : Math.round(Number(row.pnl) * 100) / 100,
+      posture: row.posture,
+      prevHash: row.prev_hash,
+      recordId: row.record_id,
+      ref: row.ref,
+      resolutionHash: null,
+      resolvedAt: row.resolved_at,
+      rowClass: (row.row_class as HermesLedgerRowClass | null) ?? null,
+      rowHash: row.row_hash,
+      sealedAt: row.sealed_at,
+    }))
+    .reverse();
+}
+
+export async function getRecentHermesLedgerRows(limit = 5): Promise<HermesLedgerRow[]> {
+  const pulse = await getHermesLedgerPulse();
+  const headId = pulse?.latestRecordId ?? 'none';
+
+  if (recentRowsCache && recentRowsCache.headId === headId && recentRowsCache.limit >= limit) {
+    return recentRowsCache.rows.slice(-limit);
+  }
+
+  try {
+    const rows = await loadRecentHermesLedgerRowsCached(limit, headId);
+    recentRowsCache = { headId, limit, rows };
+    return rows.slice(-limit);
   } catch (error) {
     console.warn('[hermes-ledger] Recent rows lookup failed.', error);
-    return recentRowsCache?.rows ?? [];
+    return recentRowsCache?.rows.slice(-limit) ?? [];
   }
 }
 

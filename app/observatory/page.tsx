@@ -4,10 +4,12 @@ import { redirect } from 'next/navigation';
 
 import { parseObservatoryInstrument } from '@/features/observatory/paths';
 
+import { getHermesOpenExposure } from '@/features/hermes-ledger/open-exposure';
+
 import HeldPanel from './HeldPanel';
 import ObservatoryExperience from './ObservatoryExperience';
 import RecordTable from './RecordTable';
-import { loadHermesChrome, loadHermesSheet } from './load-chain-data';
+import { loadHermesChrome, loadHermesTableRows } from './load-chain-data';
 
 export const metadata: Metadata = {
   title: 'Solace · Public record',
@@ -50,40 +52,45 @@ export default async function ObservatoryPage({ searchParams }: Props) {
 
   return (
     <ObservatoryExperience chrome={chrome}>
-      <Suspense
-        fallback={
-          <section className="record-section border-t border-border pb-12 md:px-5 md:pb-16" aria-label="Sealed rows">
-            <div className="mx-auto max-w-6xl px-5 py-16 text-sm text-muted">Opening the sheet…</div>
-          </section>
-        }
-      >
-        <ObservatorySheet chrome={chrome} />
-      </Suspense>
+      <section className="record-section border-t border-border pb-12 md:px-5 md:pb-16" aria-label="Sealed rows">
+        <div className="mx-auto max-w-6xl">
+          <Suspense fallback={null}>
+            <ObservatoryHeld chrome={chrome} />
+          </Suspense>
+          <Suspense fallback={<p className="px-5 py-8 text-sm text-muted">Loading sealed rows…</p>}>
+            <ObservatoryTable chrome={chrome} />
+          </Suspense>
+          <p className="record-section-note mt-8 max-w-xl text-sm leading-relaxed text-muted">
+            Founder capital only. Young sample: a record, not a claim. Not an offer, not investment
+            advice.
+          </p>
+        </div>
+      </section>
     </ObservatoryExperience>
   );
 }
 
-async function ObservatorySheet({
+async function ObservatoryHeld({
   chrome,
 }: {
   chrome: Awaited<ReturnType<typeof loadHermesChrome>>;
 }) {
-  const sheet = await loadHermesSheet(chrome.sealedDecisions);
+  const exposure = await getHermesOpenExposure().catch(() => null);
 
   return (
-    <section className="record-section border-t border-border pb-12 md:px-5 md:pb-16" aria-label="Sealed rows">
-      <div className="mx-auto max-w-6xl">
-        <HeldPanel
-          exposure={sheet.openExposure}
-          hermesVersion={chrome.hermesVersion}
-          livePosture={chrome.livePosture}
-        />
-        <RecordTable rows={sheet.rows} totalSealed={chrome.sealedDecisions} />
-        <p className="record-section-note mt-8 max-w-xl text-sm leading-relaxed text-muted">
-          Founder capital only. Young sample: a record, not a claim. Not an offer, not investment
-          advice.
-        </p>
-      </div>
-    </section>
+    <HeldPanel
+      exposure={exposure}
+      hermesVersion={chrome.hermesVersion}
+      livePosture={chrome.livePosture}
+    />
   );
+}
+
+async function ObservatoryTable({
+  chrome,
+}: {
+  chrome: Awaited<ReturnType<typeof loadHermesChrome>>;
+}) {
+  const rows = await loadHermesTableRows(chrome.sealedDecisions);
+  return <RecordTable rows={rows} totalSealed={chrome.sealedDecisions} />;
 }

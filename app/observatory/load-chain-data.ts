@@ -92,20 +92,13 @@ export async function loadHermesChrome(): Promise<HermesRecordChrome> {
   };
 }
 
-export async function loadHermesSheet(sealedDecisions: number): Promise<{
-  openExposure: HermesChainData['openExposure'];
-  rows: TrustLedgerDisplayRow[];
-}> {
-  const [storedRows, openExposure] = await Promise.all([
-    getRecentHermesLedgerRows(80).catch(() => []),
-    getHermesOpenExposure().catch(() => null),
-  ]);
-
+export async function loadHermesTableRows(sealedDecisions: number): Promise<TrustLedgerDisplayRow[]> {
+  const storedRows = await getRecentHermesLedgerRows(80).catch(() => []);
   const newestFirst = [...storedRows].reverse();
-  const rowNumberOffset = Math.max(sealedDecisions - newestFirst.length, 0);
+  const total = Math.max(sealedDecisions, newestFirst.length);
   const rows: TrustLedgerDisplayRow[] = newestFirst.length
     ? newestFirst.map((row, index) => ({
-        row: String(rowNumberOffset + newestFirst.length - index),
+        row: String(total - index),
         recordId: row.recordId,
         sealedAt: sealedAtFormatter.format(new Date(row.sealedAt)),
         decision: row.decision,
@@ -135,7 +128,7 @@ export async function loadHermesSheet(sealedDecisions: number): Promise<{
       }))
     : [placeholderRow];
 
-  return { openExposure, rows };
+  return rows;
 }
 
 export async function loadHermesChainData(): Promise<HermesChainData> {
