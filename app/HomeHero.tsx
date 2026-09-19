@@ -128,25 +128,43 @@ export default function HomeHero() {
             )}
           </motion.div>
 
-          <motion.p variants={fade} className="mt-5 text-center text-xs font-medium tracking-wide text-muted">
-            Secure Platform Identity &amp; Processing via{' '}
-            <a
-              href="https://stripe.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-4 transition-opacity hover:opacity-70"
+          <motion.p
+            variants={fade}
+            className="mt-5 flex items-center justify-center gap-1.5 text-center text-xs font-medium tracking-wide text-muted"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-3 w-3 shrink-0"
             >
-              Stripe
-            </a>{' '}
-            and{' '}
-            <a
-              href="https://www.privy.io"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-4 transition-opacity hover:opacity-70"
-            >
-              Privy
-            </a>
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <span>
+              Secure Platform Identity &amp; Processing via{" "}
+              <a
+                href="https://stripe.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 transition-opacity hover:opacity-70"
+              >
+                Stripe
+              </a>{" "}
+              and{" "}
+              <a
+                href="https://www.privy.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 transition-opacity hover:opacity-70"
+              >
+                Privy
+              </a>
+            </span>
           </motion.p>
         </div>
       </motion.div>
